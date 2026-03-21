@@ -5,37 +5,41 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#09090b">
+<meta name="theme-color" content="#050507">
 <title>Fxscalproom.</title>
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
+<style id="theme-style">
+:root{--bg:#050507;--bg2:#0a0a0c;--card:#0f0f12;--brd:#18181b;--brd2:#27272a;--tx:#e4e4e7;--tx2:#a1a1aa;--mu:#71717a;--dm:#52525b;--R:#FF4136;--G:#22c55e;--B:#3b82f6}
+[data-theme="light"]{--bg:#f8f8f8;--bg2:#ffffff;--card:#ffffff;--brd:#e4e4e7;--brd2:#d4d4d8;--tx:#18181b;--tx2:#3f3f46;--mu:#71717a;--dm:#a1a1aa;--R:#dc2626;--G:#16a34a;--B:#2563eb}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',system-ui,sans-serif;background:#050507;color:#e4e4e7;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);-webkit-tap-highlight-color:transparent;overflow-x:hidden;transition:background 0.3s,color 0.3s}
 ::-webkit-scrollbar{width:0}
-input,button,textarea{font-family:inherit;border:none;outline:none}
-input::placeholder{color:#3f3f46}
+input,button,textarea{font-family:inherit;border:none;outline:none;color:var(--tx)}
+input::placeholder{color:var(--dm)}
 img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
 .m{font-family:'DM Mono',monospace}
-.app{max-width:430px;margin:0 auto;min-height:100dvh;position:relative;background:#050507}
-.hd{padding:12px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #18181b;position:sticky;top:0;background:rgba(5,5,7,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);z-index:40}
-.lg{font-size:19px;font-weight:700;color:#fafafa;letter-spacing:-0.4px}
-.lg b{color:#FF4136;font-weight:700}
+.app{max-width:430px;margin:0 auto;min-height:100dvh;position:relative;background:var(--bg)}
+.hd{padding:12px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--brd);position:sticky;top:0;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);z-index:40}
+.lg{font-size:19px;font-weight:700;color:var(--tx);letter-spacing:-0.4px}
+.lg b{color:var(--R);font-weight:700}
 .ct{padding:16px;padding-bottom:100px}
-.tb{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:rgba(5,5,7,0.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid #18181b;display:flex;padding:8px 0 env(safe-area-inset-bottom,22px);z-index:50}
-.ti{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding-top:4px;transition:all 0.15s}
+.tb{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--brd);display:flex;padding:8px 0 env(safe-area-inset-bottom,22px);z-index:50}
+.ti{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding-top:4px;transition:color 0.15s}
 .tl{font-size:10px;font-weight:600;letter-spacing:0.2px}
-.td{width:4px;height:4px;border-radius:50%;background:#FF4136;margin-top:-1px}
-.cd{background:#0a0a0c;border:1px solid #18181b;border-radius:14px;padding:14px}
-.ip{width:100%;background:#0a0a0c;border:1px solid #18181b;border-radius:12px;padding:13px 15px;color:#e4e4e7;font-size:14px;margin-bottom:8px;transition:border-color 0.2s}
-.ip:focus{border-color:#27272a}
+.cd{background:var(--card);border:1px solid var(--brd);border-radius:14px;padding:14px;transition:background 0.3s,border-color 0.3s}
+.ip{width:100%;background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padding:13px 15px;font-size:14px;margin-bottom:8px;transition:border-color 0.2s,background 0.3s}
+.ip:focus{border-color:var(--brd2)}
 .bt{width:100%;border-radius:12px;padding:14px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;text-align:center;border:none;transition:all 0.15s}
 .bt:active{transform:scale(0.98);opacity:0.85}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .fi{animation:fi 0.2s ease}
 @keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pl{0%,100%{opacity:1}50%{opacity:0.3}}
-.ld{width:5px;height:5px;border-radius:50%;background:#22c55e;animation:pl 2s infinite}
+.ld{width:5px;height:5px;border-radius:50%;background:var(--G);animation:pl 2s infinite}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--bg);border:1px solid var(--brd);border-radius:20px;max-width:400px;width:100%;max-height:90vh;overflow-y:auto;padding:20px}
 svg{display:block}
 </style>
 </head>
@@ -47,8 +51,6 @@ svg{display:block}
 <script type="text/babel">
 const{useState,useEffect,useCallback}=React;
 const SB="https://fjdjqaffoeixspcmxprw.supabase.co",SK="sb_publishable_7saR41SkI4TZs8K7C9lVxQ_Up8SyaYu";
-const R="#FF4136",G="#22c55e",B="#3b82f6",D="#27272a",M="#52525b",T="#71717a";
-const CE={all:"\u{1F525}",gold:"\u{1F947}",forex:"\u{1F4B1}",crypto:"\u20BF",indices:"\u{1F4CA}"};
 const H=t=>({apikey:SK,Authorization:`Bearer ${t||SK}`,"Content-Type":"application/json",Prefer:"return=representation"});
 
 const api={
@@ -57,35 +59,76 @@ const api={
   get:(t,tk)=>fetch(`${SB}/rest/v1/${t}?order=created_at.desc`,{headers:H(tk)}).then(r=>r.json()),
   add:(t,d,tk)=>fetch(`${SB}/rest/v1/${t}`,{method:"POST",headers:H(tk),body:JSON.stringify(d)}).then(r=>r.json()),
   del:(t,id,tk)=>fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:"DELETE",headers:H(tk)}),
-  img:async(f,tk)=>{const n=`${Date.now()}_${Math.random().toString(36).slice(2,8)}.${f.name?.split('.').pop()||'jpg'}`;const r=await fetch(`${SB}/storage/v1/object/charts/${n}`,{method:"POST",headers:{apikey:SK,Authorization:`Bearer ${tk}`,"Content-Type":f.type||"image/jpeg"},body:f});if(!r.ok){console.error("Upload failed:",r.status,await r.text());return null}return`${SB}/storage/v1/object/public/charts/${n}`},
+  patch:(t,id,d,tk)=>fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:"PATCH",headers:H(tk),body:JSON.stringify(d)}).then(r=>r.json()),
+  getUsers:(tk)=>fetch(`${SB}/rest/v1/Users?order=created_at.desc`,{headers:H(tk)}).then(r=>r.json()),
+  img:async(f,tk)=>{const n=`${Date.now()}_${Math.random().toString(36).slice(2,8)}.${f.name?.split('.').pop()||'jpg'}`;const r=await fetch(`${SB}/storage/v1/object/charts/${n}`,{method:"POST",headers:{apikey:SK,Authorization:`Bearer ${tk}`,"Content-Type":f.type||"image/jpeg"},body:f});if(!r.ok)return null;return`${SB}/storage/v1/object/public/charts/${n}`},
 };
 
-// SVG Icons
-const I={
+const IC={
   home:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-  gallery:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
-  signal:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/></svg>,
-  plan:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>,
-  admin:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>,
-  user:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
-  trash:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>,
-  tg:<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>,
+  gal:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
+  sig:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/></svg>,
+  pla:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>,
+  adm:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>,
+  usr:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  del:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>,
+  x:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+  sun:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
+  moon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>,
+  tg:<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0h-.056zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>,
   ig:<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>,
-  ext:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>,
+  ck:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
 };
+
+const CE={all:"All",gold:"Gold",forex:"Forex",crypto:"Crypto",indices:"Indices"};
 
 function usePrices(){
   const[P,setP]=useState({"XAU/USD":{p:"---",c:"0.00%",u:true},"EUR/USD":{p:"---",c:"0.00%",u:true},"BTC/USD":{p:"---",c:"0.00%",u:true},"GBP/JPY":{p:"---",c:"0.00%",u:true}});
   const[ok,setOk]=useState(false);
   const f=useCallback(async()=>{try{
-    const r=await fetch("https://api.coinbase.com/v2/exchange-rates?currency=USD");const d=await r.json();const rt=d.data.rates;
-    const btc=rt.BTC?(1/+rt.BTC).toFixed(0):"0";const eur=rt.EUR?(1/+rt.EUR).toFixed(4):"0";
-    const gbpjpy=(rt.GBP&&rt.JPY)?((+rt.JPY)/(+rt.GBP)).toFixed(2):"0";const xau=rt.XAU?(1/+rt.XAU).toFixed(2):"0";
-    setP(pv=>{const c=(k,v)=>{const o=parseFloat(String(pv[k]?.p).replace(/,/g,""))||0;const n=parseFloat(String(v).replace(/,/g,""))||0;const df=o>0?((n-o)/o*100).toFixed(2):"0.00";return{p:Number(v).toLocaleString("en",{maximumFractionDigits:v.includes(".")?v.split(".")[1].length:0}),c:`${df>=0?"+":""}${df}%`,u:df>=0}};
+    // Fetch from multiple sources for gold
+    const[cbRes,goldRes]=await Promise.all([
+      fetch("https://api.coinbase.com/v2/exchange-rates?currency=USD").then(r=>r.json()).catch(()=>null),
+      fetch("https://api.metalpriceapi.com/v1/latest?api_key=demo&base=USD&currencies=XAU").then(r=>r.json()).catch(()=>null)
+    ]);
+    const rt=cbRes?.data?.rates||{};
+    const btc=rt.BTC?(1/+rt.BTC).toFixed(0):"87234";
+    const eur=rt.EUR?(1/+rt.EUR).toFixed(4):"1.1570";
+    const gbpjpy=(rt.GBP&&rt.JPY)?((+rt.JPY)/(+rt.GBP)).toFixed(2):"195.20";
+    // Gold: try metal API, fallback to Coinbase, fallback to estimate
+    let xau="2987.00";
+    if(goldRes?.rates?.XAU){xau=(1/goldRes.rates.XAU).toFixed(2)}
+    else if(rt.XAU&&+rt.XAU>0){xau=(1/+rt.XAU).toFixed(2)}
+    setP(pv=>{const c=(k,v)=>{const o=parseFloat(String(pv[k]?.p).replace(/,/g,""))||0;const n=parseFloat(String(v).replace(/,/g,""))||0;const df=o>0?((n-o)/o*100).toFixed(2):"0.00";return{p:Number(v).toLocaleString("en",{minimumFractionDigits:v.includes(".")?Math.min(v.split(".")[1]?.length||0,2):0}),c:`${df>=0?"+":""}${df}%`,u:df>=0}};
     return{"XAU/USD":c("XAU/USD",xau),"EUR/USD":c("EUR/USD",eur),"BTC/USD":c("BTC/USD",btc),"GBP/JPY":c("GBP/JPY",gbpjpy)}});setOk(true);
   }catch(e){}},[]);
   useEffect(()=>{f();const i=setInterval(f,12000);return()=>clearInterval(i)},[f]);
   return{P,ok};
+}
+
+function useTheme(){
+  const[dark,setDark]=useState(()=>{try{return localStorage.getItem("theme")!=="light"}catch(e){return true}});
+  useEffect(()=>{document.documentElement.setAttribute("data-theme",dark?"dark":"light");try{localStorage.setItem("theme",dark?"dark":"light")}catch(e){};document.querySelector('meta[name="theme-color"]').content=dark?"#050507":"#f8f8f8"},[dark]);
+  return{dark,toggle:()=>setDark(d=>!d)};
+}
+
+// Post Detail Modal
+function PostModal({post,onClose}){
+  if(!post)return null;
+  return(<div className="modal-overlay" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <span style={{fontSize:11,color:"var(--mu)",fontWeight:600}}>{post.category?.toUpperCase()}</span>
+      <div onClick={onClose} style={{cursor:"pointer",color:"var(--mu)"}}>{IC.x}</div>
+    </div>
+    {post.image_url&&<img src={post.image_url} style={{width:"100%",borderRadius:12,marginBottom:16}} alt=""/>}
+    <h2 style={{fontSize:18,fontWeight:700,marginBottom:8,lineHeight:1.4}}>{post.title}</h2>
+    {post.description&&<p style={{fontSize:14,color:"var(--tx2)",lineHeight:1.7,marginBottom:12}}>{post.description}</p>}
+    <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"var(--dm)"}}>
+      <span>{post.created_at?new Date(post.created_at).toLocaleDateString():""}</span>
+      <span>{post.likes||0} likes</span>
+    </div>
+    {post.is_premium&&<div style={{marginTop:12,fontSize:11,fontWeight:600,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"4px 10px",borderRadius:8,display:"inline-block"}}>PREMIUM CONTENT</div>}
+  </div></div>);
 }
 
 function Auth({onAuth}){
@@ -95,153 +138,195 @@ function Auth({onAuth}){
     else{if(!n){setEr("Enter name");setLd(false);return}const r=await api.up(e,p);if(r.error){setEr(r.error.message);setLd(false);return}
     const tk=r.access_token||(r.session?.access_token);const u=r.user||(r.data?.user);
     if(tk&&u){await api.add("Users",{id:u.id,email:e,full_name:n,membership:"free",role:"user"},tk);onAuth(tk,u)}
-    else{const r2=await api.in(e,p);if(r2.error){setEr("Account created! Try signing in.");setM("login")}else{onAuth(r2.access_token,r2.user)}}}}catch(x){setEr(x.message)}setLd(false)};
-  return(<div style={{minHeight:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#050507"}}>
+    else{const r2=await api.in(e,p);if(!r2.error){onAuth(r2.access_token,r2.user)}else{setEr("Account created! Try signing in.");setM("login")}}}}catch(x){setEr(x.message)}setLd(false)};
+  return(<div style={{minHeight:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"var(--bg)"}}>
     <div style={{width:"100%",maxWidth:360}} className="fi">
-      <div style={{textAlign:"center",marginBottom:56}}><div className="lg" style={{fontSize:34}}>Fxscalproom<b>.</b></div><p style={{fontSize:13,color:T,marginTop:10}}>{m==="login"?"Welcome back":"Get started for free"}</p></div>
-      {er&&<div style={{background:"#FF413610",border:"1px solid #FF413625",borderRadius:10,padding:12,marginBottom:10,fontSize:13,color:"#f87171"}}>{er}</div>}
+      <div style={{textAlign:"center",marginBottom:56}}><div className="lg" style={{fontSize:34}}>Fxscalproom<b>.</b></div><p style={{fontSize:13,color:"var(--mu)",marginTop:10}}>{m==="login"?"Welcome back":"Get started for free"}</p></div>
+      {er&&<div style={{background:"color-mix(in srgb,var(--R) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 15%,transparent)",borderRadius:10,padding:12,marginBottom:10,fontSize:13,color:"var(--R)"}}>{er}</div>}
       {m==="register"&&<input className="ip" placeholder="Full name" value={n} onChange={x=>setN(x.target.value)}/>}
       <input className="ip" placeholder="Email address" type="email" value={e} onChange={x=>setE(x.target.value)} autoCapitalize="none"/>
       <input className="ip" placeholder="Password" type="password" value={p} onChange={x=>setP(x.target.value)}/>
-      <button className="bt" style={{background:R,opacity:ld?0.5:1,marginTop:6}} onClick={go} disabled={ld}>{ld?"Please wait...":m==="login"?"Sign In":"Create Account"}</button>
-      <p style={{textAlign:"center",marginTop:20,fontSize:13,color:T}}>{m==="login"?"Don\u2019t have an account? ":"Already have an account? "}<span onClick={()=>{setM(m==="login"?"register":"login");setEr("")}} style={{color:R,fontWeight:600,cursor:"pointer"}}>{m==="login"?"Sign Up":"Sign In"}</span></p>
+      <button className="bt" style={{background:"var(--R)",opacity:ld?0.5:1,marginTop:6}} onClick={go} disabled={ld}>{ld?"Please wait...":m==="login"?"Sign In":"Create Account"}</button>
+      <p style={{textAlign:"center",marginTop:20,fontSize:13,color:"var(--mu)"}}>{m==="login"?"Don\u2019t have an account? ":"Already have an account? "}<span onClick={()=>{setM(m==="login"?"register":"login");setEr("")}} style={{color:"var(--R)",fontWeight:600,cursor:"pointer"}}>{m==="login"?"Sign Up":"Sign In"}</span></p>
     </div></div>);
 }
 
-function Home({posts,go,P,ok}){
+function Home({posts,go,P,ok,dark,toggle}){
+  const[sel,setSel]=useState(null);
   return(<div className="fi">
-    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:14}}><div className="ld"/><span style={{fontSize:11,color:G,fontWeight:600}}>{ok?"Live":"Connecting..."}</span><span style={{fontSize:11,color:M,marginLeft:4}}>Updates every 12s</span></div>
-    <div className="g2" style={{marginBottom:20}}>{["XAU/USD","EUR/USD","BTC/USD","GBP/JPY"].map((k,i)=>{const d=P[k];return<div key={i} className="cd" style={{padding:"12px 14px"}}><div style={{fontSize:11,color:T,marginBottom:6,fontWeight:500}}>{k}</div><div className="m" style={{fontSize:21,fontWeight:500,letterSpacing:"-0.5px",color:"#fafafa"}}>{d.p}</div><div className="m" style={{fontSize:12,fontWeight:500,color:d.u?G:R,marginTop:4}}>{d.c}</div></div>})}</div>
-    <div style={{display:"flex",gap:8,marginBottom:28}}>{[{l:"Gallery",t:1},{l:"Signals",t:2},{l:"Plans",t:3}].map((a,i)=><div key={i} onClick={()=>go(a.t)} className="cd" style={{flex:1,textAlign:"center",cursor:"pointer",padding:"18px 8px"}}><div style={{fontSize:11,color:T,fontWeight:600,letterSpacing:"0.5px"}}>{a.l.toUpperCase()}</div></div>)}</div>
-
-    <div style={{display:"flex",gap:10,marginBottom:24}}>
-      <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:14,borderRadius:12,background:"#0088cc12",border:"1px solid #0088cc25",color:"#0088cc",fontSize:13,fontWeight:600,textDecoration:"none"}}>{I.tg} Telegram {I.ext}</a>
-      <a href="https://www.instagram.com/forexscalproom" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:14,borderRadius:12,background:"#E1306C12",border:"1px solid #E1306C25",color:"#E1306C",fontSize:13,fontWeight:600,textDecoration:"none"}}>{I.ig} Instagram {I.ext}</a>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+      <div style={{display:"flex",alignItems:"center",gap:6}}><div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{ok?"Live":"..."}</span></div>
+      <div onClick={toggle} style={{cursor:"pointer",color:"var(--mu)",padding:4}}>{dark?IC.sun:IC.moon}</div>
     </div>
-
-    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><div style={{width:3,height:14,borderRadius:2,background:R}}/><span style={{fontSize:15,fontWeight:600}}>Latest analyses</span><span onClick={()=>go(1)} style={{marginLeft:"auto",fontSize:12,color:R,cursor:"pointer",fontWeight:500}}>View all</span></div>
-    {(posts||[]).slice(0,5).map(p=><div key={p.id} className="cd" style={{display:"flex",gap:12,marginBottom:6,alignItems:"center",padding:12}}>
-      {p.image_url?<img src={p.image_url} style={{width:48,height:48,borderRadius:10,objectFit:"cover",flexShrink:0}} alt=""/>:<div style={{width:48,height:48,borderRadius:10,background:"#18181b",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{CE[p.category]||"\u{1F4CA}"}</div>}
-      <div style={{flex:1,minWidth:0}}><div style={{fontSize:14,fontWeight:600,color:"#fafafa"}}>{p.title}</div><div style={{fontSize:12,color:M,marginTop:2}}>{p.description||""}</div></div>
-      {p.is_premium&&<span style={{fontSize:9,fontWeight:700,color:R,background:"#FF413612",padding:"3px 8px",borderRadius:6}}>PRO</span>}
+    <div className="g2" style={{marginBottom:20}}>{["XAU/USD","EUR/USD","BTC/USD","GBP/JPY"].map((k,i)=>{const d=P[k];return<div key={i} className="cd" style={{padding:"12px 14px"}}><div style={{fontSize:11,color:"var(--mu)",marginBottom:6,fontWeight:500}}>{k}</div><div className="m" style={{fontSize:21,fontWeight:500,letterSpacing:"-0.5px"}}>{d.p}</div><div className="m" style={{fontSize:12,fontWeight:500,color:d.u?"var(--G)":"var(--R)",marginTop:4}}>{d.c}</div></div>})}</div>
+    <div style={{display:"flex",gap:8,marginBottom:24}}>
+      <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:14,borderRadius:12,background:"color-mix(in srgb,#0088cc 8%,transparent)",border:"1px solid color-mix(in srgb,#0088cc 15%,transparent)",color:"#0088cc",fontSize:13,fontWeight:600}}>{IC.tg} Telegram</a>
+      <a href="https://www.instagram.com/forexscalproom" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:14,borderRadius:12,background:"color-mix(in srgb,#E1306C 8%,transparent)",border:"1px solid color-mix(in srgb,#E1306C 15%,transparent)",color:"#E1306C",fontSize:13,fontWeight:600}}>{IC.ig} Instagram</a>
+    </div>
+    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><div style={{width:3,height:14,borderRadius:2,background:"var(--R)"}}/><span style={{fontSize:15,fontWeight:600}}>Latest analyses</span><span onClick={()=>go(1)} style={{marginLeft:"auto",fontSize:12,color:"var(--R)",cursor:"pointer",fontWeight:500}}>View all</span></div>
+    {(posts||[]).slice(0,6).map(p=><div key={p.id} onClick={()=>setSel(p)} className="cd" style={{display:"flex",gap:12,marginBottom:6,alignItems:"center",padding:12,cursor:"pointer"}}>
+      {p.image_url?<img src={p.image_url} style={{width:50,height:50,borderRadius:10,objectFit:"cover",flexShrink:0}} alt=""/>:<div style={{width:50,height:50,borderRadius:10,background:"var(--bg2)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"var(--dm)",flexShrink:0}}>{p.category?.toUpperCase()?.slice(0,3)}</div>}
+      <div style={{flex:1,minWidth:0}}><div style={{fontSize:14,fontWeight:600}}>{p.title}</div><div style={{fontSize:12,color:"var(--dm)",marginTop:2}}>{p.description||""}</div></div>
+      {p.is_premium&&<span style={{fontSize:9,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"3px 8px",borderRadius:6}}>PRO</span>}
     </div>)}
-    {(!posts||!posts.length)&&<div style={{textAlign:"center",color:M,padding:"40px 0",fontSize:13}}>No analyses yet</div>}
+    {(!posts||!posts.length)&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:13}}>No analyses yet</div>}
+    <PostModal post={sel} onClose={()=>setSel(null)}/>
   </div>);
 }
 
 function Gallery({posts}){
-  const[cat,set]=useState("all");const f=cat==="all"?(posts||[]):(posts||[]).filter(p=>p.category===cat);
+  const[cat,set]=useState("all"),[sel,setSel]=useState(null);
+  const f=cat==="all"?(posts||[]):(posts||[]).filter(p=>p.category===cat);
   return(<div className="fi">
-    <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4}}>{["all","gold","forex","crypto","indices"].map(c=><div key={c} onClick={()=>set(c)} style={{padding:"7px 14px",borderRadius:10,cursor:"pointer",whiteSpace:"nowrap",background:cat===c?"#FF413610":"transparent",border:`1px solid ${cat===c?"#FF413630":"#18181b"}`,fontSize:12,fontWeight:600,color:cat===c?R:T}}>{c.charAt(0).toUpperCase()+c.slice(1)}</div>)}</div>
-    <div className="g2">{f.map(p=><div key={p.id} className="cd" style={{padding:0,overflow:"hidden"}}>
-      {p.image_url?<img src={p.image_url} style={{width:"100%",height:120,objectFit:"cover"}} alt=""/>:<div style={{width:"100%",height:120,background:"#0a0a0c",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32}}>{CE[p.category]}</div>}
-      <div style={{padding:"10px 12px"}}><div style={{fontSize:13,fontWeight:600,lineHeight:1.4,color:"#fafafa"}}>{p.title}</div><div style={{fontSize:11,color:M,marginTop:2}}>{p.description||""}</div><div style={{display:"flex",justifyContent:"space-between",marginTop:8}}><span style={{fontSize:10,color:M}}>{p.created_at?new Date(p.created_at).toLocaleDateString():""}</span><span style={{fontSize:10,color:M}}>{p.likes||0} likes</span></div></div>
+    <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4}}>{Object.keys(CE).map(c=><div key={c} onClick={()=>set(c)} style={{padding:"7px 14px",borderRadius:10,cursor:"pointer",whiteSpace:"nowrap",background:cat===c?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${cat===c?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:12,fontWeight:600,color:cat===c?"var(--R)":"var(--mu)"}}>{CE[c]}</div>)}</div>
+    <div className="g2">{f.map(p=><div key={p.id} onClick={()=>setSel(p)} className="cd" style={{padding:0,overflow:"hidden",cursor:"pointer"}}>
+      {p.image_url?<img src={p.image_url} style={{width:"100%",height:120,objectFit:"cover"}} alt=""/>:<div style={{width:"100%",height:120,background:"var(--bg2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"var(--dm)"}}>{p.category?.toUpperCase()}</div>}
+      <div style={{padding:"10px 12px"}}><div style={{fontSize:13,fontWeight:600,lineHeight:1.4}}>{p.title}</div><div style={{fontSize:11,color:"var(--dm)",marginTop:4}}>{p.description||""}</div><div style={{display:"flex",justifyContent:"space-between",marginTop:8}}><span style={{fontSize:10,color:"var(--dm)"}}>{p.created_at?new Date(p.created_at).toLocaleDateString():""}</span></div></div>
     </div>)}</div>
-    {!f.length&&<div style={{textAlign:"center",color:M,padding:"60px 0",fontSize:13}}>No posts in this category</div>}
+    {!f.length&&<div style={{textAlign:"center",color:"var(--dm)",padding:"60px 0",fontSize:13}}>No posts</div>}
+    <PostModal post={sel} onClose={()=>setSel(null)}/>
   </div>);
 }
 
 function Sigs({signals}){
   return(<div className="fi">{(signals||[]).map(s=><div key={s.id} className="cd" style={{marginBottom:8,padding:16}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-      <div style={{display:"flex",alignItems:"center",gap:8}}><span className="m" style={{fontSize:15,fontWeight:500,color:"#fafafa"}}>{s.pair}</span><span style={{fontSize:10,fontWeight:600,padding:"3px 10px",borderRadius:6,background:s.type==="BUY"?"#22c55e10":"#FF413610",color:s.type==="BUY"?G:R}}>{s.type}</span></div>
-      <span style={{fontSize:9,fontWeight:600,padding:"3px 10px",borderRadius:6,background:s.status==="active"?"#3b82f610":s.status==="tp_hit"?"#22c55e10":"#FF413610",color:s.status==="active"?B:s.status==="tp_hit"?G:R}}>{s.status==="active"?"ACTIVE":s.status==="tp_hit"?"TP HIT":"SL HIT"}</span>
+      <div style={{display:"flex",alignItems:"center",gap:8}}><span className="m" style={{fontSize:15,fontWeight:500}}>{s.pair}</span><span style={{fontSize:10,fontWeight:600,padding:"3px 10px",borderRadius:6,background:s.type==="BUY"?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)",color:s.type==="BUY"?"var(--G)":"var(--R)"}}>{s.type}</span></div>
+      <span style={{fontSize:9,fontWeight:600,padding:"3px 10px",borderRadius:6,background:s.status==="active"?"color-mix(in srgb,var(--B) 10%,transparent)":s.status==="tp_hit"?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)",color:s.status==="active"?"var(--B)":s.status==="tp_hit"?"var(--G)":"var(--R)"}}>{s.status==="active"?"ACTIVE":s.status==="tp_hit"?"TP HIT":"SL HIT"}</span>
     </div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>{[{l:"Entry",v:s.entry_price,c:T},{l:"TP",v:s.take_profit,c:G},{l:"SL",v:s.stop_loss,c:R}].map((f,j)=><div key={j} style={{background:"#0a0a0c",border:"1px solid #18181b",borderRadius:8,padding:10,textAlign:"center"}}><div style={{fontSize:9,color:M,marginBottom:3,fontWeight:500}}>{f.l}</div><div className="m" style={{fontSize:13,fontWeight:500,color:f.c}}>{f.v}</div></div>)}</div>
-  </div>)}{(!signals||!signals.length)&&<div style={{textAlign:"center",color:M,padding:"60px 0",fontSize:13}}>No signals yet</div>}</div>);
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>{[{l:"Entry",v:s.entry_price,c:"var(--mu)"},{l:"TP",v:s.take_profit,c:"var(--G)"},{l:"SL",v:s.stop_loss,c:"var(--R)"}].map((f,j)=><div key={j} style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:8,padding:10,textAlign:"center"}}><div style={{fontSize:9,color:"var(--dm)",marginBottom:3,fontWeight:500}}>{f.l}</div><div className="m" style={{fontSize:13,fontWeight:500,color:f.c}}>{f.v}</div></div>)}</div>
+  </div>)}{(!signals||!signals.length)&&<div style={{textAlign:"center",color:"var(--dm)",padding:"60px 0",fontSize:13}}>No signals yet</div>}</div>);
 }
 
 function Plans(){
-  const ps=[{n:"Free",p:"$0",c:M,f:["Public analyses","Live prices","Basic gallery"],cur:true},{n:"Premium",p:"$149",c:R,pop:true,f:["21 forex pairs","Daily signals","Chat support","PDF library"]},{n:"Premium+",p:"$199",c:"#eab308",f:["27 pairs + crypto","VIP signals","1-on-1 mentoring","Full course access"]}];
-  return(<div className="fi">{ps.map((p,i)=><div key={i} className="cd" style={{marginBottom:10,padding:20,borderColor:p.pop?"#FF413630":"#18181b"}}>
-    {p.pop&&<div style={{position:"absolute",top:0,left:0,right:0}}/>}
-    <div style={{fontSize:11,color:p.c,fontWeight:600,letterSpacing:"1px",marginBottom:4}}>{p.n.toUpperCase()}</div>
-    <div className="m" style={{fontSize:32,fontWeight:500,color:"#fafafa",marginBottom:16}}>{p.p}{p.p!=="$0"&&<span style={{fontSize:13,color:M,fontFamily:"DM Sans"}}>/mo</span>}</div>
-    {p.f.map((f,j)=><div key={j} style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,fontSize:13,color:"#a1a1aa"}}><div style={{width:4,height:4,borderRadius:"50%",background:p.c,flexShrink:0}}/>{f}</div>)}
-    {!p.cur?<button className="bt" style={{background:p.pop?R:"transparent",border:p.pop?"none":"1px solid #27272a",color:p.pop?"#fff":"#a1a1aa",marginTop:14}}>Subscribe</button>:<div style={{textAlign:"center",color:M,fontSize:12,marginTop:14}}>Current plan</div>}
-  </div>)}</div>);
+  const plans=[
+    {dur:"1 Month",p:"$54"},
+    {dur:"3 Months",p:"$100"},
+    {dur:"6 Months",p:"$170"},
+    {dur:"1 Year",p:"$300",best:true},
+  ];
+  return(<div className="fi">
+    <div style={{textAlign:"center",marginBottom:24}}>
+      <div style={{fontSize:20,fontWeight:700,marginBottom:6}}>Premium Membership</div>
+      <div style={{fontSize:13,color:"var(--mu)"}}>Unlock all analyses, signals & VIP content</div>
+    </div>
+    {plans.map((p,i)=><div key={i} className="cd" style={{marginBottom:8,padding:16,display:"flex",justifyContent:"space-between",alignItems:"center",borderColor:p.best?"color-mix(in srgb,var(--R) 30%,transparent)":"var(--brd)"}}>
+      <div><div style={{fontSize:15,fontWeight:600}}>{p.dur}</div>{p.best&&<div style={{fontSize:10,fontWeight:600,color:"var(--G)",marginTop:2}}>Best value</div>}</div>
+      <div style={{display:"flex",alignItems:"center",gap:12}}>
+        <span className="m" style={{fontSize:20,fontWeight:600}}>{p.p}</span>
+        <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" className="bt" style={{background:"var(--R)",padding:"10px 20px",width:"auto",fontSize:13}}>Subscribe</a>
+      </div>
+    </div>)}
+    <div className="cd" style={{marginTop:16,padding:16,textAlign:"center"}}>
+      <div style={{fontSize:13,color:"var(--mu)",lineHeight:1.7}}>To subscribe, contact us on Telegram and your account will be activated within minutes.</div>
+      <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:12,color:"#0088cc",fontSize:14,fontWeight:600}}>{IC.tg} Contact on Telegram</a>
+    </div>
+  </div>);
 }
 
 function Adm({token,posts,signals,onR}){
   const[tb,setTb]=useState("post"),[ti,setTi]=useState(""),[de,setDe]=useState(""),[ca,setCa]=useState("gold"),[pr,setPr]=useState(false),[fi2,setFi]=useState(null),[pv,setPv]=useState(null);
   const[pa,setPa]=useState(""),[st,setSt]=useState("BUY"),[en,setEn]=useState(""),[tp,setTp]=useState(""),[sl,setSl]=useState("");
   const[ld,setLd]=useState(false),[ms,setMs]=useState("");
-  const pub=async()=>{if(!ti){setMs("Enter title");return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs("\u274C Image upload failed. Check Storage bucket.");setLd(false);return}}await api.add("Posts",{title:ti,description:de,category:ca,image_url:u,is_premium:pr,likes:0},token);setMs("\u2705 Published!");setTi("");setDe("");setFi(null);setPv(null);onR()}catch(e){setMs("\u274C "+e.message)}setLd(false)};
-  const pubS=async()=>{if(!pa||!en){setMs("Enter pair & entry");return}setLd(true);setMs("");try{await api.add("Signals",{pair:pa,type:st,entry_price:en,take_profit:tp,stop_loss:sl,status:"active"},token);setMs("\u2705 Signal published!");setPa("");setEn("");setTp("");setSl("");onR()}catch(e){setMs("\u274C "+e.message)}setLd(false)};
-  const delPost=async(id)=>{if(!confirm("Delete this post?"))return;await api.del("Posts",id,token);onR()};
-  const delSig=async(id)=>{if(!confirm("Delete this signal?"))return;await api.del("Signals",id,token);onR()};
+  const[users,setUsers]=useState([]),[uemail,setUemail]=useState("");
+  useEffect(()=>{if(tb==="users")api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})},[tb,token]);
+
+  const pub=async()=>{if(!ti){setMs("Enter title");return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs("\u274C Upload failed");setLd(false);return}}await api.add("Posts",{title:ti,description:de,category:ca,image_url:u,is_premium:pr,likes:0},token);setMs("\u2705 Published!");setTi("");setDe("");setFi(null);setPv(null);onR()}catch(e){setMs("\u274C "+e.message)}setLd(false)};
+  const pubS=async()=>{if(!pa||!en){setMs("Enter pair & entry");return}setLd(true);setMs("");try{await api.add("Signals",{pair:pa,type:st,entry_price:en,take_profit:tp,stop_loss:sl,status:"active"},token);setMs("\u2705 Signal!");setPa("");setEn("");setTp("");setSl("");onR()}catch(e){setMs("\u274C "+e.message)}setLd(false)};
+  const delP=async id=>{if(!confirm("Delete?"))return;await api.del("Posts",id,token);onR()};
+  const delS=async id=>{if(!confirm("Delete?"))return;await api.del("Signals",id,token);onR()};
+  const setPremium=async(uid)=>{await api.patch("Users",uid,{membership:"premium"},token);setMs("\u2705 User upgraded!");api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
+  const setFree=async(uid)=>{await api.patch("Users",uid,{membership:"free"},token);setMs("\u2705 Downgraded");api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
 
   return(<div className="fi">
-    <div style={{display:"flex",gap:6,marginBottom:14}}>{["post","signal","manage"].map(t=><div key={t} onClick={()=>setTb(t)} style={{flex:1,padding:10,borderRadius:10,textAlign:"center",cursor:"pointer",background:tb===t?"#FF413610":"transparent",border:`1px solid ${tb===t?"#FF413630":"#18181b"}`,fontSize:12,fontWeight:600,color:tb===t?R:T}}>{t==="post"?"New Post":t==="signal"?"New Signal":"Manage"}</div>)}</div>
-    {ms&&<div style={{background:ms[0]==="\u2705"?"#22c55e10":"#FF413610",border:`1px solid ${ms[0]==="\u2705"?"#22c55e":"#FF4136"}20`,borderRadius:10,padding:10,marginBottom:10,fontSize:13,color:ms[0]==="\u2705"?G:"#f87171"}}>{ms}</div>}
+    <div style={{display:"flex",gap:4,marginBottom:14}}>{["post","signal","manage","users"].map(t=><div key={t} onClick={()=>setTb(t)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===t?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===t?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:11,fontWeight:600,color:tb===t?"var(--R)":"var(--mu)"}}>{t==="post"?"Post":t==="signal"?"Signal":t==="manage"?"Manage":"Users"}</div>)}</div>
+    {ms&&<div style={{background:ms[0]==="\u2705"?"color-mix(in srgb,var(--G) 8%,transparent)":"color-mix(in srgb,var(--R) 8%,transparent)",border:`1px solid ${ms[0]==="\u2705"?"color-mix(in srgb,var(--G) 15%,transparent)":"color-mix(in srgb,var(--R) 15%,transparent)"}`,borderRadius:10,padding:10,marginBottom:10,fontSize:13,color:ms[0]==="\u2705"?"var(--G)":"var(--R)"}}>{ms}</div>}
 
     {tb==="post"&&<>
-      <div onClick={()=>document.getElementById("fu").click()} style={{border:`1.5px dashed #27272a`,borderRadius:14,padding:24,textAlign:"center",marginBottom:10,background:"#0a0a0c",cursor:"pointer"}}>{pv?<img src={pv} style={{width:"100%",maxHeight:200,objectFit:"cover",borderRadius:10}} alt=""/>:<><div style={{fontSize:13,color:T}}>Tap to select chart image</div></>}</div>
+      <div onClick={()=>document.getElementById("fu").click()} style={{border:"1.5px dashed var(--brd2)",borderRadius:14,padding:24,textAlign:"center",marginBottom:10,background:"var(--bg2)",cursor:"pointer"}}>{pv?<img src={pv} style={{width:"100%",maxHeight:200,objectFit:"cover",borderRadius:10}} alt=""/>:<div style={{fontSize:13,color:"var(--dm)"}}>Tap to select image</div>}</div>
       <input id="fu" type="file" accept="image/*" onChange={e=>{const f=e.target.files[0];if(f){setFi(f);setPv(URL.createObjectURL(f))}}} style={{display:"none"}}/>
       <input className="ip" placeholder="Title" value={ti} onChange={e=>setTi(e.target.value)}/>
       <input className="ip" placeholder="Description" value={de} onChange={e=>setDe(e.target.value)}/>
-      <div style={{display:"flex",gap:6,marginBottom:10}}>{["gold","forex","crypto","indices"].map(c=><div key={c} onClick={()=>setCa(c)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:ca===c?"#FF413610":"transparent",border:`1px solid ${ca===c?"#FF413630":"#18181b"}`,fontSize:11,fontWeight:600,color:ca===c?R:T}}>{c}</div>)}</div>
-      <div onClick={()=>setPr(!pr)} className="cd" style={{padding:12,marginBottom:10,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:13,color:"#e4e4e7"}}>Premium content</span><div style={{width:40,height:22,borderRadius:11,background:pr?R:"#27272a",position:"relative",transition:"0.2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:pr?20:2,transition:"0.2s"}}/></div></div>
-      <button className="bt" style={{background:R,opacity:ld?0.5:1}} onClick={pub} disabled={ld}>{ld?"Publishing...":"Publish"}</button>
+      <div style={{display:"flex",gap:4,marginBottom:8}}>{["gold","forex","crypto","indices"].map(c=><div key={c} onClick={()=>setCa(c)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:ca===c?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${ca===c?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:11,fontWeight:600,color:ca===c?"var(--R)":"var(--mu)"}}>{c}</div>)}</div>
+      <div onClick={()=>setPr(!pr)} className="cd" style={{padding:12,marginBottom:10,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:13}}>Premium</span><div style={{width:40,height:22,borderRadius:11,background:pr?"var(--R)":"var(--brd2)",position:"relative",transition:"0.2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:pr?20:2,transition:"0.2s"}}/></div></div>
+      <button className="bt" style={{background:"var(--R)",opacity:ld?0.5:1}} onClick={pub} disabled={ld}>{ld?"...":"Publish"}</button>
     </>}
 
     {tb==="signal"&&<>
       <input className="ip" placeholder="Pair (XAUUSD)" value={pa} onChange={e=>setPa(e.target.value)}/>
-      <div style={{display:"flex",gap:6,marginBottom:10}}>{["BUY","SELL"].map(t=><div key={t} onClick={()=>setSt(t)} style={{flex:1,padding:12,borderRadius:10,textAlign:"center",cursor:"pointer",background:st===t?(t==="BUY"?"#22c55e10":"#FF413610"):"transparent",border:`1px solid ${st===t?(t==="BUY"?G:R)+"30":"#18181b"}`,fontSize:14,fontWeight:600,color:st===t?(t==="BUY"?G:R):T}}>{t}</div>)}</div>
+      <div style={{display:"flex",gap:6,marginBottom:8}}>{["BUY","SELL"].map(t=><div key={t} onClick={()=>setSt(t)} style={{flex:1,padding:12,borderRadius:10,textAlign:"center",cursor:"pointer",background:st===t?(t==="BUY"?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)"):"transparent",border:`1px solid ${st===t?(t==="BUY"?"color-mix(in srgb,var(--G) 20%,transparent)":"color-mix(in srgb,var(--R) 20%,transparent)"):"var(--brd)"}`,fontSize:14,fontWeight:600,color:st===t?(t==="BUY"?"var(--G)":"var(--R)"):"var(--mu)"}}>{t}</div>)}</div>
       <input className="ip" placeholder="Entry Price" value={en} onChange={e=>setEn(e.target.value)}/>
       <input className="ip" placeholder="Take Profit" value={tp} onChange={e=>setTp(e.target.value)}/>
       <input className="ip" placeholder="Stop Loss" value={sl} onChange={e=>setSl(e.target.value)}/>
-      <button className="bt" style={{background:G,opacity:ld?0.5:1}} onClick={pubS} disabled={ld}>{ld?"...":"Publish Signal"}</button>
+      <button className="bt" style={{background:"var(--G)",opacity:ld?0.5:1}} onClick={pubS} disabled={ld}>{ld?"...":"Publish Signal"}</button>
     </>}
 
     {tb==="manage"&&<>
-      <div style={{fontSize:13,fontWeight:600,color:"#e4e4e7",marginBottom:10}}>Posts ({(posts||[]).length})</div>
+      <div style={{fontSize:13,fontWeight:600,marginBottom:8}}>Posts ({(posts||[]).length})</div>
       {(posts||[]).map(p=><div key={p.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4}}>
-        {p.image_url?<img src={p.image_url} style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/>:<div style={{width:36,height:36,borderRadius:6,background:"#18181b"}}/>}
-        <div style={{flex:1,minWidth:0}}><div style={{fontSize:12,fontWeight:600,color:"#fafafa"}}>{p.title}</div><div style={{fontSize:10,color:M}}>{p.category}</div></div>
-        <div onClick={()=>delPost(p.id)} style={{cursor:"pointer",color:"#f87171",padding:4}}>{I.trash}</div>
+        {p.image_url?<img src={p.image_url} style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/>:<div style={{width:36,height:36,borderRadius:6,background:"var(--bg)"}}/>}
+        <div style={{flex:1,minWidth:0}}><div style={{fontSize:12,fontWeight:600}}>{p.title}</div></div>
+        <div onClick={()=>delP(p.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
       </div>)}
-      <div style={{fontSize:13,fontWeight:600,color:"#e4e4e7",marginBottom:10,marginTop:16}}>Signals ({(signals||[]).length})</div>
+      <div style={{fontSize:13,fontWeight:600,marginBottom:8,marginTop:16}}>Signals ({(signals||[]).length})</div>
       {(signals||[]).map(s=><div key={s.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4}}>
-        <div style={{flex:1}}><span className="m" style={{fontSize:12,fontWeight:500}}>{s.pair}</span> <span style={{fontSize:10,color:s.type==="BUY"?G:R}}>{s.type}</span></div>
-        <div onClick={()=>delSig(s.id)} style={{cursor:"pointer",color:"#f87171",padding:4}}>{I.trash}</div>
+        <div style={{flex:1}}><span className="m" style={{fontSize:12}}>{s.pair}</span> <span style={{fontSize:10,color:s.type==="BUY"?"var(--G)":"var(--R)"}}>{s.type}</span></div>
+        <div onClick={()=>delS(s.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
+      </div>)}
+    </>}
+
+    {tb==="users"&&<>
+      <div style={{fontSize:13,fontWeight:600,marginBottom:10}}>Users ({users.length})</div>
+      {users.map(u=><div key={u.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:12,marginBottom:4}}>
+        <div style={{width:32,height:32,borderRadius:"50%",background:"var(--bg)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,flexShrink:0}}>{(u.full_name||u.email||"?")[0].toUpperCase()}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:600}}>{u.full_name||"No name"}</div>
+          <div style={{fontSize:10,color:"var(--dm)"}}>{u.email}</div>
+        </div>
+        {u.membership==="premium"?
+          <div onClick={()=>setFree(u.id)} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--G)",background:"color-mix(in srgb,var(--G) 10%,transparent)",padding:"4px 10px",borderRadius:6,display:"flex",alignItems:"center",gap:4}}>{IC.ck} PRO</div>:
+          <div onClick={()=>setPremium(u.id)} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--mu)",background:"var(--bg)",padding:"4px 10px",borderRadius:6,border:"1px solid var(--brd)"}}>Set PRO</div>
+        }
       </div>)}
     </>}
   </div>);
 }
 
-function Prof({user,up,onOut}){
+function Prof({user,up,onOut,dark,toggle}){
   return(<div className="fi">
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"28px 0 36px"}}>
-      <div style={{width:72,height:72,borderRadius:"50%",background:"#0a0a0c",border:"2px solid #18181b",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,fontWeight:700,color:"#fafafa",marginBottom:14}}>{(up?.full_name||user?.email||"U")[0].toUpperCase()}</div>
-      <div style={{fontSize:17,fontWeight:600,color:"#fafafa"}}>{up?.full_name||"User"}</div>
-      <div style={{fontSize:12,color:M,marginTop:4}}>{user?.email}</div>
-      <div style={{marginTop:10,fontSize:11,fontWeight:600,color:up?.role==="admin"?R:G,background:up?.role==="admin"?"#FF413610":"#22c55e10",padding:"4px 12px",borderRadius:20}}>{(up?.membership||"free").toUpperCase()}{up?.role==="admin"?" \u00B7 ADMIN":""}</div>
+      <div style={{width:72,height:72,borderRadius:"50%",background:"var(--bg2)",border:"2px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,fontWeight:700,marginBottom:14}}>{(up?.full_name||user?.email||"U")[0].toUpperCase()}</div>
+      <div style={{fontSize:17,fontWeight:600}}>{up?.full_name||"User"}</div>
+      <div style={{fontSize:12,color:"var(--dm)",marginTop:4}}>{user?.email}</div>
+      <div style={{marginTop:10,fontSize:11,fontWeight:600,color:up?.membership==="premium"?"var(--G)":"var(--mu)",background:up?.membership==="premium"?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--mu) 10%,transparent)",padding:"4px 12px",borderRadius:20}}>{(up?.membership||"free").toUpperCase()}{up?.role==="admin"?" \u00B7 ADMIN":""}</div>
     </div>
-    {[{l:"Edit Profile",ic:I.user},{l:"Notifications",ic:I.signal}].map((it,i)=><div key={i} className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:13,marginBottom:4,cursor:"pointer"}}><span style={{color:T}}>{it.ic}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>{it.l}</span><span style={{color:M,fontSize:14}}>&rsaquo;</span></div>)}
-    <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:13,marginBottom:4,cursor:"pointer",textDecoration:"none",color:"#e4e4e7"}}><span style={{color:"#0088cc"}}>{I.tg}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Telegram</span>{I.ext}</a>
-    <a href="https://www.instagram.com/forexscalproom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:13,marginBottom:4,cursor:"pointer",textDecoration:"none",color:"#e4e4e7"}}><span style={{color:"#E1306C"}}>{I.ig}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Instagram</span>{I.ext}</a>
-    <div onClick={onOut} className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:13,marginTop:12,cursor:"pointer",background:"#FF413608",borderColor:"#FF413618"}}><span style={{fontSize:13,color:R,fontWeight:600}}>Sign out</span></div>
+    <div onClick={toggle} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:14,marginBottom:6,cursor:"pointer"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{color:"var(--mu)"}}>{dark?IC.moon:IC.sun}</span><span style={{fontSize:13,fontWeight:500}}>{dark?"Dark Mode":"Light Mode"}</span></div>
+      <div style={{width:40,height:22,borderRadius:11,background:dark?"var(--R)":"var(--brd2)",position:"relative",transition:"0.2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:dark?20:2,transition:"0.2s"}}/></div>
+    </div>
+    <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginBottom:4,cursor:"pointer"}}><span style={{color:"#0088cc"}}>{IC.tg}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Telegram</span></a>
+    <a href="https://www.instagram.com/forexscalproom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginBottom:4,cursor:"pointer"}}><span style={{color:"#E1306C"}}>{IC.ig}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Instagram</span></a>
+    <div onClick={onOut} className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginTop:12,cursor:"pointer",background:"color-mix(in srgb,var(--R) 5%,transparent)",borderColor:"color-mix(in srgb,var(--R) 12%,transparent)"}}><span style={{fontSize:13,color:"var(--R)",fontWeight:600}}>Sign out</span></div>
   </div>);
 }
 
 function App(){
   const[tk,setTk]=useState(null),[usr,setUsr]=useState(null),[up,setUp]=useState(null),[adm,setAdm]=useState(false);
   const[tab,setTab]=useState(0),[posts,setP]=useState([]),[sigs,setS]=useState([]);
-  const{P,ok}=usePrices();
+  const{P,ok}=usePrices();const{dark,toggle}=useTheme();
   const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p))setP(p);const s=await api.get("Signals",tk);if(Array.isArray(s))setS(s)}catch(e){}},[tk]);
   const chk=useCallback(async(u,t)=>{try{const r=await fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{headers:H(t)});const d=await r.json();if(Array.isArray(d)&&d[0]){setUp(d[0]);if(d[0].role==="admin")setAdm(true)}}catch(e){}},[]);
   useEffect(()=>{if(tk)load()},[tk,load]);
   useEffect(()=>{if(tk&&usr)chk(usr,tk)},[tk,usr,chk]);
   if(!tk)return<Auth onAuth={(t,u)=>{setTk(t);setUsr(u)}}/>;
-  const AT=[{l:"Home",i:I.home},{l:"Gallery",i:I.gallery},{l:"Signals",i:I.signal},{l:"Plans",i:I.plan},{l:"Admin",i:I.admin,ao:true},{l:"Profile",i:I.user}];
+  const AT=[{l:"Home",i:IC.home},{l:"Gallery",i:IC.gal},{l:"Signals",i:IC.sig},{l:"Plans",i:IC.pla},{l:"Admin",i:IC.adm,ao:true},{l:"Profile",i:IC.usr}];
   const VT=AT.filter(t=>!t.ao||adm);const st=Math.min(tab,VT.length-1);const cur=VT[st];
   const goTab=i=>{const idx=VT.findIndex(t=>t===AT[i]);setTab(idx>=0?idx:0)};
-  const scr=()=>{switch(cur?.l){case"Home":return<Home posts={posts} go={goTab} P={P} ok={ok}/>;case"Gallery":return<Gallery posts={posts}/>;case"Signals":return<Sigs signals={sigs}/>;case"Plans":return<Plans/>;case"Admin":return<Adm token={tk} posts={posts} signals={sigs} onR={load}/>;case"Profile":return<Prof user={usr} up={up} onOut={()=>{setTk(null);setUsr(null);setAdm(false);setUp(null);setTab(0)}}/>;default:return null}};
+  const scr=()=>{switch(cur?.l){case"Home":return<Home posts={posts} go={goTab} P={P} ok={ok} dark={dark} toggle={toggle}/>;case"Gallery":return<Gallery posts={posts}/>;case"Signals":return<Sigs signals={sigs}/>;case"Plans":return<Plans/>;case"Admin":return<Adm token={tk} posts={posts} signals={sigs} onR={load}/>;case"Profile":return<Prof user={usr} up={up} onOut={()=>{setTk(null);setUsr(null);setAdm(false);setUp(null);setTab(0)}} dark={dark} toggle={toggle}/>;default:return null}};
   return(<div className="app">
-    <div className="hd"><div className="lg">Fxscalproom<b>.</b></div><div style={{display:"flex",alignItems:"center",gap:8}}>{adm&&<span style={{fontSize:9,fontWeight:600,color:R,background:"#FF413610",padding:"3px 8px",borderRadius:6}}>ADMIN</span>}<span style={{fontSize:12,color:T,fontWeight:500}}>{cur?.l}</span></div></div>
+    <div className="hd"><div className="lg">Fxscalproom<b>.</b></div><div style={{display:"flex",alignItems:"center",gap:8}}>{adm&&<span style={{fontSize:9,fontWeight:600,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"3px 8px",borderRadius:6}}>ADMIN</span>}<span style={{fontSize:12,color:"var(--mu)",fontWeight:500}}>{cur?.l}</span></div></div>
     <div className="ct">{scr()}</div>
-    <div className="tb">{VT.map((t,i)=><div key={i} className="ti" onClick={()=>setTab(i)} style={{color:st===i?"#fafafa":"#3f3f46"}}>{t.i}<span className="tl" style={{color:st===i?R:"#3f3f46"}}>{t.l}</span>{st===i&&<div className="td"/>}</div>)}</div>
+    <div className="tb">{VT.map((t,i)=><div key={i} className="ti" onClick={()=>setTab(i)} style={{color:st===i?"var(--tx)":"var(--dm)"}}>{t.i}<span className="tl" style={{color:st===i?"var(--R)":"var(--dm)"}}>{t.l}</span>{st===i&&<div className="td"/>}</div>)}</div>
   </div>);
 }
 ReactDOM.render(<App/>,document.getElementById("root"));
