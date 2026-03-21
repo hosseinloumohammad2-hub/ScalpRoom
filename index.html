@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#09090b">
+<title>Fxscalproom.</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#050507;color:#e4e4e7;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+::-webkit-scrollbar{width:0}
+input,button,textarea{font-family:inherit;border:none;outline:none}
+input::placeholder{color:#3f3f46}
+img{display:block;max-width:100%}
+.m{font-family:'DM Mono',monospace}
+.app{max-width:430px;margin:0 auto;min-height:100dvh;position:relative;background:#050507}
+.hd{padding:12px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #18181b;position:sticky;top:0;background:rgba(5,5,7,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);z-index:40}
+.lg{font-size:19px;font-weight:700;color:#fafafa;letter-spacing:-0.4px}
+.lg b{color:#FF4136;font-weight:700}
+.ct{padding:16px;padding-bottom:100px}
+.tb{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:rgba(5,5,7,0.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid #18181b;display:flex;padding:8px 0 env(safe-area-inset-bottom,22px);z-index:50}
+.ti{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding-top:4px;transition:all 0.15s}
+.tl{font-size:10px;font-weight:600;letter-spacing:0.2px}
+.td{width:4px;height:4px;border-radius:50%;background:#FF4136;margin-top:-1px}
+.cd{background:#0a0a0c;border:1px solid #18181b;border-radius:14px;padding:14px}
+.ip{width:100%;background:#0a0a0c;border:1px solid #18181b;border-radius:12px;padding:13px 15px;color:#e4e4e7;font-size:14px;margin-bottom:8px;transition:border-color 0.2s}
+.ip:focus{border-color:#27272a}
+.bt{width:100%;border-radius:12px;padding:14px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;text-align:center;border:none;transition:all 0.15s}
+.bt:active{transform:scale(0.98);opacity:0.85}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fi{animation:fi 0.2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pl{0%,100%{opacity:1}50%{opacity:0.3}}
+.ld{width:5px;height:5px;border-radius:50%;background:#22c55e;animation:pl 2s infinite}
+svg{display:block}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script type="text/babel">
+const{useState,useEffect,useCallback}=React;
+const SB="https://fjdjqaffoeixspcmxprw.supabase.co",SK="sb_publishable_7saR41SkI4TZs8K7C9lVxQ_Up8SyaYu";
+const R="#FF4136",G="#22c55e",B="#3b82f6",D="#27272a",M="#52525b",T="#71717a";
+const CE={all:"\u{1F525}",gold:"\u{1F947}",forex:"\u{1F4B1}",crypto:"\u20BF",indices:"\u{1F4CA}"};
+const H=t=>({apikey:SK,Authorization:`Bearer ${t||SK}`,"Content-Type":"application/json",Prefer:"return=representation"});
+
+const api={
+  up:(e,p)=>fetch(`${SB}/auth/v1/signup`,{method:"POST",headers:{apikey:SK,"Content-Type":"application/json"},body:JSON.stringify({email:e,password:p})}).then(r=>r.json()),
+  in:(e,p)=>fetch(`${SB}/auth/v1/token?grant_type=password`,{method:"POST",headers:{apikey:SK,"Content-Type":"application/json"},body:JSON.stringify({email:e,password:p})}).then(r=>r.json()),
+  get:(t,tk)=>fetch(`${SB}/rest/v1/${t}?order=created_at.desc`,{headers:H(tk)}).then(r=>r.json()),
+  add:(t,d,tk)=>fetch(`${SB}/rest/v1/${t}`,{method:"POST",headers:H(tk),body:JSON.stringify(d)}).then(r=>r.json()),
+  del:(t,id,tk)=>fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:"DELETE",headers:H(tk)}),
+  img:async(f,tk)=>{const n=`${Date.now()}_${Math.random().toString(36).slice(2,8)}.${f.name?.split('.').pop()||'jpg'}`;const r=await fetch(`${SB}/storage/v1/object/charts/${n}`,{method:"POST",headers:{apikey:SK,Authorization:`Bearer ${tk}`,"Content-Type":f.type||"image/jpeg"},body:f});if(!r.ok){console.error("Upload failed:",r.status,await r.text());return null}return`${SB}/storage/v1/object/public/charts/${n}`},
+};
+
+// SVG Icons
+const I={
+  home:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  gallery:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
+  signal:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/></svg>,
+  plan:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>,
+  admin:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>,
+  user:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  trash:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>,
+  tg:<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>,
+  ig:<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>,
+  ext:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>,
+};
+
+function usePrices(){
+  const[P,setP]=useState({"XAU/USD":{p:"---",c:"0.00%",u:true},"EUR/USD":{p:"---",c:"0.00%",u:true},"BTC/USD":{p:"---",c:"0.00%",u:true},"GBP/JPY":{p:"---",c:"0.00%",u:true}});
+  const[ok,setOk]=useState(false);
+  const f=useCallback(async()=>{try{
+    const r=await fetch("https://api.coinbase.com/v2/exchange-rates?currency=USD");const d=await r.json();const rt=d.data.rates;
+    const btc=rt.BTC?(1/+rt.BTC).toFixed(0):"0";const eur=rt.EUR?(1/+rt.EUR).toFixed(4):"0";
+    const gbpjpy=(rt.GBP&&rt.JPY)?((+rt.JPY)/(+rt.GBP)).toFixed(2):"0";const xau=rt.XAU?(1/+rt.XAU).toFixed(2):"0";
+    setP(pv=>{const c=(k,v)=>{const o=parseFloat(String(pv[k]?.p).replace(/,/g,""))||0;const n=parseFloat(String(v).replace(/,/g,""))||0;const df=o>0?((n-o)/o*100).toFixed(2):"0.00";return{p:Number(v).toLocaleString("en",{maximumFractionDigits:v.includes(".")?v.split(".")[1].length:0}),c:`${df>=0?"+":""}${df}%`,u:df>=0}};
+    return{"XAU/USD":c("XAU/USD",xau),"EUR/USD":c("EUR/USD",eur),"BTC/USD":c("BTC/USD",btc),"GBP/JPY":c("GBP/JPY",gbpjpy)}});setOk(true);
+  }catch(e){}},[]);
+  useEffect(()=>{f();const i=setInterval(f,12000);return()=>clearInterval(i)},[f]);
+  return{P,ok};
+}
+
+function Auth({onAuth}){
+  const[m,setM]=useState("login"),[e,setE]=useState(""),[p,setP]=useState(""),[n,setN]=useState(""),[er,setEr]=useState(""),[ld,setLd]=useState(false);
+  const go=async()=>{if(!e||!p){setEr("Fill all fields");return}setLd(true);setEr("");
+    try{if(m==="login"){const r=await api.in(e,p);if(r.error){setEr(r.error.message);setLd(false);return}onAuth(r.access_token,r.user)}
+    else{if(!n){setEr("Enter name");setLd(false);return}const r=await api.up(e,p);if(r.error){setEr(r.error.message);setLd(false);return}
+    const tk=r.access_token||(r.session?.access_token);const u=r.user||(r.data?.user);
+    if(tk&&u){await api.add("Users",{id:u.id,email:e,full_name:n,membership:"free",role:"user"},tk);onAuth(tk,u)}
+    else{const r2=await api.in(e,p);if(r2.error){setEr("Account created! Try signing in.");setM("login")}else{onAuth(r2.access_token,r2.user)}}}}catch(x){setEr(x.message)}setLd(false)};
+  return(<div style={{minHeight:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#050507"}}>
+    <div style={{width:"100%",maxWidth:360}} className="fi">
+      <div style={{textAlign:"center",marginBottom:56}}><div className="lg" style={{fontSize:34}}>Fxscalproom<b>.</b></div><p style={{fontSize:13,color:T,marginTop:10}}>{m==="login"?"Welcome back":"Get started for free"}</p></div>
+      {er&&<div style={{background:"#FF413610",border:"1px solid #FF413625",borderRadius:10,padding:12,marginBottom:10,fontSize:13,color:"#f87171"}}>{er}</div>}
+      {m==="register"&&<input className="ip" placeholder="Full name" value={n} onChange={x=>setN(x.target.value)}/>}
+      <input className="ip" placeholder="Email address" type="email" value={e} onChange={x=>setE(x.target.value)} autoCapitalize="none"/>
+      <input className="ip" placeholder="Password" type="password" value={p} onChange={x=>setP(x.target.value)}/>
+      <button className="bt" style={{background:R,opacity:ld?0.5:1,marginTop:6}} onClick={go} disabled={ld}>{ld?"Please wait...":m==="login"?"Sign In":"Create Account"}</button>
+      <p style={{textAlign:"center",marginTop:20,fontSize:13,color:T}}>{m==="login"?"Don\u2019t have an account? ":"Already have an account? "}<span onClick={()=>{setM(m==="login"?"register":"login");setEr("")}} style={{color:R,fontWeight:600,cursor:"pointer"}}>{m==="login"?"Sign Up":"Sign In"}</span></p>
+    </div></div>);
+}
+
+function Home({posts,go,P,ok}){
+  return(<div className="fi">
+    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:14}}><div className="ld"/><span style={{fontSize:11,color:G,fontWeight:600}}>{ok?"Live":"Connecting..."}</span><span style={{fontSize:11,color:M,marginLeft:4}}>Updates every 12s</span></div>
+    <div className="g2" style={{marginBottom:20}}>{["XAU/USD","EUR/USD","BTC/USD","GBP/JPY"].map((k,i)=>{const d=P[k];return<div key={i} className="cd" style={{padding:"12px 14px"}}><div style={{fontSize:11,color:T,marginBottom:6,fontWeight:500}}>{k}</div><div className="m" style={{fontSize:21,fontWeight:500,letterSpacing:"-0.5px",color:"#fafafa"}}>{d.p}</div><div className="m" style={{fontSize:12,fontWeight:500,color:d.u?G:R,marginTop:4}}>{d.c}</div></div>})}</div>
+    <div style={{display:"flex",gap:8,marginBottom:28}}>{[{l:"Gallery",t:1},{l:"Signals",t:2},{l:"Plans",t:3}].map((a,i)=><div key={i} onClick={()=>go(a.t)} className="cd" style={{flex:1,textAlign:"center",cursor:"pointer",padding:"18px 8px"}}><div style={{fontSize:11,color:T,fontWeight:600,letterSpacing:"0.5px"}}>{a.l.toUpperCase()}</div></div>)}</div>
+
+    <div style={{display:"flex",gap:10,marginBottom:24}}>
+      <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:14,borderRadius:12,background:"#0088cc12",border:"1px solid #0088cc25",color:"#0088cc",fontSize:13,fontWeight:600,textDecoration:"none"}}>{I.tg} Telegram {I.ext}</a>
+      <a href="https://www.instagram.com/forexscalproom" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:14,borderRadius:12,background:"#E1306C12",border:"1px solid #E1306C25",color:"#E1306C",fontSize:13,fontWeight:600,textDecoration:"none"}}>{I.ig} Instagram {I.ext}</a>
+    </div>
+
+    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><div style={{width:3,height:14,borderRadius:2,background:R}}/><span style={{fontSize:15,fontWeight:600}}>Latest analyses</span><span onClick={()=>go(1)} style={{marginLeft:"auto",fontSize:12,color:R,cursor:"pointer",fontWeight:500}}>View all</span></div>
+    {(posts||[]).slice(0,5).map(p=><div key={p.id} className="cd" style={{display:"flex",gap:12,marginBottom:6,alignItems:"center",padding:12}}>
+      {p.image_url?<img src={p.image_url} style={{width:48,height:48,borderRadius:10,objectFit:"cover",flexShrink:0}} alt=""/>:<div style={{width:48,height:48,borderRadius:10,background:"#18181b",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{CE[p.category]||"\u{1F4CA}"}</div>}
+      <div style={{flex:1,minWidth:0}}><div style={{fontSize:14,fontWeight:600,color:"#fafafa"}}>{p.title}</div><div style={{fontSize:12,color:M,marginTop:2}}>{p.description||""}</div></div>
+      {p.is_premium&&<span style={{fontSize:9,fontWeight:700,color:R,background:"#FF413612",padding:"3px 8px",borderRadius:6}}>PRO</span>}
+    </div>)}
+    {(!posts||!posts.length)&&<div style={{textAlign:"center",color:M,padding:"40px 0",fontSize:13}}>No analyses yet</div>}
+  </div>);
+}
+
+function Gallery({posts}){
+  const[cat,set]=useState("all");const f=cat==="all"?(posts||[]):(posts||[]).filter(p=>p.category===cat);
+  return(<div className="fi">
+    <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4}}>{["all","gold","forex","crypto","indices"].map(c=><div key={c} onClick={()=>set(c)} style={{padding:"7px 14px",borderRadius:10,cursor:"pointer",whiteSpace:"nowrap",background:cat===c?"#FF413610":"transparent",border:`1px solid ${cat===c?"#FF413630":"#18181b"}`,fontSize:12,fontWeight:600,color:cat===c?R:T}}>{c.charAt(0).toUpperCase()+c.slice(1)}</div>)}</div>
+    <div className="g2">{f.map(p=><div key={p.id} className="cd" style={{padding:0,overflow:"hidden"}}>
+      {p.image_url?<img src={p.image_url} style={{width:"100%",height:120,objectFit:"cover"}} alt=""/>:<div style={{width:"100%",height:120,background:"#0a0a0c",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32}}>{CE[p.category]}</div>}
+      <div style={{padding:"10px 12px"}}><div style={{fontSize:13,fontWeight:600,lineHeight:1.4,color:"#fafafa"}}>{p.title}</div><div style={{fontSize:11,color:M,marginTop:2}}>{p.description||""}</div><div style={{display:"flex",justifyContent:"space-between",marginTop:8}}><span style={{fontSize:10,color:M}}>{p.created_at?new Date(p.created_at).toLocaleDateString():""}</span><span style={{fontSize:10,color:M}}>{p.likes||0} likes</span></div></div>
+    </div>)}</div>
+    {!f.length&&<div style={{textAlign:"center",color:M,padding:"60px 0",fontSize:13}}>No posts in this category</div>}
+  </div>);
+}
+
+function Sigs({signals}){
+  return(<div className="fi">{(signals||[]).map(s=><div key={s.id} className="cd" style={{marginBottom:8,padding:16}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+      <div style={{display:"flex",alignItems:"center",gap:8}}><span className="m" style={{fontSize:15,fontWeight:500,color:"#fafafa"}}>{s.pair}</span><span style={{fontSize:10,fontWeight:600,padding:"3px 10px",borderRadius:6,background:s.type==="BUY"?"#22c55e10":"#FF413610",color:s.type==="BUY"?G:R}}>{s.type}</span></div>
+      <span style={{fontSize:9,fontWeight:600,padding:"3px 10px",borderRadius:6,background:s.status==="active"?"#3b82f610":s.status==="tp_hit"?"#22c55e10":"#FF413610",color:s.status==="active"?B:s.status==="tp_hit"?G:R}}>{s.status==="active"?"ACTIVE":s.status==="tp_hit"?"TP HIT":"SL HIT"}</span>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>{[{l:"Entry",v:s.entry_price,c:T},{l:"TP",v:s.take_profit,c:G},{l:"SL",v:s.stop_loss,c:R}].map((f,j)=><div key={j} style={{background:"#0a0a0c",border:"1px solid #18181b",borderRadius:8,padding:10,textAlign:"center"}}><div style={{fontSize:9,color:M,marginBottom:3,fontWeight:500}}>{f.l}</div><div className="m" style={{fontSize:13,fontWeight:500,color:f.c}}>{f.v}</div></div>)}</div>
+  </div>)}{(!signals||!signals.length)&&<div style={{textAlign:"center",color:M,padding:"60px 0",fontSize:13}}>No signals yet</div>}</div>);
+}
+
+function Plans(){
+  const ps=[{n:"Free",p:"$0",c:M,f:["Public analyses","Live prices","Basic gallery"],cur:true},{n:"Premium",p:"$149",c:R,pop:true,f:["21 forex pairs","Daily signals","Chat support","PDF library"]},{n:"Premium+",p:"$199",c:"#eab308",f:["27 pairs + crypto","VIP signals","1-on-1 mentoring","Full course access"]}];
+  return(<div className="fi">{ps.map((p,i)=><div key={i} className="cd" style={{marginBottom:10,padding:20,borderColor:p.pop?"#FF413630":"#18181b"}}>
+    {p.pop&&<div style={{position:"absolute",top:0,left:0,right:0}}/>}
+    <div style={{fontSize:11,color:p.c,fontWeight:600,letterSpacing:"1px",marginBottom:4}}>{p.n.toUpperCase()}</div>
+    <div className="m" style={{fontSize:32,fontWeight:500,color:"#fafafa",marginBottom:16}}>{p.p}{p.p!=="$0"&&<span style={{fontSize:13,color:M,fontFamily:"DM Sans"}}>/mo</span>}</div>
+    {p.f.map((f,j)=><div key={j} style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,fontSize:13,color:"#a1a1aa"}}><div style={{width:4,height:4,borderRadius:"50%",background:p.c,flexShrink:0}}/>{f}</div>)}
+    {!p.cur?<button className="bt" style={{background:p.pop?R:"transparent",border:p.pop?"none":"1px solid #27272a",color:p.pop?"#fff":"#a1a1aa",marginTop:14}}>Subscribe</button>:<div style={{textAlign:"center",color:M,fontSize:12,marginTop:14}}>Current plan</div>}
+  </div>)}</div>);
+}
+
+function Adm({token,posts,signals,onR}){
+  const[tb,setTb]=useState("post"),[ti,setTi]=useState(""),[de,setDe]=useState(""),[ca,setCa]=useState("gold"),[pr,setPr]=useState(false),[fi2,setFi]=useState(null),[pv,setPv]=useState(null);
+  const[pa,setPa]=useState(""),[st,setSt]=useState("BUY"),[en,setEn]=useState(""),[tp,setTp]=useState(""),[sl,setSl]=useState("");
+  const[ld,setLd]=useState(false),[ms,setMs]=useState("");
+  const pub=async()=>{if(!ti){setMs("Enter title");return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs("\u274C Image upload failed. Check Storage bucket.");setLd(false);return}}await api.add("Posts",{title:ti,description:de,category:ca,image_url:u,is_premium:pr,likes:0},token);setMs("\u2705 Published!");setTi("");setDe("");setFi(null);setPv(null);onR()}catch(e){setMs("\u274C "+e.message)}setLd(false)};
+  const pubS=async()=>{if(!pa||!en){setMs("Enter pair & entry");return}setLd(true);setMs("");try{await api.add("Signals",{pair:pa,type:st,entry_price:en,take_profit:tp,stop_loss:sl,status:"active"},token);setMs("\u2705 Signal published!");setPa("");setEn("");setTp("");setSl("");onR()}catch(e){setMs("\u274C "+e.message)}setLd(false)};
+  const delPost=async(id)=>{if(!confirm("Delete this post?"))return;await api.del("Posts",id,token);onR()};
+  const delSig=async(id)=>{if(!confirm("Delete this signal?"))return;await api.del("Signals",id,token);onR()};
+
+  return(<div className="fi">
+    <div style={{display:"flex",gap:6,marginBottom:14}}>{["post","signal","manage"].map(t=><div key={t} onClick={()=>setTb(t)} style={{flex:1,padding:10,borderRadius:10,textAlign:"center",cursor:"pointer",background:tb===t?"#FF413610":"transparent",border:`1px solid ${tb===t?"#FF413630":"#18181b"}`,fontSize:12,fontWeight:600,color:tb===t?R:T}}>{t==="post"?"New Post":t==="signal"?"New Signal":"Manage"}</div>)}</div>
+    {ms&&<div style={{background:ms[0]==="\u2705"?"#22c55e10":"#FF413610",border:`1px solid ${ms[0]==="\u2705"?"#22c55e":"#FF4136"}20`,borderRadius:10,padding:10,marginBottom:10,fontSize:13,color:ms[0]==="\u2705"?G:"#f87171"}}>{ms}</div>}
+
+    {tb==="post"&&<>
+      <div onClick={()=>document.getElementById("fu").click()} style={{border:`1.5px dashed #27272a`,borderRadius:14,padding:24,textAlign:"center",marginBottom:10,background:"#0a0a0c",cursor:"pointer"}}>{pv?<img src={pv} style={{width:"100%",maxHeight:200,objectFit:"cover",borderRadius:10}} alt=""/>:<><div style={{fontSize:13,color:T}}>Tap to select chart image</div></>}</div>
+      <input id="fu" type="file" accept="image/*" onChange={e=>{const f=e.target.files[0];if(f){setFi(f);setPv(URL.createObjectURL(f))}}} style={{display:"none"}}/>
+      <input className="ip" placeholder="Title" value={ti} onChange={e=>setTi(e.target.value)}/>
+      <input className="ip" placeholder="Description" value={de} onChange={e=>setDe(e.target.value)}/>
+      <div style={{display:"flex",gap:6,marginBottom:10}}>{["gold","forex","crypto","indices"].map(c=><div key={c} onClick={()=>setCa(c)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:ca===c?"#FF413610":"transparent",border:`1px solid ${ca===c?"#FF413630":"#18181b"}`,fontSize:11,fontWeight:600,color:ca===c?R:T}}>{c}</div>)}</div>
+      <div onClick={()=>setPr(!pr)} className="cd" style={{padding:12,marginBottom:10,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:13,color:"#e4e4e7"}}>Premium content</span><div style={{width:40,height:22,borderRadius:11,background:pr?R:"#27272a",position:"relative",transition:"0.2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:pr?20:2,transition:"0.2s"}}/></div></div>
+      <button className="bt" style={{background:R,opacity:ld?0.5:1}} onClick={pub} disabled={ld}>{ld?"Publishing...":"Publish"}</button>
+    </>}
+
+    {tb==="signal"&&<>
+      <input className="ip" placeholder="Pair (XAUUSD)" value={pa} onChange={e=>setPa(e.target.value)}/>
+      <div style={{display:"flex",gap:6,marginBottom:10}}>{["BUY","SELL"].map(t=><div key={t} onClick={()=>setSt(t)} style={{flex:1,padding:12,borderRadius:10,textAlign:"center",cursor:"pointer",background:st===t?(t==="BUY"?"#22c55e10":"#FF413610"):"transparent",border:`1px solid ${st===t?(t==="BUY"?G:R)+"30":"#18181b"}`,fontSize:14,fontWeight:600,color:st===t?(t==="BUY"?G:R):T}}>{t}</div>)}</div>
+      <input className="ip" placeholder="Entry Price" value={en} onChange={e=>setEn(e.target.value)}/>
+      <input className="ip" placeholder="Take Profit" value={tp} onChange={e=>setTp(e.target.value)}/>
+      <input className="ip" placeholder="Stop Loss" value={sl} onChange={e=>setSl(e.target.value)}/>
+      <button className="bt" style={{background:G,opacity:ld?0.5:1}} onClick={pubS} disabled={ld}>{ld?"...":"Publish Signal"}</button>
+    </>}
+
+    {tb==="manage"&&<>
+      <div style={{fontSize:13,fontWeight:600,color:"#e4e4e7",marginBottom:10}}>Posts ({(posts||[]).length})</div>
+      {(posts||[]).map(p=><div key={p.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4}}>
+        {p.image_url?<img src={p.image_url} style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/>:<div style={{width:36,height:36,borderRadius:6,background:"#18181b"}}/>}
+        <div style={{flex:1,minWidth:0}}><div style={{fontSize:12,fontWeight:600,color:"#fafafa"}}>{p.title}</div><div style={{fontSize:10,color:M}}>{p.category}</div></div>
+        <div onClick={()=>delPost(p.id)} style={{cursor:"pointer",color:"#f87171",padding:4}}>{I.trash}</div>
+      </div>)}
+      <div style={{fontSize:13,fontWeight:600,color:"#e4e4e7",marginBottom:10,marginTop:16}}>Signals ({(signals||[]).length})</div>
+      {(signals||[]).map(s=><div key={s.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4}}>
+        <div style={{flex:1}}><span className="m" style={{fontSize:12,fontWeight:500}}>{s.pair}</span> <span style={{fontSize:10,color:s.type==="BUY"?G:R}}>{s.type}</span></div>
+        <div onClick={()=>delSig(s.id)} style={{cursor:"pointer",color:"#f87171",padding:4}}>{I.trash}</div>
+      </div>)}
+    </>}
+  </div>);
+}
+
+function Prof({user,up,onOut}){
+  return(<div className="fi">
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"28px 0 36px"}}>
+      <div style={{width:72,height:72,borderRadius:"50%",background:"#0a0a0c",border:"2px solid #18181b",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,fontWeight:700,color:"#fafafa",marginBottom:14}}>{(up?.full_name||user?.email||"U")[0].toUpperCase()}</div>
+      <div style={{fontSize:17,fontWeight:600,color:"#fafafa"}}>{up?.full_name||"User"}</div>
+      <div style={{fontSize:12,color:M,marginTop:4}}>{user?.email}</div>
+      <div style={{marginTop:10,fontSize:11,fontWeight:600,color:up?.role==="admin"?R:G,background:up?.role==="admin"?"#FF413610":"#22c55e10",padding:"4px 12px",borderRadius:20}}>{(up?.membership||"free").toUpperCase()}{up?.role==="admin"?" \u00B7 ADMIN":""}</div>
+    </div>
+    {[{l:"Edit Profile",ic:I.user},{l:"Notifications",ic:I.signal}].map((it,i)=><div key={i} className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:13,marginBottom:4,cursor:"pointer"}}><span style={{color:T}}>{it.ic}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>{it.l}</span><span style={{color:M,fontSize:14}}>&rsaquo;</span></div>)}
+    <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:13,marginBottom:4,cursor:"pointer",textDecoration:"none",color:"#e4e4e7"}}><span style={{color:"#0088cc"}}>{I.tg}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Telegram</span>{I.ext}</a>
+    <a href="https://www.instagram.com/forexscalproom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:13,marginBottom:4,cursor:"pointer",textDecoration:"none",color:"#e4e4e7"}}><span style={{color:"#E1306C"}}>{I.ig}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Instagram</span>{I.ext}</a>
+    <div onClick={onOut} className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:13,marginTop:12,cursor:"pointer",background:"#FF413608",borderColor:"#FF413618"}}><span style={{fontSize:13,color:R,fontWeight:600}}>Sign out</span></div>
+  </div>);
+}
+
+function App(){
+  const[tk,setTk]=useState(null),[usr,setUsr]=useState(null),[up,setUp]=useState(null),[adm,setAdm]=useState(false);
+  const[tab,setTab]=useState(0),[posts,setP]=useState([]),[sigs,setS]=useState([]);
+  const{P,ok}=usePrices();
+  const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p))setP(p);const s=await api.get("Signals",tk);if(Array.isArray(s))setS(s)}catch(e){}},[tk]);
+  const chk=useCallback(async(u,t)=>{try{const r=await fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{headers:H(t)});const d=await r.json();if(Array.isArray(d)&&d[0]){setUp(d[0]);if(d[0].role==="admin")setAdm(true)}}catch(e){}},[]);
+  useEffect(()=>{if(tk)load()},[tk,load]);
+  useEffect(()=>{if(tk&&usr)chk(usr,tk)},[tk,usr,chk]);
+  if(!tk)return<Auth onAuth={(t,u)=>{setTk(t);setUsr(u)}}/>;
+  const AT=[{l:"Home",i:I.home},{l:"Gallery",i:I.gallery},{l:"Signals",i:I.signal},{l:"Plans",i:I.plan},{l:"Admin",i:I.admin,ao:true},{l:"Profile",i:I.user}];
+  const VT=AT.filter(t=>!t.ao||adm);const st=Math.min(tab,VT.length-1);const cur=VT[st];
+  const goTab=i=>{const idx=VT.findIndex(t=>t===AT[i]);setTab(idx>=0?idx:0)};
+  const scr=()=>{switch(cur?.l){case"Home":return<Home posts={posts} go={goTab} P={P} ok={ok}/>;case"Gallery":return<Gallery posts={posts}/>;case"Signals":return<Sigs signals={sigs}/>;case"Plans":return<Plans/>;case"Admin":return<Adm token={tk} posts={posts} signals={sigs} onR={load}/>;case"Profile":return<Prof user={usr} up={up} onOut={()=>{setTk(null);setUsr(null);setAdm(false);setUp(null);setTab(0)}}/>;default:return null}};
+  return(<div className="app">
+    <div className="hd"><div className="lg">Fxscalproom<b>.</b></div><div style={{display:"flex",alignItems:"center",gap:8}}>{adm&&<span style={{fontSize:9,fontWeight:600,color:R,background:"#FF413610",padding:"3px 8px",borderRadius:6}}>ADMIN</span>}<span style={{fontSize:12,color:T,fontWeight:500}}>{cur?.l}</span></div></div>
+    <div className="ct">{scr()}</div>
+    <div className="tb">{VT.map((t,i)=><div key={i} className="ti" onClick={()=>setTab(i)} style={{color:st===i?"#fafafa":"#3f3f46"}}>{t.i}<span className="tl" style={{color:st===i?R:"#3f3f46"}}>{t.l}</span>{st===i&&<div className="td"/>}</div>)}</div>
+  </div>);
+}
+ReactDOM.render(<App/>,document.getElementById("root"));
+</script>
+</body>
+</html>
