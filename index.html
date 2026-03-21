@@ -114,38 +114,72 @@ const CE={all:"all",gold:"gold",forex:"forex",crypto:"crypto",indices:"indices",
 
 /* ─── Prices Hook ─── */
 function usePrices(){
-  const[P,setP]=useState({
-    "XAU/USD":{p:"---",c:"0.00%",u:true},
-    "BTC/USD":{p:"---",c:"0.00%",u:true},
-    "EUR/USD":{p:"---",c:"0.00%",u:true},
-    "GBP/USD":{p:"---",c:"0.00%",u:true},
-    "XAG/USD":{p:"---",c:"0.00%",u:true},
-    "USD/IRR":{p:"---",c:"0.00%",u:true},
-    "IR_GOLD":{p:"---",c:"0.00%",u:true},
-    "IR_BOURSE":{p:"---",c:"0.00%",u:true},
-  });
-  const[ok,setOk]=useState(false);
-  const prev=useRef({});
-  const f=useCallback(async()=>{try{
-    const cbRes=await fetch("https://api.coinbase.com/v2/exchange-rates?currency=USD").then(r=>r.json()).catch(()=>null);
-    const rt=cbRes?.data?.rates||{};
-    const btc=rt.BTC?(1/+rt.BTC).toFixed(0):"104500";
-    const eur=rt.EUR?(1/+rt.EUR).toFixed(4):"1.0845";
-    const gbp=rt.GBP?(1/+rt.GBP).toFixed(4):"1.2935";
-    let xau="3025.00";
-    if(rt.XAU&&+rt.XAU>0)xau=(1/+rt.XAU).toFixed(2);
-    let xag="33.80";
-    if(rt.XAG&&+rt.XAG>0)xag=(1/+rt.XAG).toFixed(2);
-    // Iran data - estimated (no free live API)
-    const usdirr="152,950";
-    const irgold="7,285,000";
-    const irbourse="2,456,780";
-    const mk=(k,v,dec)=>{const vs=String(v).replace(/,/g,"");const n=parseFloat(vs)||0;const o=prev.current[k]||n;const df=o>0?((n-o)/o*100).toFixed(2):"0.00";prev.current[k]=n;return{p:v.toString().includes(",")?v:Number(vs).toLocaleString("en",{minimumFractionDigits:dec||0}),c:`${df>=0?"+":""}${df}%`,u:df>=0}};
-    setP({"XAU/USD":mk("XAU/USD",xau,2),"BTC/USD":mk("BTC/USD",btc,0),"EUR/USD":mk("EUR/USD",eur,4),"GBP/USD":mk("GBP/USD",gbp,4),"XAG/USD":mk("XAG/USD",xag,2),"USD/IRR":mk("USD/IRR",usdirr,0),"IR_GOLD":mk("IR_GOLD",irgold,0),"IR_BOURSE":mk("IR_BOURSE",irbourse,0)});
-    setOk(true);
-  }catch(e){console.error(e)}},[]);
-  useEffect(()=>{f();const i=setInterval(f,15000);return()=>clearInterval(i)},[f]);
+  // Only used for data that TradingView doesn't cover (Iran market)
+  // TradingView widgets handle XAU, XAG, BTC, EUR, GBP live
+  const init=()=>({p:"---",c:"0.00%",u:true});
+  const[P,setP]=useState({"USD/IRR":init(),"IR_GOLD":init(),"IR_BOURSE":init()});
+  const[ok,setOk]=useState(true);
   return{P,ok};
+}
+
+// TradingView symbols config
+const TV_SYMBOLS=[
+  {sym:"OANDA:XAUUSD",label:"XAU/USD"},
+  {sym:"BITSTAMP:BTCUSD",label:"BTC/USD"},
+  {sym:"FX:EURUSD",label:"EUR/USD"},
+  {sym:"FX:GBPUSD",label:"GBP/USD"},
+  {sym:"OANDA:XAGUSD",label:"XAG/USD"},
+];
+
+// TradingView single ticker component
+function TVTicker({symbol,colorTheme}){
+  const ref=useRef(null);
+  const loaded=useRef(false);
+  useEffect(()=>{
+    if(!ref.current||loaded.current)return;
+    loaded.current=true;
+    const s=document.createElement("script");
+    s.src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js";
+    s.async=true;
+    s.innerHTML=JSON.stringify({
+      symbol:symbol,
+      width:"100%",
+      isTransparent:true,
+      colorTheme:colorTheme||"dark",
+      locale:"en",
+    });
+    ref.current.appendChild(s);
+  },[symbol,colorTheme]);
+  return(<div ref={ref} style={{overflow:"hidden"}}><div className="tradingview-widget-container__widget"></div></div>);
+}
+
+// TradingView ticker tape (scrolling bar at top)
+function TVTickerTape({colorTheme}){
+  const ref=useRef(null);
+  const loaded=useRef(false);
+  useEffect(()=>{
+    if(!ref.current||loaded.current)return;
+    loaded.current=true;
+    const s=document.createElement("script");
+    s.src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
+    s.async=true;
+    s.innerHTML=JSON.stringify({
+      symbols:[
+        {proName:"OANDA:XAUUSD",title:"Gold"},
+        {proName:"OANDA:XAGUSD",title:"Silver"},
+        {proName:"BITSTAMP:BTCUSD",title:"Bitcoin"},
+        {proName:"FX:EURUSD",title:"EUR/USD"},
+        {proName:"FX:GBPUSD",title:"GBP/USD"},
+      ],
+      showSymbolLogo:true,
+      isTransparent:true,
+      displayMode:"adaptive",
+      colorTheme:colorTheme||"dark",
+      locale:"en",
+    });
+    ref.current.appendChild(s);
+  },[colorTheme]);
+  return(<div ref={ref}><div className="tradingview-widget-container__widget"></div></div>);
 }
 
 /* ─── Theme Hook ─── */
@@ -269,41 +303,40 @@ function Auth({onAuth,lang,setLang}){
 function Home({posts,go,P,ok,dark,toggle}){
   const{t,lang}=useLang();
   const[sel,setSel]=useState(null);
-  const priceKeys=[
-    {k:"XAU/USD",label:t.xauusd,icon:"Au"},
-    {k:"BTC/USD",label:t.btcusd,icon:"Btc"},
-    {k:"EUR/USD",label:t.eurusd,icon:"Eu"},
-    {k:"GBP/USD",label:t.gbpusd,icon:"Gb"},
-    {k:"XAG/USD",label:t.xagusd,icon:"Ag"},
-    {k:"USD/IRR",label:t.usdirr,icon:"IR"},
-    {k:"IR_GOLD",label:t.irgold,icon:"Au"},
-    {k:"IR_BOURSE",label:t.irbourse,icon:"Bx"},
-  ];
+  const theme=dark?"dark":"light";
   return(<div className="fi">
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-      <div style={{display:"flex",alignItems:"center",gap:6}}><div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{ok?t.live:"..."}</span></div>
+      <div style={{display:"flex",alignItems:"center",gap:6}}><div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span></div>
       <div onClick={toggle} style={{cursor:"pointer",color:"var(--mu)",padding:4}}>{dark?IC.sun:IC.moon}</div>
     </div>
-    {/* Price Grid */}
-    <div className="g2" style={{marginBottom:14}}>
-      {priceKeys.slice(0,6).map((pk,i)=>{const d=P[pk.k];return<div key={i} className="cd" style={{padding:"11px 13px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-          <span style={{fontSize:10,color:"var(--mu)",fontWeight:600}}>{pk.label}</span>
-          <span style={{color:d.u?"var(--G)":"var(--R)",display:"flex",alignItems:"center"}}>{d.u?IC.arrowUp:IC.arrowDown}</span>
-        </div>
-        <div className="m" style={{fontSize:18,fontWeight:500,letterSpacing:"-.5px"}}>{d.p}</div>
-        <div className="m" style={{fontSize:11,fontWeight:500,color:d.u?"var(--G)":"var(--R)",marginTop:3}}>{d.c}</div>
-      </div>})}
+    {/* TradingView Ticker Tape - scrolling live prices */}
+    <div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}>
+      <TVTickerTape colorTheme={theme}/>
     </div>
+    {/* TradingView Individual Tickers */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:12}}>
+      {TV_SYMBOLS.map((s,i)=><div key={i} className="cd" style={{padding:0,overflow:"hidden",minHeight:70}}>
+        <TVTicker symbol={s.sym} colorTheme={theme}/>
+      </div>)}
+      {/* Iran Market - static/manual */}
+      <div className="cd" style={{padding:"11px 13px"}}>
+        <div style={{fontSize:10,color:"var(--mu)",fontWeight:600,marginBottom:6}}>{t.usdirr}</div>
+        <div className="m" style={{fontSize:18,fontWeight:500,letterSpacing:"-.5px"}}>157,250</div>
+        <div style={{fontSize:10,color:"var(--mu)",marginTop:3}}>{t.iran}</div>
+      </div>
+    </div>
+    {/* Iran Market Row */}
     <div className="g2" style={{marginBottom:20}}>
-      {priceKeys.slice(6).map((pk,i)=>{const d=P[pk.k];return<div key={i} className="cd" style={{padding:"11px 13px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-          <span style={{fontSize:10,color:"var(--mu)",fontWeight:600}}>{pk.label}</span>
-          <span style={{color:d.u?"var(--G)":"var(--R)",display:"flex",alignItems:"center"}}>{d.u?IC.arrowUp:IC.arrowDown}</span>
-        </div>
-        <div className="m" style={{fontSize:18,fontWeight:500,letterSpacing:"-.5px"}}>{d.p}</div>
-        <div className="m" style={{fontSize:11,fontWeight:500,color:d.u?"var(--G)":"var(--R)",marginTop:3}}>{d.c}</div>
-      </div>})}
+      <div className="cd" style={{padding:"11px 13px"}}>
+        <div style={{fontSize:10,color:"var(--mu)",fontWeight:600,marginBottom:6}}>{t.irgold}</div>
+        <div className="m" style={{fontSize:16,fontWeight:500}}>7,285,000</div>
+        <div style={{fontSize:10,color:"var(--mu)",marginTop:3}}>IRR</div>
+      </div>
+      <div className="cd" style={{padding:"11px 13px"}}>
+        <div style={{fontSize:10,color:"var(--mu)",fontWeight:600,marginBottom:6}}>{t.irbourse}</div>
+        <div className="m" style={{fontSize:16,fontWeight:500}}>2,456,780</div>
+        <div style={{fontSize:10,color:"var(--mu)",marginTop:3}}>TEDPIX</div>
+      </div>
     </div>
     {/* Social Links */}
     <div style={{display:"flex",gap:8,marginBottom:24}}>
@@ -360,9 +393,10 @@ function Analysis({posts}){
 }
 
 /* ─── Signals ─── */
-function Sigs({signals}){
+function Sigs({signals,userProfile}){
   const{t}=useLang();
   const[filter,setFilter]=useState("all");
+  const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
   const filtered=useMemo(()=>{
     if(filter==="all")return signals||[];
     return(signals||[]).filter(s=>s.status===filter);
@@ -376,7 +410,10 @@ function Sigs({signals}){
         color:filter===f?"var(--R)":"var(--mu)"
       }}>{f==="all"?t.all:f==="active"?t.active:f==="tp_hit"?t.tpHit:t.slHit}</div>)}
     </div>
-    {filtered.map(s=><div key={s.id} className="cd" style={{marginBottom:8,padding:16}}>
+    {filtered.map(s=>{
+      const locked=s.is_premium&&!isPremiumUser;
+      return<div key={s.id} className="cd" style={{marginBottom:8,padding:16,position:"relative",opacity:locked?.6:1}}>
+      {locked&&<div style={{position:"absolute",top:10,right:10,fontSize:9,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"3px 8px",borderRadius:6,display:"flex",alignItems:"center",gap:4}}>{IC.crown} PREMIUM</div>}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <span className="m" style={{fontSize:15,fontWeight:500}}>{s.pair}</span>
@@ -387,7 +424,7 @@ function Sigs({signals}){
           color:s.status==="active"?"var(--B)":s.status==="tp_hit"?"var(--G)":"var(--R)"
         }}>{s.status==="active"?t.active:s.status==="tp_hit"?t.tpHit:t.slHit}</span>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,filter:locked?"blur(6px)":"none"}}>
         {[{l:"Entry",v:s.entry_price,c:"var(--mu)"},{l:"TP",v:s.take_profit,c:"var(--G)"},{l:"SL",v:s.stop_loss,c:"var(--R)"}].map((f,j)=>
           <div key={j} style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:8,padding:10,textAlign:"center"}}>
             <div style={{fontSize:9,color:"var(--dm)",marginBottom:3,fontWeight:500}}>{f.l}</div>
@@ -395,15 +432,15 @@ function Sigs({signals}){
           </div>
         )}
       </div>
-      {/* PnL & dates */}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:10,fontSize:11,color:"var(--dm)"}}>
+      {locked&&<div style={{textAlign:"center",marginTop:10,fontSize:12,color:"var(--R)",fontWeight:600}}>Upgrade to Premium to see details</div>}
+      {!locked&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:10,fontSize:11,color:"var(--dm)"}}>
         <span>{s.created_at?new Date(s.created_at).toLocaleDateString()+" "+new Date(s.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):""}</span>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           {s.pnl&&<span className="m" style={{fontWeight:600,color:s.pnl.startsWith("-")?"var(--R)":"var(--G)"}}>{s.pnl}</span>}
           {s.closed_at&&<span style={{fontSize:10}}>Closed: {new Date(s.closed_at).toLocaleDateString()}</span>}
         </div>
-      </div>
-    </div>)}
+      </div>}
+    </div>})}
     {!filtered.length&&<div style={{textAlign:"center",color:"var(--dm)",padding:"60px 0",fontSize:13}}>{t.noSignals}</div>}
   </div>);
 }
@@ -443,7 +480,7 @@ function Adm({token,posts,signals,onR}){
   const{t}=useLang();
   const[tb,setTb]=useState("post");
   const[ti,setTi]=useState(""),[de,setDe]=useState(""),[ca,setCa]=useState("gold"),[pr,setPr]=useState(false),[fi2,setFi]=useState(null),[pv,setPv]=useState(null);
-  const[pa,setPa]=useState(""),[st,setSt]=useState("BUY"),[en,setEn]=useState(""),[tp,setTp]=useState(""),[sl,setSl]=useState("");
+  const[pa,setPa]=useState(""),[st,setSt]=useState("BUY"),[en,setEn]=useState(""),[tp,setTp]=useState(""),[sl,setSl]=useState(""),[sigPr,setSigPr]=useState(false);
   const[ld,setLd]=useState(false),[ms,setMs]=useState("");
   const[users,setUsers]=useState([]);
   const[editSig,setEditSig]=useState(null);
@@ -452,7 +489,7 @@ function Adm({token,posts,signals,onR}){
   useEffect(()=>{if(tb==="users")api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})},[tb,token]);
 
   const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}await api.add("Posts",{title:ti,description:de,category:ca,image_url:u,is_premium:pr,likes:0},token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);onR();noti.notify("Fxscalproom","New analysis: "+ti)}catch(e){setMs(e.message)}setLd(false)};
-  const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{await api.add("Signals",{pair:pa,type:st,entry_price:en,take_profit:tp,stop_loss:sl,status:"active",pnl:null,closed_at:null},token);setMs(t.signalPub);setPa("");setEn("");setTp("");setSl("");onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st)}catch(e){setMs(e.message)}setLd(false)};
+  const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{await api.add("Signals",{pair:pa,type:st,entry_price:en,take_profit:tp,stop_loss:sl,status:"active",pnl:null,closed_at:null,is_premium:sigPr},token);setMs(t.signalPub);setPa("");setEn("");setTp("");setSl("");setSigPr(false);onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st)}catch(e){setMs(e.message)}setLd(false)};
   const delP=async id=>{if(!confirm("Delete?"))return;await api.del("Posts",id,token);onR()};
   const delS=async id=>{if(!confirm("Delete?"))return;await api.del("Signals",id,token);onR()};
   const setPremium=async(uid)=>{await api.patch("Users",uid,{membership:"premium"},token);setMs(t.upgraded);api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
@@ -490,6 +527,10 @@ function Adm({token,posts,signals,onR}){
       <input className="ip" placeholder={t.entry} value={en} onChange={e=>setEn(e.target.value)}/>
       <input className="ip" placeholder={t.tp} value={tp} onChange={e=>setTp(e.target.value)}/>
       <input className="ip" placeholder={t.sl} value={sl} onChange={e=>setSl(e.target.value)}/>
+      <div onClick={()=>setSigPr(!sigPr)} className="cd" style={{padding:12,marginBottom:10,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <span style={{fontSize:13}}>Premium Signal</span>
+        <div style={{width:40,height:22,borderRadius:11,background:sigPr?"var(--R)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:sigPr?20:2,transition:".2s"}}/></div>
+      </div>
       <button className="bt" style={{background:"var(--G)",opacity:ld?.5:1}} onClick={pubS} disabled={ld}>{ld?"...":t.publishSignal}</button>
     </>}
 
@@ -587,11 +628,25 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang}){
 
 /* ─── Main App ─── */
 function App(){
-  const[tk,setTk]=useState(null),[usr,setUsr]=useState(null),[up,setUp]=useState(null),[adm,setAdm]=useState(false);
+  // Restore session from localStorage
+  const[tk,setTk]=useState(()=>{try{return localStorage.getItem("fx_tk")||null}catch(e){return null}});
+  const[usr,setUsr]=useState(()=>{try{const u=localStorage.getItem("fx_usr");return u?JSON.parse(u):null}catch(e){return null}});
+  const[up,setUp]=useState(null),[adm,setAdm]=useState(false);
   const[tab,setTab]=useState(0),[posts,setP]=useState([]),[sigs,setS]=useState([]);
   const[lang,setLangState]=useState(()=>{try{return localStorage.getItem("fxlang")||"en"}catch(e){return"en"}});
   const{P,ok}=usePrices();const{dark,toggle}=useTheme();
   const t=T[lang]||T.en;
+
+  // Save session on login
+  const handleAuth=(token,user)=>{
+    setTk(token);setUsr(user);
+    try{localStorage.setItem("fx_tk",token);localStorage.setItem("fx_usr",JSON.stringify(user))}catch(e){}
+  };
+  // Clear session on logout
+  const handleLogout=()=>{
+    setTk(null);setUsr(null);setAdm(false);setUp(null);setTab(0);
+    try{localStorage.removeItem("fx_tk");localStorage.removeItem("fx_usr")}catch(e){}
+  };
 
   const setLang=(l)=>{setLangState(l);try{localStorage.setItem("fxlang",l)}catch(e){}
     const isRtl=RTL_LANGS.includes(l);
@@ -600,14 +655,14 @@ function App(){
   };
   useEffect(()=>{const isRtl=RTL_LANGS.includes(lang);document.documentElement.setAttribute("dir",isRtl?"rtl":"ltr");document.documentElement.setAttribute("lang",lang)},[]);
 
-  const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p))setP(p);const s=await api.get("Signals",tk);if(Array.isArray(s))setS(s)}catch(e){}},[tk]);
+  const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p))setP(p);else if(p?.message){handleLogout();return}const s=await api.get("Signals",tk);if(Array.isArray(s))setS(s)}catch(e){}},[tk]);
   const chk=useCallback(async(u,t)=>{try{const r=await fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{headers:H(t)});const d=await r.json();if(Array.isArray(d)&&d[0]){setUp(d[0]);if(d[0].role==="admin")setAdm(true)}}catch(e){}},[]);
   useEffect(()=>{if(tk)load()},[tk,load]);
   useEffect(()=>{if(tk&&usr)chk(usr,tk)},[tk,usr,chk]);
   // Auto-refresh
   useEffect(()=>{if(tk){const i=setInterval(load,30000);return()=>clearInterval(i)}},[tk,load]);
 
-  if(!tk)return<Auth onAuth={(t,u)=>{setTk(t);setUsr(u)}} lang={lang} setLang={setLang}/>;
+  if(!tk)return<Auth onAuth={handleAuth} lang={lang} setLang={setLang}/>;
 
   const AT=[
     {l:t.home,k:"home",i:IC.home},
@@ -625,10 +680,10 @@ function App(){
   const scr=()=>{switch(cur?.k){
     case"home":return<Home posts={posts} go={goTab} P={P} ok={ok} dark={dark} toggle={toggle}/>;
     case"analysis":return<Analysis posts={posts}/>;
-    case"signals":return<Sigs signals={sigs}/>;
+    case"signals":return<Sigs signals={sigs} userProfile={up}/>;
     case"plans":return<Plans/>;
     case"admin":return<Adm token={tk} posts={posts} signals={sigs} onR={load}/>;
-    case"profile":return<Prof user={usr} up={up} onOut={()=>{setTk(null);setUsr(null);setAdm(false);setUp(null);setTab(0)}} dark={dark} toggle={toggle} lang={lang} setLang={setLang}/>;
+    case"profile":return<Prof user={usr} up={up} onOut={handleLogout} dark={dark} toggle={toggle} lang={lang} setLang={setLang}/>;
     default:return null;
   }};
 
