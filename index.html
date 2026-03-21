@@ -42,6 +42,11 @@ a{color:inherit;text-decoration:none}
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
 .modal{background:var(--bg);border:1px solid var(--brd);border-radius:20px;max-width:400px;width:100%;max-height:90vh;overflow-y:auto;padding:20px}
 svg{display:block}
+.tradingview-widget-copyright{display:none!important}
+.tradingview-widget-container__widget a{pointer-events:none!important}
+.tv-embed-widget-wrapper__header{display:none!important}
+.tv-card{pointer-events:none!important}
+[class*="tradingview"] a[href*="tradingview"]{pointer-events:none!important;cursor:default!important}
 textarea{background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padding:13px 15px;font-size:14px;margin-bottom:8px;width:100%;resize:vertical;min-height:60px;transition:border-color .2s}
 textarea:focus{border-color:var(--brd2)}
 select{background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padding:13px 15px;font-size:14px;margin-bottom:8px;width:100%;-webkit-appearance:none}
@@ -131,26 +136,39 @@ const TV_SYMBOLS=[
   {sym:"OANDA:XAGUSD",label:"XAG/USD"},
 ];
 
-// TradingView single ticker component
-function TVTicker({symbol,colorTheme}){
+// TradingView Market Overview (single widget, loads once, shows all prices)
+function TVMarketOverview({colorTheme}){
   const ref=useRef(null);
   const loaded=useRef(false);
   useEffect(()=>{
     if(!ref.current||loaded.current)return;
     loaded.current=true;
     const s=document.createElement("script");
-    s.src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js";
+    s.src="https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js";
     s.async=true;
     s.innerHTML=JSON.stringify({
-      symbol:symbol,
       width:"100%",
+      height:450,
+      symbolsGroups:[
+        {name:"Forex & Metals",symbols:[
+          {name:"OANDA:XAUUSD",displayName:"Gold"},
+          {name:"OANDA:XAGUSD",displayName:"Silver"},
+          {name:"TVC:DXY",displayName:"DXY Index"},
+          {name:"FX:UKOIL",displayName:"Brent Oil"},
+          {name:"FX:EURUSD",displayName:"EUR/USD"},
+          {name:"FX:GBPUSD",displayName:"GBP/USD"},
+          {name:"BITSTAMP:BTCUSD",displayName:"Bitcoin"},
+          {name:"BITSTAMP:ETHUSD",displayName:"Ethereum"},
+        ]}
+      ],
+      showSymbolLogo:true,
       isTransparent:true,
       colorTheme:colorTheme||"dark",
       locale:"en",
     });
     ref.current.appendChild(s);
-  },[symbol,colorTheme]);
-  return(<div ref={ref} style={{overflow:"hidden"}}><div className="tradingview-widget-container__widget"></div></div>);
+  },[colorTheme]);
+  return(<div ref={ref} style={{position:"relative"}}><div className="tradingview-widget-container__widget"></div><div style={{position:"absolute",top:0,left:0,right:0,bottom:0,zIndex:2,cursor:"default"}}></div></div>);
 }
 
 // TradingView ticker tape (scrolling bar at top)
@@ -167,9 +185,12 @@ function TVTickerTape({colorTheme}){
       symbols:[
         {proName:"OANDA:XAUUSD",title:"Gold"},
         {proName:"OANDA:XAGUSD",title:"Silver"},
-        {proName:"BITSTAMP:BTCUSD",title:"Bitcoin"},
+        {proName:"TVC:DXY",title:"DXY"},
+        {proName:"FX:UKOIL",title:"Brent Oil"},
         {proName:"FX:EURUSD",title:"EUR/USD"},
         {proName:"FX:GBPUSD",title:"GBP/USD"},
+        {proName:"BITSTAMP:BTCUSD",title:"Bitcoin"},
+        {proName:"BITSTAMP:ETHUSD",title:"Ethereum"},
       ],
       showSymbolLogo:true,
       isTransparent:true,
@@ -179,7 +200,7 @@ function TVTickerTape({colorTheme}){
     });
     ref.current.appendChild(s);
   },[colorTheme]);
-  return(<div ref={ref}><div className="tradingview-widget-container__widget"></div></div>);
+  return(<div ref={ref} style={{position:"relative"}}><div className="tradingview-widget-container__widget"></div><div style={{position:"absolute",top:0,left:0,right:0,bottom:0,zIndex:2,cursor:"default"}}></div></div>);
 }
 
 /* ─── Theme Hook ─── */
@@ -313,30 +334,9 @@ function Home({posts,go,P,ok,dark,toggle}){
     <div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}>
       <TVTickerTape colorTheme={theme}/>
     </div>
-    {/* TradingView Individual Tickers */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:12}}>
-      {TV_SYMBOLS.map((s,i)=><div key={i} className="cd" style={{padding:0,overflow:"hidden",minHeight:70}}>
-        <TVTicker symbol={s.sym} colorTheme={theme}/>
-      </div>)}
-      {/* Iran Market - static/manual */}
-      <div className="cd" style={{padding:"11px 13px"}}>
-        <div style={{fontSize:10,color:"var(--mu)",fontWeight:600,marginBottom:6}}>{t.usdirr}</div>
-        <div className="m" style={{fontSize:18,fontWeight:500,letterSpacing:"-.5px"}}>157,250</div>
-        <div style={{fontSize:10,color:"var(--mu)",marginTop:3}}>{t.iran}</div>
-      </div>
-    </div>
-    {/* Iran Market Row */}
-    <div className="g2" style={{marginBottom:20}}>
-      <div className="cd" style={{padding:"11px 13px"}}>
-        <div style={{fontSize:10,color:"var(--mu)",fontWeight:600,marginBottom:6}}>{t.irgold}</div>
-        <div className="m" style={{fontSize:16,fontWeight:500}}>7,285,000</div>
-        <div style={{fontSize:10,color:"var(--mu)",marginTop:3}}>IRR</div>
-      </div>
-      <div className="cd" style={{padding:"11px 13px"}}>
-        <div style={{fontSize:10,color:"var(--mu)",fontWeight:600,marginBottom:6}}>{t.irbourse}</div>
-        <div className="m" style={{fontSize:16,fontWeight:500}}>2,456,780</div>
-        <div style={{fontSize:10,color:"var(--mu)",marginTop:3}}>TEDPIX</div>
-      </div>
+    {/* TradingView Market Overview - all prices in one widget */}
+    <div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}>
+      <TVMarketOverview colorTheme={theme}/>
     </div>
     {/* Social Links */}
     <div style={{display:"flex",gap:8,marginBottom:24}}>
