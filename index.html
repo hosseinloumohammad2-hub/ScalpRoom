@@ -270,8 +270,9 @@ function SignalEditModal({sig,onClose,onSave}){
   const[etp1,setEtp1]=useState(sig?.take_profit||"");
   const[etp2,setEtp2]=useState(sig?.tp2||"");
   const[etp3,setEtp3]=useState(sig?.tp3||"");
+  const[pubDate,setPubDate]=useState(sig?.created_at?sig.created_at.slice(0,16):"");
   if(!sig)return null;
-  const save=()=>{onSave(sig.id,{status,pnl:pnl||null,closed_at:closedAt?new Date(closedAt).toISOString():null,take_profit:etp1||null,tp2:etp2||null,tp3:etp3||null});onClose()};
+  const save=()=>{onSave(sig.id,{status,pnl:pnl||null,closed_at:closedAt?new Date(closedAt).toISOString():null,take_profit:etp1||null,tp2:etp2||null,tp3:etp3||null,created_at:pubDate?new Date(pubDate).toISOString():sig.created_at});onClose()};
   return(<div className="modal-overlay" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
       <span style={{fontSize:15,fontWeight:700}}>{t.editSignal}</span>
@@ -292,6 +293,8 @@ function SignalEditModal({sig,onClose,onSave}){
     <input className="ip" placeholder="TP3 (optional)" value={etp3} onChange={e=>setEtp3(e.target.value)}/>
     <div style={{fontSize:12,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>{t.pnl}</div>
     <input className="ip" placeholder="e.g. +120 pips" value={pnl} onChange={e=>setPnl(e.target.value)}/>
+    <div style={{fontSize:12,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>Publish Date</div>
+    <input className="ip" type="datetime-local" value={pubDate} onChange={e=>setPubDate(e.target.value)}/>
     <div style={{fontSize:12,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>{t.closedAt}</div>
     <input className="ip" type="datetime-local" value={closedAt} onChange={e=>setClosedAt(e.target.value)}/>
     <button className="bt" style={{background:"var(--B)",marginTop:8}} onClick={save}>{t.save}</button>
@@ -812,6 +815,7 @@ function App(){
         <div className="tb">{VT.map((tab,i)=>
           <div key={i} className="ti" onClick={()=>setTab(i)} style={{color:st===i?"var(--tx)":"var(--dm)"}}>
             {tab.i}
+            <span style={{fontSize:9,fontWeight:600,color:st===i?"var(--R)":"var(--dm)"}}>{tab.l}</span>
           </div>
         )}</div>
       </div>
