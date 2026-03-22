@@ -294,9 +294,15 @@ function SignalEditModal({sig,onClose,onSave}){
 /* ─── Auth Screen ─── */
 function Auth({onAuth,lang,setLang}){
   const t=T[lang];
-  const[m,setM]=useState("login"),[e,setE]=useState(""),[p,setP]=useState(""),[n,setN]=useState(""),[er,setEr]=useState(""),[ld,setLd]=useState(false);
+  const[m,setM]=useState("login"),[e,setE]=useState(""),[p,setP]=useState(""),[n,setN]=useState(""),[er,setEr]=useState(""),[ld,setLd]=useState(false),[ok,setOk]=useState("");
   const[showLang,setShowLang]=useState(false);
-  const go=async()=>{if(!e||!p){setEr(t.fill);return}setLd(true);setEr("");
+  const go=async()=>{
+    if(m==="forgot"){
+      if(!e){setEr(t.fill);return}setLd(true);setEr("");setOk("");
+      try{const r=await fetch(`${SB}/auth/v1/recover`,{method:"POST",headers:{apikey:SK,"Content-Type":"application/json"},body:JSON.stringify({email:e})});const d=await r.json();if(d.error){setEr(d.error.message||"Error")}else{setOk(t.resetSent||"Reset link sent! Check your email.")}
+      }catch(x){setEr(x.message)}setLd(false);return;
+    }
+    if(!e||!p){setEr(t.fill);return}setLd(true);setEr("");
     try{if(m==="login"){const r=await api.in(e,p);if(r.error){setEr(r.error_description||r.error.message||"Error");setLd(false);return}onAuth(r.access_token,r.user)}
     else{if(!n){setEr(t.enterName);setLd(false);return}const r=await api.up(e,p);if(r.error){setEr(r.error_description||r.error.message||"Error");setLd(false);return}
     const tk=r.access_token||(r.session?.access_token);const u=r.user||(r.data?.user);
@@ -306,7 +312,7 @@ function Auth({onAuth,lang,setLang}){
     <div style={{width:"100%",maxWidth:360}} className="fi">
       <div style={{textAlign:"center",marginBottom:48}}>
         <div className="lg" style={{fontSize:34}}>Fxscalproom<b>.</b></div>
-        <p style={{fontSize:13,color:"var(--mu)",marginTop:10}}>{m==="login"?t.welcome:t.getStarted}</p>
+        <p style={{fontSize:13,color:"var(--mu)",marginTop:10}}>{m==="login"?t.welcome:m==="forgot"?(t.forgotPassword||"Reset Password"):t.getStarted}</p>
       </div>
       {/* Language selector */}
       <div style={{display:"flex",justifyContent:"center",marginBottom:20}}>
@@ -318,24 +324,34 @@ function Auth({onAuth,lang,setLang}){
         <div key={k} onClick={()=>{setLang(k);setShowLang(false)}} style={{padding:"6px 14px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,background:lang===k?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${lang===k?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,color:lang===k?"var(--R)":"var(--mu)"}}>{v}</div>
       )}</div>}
       {er&&<div style={{background:"color-mix(in srgb,var(--R) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 15%,transparent)",borderRadius:10,padding:12,marginBottom:10,fontSize:13,color:"var(--R)"}}>{er}</div>}
+      {ok&&<div style={{background:"color-mix(in srgb,var(--G) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 15%,transparent)",borderRadius:10,padding:12,marginBottom:10,fontSize:13,color:"var(--G)"}}>{ok}</div>}
       {m==="register"&&<input className="ip" placeholder={t.fullName} value={n} onChange={x=>setN(x.target.value)}/>}
       <input className="ip" placeholder={t.email} type="email" value={e} onChange={x=>setE(x.target.value)} autoCapitalize="none"/>
-      <input className="ip" placeholder={t.password} type="password" value={p} onChange={x=>setP(x.target.value)} onKeyDown={x=>x.key==="Enter"&&go()}/>
-      <button className="bt" style={{background:"var(--R)",opacity:ld?.5:1,marginTop:6}} onClick={go} disabled={ld}>{ld?"...":m==="login"?t.signIn:t.createAcc}</button>
-      <p style={{textAlign:"center",marginTop:20,fontSize:13,color:"var(--mu)"}}>{m==="login"?"":""}
-        <span onClick={()=>{setM(m==="login"?"register":"login");setEr("")}} style={{color:"var(--R)",fontWeight:600,cursor:"pointer"}}>{m==="login"?t.signUp:t.signIn}</span>
+      {m!=="forgot"&&<input className="ip" placeholder={t.password} type="password" value={p} onChange={x=>setP(x.target.value)} onKeyDown={x=>x.key==="Enter"&&go()}/>}
+      <button className="bt" style={{background:"var(--R)",opacity:ld?.5:1,marginTop:6}} onClick={go} disabled={ld}>{ld?"...":m==="forgot"?(t.sendResetLink||"Send Reset Link"):m==="login"?t.signIn:t.createAcc}</button>
+      {m==="login"&&<p style={{textAlign:"center",marginTop:14,fontSize:13}}><span onClick={()=>{setM("forgot");setEr("");setOk("")}} style={{color:"var(--mu)",cursor:"pointer"}}>{t.forgotPassword||"Forgot password?"}</span></p>}
+      <p style={{textAlign:"center",marginTop:m==="login"?8:20,fontSize:13,color:"var(--mu)"}}>
+        {m==="forgot"?<span onClick={()=>{setM("login");setEr("");setOk("")}} style={{color:"var(--R)",fontWeight:600,cursor:"pointer"}}>{t.signIn}</span>:
+        <span onClick={()=>{setM(m==="login"?"register":"login");setEr("");setOk("")}} style={{color:"var(--R)",fontWeight:600,cursor:"pointer"}}>{m==="login"?t.signUp:t.signIn}</span>}
       </p>
     </div></div>);
 }
 
+function LiveClock(){
+  const[time,setTime]=useState(new Date());
+  useEffect(()=>{const i=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(i)},[]);
+  return<span className="m" style={{fontSize:11,color:"var(--tx2)",fontWeight:500}}>{time.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</span>;
+}
+
 /* ─── Home ─── */
-function Home({posts,go,P,ok,dark,toggle}){
+function Home({posts,go,P,ok,dark,toggle,userProfile}){
   const{t,lang}=useLang();
   const[sel,setSel]=useState(null);
   const theme=dark?"dark":"light";
+  const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
   return(<div className="fi">
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-      <div style={{display:"flex",alignItems:"center",gap:6}}><div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span></div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}><div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/></div>
       <div onClick={toggle} style={{cursor:"pointer",color:"var(--mu)",padding:4}}>{dark?IC.sun:IC.moon}</div>
     </div>
     {/* TradingView Ticker Tape - scrolling live prices */}
@@ -357,21 +373,27 @@ function Home({posts,go,P,ok,dark,toggle}){
       <span style={{fontSize:15,fontWeight:600}}>{t.latest}</span>
       <span onClick={()=>go(1)} style={{marginLeft:"auto",fontSize:12,color:"var(--R)",cursor:"pointer",fontWeight:500}}>{t.viewAll}</span>
     </div>
-    {(posts||[]).slice(0,6).map(p=><div key={p.id} onClick={()=>setSel(p)} className="cd" style={{display:"flex",gap:12,marginBottom:6,alignItems:"center",padding:12,cursor:"pointer"}}>
-      {p.image_url?<img src={p.image_url} style={{width:50,height:50,borderRadius:10,objectFit:"cover",flexShrink:0}} alt=""/>:<div style={{width:50,height:50,borderRadius:10,background:"var(--bg2)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"var(--dm)",flexShrink:0,fontWeight:600}}>{p.category?.toUpperCase()?.slice(0,4)}</div>}
-      <div style={{flex:1,minWidth:0}}><div style={{fontSize:14,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div><div style={{fontSize:12,color:"var(--dm)",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.description||""}</div></div>
-      {p.is_premium&&<span style={{fontSize:9,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"3px 8px",borderRadius:6,flexShrink:0}}>PRO</span>}
-    </div>)}
+    {(posts||[]).slice(0,6).map(p=>{
+      const locked=p.is_premium&&!isPremiumUser;
+      return<div key={p.id} onClick={()=>{if(!locked)setSel(p)}} className="cd" style={{display:"flex",gap:12,marginBottom:6,alignItems:"center",padding:12,cursor:locked?"default":"pointer",position:"relative"}}>
+      {p.image_url?<img src={p.image_url} style={{width:50,height:50,borderRadius:10,objectFit:"cover",flexShrink:0,filter:locked?"blur(6px)":"none"}} alt=""/>:<div style={{width:50,height:50,borderRadius:10,background:"var(--bg2)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"var(--dm)",flexShrink:0,fontWeight:600,filter:locked?"blur(6px)":"none"}}>{p.category?.toUpperCase()?.slice(0,4)}</div>}
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:14,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
+        <div style={{fontSize:12,color:"var(--dm)",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",filter:locked?"blur(5px)":"none"}}>{p.description||""}</div>
+      </div>
+      {p.is_premium&&<span style={{fontSize:9,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"3px 8px",borderRadius:6,flexShrink:0,display:"flex",alignItems:"center",gap:3}}>{IC.crown} PRO</span>}
+    </div>})}
     {(!posts||!posts.length)&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:13}}>{t.noAnalyses}</div>}
     <PostModal post={sel} onClose={()=>setSel(null)}/>
   </div>);
 }
 
 /* ─── Analysis Tab ─── */
-function Analysis({posts}){
+function Analysis({posts,userProfile}){
   const{t}=useLang();
   const cats={all:t.all,gold:t.gold,forex:t.forex,crypto:t.crypto,indices:t.indices,iran:t.iran};
   const[cat,setCat]=useState("all"),[sel,setSel]=useState(null),[q,setQ]=useState("");
+  const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
   const f=useMemo(()=>{let list=cat==="all"?(posts||[]):(posts||[]).filter(p=>p.category===cat);
     if(q){const ql=q.toLowerCase();list=list.filter(p=>(p.title||"").toLowerCase().includes(ql)||(p.description||"").toLowerCase().includes(ql))}
     return list;
@@ -386,15 +408,21 @@ function Analysis({posts}){
     <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4}}>
       {Object.entries(cats).map(([c,label])=><div key={c} onClick={()=>setCat(c)} style={{padding:"7px 14px",borderRadius:10,cursor:"pointer",whiteSpace:"nowrap",background:cat===c?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${cat===c?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:12,fontWeight:600,color:cat===c?"var(--R)":"var(--mu)"}}>{label}</div>)}
     </div>
-    <div className="g2">{f.map(p=><div key={p.id} onClick={()=>setSel(p)} className="cd" style={{padding:0,overflow:"hidden",cursor:"pointer"}}>
-      {p.image_url?<img src={p.image_url} style={{width:"100%",height:120,objectFit:"cover"}} alt=""/>:<div style={{width:"100%",height:120,background:"var(--bg2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"var(--dm)",fontWeight:600}}>{p.category?.toUpperCase()}</div>}
+    <div className="g2">{f.map(p=>{
+      const locked=p.is_premium&&!isPremiumUser;
+      return<div key={p.id} onClick={()=>{if(!locked)setSel(p)}} className="cd" style={{padding:0,overflow:"hidden",cursor:locked?"default":"pointer",position:"relative"}}>
+      {p.image_url?<img src={p.image_url} style={{width:"100%",height:120,objectFit:"cover",filter:locked?"blur(8px)":"none"}} alt=""/>:<div style={{width:"100%",height:120,background:"var(--bg2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"var(--dm)",fontWeight:600,filter:locked?"blur(8px)":"none"}}>{p.category?.toUpperCase()}</div>}
+      {locked&&<div style={{position:"absolute",top:0,left:0,right:0,height:120,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.4)",borderRadius:"14px 14px 0 0"}}>
+        <span style={{color:"#fff",display:"flex",alignItems:"center",gap:4}}>{IC.crown}</span>
+        <span style={{fontSize:11,fontWeight:700,color:"#fff",marginTop:4}}>PREMIUM</span>
+      </div>}
       <div style={{padding:"10px 12px"}}><div style={{fontSize:13,fontWeight:600,lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
-      <div style={{fontSize:11,color:"var(--dm)",marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.description||""}</div>
+      <div style={{fontSize:11,color:"var(--dm)",marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",filter:locked?"blur(4px)":"none"}}>{p.description||""}</div>
       <div style={{display:"flex",justifyContent:"space-between",marginTop:8,alignItems:"center"}}>
         <span style={{fontSize:10,color:"var(--dm)"}}>{p.created_at?new Date(p.created_at).toLocaleDateString():""}</span>
         {p.is_premium&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 6px",borderRadius:4}}>PRO</span>}
       </div></div>
-    </div>)}</div>
+    </div>})}</div>
     {!f.length&&<div style={{textAlign:"center",color:"var(--dm)",padding:"60px 0",fontSize:13}}>{t.noPosts}</div>}
     <PostModal post={sel} onClose={()=>setSel(null)}/>
   </div>);
@@ -686,8 +714,8 @@ function App(){
   const goTab=i=>setTab(i);
 
   const scr=()=>{switch(cur?.k){
-    case"home":return<Home posts={posts} go={goTab} P={P} ok={ok} dark={dark} toggle={toggle}/>;
-    case"analysis":return<Analysis posts={posts}/>;
+    case"home":return<Home posts={posts} go={goTab} P={P} ok={ok} dark={dark} toggle={toggle} userProfile={up}/>;
+    case"analysis":return<Analysis posts={posts} userProfile={up}/>;
     case"signals":return<Sigs signals={sigs} userProfile={up}/>;
     case"plans":return<Plans/>;
     case"admin":return<Adm token={tk} posts={posts} signals={sigs} onR={load}/>;
