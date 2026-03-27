@@ -6,18 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#050507">
-<title>Fxscalproom. — Forex Analysis & Signals</title>
-<meta name="description" content="Professional forex analysis, live signals, and market insights. Gold, Forex, Crypto, Indices — all in one platform.">
-<meta property="og:title" content="Fxscalproom. — Forex Analysis & Signals">
-<meta property="og:description" content="Professional forex analysis, live signals, and market insights. Gold, Forex, Crypto, Indices.">
-<meta property="og:image" content="https://fjdjqaffoeixspcmxprw.supabase.co/storage/v1/object/public/charts/og-preview.jpg">
-<meta property="og:url" content="https://scalp-room.vercel.app">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Fxscalproom">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Fxscalproom. — Forex Analysis & Signals">
-<meta name="twitter:description" content="Professional forex analysis, live signals, and market insights.">
-<meta name="twitter:image" content="https://fjdjqaffoeixspcmxprw.supabase.co/storage/v1/object/public/charts/og-preview.jpg">
+<title>Fxscalproom.</title>
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style id="theme-style">
@@ -282,7 +271,7 @@ function Toast({msg,onDone}){
 }
 
 /* ─── Post Detail Modal ─── */
-function PostModal({post,onClose,isAdmin}){
+function PostModal({post,onClose}){
   const[zoomed,setZoomed]=useState(false);
   const[scale,setScale]=useState(1);
   const[pos,setPos]=useState({x:0,y:0});
@@ -315,14 +304,6 @@ function PostModal({post,onClose,isAdmin}){
   const handleTouchEnd=()=>{dragging.current=false;if(scale<=1){setScale(1);setPos({x:0,y:0})}};
   const downloadImg=()=>{const a=document.createElement("a");a.href=post.image_url;a.download=`${post.title||"analysis"}.jpg`;a.target="_blank";a.click()};
   const resetZoom=()=>{setScale(1);setPos({x:0,y:0});setZoomed(false)};
-  const sharePost=async()=>{
-    const shareText=`📊 ${post.title}\n\n${(post.description||"").slice(0,200)}\n\n🔗 Fxscalproom — Forex Analysis & Signals\nhttps://scalp-room.vercel.app`;
-    if(navigator.share){
-      try{await navigator.share({title:post.title,text:shareText,url:"https://scalp-room.vercel.app"})}catch(e){}
-    }else{
-      try{await navigator.clipboard.writeText(shareText);alert("Copied!")}catch(e){}
-    }
-  };
 
   return(<div className="modal-overlay" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:zoomed?"100%":"400px",padding:zoomed?0:20,borderRadius:zoomed?0:20,maxHeight:zoomed?"100vh":"90vh"}}>
     {!zoomed&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
@@ -345,10 +326,6 @@ function PostModal({post,onClose,isAdmin}){
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download
         </div>
-        {isAdmin&&<div onClick={sharePost} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:10,borderRadius:10,background:"color-mix(in srgb,var(--B) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--B) 20%,transparent)",cursor:"pointer",fontSize:12,fontWeight:600,color:"var(--B)"}}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          Share
-        </div>}
       </div>
     </div>}
     {!zoomed&&<>
@@ -502,7 +479,6 @@ function Home({posts,go,P,ok,dark,toggle,userProfile}){
   const[sel,setSel]=useState(null);
   const theme=dark?"dark":"light";
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
-  const isAdmin=userProfile?.role==="admin";
   return(<div className="fi">
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
       <div style={{display:"flex",alignItems:"center",gap:8}}><div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/></div>
@@ -560,7 +536,7 @@ function Home({posts,go,P,ok,dark,toggle,userProfile}){
       {p.is_premium&&<span style={{fontSize:9,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"3px 8px",borderRadius:6,flexShrink:0,display:"flex",alignItems:"center",gap:3}}>{IC.crown} PRO</span>}
     </div>})}
     {(!posts||!posts.length)&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:13}}>{t.noAnalyses}</div>}
-    <PostModal post={sel} onClose={()=>setSel(null)} isAdmin={isAdmin}/>
+    <PostModal post={sel} onClose={()=>setSel(null)}/>
   </div>);
 }
 
@@ -570,7 +546,6 @@ function Analysis({posts,userProfile}){
   const cats={all:t.all,gold:t.gold,forex:t.forex,crypto:t.crypto,indices:t.indices,iran:t.iran};
   const[cat,setCat]=useState("all"),[sel,setSel]=useState(null),[q,setQ]=useState("");
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
-  const isAdmin=userProfile?.role==="admin";
   const f=useMemo(()=>{let list=cat==="all"?(posts||[]):(posts||[]).filter(p=>p.category===cat);
     if(q){const ql=q.toLowerCase();list=list.filter(p=>(p.title||"").toLowerCase().includes(ql)||(p.description||"").toLowerCase().includes(ql))}
     return list;
@@ -601,7 +576,7 @@ function Analysis({posts,userProfile}){
       </div></div>
     </div>})}</div>
     {!f.length&&<div style={{textAlign:"center",color:"var(--dm)",padding:"60px 0",fontSize:13}}>{t.noPosts}</div>}
-    <PostModal post={sel} onClose={()=>setSel(null)} isAdmin={isAdmin}/>
+    <PostModal post={sel} onClose={()=>setSel(null)}/>
   </div>);
 }
 
