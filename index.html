@@ -170,12 +170,12 @@ function TVMarketOverview({colorTheme}){
     s.async=true;
     s.innerHTML=JSON.stringify({
       width:"100%",
-      height:560,
+      height:720,
       symbolsGroups:[
         {name:"Forex & Metals",symbols:[
           {name:"OANDA:XAUUSD",displayName:"Gold"},
           {name:"OANDA:XAGUSD",displayName:"Silver"},
-          {name:"TVC:DXY",displayName:"DXY Index"},
+          {name:"CAPITALCOM:DXY",displayName:"DXY Index"},
           {name:"TVC:USOIL",displayName:"Crude Oil"},
           {name:"FX:EURUSD",displayName:"EUR/USD"},
           {name:"FX:GBPUSD",displayName:"GBP/USD"},
@@ -185,6 +185,9 @@ function TVMarketOverview({colorTheme}){
           {name:"FX:USDJPY",displayName:"USD/JPY"},
           {name:"FOREXCOM:SPXUSD",displayName:"S&P 500"},
           {name:"FOREXCOM:NSXUSD",displayName:"Nasdaq 100"},
+          {name:"BLACKBULL:US30",displayName:"Dow Jones"},
+          {name:"PEPPERSTONE:GER40",displayName:"DAX 40"},
+          {name:"SPREADEX:FTSE",displayName:"FTSE 100"},
         ]}
       ],
       showSymbolLogo:true,
@@ -211,7 +214,7 @@ function TVTickerTape({colorTheme}){
       symbols:[
         {proName:"OANDA:XAUUSD",title:"Gold"},
         {proName:"OANDA:XAGUSD",title:"Silver"},
-        {proName:"TVC:DXY",title:"DXY"},
+        {proName:"INDEX:DXY",title:"DXY"},
         {proName:"TVC:USOIL",title:"Crude Oil"},
         {proName:"FX:EURUSD",title:"EUR/USD"},
         {proName:"FX:GBPUSD",title:"GBP/USD"},
@@ -221,6 +224,9 @@ function TVTickerTape({colorTheme}){
         {proName:"FX:USDJPY",title:"USD/JPY"},
         {proName:"FOREXCOM:SPXUSD",title:"S&P 500"},
         {proName:"FOREXCOM:NSXUSD",title:"Nasdaq 100"},
+        {proName:"BLACKBULL:US30",title:"Dow Jones"},
+        {proName:"PEPPERSTONE:GER40",title:"DAX 40"},
+        {proName:"SPREADEX:FTSE",title:"FTSE 100"},
       ],
       showSymbolLogo:true,
       isTransparent:true,
