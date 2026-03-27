@@ -120,25 +120,27 @@ const CE={all:"all",gold:"gold",forex:"forex",crypto:"crypto",indices:"indices",
 /* ─── Prices Hook ─── */
 function usePrices(){
   const init=()=>({p:"---",c:"0",u:true});
-  const[P,setP]=useState({usd_sell:init(),eur_sell:init(),sekkeh:init(),gold18:init(),tether:init()});
+  const[P,setP]=useState({usd_sell:init(),eur_sell:init(),sekkeh:init(),gold18:init(),tether:init(),rub:init()});
   const[ok,setOk]=useState(false);
   const prev=useRef({});
   const mk=(k,v)=>{const n=parseFloat(String(v).replace(/,/g,""))||0;const o=prev.current[k]||n;prev.current[k]=n;return{p:Number(n).toLocaleString("en"),c:v,u:n>=o}};
   const f=useCallback(async()=>{try{
-    const r=await fetch("https://api.navasan.tech/latest/?api_key=freegV7oQ84K6lg7IbnoHIQWnbL32KTq&item=usd_sell,18ayar,sekkeh,usdt_sell,eur_sell");
+    const r=await fetch("https://api.navasan.tech/latest/?api_key=freegV7oQ84K6lg7IbnoHIQWnbL32KTq&item=usd_sell,18ayar,sekkeh,usdt,eur,rub");
     const d=await r.json();
     if(d){
       const usd=d.usd_sell?.value||"0";
-      const eur=d.eur_sell?.value||"0";
+      const eur=d.eur?.value||d.eur_sell?.value||"0";
       const gold=d["18ayar"]?.value||"0";
       const coin=d.sekkeh?.value||"0";
-      const tether=d.usdt_sell?.value||"0";
+      const tether=d.usdt?.value||d.usdt_sell?.value||"0";
+      const rub=d.rub?.value||"0";
       setP({
         usd_sell:mk("usd",usd),
         eur_sell:mk("eur",eur),
         sekkeh:mk("coin",coin),
         gold18:mk("gold",gold),
         tether:mk("tether",tether),
+        rub:mk("rub",rub),
       });
       setOk(true);
     }
@@ -488,7 +490,7 @@ function Home({posts,go,P,ok,dark,toggle,userProfile}){
     {/* Iran Market Prices - Navasan API */}
     {ok&&<div className="cd" style={{marginBottom:12}}>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-        <span style={{fontSize:11,fontWeight:700,color:"var(--R)",letterSpacing:.5}}>🇮🇷</span>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Lion_and_Sun_%28Pahlavi_dynasty%29_%28helmet%29.svg/20px-Lion_and_Sun_%28Pahlavi_dynasty%29_%28helmet%29.svg.png" width="16" height="16" alt="" style={{borderRadius:2}} onError={e=>{e.target.style.display="none"}}/>
         <span style={{fontSize:13,fontWeight:700}}>{t.iran||"Iran Market"}</span>
         <div className="ld" style={{marginLeft:"auto"}}/>
       </div>
@@ -499,6 +501,7 @@ function Home({posts,go,P,ok,dark,toggle,userProfile}){
           {label:lang==="fa"?"سکه امامی":"Sekke",val:P.sekkeh,unit:lang==="fa"?"تومان":"IRR"},
           {label:lang==="fa"?"طلا ۱۸ عیار":"Gold 18K",val:P.gold18,unit:lang==="fa"?"تومان":"IRR"},
           {label:lang==="fa"?"تتر":"USDT",val:P.tether,unit:lang==="fa"?"تومان":"IRR"},
+          {label:lang==="fa"?"روبل روسیه":"RUB",val:P.rub,unit:lang==="fa"?"تومان":"IRR"},
         ].map((item,i)=><div key={i} style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:10,padding:12}}>
           <div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginBottom:6}}>{item.label}</div>
           <div className="m" style={{fontSize:14,fontWeight:600,color:item.val?.u?"var(--G)":"var(--R)"}}>{item.val?.p||"---"}</div>
@@ -666,12 +669,12 @@ function Plans(){
       </div>
       <div style={{display:"flex",alignItems:"center",gap:12}}>
         <span className="m" style={{fontSize:22,fontWeight:600}}>{p.p}</span>
-        <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" className="bt" style={{background:"var(--R)",padding:"10px 20px",width:"auto",fontSize:13}}>{t.subscribe}</a>
+        <a href="https://t.me/hosenlou" target="_blank" rel="noopener" className="bt" style={{background:"var(--R)",padding:"10px 20px",width:"auto",fontSize:13}}>{t.subscribe}</a>
       </div>
     </div>)}
     <div className="cd" style={{marginTop:16,padding:16,textAlign:"center"}}>
       <div style={{fontSize:13,color:"var(--mu)",lineHeight:1.7}}>{t.unlock}</div>
-      <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:12,color:"#0088cc",fontSize:14,fontWeight:600}}>{IC.tg} {t.contact}</a>
+      <a href="https://t.me/hosenlou" target="_blank" rel="noopener" style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:12,color:"#0088cc",fontSize:14,fontWeight:600}}>{IC.tg} {t.contact}</a>
     </div>
   </div>);
 }
