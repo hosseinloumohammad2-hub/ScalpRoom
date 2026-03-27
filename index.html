@@ -194,7 +194,7 @@ function TVMarketOverview({colorTheme}){
     });
     ref.current.appendChild(s);
   },[colorTheme]);
-  return(<div ref={ref} style={{position:"relative"}}><div className="tradingview-widget-container__widget"></div><div style={{position:"absolute",top:0,left:0,right:0,bottom:0,zIndex:2,cursor:"default"}}></div></div>);
+  return(<div ref={ref} style={{position:"relative",overflow:"hidden"}}><div className="tradingview-widget-container__widget" style={{marginLeft:-10,marginRight:-10,width:"calc(100% + 20px)"}}></div><div style={{position:"absolute",top:0,left:0,right:0,bottom:0,zIndex:2,cursor:"default"}}></div></div>);
 }
 
 // TradingView ticker tape (scrolling bar at top)
@@ -490,7 +490,7 @@ function Home({posts,go,P,ok,dark,toggle,userProfile}){
     {/* Iran Market Prices - Navasan API */}
     {ok&&<div className="cd" style={{marginBottom:12}}>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Lion_and_Sun_%28Pahlavi_dynasty%29_%28helmet%29.svg/20px-Lion_and_Sun_%28Pahlavi_dynasty%29_%28helmet%29.svg.png" width="16" height="16" alt="" style={{borderRadius:2}} onError={e=>{e.target.style.display="none"}}/>
+        <svg width="18" height="18" viewBox="0 0 100 100"><rect width="100" height="33" fill="#239f40"/><rect y="33" width="100" height="34" fill="#fff"/><rect y="67" width="100" height="33" fill="#da0000"/><text x="50" y="58" textAnchor="middle" fontSize="28" fill="#da0000">☀</text></svg>
         <span style={{fontSize:13,fontWeight:700}}>{t.iran||"Iran Market"}</span>
         <div className="ld" style={{marginLeft:"auto"}}/>
       </div>
