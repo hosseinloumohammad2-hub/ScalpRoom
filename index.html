@@ -685,9 +685,78 @@ function Sigs({signals,userProfile}){
 }
 
 /* ─── Plans ─── */
-function Plans(){
+function Plans({userProfile}){
   const{t}=useLang();
-  const plans=[{dur:t.month1,p:"$54"},{dur:t.month3,p:"$100",save:"38%"},{dur:t.month6,p:"$170",save:"47%"},{dur:t.year1,p:"$300",best:true,save:"54%"}];
+  const isPremium=userProfile?.membership==="premium";
+  const expiresAt=userProfile?.premium_expires_at?new Date(userProfile.premium_expires_at):null;
+  const now=new Date();
+  const daysLeft=expiresAt?Math.max(0,Math.ceil((expiresAt-now)/(1000*60*60*24))):0;
+  const hoursLeft=expiresAt?Math.max(0,Math.ceil((expiresAt-now)/(1000*60*60)))%24:0;
+
+  // Determine current plan type based on days remaining
+  const isMonthly=daysLeft>0&&daysLeft<=35;
+  const isQuarterly=daysLeft>35&&daysLeft<=100;
+  const isSemiAnnual=daysLeft>100&&daysLeft<=200;
+  const isAnnual=daysLeft>200;
+  const canUpgrade=isPremium&&!isAnnual&&daysLeft>0;
+
+  // Upgrade pricing
+  const getUpgradePrice=()=>{
+    if(isMonthly)return{from:t.month1||"1 Month",to:t.year1||"1 Year",price:"$246",save:"$54"};
+    if(isQuarterly)return{from:t.month3||"3 Months",to:t.year1||"1 Year",price:"$200",save:"$100"};
+    if(isSemiAnnual)return{from:t.month6||"6 Months",to:t.year1||"1 Year",price:"$130",save:"$170"};
+    return null;
+  };
+  const upgrade=getUpgradePrice();
+
+  const plans=[{dur:t.month1,p:"$54",days:30},{dur:t.month3,p:"$100",save:"38%",days:90},{dur:t.month6,p:"$170",save:"47%",days:180},{dur:t.year1,p:"$300",best:true,save:"54%",days:365}];
+
+  // Premium user view
+  if(isPremium&&expiresAt){
+    return(<div className="fi">
+      <div style={{textAlign:"center",marginBottom:24}}>
+        <div style={{display:"inline-flex",alignItems:"center",gap:6,color:"var(--G)",marginBottom:10}}>{IC.crown}<span style={{fontSize:12,fontWeight:700,letterSpacing:1}}>PREMIUM ACTIVE</span></div>
+        <div style={{fontSize:20,fontWeight:700,marginBottom:16}}>Your Subscription</div>
+      </div>
+
+      {/* Countdown */}
+      <div className="cd" style={{textAlign:"center",padding:24,marginBottom:16,borderColor:"color-mix(in srgb,var(--G) 25%,transparent)",background:"color-mix(in srgb,var(--G) 3%,transparent)"}}>
+        <div style={{fontSize:12,color:"var(--mu)",marginBottom:12,fontWeight:600}}>Time Remaining</div>
+        <div style={{display:"flex",justifyContent:"center",gap:16}}>
+          <div>
+            <div className="m" style={{fontSize:36,fontWeight:700,color:daysLeft<=7?"var(--R)":"var(--G)"}}>{daysLeft}</div>
+            <div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginTop:2}}>Days</div>
+          </div>
+          <div>
+            <div className="m" style={{fontSize:36,fontWeight:700,color:daysLeft<=7?"var(--R)":"var(--G)"}}>{hoursLeft}</div>
+            <div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginTop:2}}>Hours</div>
+          </div>
+        </div>
+        <div style={{fontSize:11,color:"var(--dm)",marginTop:14}}>Expires: {expiresAt.toLocaleDateString()} {expiresAt.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>
+        {daysLeft<=7&&<div style={{fontSize:12,fontWeight:600,color:"var(--R)",marginTop:10,background:"color-mix(in srgb,var(--R) 8%,transparent)",padding:"8px 14px",borderRadius:8,display:"inline-block"}}>⚠ Expiring soon! Renew now</div>}
+      </div>
+
+      {/* Upgrade offer */}
+      {canUpgrade&&upgrade&&<div className="cd" style={{padding:16,marginBottom:16,borderColor:"color-mix(in srgb,var(--Y) 25%,transparent)",background:"color-mix(in srgb,var(--Y) 3%,transparent)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}>
+          <span style={{fontSize:14}}>⬆️</span>
+          <span style={{fontSize:14,fontWeight:700}}>Upgrade to Annual</span>
+        </div>
+        <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.6,marginBottom:12}}>
+          You're on <b>{upgrade.from}</b> plan. Upgrade to <b>{upgrade.to}</b> for just <b>{upgrade.price}</b> more (save {upgrade.save} total!)
+        </div>
+        <a href="https://t.me/hosenlou" target="_blank" rel="noopener" className="bt" style={{background:"var(--Y)",color:"#000",fontSize:13}}>Upgrade Now — {upgrade.price}</a>
+      </div>}
+
+      {/* Renew */}
+      <div className="cd" style={{padding:16,textAlign:"center"}}>
+        <div style={{fontSize:13,color:"var(--mu)",marginBottom:10}}>Renew or extend your subscription</div>
+        <a href="https://t.me/hosenlou" target="_blank" rel="noopener" style={{display:"inline-flex",alignItems:"center",gap:8,color:"#0088cc",fontSize:14,fontWeight:600}}>{IC.tg} Contact on Telegram</a>
+      </div>
+    </div>);
+  }
+
+  // Free user view
   return(<div className="fi">
     <div style={{textAlign:"center",marginBottom:28}}>
       <div style={{display:"inline-flex",alignItems:"center",gap:6,color:"var(--Y)",marginBottom:10}}>{IC.crown}<span style={{fontSize:12,fontWeight:700,letterSpacing:1}}>PREMIUM</span></div>
@@ -755,6 +824,8 @@ function Adm({token,posts,signals,onR}){
   const[editPost,setEditPost]=useState(null);
   const[customDate,setCustomDate]=useState(false),[postDate,setPostDate]=useState("");
   const[sigCustomDate,setSigCustomDate]=useState(false),[sigDate,setSigDate]=useState("");
+  const[editUserExp,setEditUserExp]=useState(null);
+  const[expDate,setExpDate]=useState("");
   const noti=useNotifications();
 
   useEffect(()=>{if(tb==="users")api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})},[tb,token]);
@@ -763,8 +834,20 @@ function Adm({token,posts,signals,onR}){
   const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{const data={pair:pa,type:st,entry_price:en,take_profit:tp1,tp2:tp2||null,tp3:tp3||null,stop_loss:sl,status:"active",pnl:null,closed_at:null,is_premium:sigPr};if(sigCustomDate&&sigDate)data.created_at=new Date(sigDate).toISOString();await api.add("Signals",data,token);setMs(t.signalPub);setPa("");setEn("");setTp1("");setTp2("");setTp3("");setSl("");setSigPr(false);setSigCustomDate(false);setSigDate("");onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st)}catch(e){setMs(e.message)}setLd(false)};
   const delP=async id=>{if(!confirm("Delete?"))return;await api.del("Posts",id,token);onR()};
   const delS=async id=>{if(!confirm("Delete?"))return;await api.del("Signals",id,token);onR()};
-  const setPremium=async(uid)=>{await api.patch("Users",uid,{membership:"premium"},token);setMs(t.upgraded);api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
-  const setFree=async(uid)=>{await api.patch("Users",uid,{membership:"free"},token);setMs(t.downgraded);api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
+  const setPremium=async(uid,expiry)=>{
+    const data={membership:"premium"};
+    if(expiry)data.premium_expires_at=new Date(expiry).toISOString();
+    await api.patch("Users",uid,data,token);
+    setMs(t.upgraded);setEditUserExp(null);setExpDate("");
+    api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)});
+  };
+  const setFree=async(uid)=>{await api.patch("Users",uid,{membership:"free",premium_expires_at:null},token);setMs(t.downgraded);api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
+  const updateExpiry=async(uid)=>{
+    if(!expDate)return;
+    await api.patch("Users",uid,{premium_expires_at:new Date(expDate).toISOString()},token);
+    setMs("Expiry updated!");setEditUserExp(null);setExpDate("");
+    api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)});
+  };
   const saveSig=async(id,data)=>{await api.patch("Signals",id,data,token);onR();setMs("Signal updated!")};
   const savePost=async(id,data)=>{await api.patch("Posts",id,data,token);onR();setMs("Post updated!")};
 
@@ -852,17 +935,36 @@ function Adm({token,posts,signals,onR}){
 
     {tb==="users"&&<>
       <div style={{fontSize:13,fontWeight:600,marginBottom:10}}>{t.users} ({users.length})</div>
-      {users.map(u=><div key={u.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:12,marginBottom:4}}>
-        <div style={{width:32,height:32,borderRadius:"50%",background:"var(--bg)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,flexShrink:0}}>{(u.full_name||u.email||"?")[0].toUpperCase()}</div>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:12,fontWeight:600}}>{u.full_name||"No name"}</div>
-          <div style={{fontSize:10,color:"var(--dm)"}}>{u.email}</div>
+      {users.map(u=>{
+        const exp=u.premium_expires_at?new Date(u.premium_expires_at):null;
+        const dLeft=exp?Math.max(0,Math.ceil((exp-new Date())/(1000*60*60*24))):0;
+        return<div key={u.id} className="cd" style={{padding:12,marginBottom:4}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:32,height:32,borderRadius:"50%",background:"var(--bg)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,flexShrink:0}}>{(u.full_name||u.email||"?")[0].toUpperCase()}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:12,fontWeight:600}}>{u.full_name||"No name"}</div>
+            <div style={{fontSize:10,color:"var(--dm)"}}>{u.email}</div>
+            {u.membership==="premium"&&exp&&<div style={{fontSize:9,color:dLeft<=7?"var(--R)":"var(--G)",marginTop:2,fontWeight:600}}>{dLeft} days left · {exp.toLocaleDateString()}</div>}
+          </div>
+          {u.membership==="premium"?
+            <div style={{display:"flex",gap:4}}>
+              <div onClick={()=>{setEditUserExp(editUserExp===u.id?null:u.id);setExpDate(u.premium_expires_at?u.premium_expires_at.slice(0,16):"")}} style={{cursor:"pointer",fontSize:9,fontWeight:600,color:"var(--B)",background:"color-mix(in srgb,var(--B) 10%,transparent)",padding:"4px 8px",borderRadius:6}}>📅</div>
+              <div onClick={()=>setFree(u.id)} style={{cursor:"pointer",fontSize:9,fontWeight:600,color:"var(--G)",background:"color-mix(in srgb,var(--G) 10%,transparent)",padding:"4px 8px",borderRadius:6,display:"flex",alignItems:"center",gap:3}}>{IC.ck} PRO</div>
+            </div>:
+            <div onClick={()=>{setEditUserExp(u.id);setExpDate("")}} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--mu)",background:"var(--bg)",padding:"4px 10px",borderRadius:6,border:"1px solid var(--brd)"}}>{t.setpro}</div>
+          }
         </div>
-        {u.membership==="premium"?
-          <div onClick={()=>setFree(u.id)} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--G)",background:"color-mix(in srgb,var(--G) 10%,transparent)",padding:"4px 10px",borderRadius:6,display:"flex",alignItems:"center",gap:4}}>{IC.ck} PRO</div>:
-          <div onClick={()=>setPremium(u.id)} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--mu)",background:"var(--bg)",padding:"4px 10px",borderRadius:6,border:"1px solid var(--brd)"}}>{t.setpro}</div>
-        }
-      </div>)}
+        {editUserExp===u.id&&<div style={{marginTop:10,padding:10,background:"var(--bg)",borderRadius:10,border:"1px solid var(--brd)"}}>
+          <div style={{fontSize:11,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>Expiry Date</div>
+          <input className="ip" type="datetime-local" value={expDate} onChange={e=>setExpDate(e.target.value)} style={{marginBottom:6}}/>
+          <div style={{display:"flex",gap:6}}>
+            {["30","90","180","365"].map(d=><div key={d} onClick={()=>{const dt=new Date();dt.setDate(dt.getDate()+parseInt(d));setExpDate(dt.toISOString().slice(0,16))}} style={{flex:1,padding:6,borderRadius:6,textAlign:"center",cursor:"pointer",fontSize:10,fontWeight:600,background:"var(--bg2)",border:"1px solid var(--brd)",color:"var(--mu)"}}>{d}d</div>)}
+          </div>
+          <button className="bt" style={{background:"var(--B)",marginTop:8,padding:10,fontSize:12}} onClick={()=>{if(u.membership!=="premium"){setPremium(u.id,expDate)}else{updateExpiry(u.id)}}}>
+            {u.membership==="premium"?"Update Expiry":"Set PRO + Expiry"}
+          </button>
+        </div>}
+      </div>})}
     </>}
 
     {editSig&&<SignalEditModal sig={editSig} onClose={()=>setEditSig(null)} onSave={saveSig}/>}
@@ -972,7 +1074,7 @@ function App(){
     case"home":return<Home posts={posts} go={goTab} P={P} ok={ok} dark={dark} toggle={toggle} userProfile={up}/>;
     case"analysis":return<Analysis posts={posts} userProfile={up}/>;
     case"signals":return<Sigs signals={sigs} userProfile={up}/>;
-    case"plans":return<Plans/>;
+    case"plans":return<Plans userProfile={up}/>;
     case"admin":return<Adm token={tk} posts={posts} signals={sigs} onR={load}/>;
     case"profile":return<Prof user={usr} up={up} onOut={handleLogout} dark={dark} toggle={toggle} lang={lang} setLang={setLang}/>;
     default:return null;
