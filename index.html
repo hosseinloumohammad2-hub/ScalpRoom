@@ -54,6 +54,37 @@ textarea:focus{border-color:var(--brd2)}
 select{background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padding:13px 15px;font-size:14px;margin-bottom:8px;width:100%;-webkit-appearance:none}
 .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:12px 20px;z-index:200;font-size:13px;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.3);animation:toastIn .3s ease}
 @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes splashPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.15);opacity:.7}}
+@keyframes splashFadeOut{from{opacity:1}to{opacity:0;pointer-events:none}}
+@keyframes splashSlideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes dotBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
+.splash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg)}
+.splash.out{animation:splashFadeOut .5s ease forwards}
+.splash-logo{font-size:42px;font-weight:700;letter-spacing:-.5px;animation:splashSlideUp .6s ease}
+.splash-logo b{color:var(--R);animation:splashPulse 2s ease-in-out infinite}
+.splash-sub{font-size:12px;color:var(--dm);margin-top:12px;animation:splashSlideUp .6s ease .15s both}
+.splash-dots{display:flex;gap:6px;margin-top:32px;animation:splashSlideUp .6s ease .3s both}
+.splash-dots span{width:6px;height:6px;border-radius:50%;background:var(--R)}
+.splash-dots span:nth-child(1){animation:dotBounce .6s ease infinite}
+.splash-dots span:nth-child(2){animation:dotBounce .6s ease .15s infinite}
+.splash-dots span:nth-child(3){animation:dotBounce .6s ease .3s infinite}
+.nb{position:absolute;top:2px;right:50%;transform:translateX(12px);width:7px;height:7px;border-radius:50%;background:var(--R);border:1.5px solid var(--bg);animation:dotBounce .6s ease infinite}
+.ptr{text-align:center;overflow:hidden;transition:max-height .3s,opacity .3s;max-height:0;opacity:0}
+.ptr.active{max-height:60px;opacity:1}
+.ptr-spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--brd);border-top-color:var(--R);border-radius:50%;animation:spin .6s linear infinite;margin:12px 0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.onb-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:998;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}
+.onb-overlay.out{animation:splashFadeOut .4s ease forwards}
+.onb-card{text-align:center;max-width:320px;animation:splashSlideUp .5s ease}
+.onb-icon{font-size:48px;margin-bottom:20px}
+.onb-title{font-size:22px;font-weight:700;margin-bottom:10px;line-height:1.3}
+.onb-desc{font-size:14px;color:var(--tx2);line-height:1.7;margin-bottom:32px}
+.onb-dots{display:flex;gap:8px;justify-content:center;margin-bottom:24px}
+.onb-dots span{width:8px;height:8px;border-radius:50%;background:var(--brd);transition:.3s}
+.onb-dots span.act{background:var(--R);width:20px}
+.perf-chart{display:flex;align-items:flex-end;gap:3px;height:60px;margin-top:12px;padding:0 4px}
+.perf-bar{flex:1;border-radius:3px 3px 0 0;transition:height .5s ease;min-width:0;position:relative}
+.perf-bar:hover::after{content:attr(data-label);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font-size:8px;white-space:nowrap;color:var(--tx2);padding:2px 4px;background:var(--card);border:1px solid var(--brd);border-radius:4px;margin-bottom:2px}
 </style>
 </head>
 <body>
@@ -70,8 +101,8 @@ const H=t=>({apikey:SK,Authorization:`Bearer ${t||SK}`,"Content-Type":"applicati
 const LANGS={en:"English",ar:"العربية",fa:"فارسی",tr:"Türkçe",ru:"Русский"};
 const RTL_LANGS=["ar","fa"];
 const T={
-  en:{home:"Home",analysis:"Analysis",signals:"Signals",plans:"Plans",admin:"Admin",profile:"Profile",live:"Live",latest:"Latest analyses",viewAll:"View all",noAnalyses:"No analyses yet",noSignals:"No signals yet",noPosts:"No posts",premium:"Premium Membership",unlock:"Unlock all analyses, signals & VIP content",subscribe:"Subscribe",contact:"Contact on Telegram",signIn:"Sign In",signUp:"Sign Up",createAcc:"Create Account",welcome:"Welcome back",getStarted:"Get started for free",fill:"Fill all fields",enterName:"Enter name",email:"Email address",password:"Password",fullName:"Full name",darkMode:"Dark Mode",lightMode:"Light Mode",signOut:"Sign out",publish:"Publish",publishSignal:"Publish Signal",post:"Post",signal:"Signal",manage:"Manage",users:"Users",title:"Title",description:"Description",pair:"Pair",entry:"Entry Price",tp:"Take Profit",sl:"Stop Loss",tapImage:"Tap to select image",delete:"Delete",setpro:"Set PRO",uploadFailed:"Upload failed",published:"Published!",signalPub:"Signal published!",upgraded:"User upgraded!",downgraded:"Downgraded",language:"Language",bestValue:"Best value",active:"ACTIVE",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"Edit Signal",pnl:"PnL",closedAt:"Closed at",save:"Save",status:"Status",search:"Search...",all:"All",gold:"Gold",forex:"Forex",crypto:"Crypto",indices:"Indices",iran:"Iran Market",month1:"1 Month",month3:"3 Months",month6:"6 Months",year1:"1 Year",free:"FREE",membership:"Membership",role:"Role",joinDate:"Joined",pushEnabled:"Notifications enabled",pushEnable:"Enable Notifications",noPermission:"Notification permission denied",enterTitle:"Enter title",enterPair:"Enter pair & entry",xauusd:"Gold",btcusd:"Bitcoin",eurusd:"EUR/USD",gbpusd:"GBP/USD",xagusd:"Silver",usdirr:"USD/IRR",irgold:"Iran Gold (g)",irbourse:"Iran Bourse"},
-  fa:{home:"خانه",analysis:"تحلیل‌ها",signals:"سیگنال‌ها",plans:"اشتراک",admin:"مدیریت",profile:"پروفایل",live:"زنده",latest:"آخرین تحلیل‌ها",viewAll:"مشاهده همه",noAnalyses:"هنوز تحلیلی نیست",noSignals:"هنوز سیگنالی نیست",noPosts:"پستی نیست",premium:"اشتراک ویژه",unlock:"دسترسی به تمام تحلیل‌ها، سیگنال‌ها و محتوای VIP",subscribe:"خرید اشتراک",contact:"تماس در تلگرام",signIn:"ورود",signUp:"ثبت‌نام",createAcc:"ساخت حساب",welcome:"خوش آمدید",getStarted:"رایگان شروع کنید",fill:"همه فیلدها را پر کنید",enterName:"نام را وارد کنید",email:"آدرس ایمیل",password:"رمز عبور",fullName:"نام کامل",darkMode:"حالت تاریک",lightMode:"حالت روشن",signOut:"خروج",publish:"انتشار",publishSignal:"انتشار سیگنال",post:"پست",signal:"سیگنال",manage:"مدیریت",users:"کاربران",title:"عنوان",description:"توضیحات",pair:"جفت ارز",entry:"قیمت ورود",tp:"حد سود",sl:"حد ضرر",tapImage:"برای انتخاب عکس بزنید",delete:"حذف",setpro:"تنظیم PRO",uploadFailed:"آپلود ناموفق",published:"منتشر شد!",signalPub:"سیگنال منتشر شد!",upgraded:"کاربر ارتقا یافت!",downgraded:"تنزیل شد",language:"زبان",bestValue:"بهترین ارزش",active:"فعال",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"ویرایش سیگنال",pnl:"سود/ضرر",closedAt:"بسته شده در",save:"ذخیره",status:"وضعیت",search:"جستجو...",all:"همه",gold:"طلا",forex:"فارکس",crypto:"کریپتو",indices:"شاخص‌ها",iran:"بازار ایران",month1:"۱ ماه",month3:"۳ ماه",month6:"۶ ماه",year1:"۱ سال",free:"رایگان",membership:"اشتراک",role:"نقش",joinDate:"تاریخ عضویت",pushEnabled:"اعلان‌ها فعال شد",pushEnable:"فعال‌سازی اعلان‌ها",noPermission:"دسترسی اعلان رد شد",enterTitle:"عنوان را وارد کنید",enterPair:"جفت ارز و قیمت ورود را وارد کنید",xauusd:"طلا",btcusd:"بیت‌کوین",eurusd:"یورو/دلار",gbpusd:"پوند/دلار",xagusd:"نقره",usdirr:"دلار/تومان",irgold:"طلای گرمی",irbourse:"بورس ایران"},
+  en:{home:"Home",analysis:"Analysis",signals:"Signals",plans:"Plans",admin:"Admin",profile:"Profile",live:"Live",latest:"Latest analyses",viewAll:"View all",noAnalyses:"No analyses yet",noSignals:"No signals yet",noPosts:"No posts",premium:"Premium Membership",unlock:"Unlock all analyses, signals & VIP content",subscribe:"Subscribe",contact:"Contact on Telegram",signIn:"Sign In",signUp:"Sign Up",createAcc:"Create Account",welcome:"Welcome back",getStarted:"Get started for free",fill:"Fill all fields",enterName:"Enter name",email:"Email address",password:"Password",fullName:"Full name",darkMode:"Dark Mode",lightMode:"Light Mode",signOut:"Sign out",publish:"Publish",publishSignal:"Publish Signal",post:"Post",signal:"Signal",manage:"Manage",users:"Users",title:"Title",description:"Description",pair:"Pair",entry:"Entry Price",tp:"Take Profit",sl:"Stop Loss",tapImage:"Tap to select image",delete:"Delete",setpro:"Set PRO",uploadFailed:"Upload failed",published:"Published!",signalPub:"Signal published!",upgraded:"User upgraded!",downgraded:"Downgraded",language:"Language",bestValue:"Best value",active:"ACTIVE",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"Edit Signal",pnl:"PnL",closedAt:"Closed at",save:"Save",status:"Status",search:"Search...",all:"All",gold:"Gold",forex:"Forex",crypto:"Crypto",indices:"Indices",iran:"Iran Market",month1:"1 Month",month3:"3 Months",month6:"6 Months",year1:"1 Year",free:"FREE",membership:"Membership",role:"Role",joinDate:"Joined",pushEnabled:"Notifications enabled",pushEnable:"Enable Notifications",noPermission:"Notification permission denied",enterTitle:"Enter title",enterPair:"Enter pair & entry",xauusd:"Gold",btcusd:"Bitcoin",eurusd:"EUR/USD",gbpusd:"GBP/USD",xagusd:"Silver",usdirr:"USD/IRR",irgold:"Iran Gold (g)",irbourse:"Iran Bourse",onb1t:"Live Signals",onb1d:"Get real-time trading signals with entry, TP & SL levels",onb2t:"Expert Analysis",onb2d:"Professional chart analysis from experienced traders",onb3t:"Invite & Earn",onb3d:"Invite 10 friends and get 1 month free premium!",next:"Next",start:"Let's Go",referral:"Referral",yourCode:"Your Invite Code",invites:"Invites",invitesNeeded:"invites to free month",shareCode:"Share your code",copied:"Copied!",referralDesc:"Invite 10 friends and unlock 1 month free premium membership!",enterRef:"Have a referral code?",applyCode:"Apply",refApplied:"Referral code applied!",refInvalid:"Invalid code",hello:"Hello"},
+  fa:{home:"خانه",analysis:"تحلیل‌ها",signals:"سیگنال‌ها",plans:"اشتراک",admin:"مدیریت",profile:"پروفایل",live:"زنده",latest:"آخرین تحلیل‌ها",viewAll:"مشاهده همه",noAnalyses:"هنوز تحلیلی نیست",noSignals:"هنوز سیگنالی نیست",noPosts:"پستی نیست",premium:"اشتراک ویژه",unlock:"دسترسی به تمام تحلیل‌ها، سیگنال‌ها و محتوای VIP",subscribe:"خرید اشتراک",contact:"تماس در تلگرام",signIn:"ورود",signUp:"ثبت‌نام",createAcc:"ساخت حساب",welcome:"خوش آمدید",getStarted:"رایگان شروع کنید",fill:"همه فیلدها را پر کنید",enterName:"نام را وارد کنید",email:"آدرس ایمیل",password:"رمز عبور",fullName:"نام کامل",darkMode:"حالت تاریک",lightMode:"حالت روشن",signOut:"خروج",publish:"انتشار",publishSignal:"انتشار سیگنال",post:"پست",signal:"سیگنال",manage:"مدیریت",users:"کاربران",title:"عنوان",description:"توضیحات",pair:"جفت ارز",entry:"قیمت ورود",tp:"حد سود",sl:"حد ضرر",tapImage:"برای انتخاب عکس بزنید",delete:"حذف",setpro:"تنظیم PRO",uploadFailed:"آپلود ناموفق",published:"منتشر شد!",signalPub:"سیگنال منتشر شد!",upgraded:"کاربر ارتقا یافت!",downgraded:"تنزیل شد",language:"زبان",bestValue:"بهترین ارزش",active:"فعال",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"ویرایش سیگنال",pnl:"سود/ضرر",closedAt:"بسته شده در",save:"ذخیره",status:"وضعیت",search:"جستجو...",all:"همه",gold:"طلا",forex:"فارکس",crypto:"کریپتو",indices:"شاخص‌ها",iran:"بازار ایران",month1:"۱ ماه",month3:"۳ ماه",month6:"۶ ماه",year1:"۱ سال",free:"رایگان",membership:"اشتراک",role:"نقش",joinDate:"تاریخ عضویت",pushEnabled:"اعلان‌ها فعال شد",pushEnable:"فعال‌سازی اعلان‌ها",noPermission:"دسترسی اعلان رد شد",enterTitle:"عنوان را وارد کنید",enterPair:"جفت ارز و قیمت ورود را وارد کنید",xauusd:"طلا",btcusd:"بیت‌کوین",eurusd:"یورو/دلار",gbpusd:"پوند/دلار",xagusd:"نقره",usdirr:"دلار/تومان",irgold:"طلای گرمی",irbourse:"بورس ایران",onb1t:"سیگنال‌ زنده",onb1d:"دریافت سیگنال معاملاتی با نقاط ورود، TP و SL",onb2t:"تحلیل حرفه‌ای",onb2d:"تحلیل چارت توسط تریدرهای باتجربه",onb3t:"دعوت و جایزه",onb3d:"۱۰ نفر دعوت کن و ۱ ماه اشتراک رایگان بگیر!",next:"بعدی",start:"شروع کنیم",referral:"دعوت دوستان",yourCode:"کد دعوت شما",invites:"دعوت‌ها",invitesNeeded:"دعوت تا اشتراک رایگان",shareCode:"کد خود را به اشتراک بگذارید",copied:"کپی شد!",referralDesc:"۱۰ نفر دعوت کنید و ۱ ماه اشتراک ویژه رایگان دریافت کنید!",enterRef:"کد دعوت دارید؟",applyCode:"اعمال",refApplied:"کد دعوت اعمال شد!",refInvalid:"کد نامعتبر",hello:"سلام"},
   ar:{home:"الرئيسية",analysis:"التحليل",signals:"الإشارات",plans:"الاشتراك",admin:"الإدارة",profile:"الملف",live:"مباشر",latest:"آخر التحليلات",viewAll:"عرض الكل",noAnalyses:"لا توجد تحليلات بعد",noSignals:"لا توجد إشارات بعد",noPosts:"لا توجد منشورات",premium:"العضوية المميزة",unlock:"فتح جميع التحليلات والإشارات والمحتوى VIP",subscribe:"اشترك",contact:"تواصل عبر تلغرام",signIn:"تسجيل الدخول",signUp:"إنشاء حساب",createAcc:"إنشاء حساب",welcome:"مرحبا بعودتك",getStarted:"ابدأ مجاناً",fill:"املأ جميع الحقول",enterName:"أدخل الاسم",email:"البريد الإلكتروني",password:"كلمة المرور",fullName:"الاسم الكامل",darkMode:"الوضع الداكن",lightMode:"الوضع الفاتح",signOut:"تسجيل الخروج",publish:"نشر",publishSignal:"نشر الإشارة",post:"منشور",signal:"إشارة",manage:"إدارة",users:"المستخدمون",title:"العنوان",description:"الوصف",pair:"الزوج",entry:"سعر الدخول",tp:"جني الأرباح",sl:"وقف الخسارة",tapImage:"اضغط لاختيار صورة",delete:"حذف",setpro:"تعيين PRO",uploadFailed:"فشل الرفع",published:"تم النشر!",signalPub:"تم نشر الإشارة!",upgraded:"تمت ترقية المستخدم!",downgraded:"تم التخفيض",language:"اللغة",bestValue:"أفضل قيمة",active:"نشط",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"تعديل الإشارة",pnl:"الربح/الخسارة",closedAt:"أغلق في",save:"حفظ",status:"الحالة",search:"بحث...",all:"الكل",gold:"الذهب",forex:"الفوركس",crypto:"العملات الرقمية",indices:"المؤشرات",iran:"السوق الإيرانية",month1:"شهر واحد",month3:"٣ أشهر",month6:"٦ أشهر",year1:"سنة واحدة",free:"مجاني",membership:"العضوية",role:"الدور",joinDate:"تاريخ الانضمام",pushEnabled:"تم تفعيل الإشعارات",pushEnable:"تفعيل الإشعارات",noPermission:"تم رفض إذن الإشعارات",enterTitle:"أدخل العنوان",enterPair:"أدخل الزوج وسعر الدخول",xauusd:"الذهب",btcusd:"البيتكوين",eurusd:"يورو/دولار",gbpusd:"جنيه/دولار",xagusd:"الفضة",usdirr:"دولار/تومان",irgold:"ذهب إيراني (غ)",irbourse:"بورصة إيران"},
   tr:{home:"Ana Sayfa",analysis:"Analiz",signals:"Sinyaller",plans:"Planlar",admin:"Yönetici",profile:"Profil",live:"Canlı",latest:"Son analizler",viewAll:"Tümünü gör",noAnalyses:"Henüz analiz yok",noSignals:"Henüz sinyal yok",noPosts:"Gönderi yok",premium:"Premium Üyelik",unlock:"Tüm analizlere, sinyallere ve VIP içeriklere erişin",subscribe:"Abone Ol",contact:"Telegram'da iletişim",signIn:"Giriş Yap",signUp:"Kayıt Ol",createAcc:"Hesap Oluştur",welcome:"Tekrar hoş geldiniz",getStarted:"Ücretsiz başla",fill:"Tüm alanları doldurun",enterName:"İsim girin",email:"E-posta adresi",password:"Şifre",fullName:"Ad Soyad",darkMode:"Karanlık Mod",lightMode:"Aydınlık Mod",signOut:"Çıkış Yap",publish:"Yayınla",publishSignal:"Sinyal Yayınla",post:"Gönderi",signal:"Sinyal",manage:"Yönet",users:"Kullanıcılar",title:"Başlık",description:"Açıklama",pair:"Çift",entry:"Giriş Fiyatı",tp:"Kâr Al",sl:"Zarar Durdur",tapImage:"Resim seçmek için dokunun",delete:"Sil",setpro:"PRO Yap",uploadFailed:"Yükleme başarısız",published:"Yayınlandı!",signalPub:"Sinyal yayınlandı!",upgraded:"Kullanıcı yükseltildi!",downgraded:"İndirildi",language:"Dil",bestValue:"En iyi değer",active:"AKTİF",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"Sinyal Düzenle",pnl:"Kâr/Zarar",closedAt:"Kapandı",save:"Kaydet",status:"Durum",search:"Ara...",all:"Tümü",gold:"Altın",forex:"Forex",crypto:"Kripto",indices:"Endeksler",iran:"İran Piyasası",month1:"1 Ay",month3:"3 Ay",month6:"6 Ay",year1:"1 Yıl",free:"ÜCRETSİZ",membership:"Üyelik",role:"Rol",joinDate:"Katılım",pushEnabled:"Bildirimler aktif",pushEnable:"Bildirimleri Etkinleştir",noPermission:"Bildirim izni reddedildi",enterTitle:"Başlık girin",enterPair:"Çift ve giriş fiyatı girin",xauusd:"Altın",btcusd:"Bitcoin",eurusd:"EUR/USD",gbpusd:"GBP/USD",xagusd:"Gümüş",usdirr:"USD/IRR",irgold:"İran Altın (g)",irbourse:"İran Borsası"},
   ru:{home:"Главная",analysis:"Анализ",signals:"Сигналы",plans:"Планы",admin:"Админ",profile:"Профиль",live:"Онлайн",latest:"Последние анализы",viewAll:"Все",noAnalyses:"Пока нет анализов",noSignals:"Пока нет сигналов",noPosts:"Нет постов",premium:"Премиум подписка",unlock:"Доступ ко всем анализам, сигналам и VIP контенту",subscribe:"Подписаться",contact:"Связаться в Telegram",signIn:"Войти",signUp:"Регистрация",createAcc:"Создать аккаунт",welcome:"С возвращением",getStarted:"Начните бесплатно",fill:"Заполните все поля",enterName:"Введите имя",email:"Электронная почта",password:"Пароль",fullName:"Полное имя",darkMode:"Тёмная тема",lightMode:"Светлая тема",signOut:"Выйти",publish:"Опубликовать",publishSignal:"Опубликовать сигнал",post:"Пост",signal:"Сигнал",manage:"Управление",users:"Пользователи",title:"Заголовок",description:"Описание",pair:"Пара",entry:"Цена входа",tp:"Тейк-профит",sl:"Стоп-лосс",tapImage:"Нажмите для выбора изображения",delete:"Удалить",setpro:"Установить PRO",uploadFailed:"Загрузка не удалась",published:"Опубликовано!",signalPub:"Сигнал опубликован!",upgraded:"Пользователь повышен!",downgraded:"Понижен",language:"Язык",bestValue:"Лучшая цена",active:"АКТИВНЫЙ",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"Редактировать сигнал",pnl:"PnL",closedAt:"Закрыт",save:"Сохранить",status:"Статус",search:"Поиск...",all:"Все",gold:"Золото",forex:"Форекс",crypto:"Крипто",indices:"Индексы",iran:"Рынок Ирана",month1:"1 Месяц",month3:"3 Месяца",month6:"6 Месяцев",year1:"1 Год",free:"БЕСПЛАТНО",membership:"Подписка",role:"Роль",joinDate:"Дата",pushEnabled:"Уведомления включены",pushEnable:"Включить уведомления",noPermission:"Разрешение на уведомления отклонено",enterTitle:"Введите заголовок",enterPair:"Введите пару и цену входа",xauusd:"Золото",btcusd:"Биткоин",eurusd:"EUR/USD",gbpusd:"GBP/USD",xagusd:"Серебро",usdirr:"USD/IRR",irgold:"Иран Золото (г)",irbourse:"Иран Биржа"}
@@ -513,6 +544,19 @@ function SignalScoreboard({signals}){
   const winRate=closed>0?((tpHit/closed)*100).toFixed(0):0;
   let totalPips=0;
   sigs.forEach(s=>{if(s.pnl){const n=parseFloat(s.pnl.replace(/[^0-9.\-+]/g,""));if(!isNaN(n))totalPips+=n}});
+  // Build equity curve data from closed signals
+  const equityData=useMemo(()=>{
+    const closedSigs=sigs.filter(s=>s.status==="tp_hit"||s.status==="sl_hit").sort((a,b)=>new Date(a.closed_at||a.created_at)-new Date(b.closed_at||b.created_at));
+    let cumPips=0;const data=[];
+    closedSigs.forEach((s,i)=>{
+      const n=s.pnl?parseFloat(s.pnl.replace(/[^0-9.\-+]/g,"")):0;
+      cumPips+=n;
+      const dt=new Date(s.closed_at||s.created_at);
+      data.push({pips:cumPips,date:`${dt.getMonth()+1}/${dt.getDate()}`,raw:n,status:s.status});
+    });
+    return data;
+  },[sigs]);
+  const maxPips=equityData.length?Math.max(...equityData.map(d=>Math.abs(d.pips)),1):1;
   if(total===0)return null;
   return(<div className="cd" style={{marginBottom:12}}>
     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
@@ -539,6 +583,26 @@ function SignalScoreboard({signals}){
     {totalPips!==0&&<div style={{marginTop:10,textAlign:"center",padding:10,background:totalPips>0?"color-mix(in srgb,var(--G) 5%,var(--bg))":"color-mix(in srgb,var(--R) 5%,var(--bg))",borderRadius:10,border:`1px solid ${totalPips>0?"color-mix(in srgb,var(--G) 15%,transparent)":"color-mix(in srgb,var(--R) 15%,transparent)"}`}}>
       <span style={{fontSize:10,color:"var(--dm)",fontWeight:600}}>Total Pips: </span>
       <span className="m" style={{fontSize:16,fontWeight:700,color:totalPips>0?"var(--G)":"var(--R)"}}>{totalPips>0?"+":""}{totalPips.toLocaleString()}</span>
+    </div>}
+    {equityData.length>1&&<div style={{marginTop:12}}>
+      <div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginBottom:6}}>📈 Equity Curve (Cumulative Pips)</div>
+      <div style={{position:"relative",height:80,background:"var(--bg)",borderRadius:10,border:"1px solid var(--brd)",padding:"8px 4px",overflow:"hidden"}}>
+        <svg width="100%" height="100%" viewBox={`0 0 ${equityData.length*20} 60`} preserveAspectRatio="none" style={{display:"block"}}>
+          <defs>
+            <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={totalPips>=0?"#22c55e":"#ef4444"} stopOpacity="0.3"/>
+              <stop offset="100%" stopColor={totalPips>=0?"#22c55e":"#ef4444"} stopOpacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d={`M0,${30-equityData[0].pips/maxPips*25} ${equityData.map((d,i)=>`L${i*(equityData.length>1?((equityData.length)*20-20)/(equityData.length-1):0)},${30-d.pips/maxPips*25}`).join(" ")} L${(equityData.length-1)*(equityData.length>1?((equityData.length)*20-20)/(equityData.length-1):0)},60 L0,60 Z`} fill="url(#eqGrad)"/>
+          <polyline points={equityData.map((d,i)=>`${i*(equityData.length>1?((equityData.length)*20-20)/(equityData.length-1):0)},${30-d.pips/maxPips*25}`).join(" ")} fill="none" stroke={totalPips>=0?"#22c55e":"#ef4444"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          {equityData.map((d,i)=><circle key={i} cx={i*(equityData.length>1?((equityData.length)*20-20)/(equityData.length-1):0)} cy={30-d.pips/maxPips*25} r="2" fill={d.status==="tp_hit"?"#22c55e":"#ef4444"}/>)}
+        </svg>
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",marginTop:4,fontSize:8,color:"var(--dm)"}}>
+        <span>{equityData[0]?.date}</span>
+        <span>{equityData[equityData.length-1]?.date}</span>
+      </div>
     </div>}
     <div style={{marginTop:10}}>
       <div style={{height:6,borderRadius:3,background:"var(--brd)",overflow:"hidden",display:"flex"}}>
@@ -584,6 +648,132 @@ function Toast({msg,onDone}){
   useEffect(()=>{if(msg){const t=setTimeout(onDone,2500);return()=>clearTimeout(t)}},[msg]);
   if(!msg)return null;
   return<div className="toast">{msg}</div>;
+}
+
+/* ─── Splash Screen ─── */
+function SplashScreen({onDone}){
+  const[out,setOut]=useState(false);
+  useEffect(()=>{const t1=setTimeout(()=>setOut(true),1800);const t2=setTimeout(onDone,2300);return()=>{clearTimeout(t1);clearTimeout(t2)}},[]);
+  return(<div className={`splash${out?" out":""}`}>
+    <div className="splash-logo">Fxscalproom<b>.</b></div>
+    <div className="splash-sub">Professional Trading Signals</div>
+    <div className="splash-dots"><span/><span/><span/></div>
+  </div>);
+}
+
+/* ─── Onboarding ─── */
+function Onboarding({onDone,lang}){
+  const t=T[lang]||T.en;
+  const[step,setStep]=useState(0);
+  const[out,setOut]=useState(false);
+  const slides=[
+    {icon:"📡",title:t.onb1t||"Live Signals",desc:t.onb1d||"Get real-time trading signals with entry, TP & SL levels"},
+    {icon:"📊",title:t.onb2t||"Expert Analysis",desc:t.onb2d||"Professional chart analysis from experienced traders"},
+    {icon:"🎁",title:t.onb3t||"Invite & Earn",desc:t.onb3d||"Invite 10 friends and get 1 month free premium!"},
+  ];
+  const next=()=>{if(step<slides.length-1)setStep(step+1);else{setOut(true);setTimeout(onDone,400)}};
+  return(<div className={`onb-overlay${out?" out":""}`}>
+    <div className="onb-card" key={step}>
+      <div className="onb-icon">{slides[step].icon}</div>
+      <div className="onb-title">{slides[step].title}</div>
+      <div className="onb-desc">{slides[step].desc}</div>
+    </div>
+    <div className="onb-dots">{slides.map((_,i)=><span key={i} className={i===step?"act":""}/>)}</div>
+    <button className="bt" style={{background:"var(--R)",maxWidth:280,width:"100%"}} onClick={next}>
+      {step<slides.length-1?(t.next||"Next"):(t.start||"Let's Go")}
+    </button>
+  </div>);
+}
+
+/* ─── Pull to Refresh ─── */
+function usePullToRefresh(onRefresh){
+  const[pulling,setPulling]=useState(false);
+  const[refreshing,setRefreshing]=useState(false);
+  const startY=useRef(0);const el=useRef(null);
+  const onTouchStart=useCallback(e=>{if(window.scrollY<=0)startY.current=e.touches[0].clientY},[]);
+  const onTouchMove=useCallback(e=>{if(startY.current>0&&!refreshing){const dy=e.touches[0].clientY-startY.current;if(dy>60&&window.scrollY<=0)setPulling(true)}},[refreshing]);
+  const onTouchEnd=useCallback(async()=>{if(pulling&&!refreshing){setRefreshing(true);setPulling(false);await onRefresh();setRefreshing(false)}startY.current=0;setPulling(false)},[pulling,refreshing,onRefresh]);
+  useEffect(()=>{const d=document;d.addEventListener("touchstart",onTouchStart,{passive:true});d.addEventListener("touchmove",onTouchMove,{passive:true});d.addEventListener("touchend",onTouchEnd);return()=>{d.removeEventListener("touchstart",onTouchStart);d.removeEventListener("touchmove",onTouchMove);d.removeEventListener("touchend",onTouchEnd)}},[onTouchStart,onTouchMove,onTouchEnd]);
+  const PTR=()=>(<div className={`ptr${pulling||refreshing?" active":""}`}>{refreshing?<div className="ptr-spinner"/>:<div style={{padding:"12px 0",fontSize:11,color:"var(--dm)",fontWeight:600}}>↓ Pull to refresh</div>}</div>);
+  return{PTR,refreshing};
+}
+
+/* ─── Referral Section (Profile) ─── */
+function ReferralSection({userId,token,userProfile}){
+  const{t}=useLang();
+  const[refCode,setRefCode]=useState("");
+  const[referrals,setReferrals]=useState(0);
+  const[inputCode,setInputCode]=useState("");
+  const[msg,setMsg]=useState("");
+  const[copied,setCopied]=useState(false);
+  const needed=10;
+  useEffect(()=>{
+    if(!userId)return;
+    const code="FX"+userId.slice(0,6).toUpperCase();
+    setRefCode(code);
+    const loadRefs=async()=>{
+      try{
+        const r=await fetch(`${SB}/rest/v1/Referrals?referrer_id=eq.${userId}&select=id`,{headers:H(token)});
+        const d=await r.json();
+        if(Array.isArray(d))setReferrals(d.length);
+      }catch(e){}
+    };
+    loadRefs();
+  },[userId,token]);
+  const copyCode=()=>{navigator.clipboard?.writeText(refCode);setCopied(true);setTimeout(()=>setCopied(false),2000)};
+  const shareCode=()=>{if(navigator.share){navigator.share({title:"Fxscalproom",text:`Join Fxscalproom with my invite code: ${refCode}`,url:window.location.origin})}else copyCode()};
+  const applyRef=async()=>{
+    if(!inputCode.trim()||inputCode.trim()===refCode){setMsg(t.refInvalid||"Invalid code");return}
+    try{
+      const chk=await fetch(`${SB}/rest/v1/Users?id=like.*${inputCode.replace("FX","").toLowerCase()}*&select=id`,{headers:H(token)});
+      const d=await chk.json();
+      if(!Array.isArray(d)||!d.length){setMsg(t.refInvalid||"Invalid code");return}
+      const referrerId=d[0].id;
+      const exists=await fetch(`${SB}/rest/v1/Referrals?referrer_id=eq.${referrerId}&referred_id=eq.${userId}`,{headers:H(token)});
+      const ex=await exists.json();
+      if(Array.isArray(ex)&&ex.length>0){setMsg("Already applied!");return}
+      await fetch(`${SB}/rest/v1/Referrals`,{method:"POST",headers:H(token),body:JSON.stringify({referrer_id:referrerId,referred_id:userId,code:inputCode.trim()})});
+      setMsg(t.refApplied||"Referral code applied!");
+      setInputCode("");
+    }catch(e){setMsg(e.message)}
+    setTimeout(()=>setMsg(""),3000);
+  };
+  const pct=Math.min(100,(referrals/needed)*100);
+  const remaining=Math.max(0,needed-referrals);
+  return(<div className="cd" style={{marginBottom:6}}>
+    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+      <span style={{fontSize:18}}>🎁</span>
+      <div>
+        <div style={{fontSize:14,fontWeight:700}}>{t.referral||"Referral"}</div>
+        <div style={{fontSize:11,color:"var(--tx2)",marginTop:2}}>{t.referralDesc||"Invite 10 friends for 1 month free premium!"}</div>
+      </div>
+    </div>
+    <div style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:12,padding:14,marginBottom:10}}>
+      <div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginBottom:8}}>{t.yourCode||"Your Invite Code"}</div>
+      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+        <div className="m" style={{flex:1,fontSize:20,fontWeight:700,letterSpacing:2,color:"var(--R)",textAlign:"center"}}>{refCode}</div>
+        <div onClick={copyCode} style={{padding:"8px 14px",borderRadius:8,background:"color-mix(in srgb,var(--R) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 20%,transparent)",cursor:"pointer",fontSize:11,fontWeight:600,color:"var(--R)"}}>{copied?(t.copied||"Copied!"):"Copy"}</div>
+      </div>
+    </div>
+    <div style={{marginBottom:12}}>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+        <span style={{fontSize:11,fontWeight:600,color:"var(--tx2)"}}>{t.invites||"Invites"}: {referrals}/{needed}</span>
+        <span style={{fontSize:11,fontWeight:600,color:remaining===0?"var(--G)":"var(--dm)"}}>{remaining===0?"🎉 Unlocked!":`${remaining} ${t.invitesNeeded||"more needed"}`}</span>
+      </div>
+      <div style={{height:8,borderRadius:4,background:"var(--brd)",overflow:"hidden"}}>
+        <div style={{height:"100%",borderRadius:4,background:pct>=100?"var(--G)":"var(--R)",width:`${pct}%`,transition:"width .5s ease"}}/>
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",marginTop:6}}>
+        {Array.from({length:needed}).map((_,i)=><div key={i} style={{width:8,height:8,borderRadius:"50%",background:i<referrals?"var(--G)":"var(--brd)",transition:".3s"}}/>)}
+      </div>
+    </div>
+    <button className="bt" style={{background:"var(--R)",marginBottom:10}} onClick={shareCode}>{t.shareCode||"Share your code"}</button>
+    <div style={{display:"flex",gap:6}}>
+      <input className="ip" placeholder={t.enterRef||"Have a referral code?"} value={inputCode} onChange={e=>setInputCode(e.target.value)} style={{marginBottom:0,flex:1}}/>
+      <button className="bt" style={{background:"var(--B)",width:"auto",padding:"12px 18px"}} onClick={applyRef}>{t.applyCode||"Apply"}</button>
+    </div>
+    {msg&&<div style={{marginTop:8,fontSize:12,fontWeight:600,color:msg.includes("!")?"var(--G)":"var(--R)",textAlign:"center"}}>{msg}</div>}
+  </div>);
 }
 
 /* ─── Post Detail Modal ─── */
@@ -764,7 +954,14 @@ function Home({posts,signals,go,P,ok,dark,toggle,userProfile}){
   const[sel,setSel]=useState(null);
   const theme=dark?"dark":"light";
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
+  const firstName=(userProfile?.full_name||"").split(" ")[0]||"";
+  const hour=new Date().getHours();
+  const greeting=hour<12?(lang==="fa"?"صبح بخیر":"Good morning"):hour<18?(lang==="fa"?"عصر بخیر":"Good afternoon"):(lang==="fa"?"شب بخیر":"Good evening");
   return(<div className="fi">
+    {firstName&&<div style={{marginBottom:14,padding:"14px 0 4px"}}>
+      <div style={{fontSize:20,fontWeight:700,lineHeight:1.3}}>{greeting}، {firstName} 👋</div>
+      <div style={{fontSize:12,color:"var(--tx2)",marginTop:4}}>{lang==="fa"?"بازارها رو رصد کن و بهترین فرصت‌ها رو پیدا کن":"Track markets and find the best opportunities"}</div>
+    </div>}
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
       <div style={{display:"flex",alignItems:"center",gap:8}}><div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/></div>
       <div onClick={toggle} style={{cursor:"pointer",color:"var(--mu)",padding:4}}>{dark?IC.sun:IC.moon}</div>
@@ -1163,7 +1360,7 @@ function Adm({token,posts,signals,onR}){
 }
 
 /* ─── Profile ─── */
-function Prof({user,up,onOut,dark,toggle,lang,setLang}){
+function Prof({user,up,onOut,dark,toggle,lang,setLang,token}){
   const{t}=useLang();
   const noti=useNotifications();
   const[showLang,setShowLang]=useState(false);
@@ -1176,6 +1373,7 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang}){
         {(up?.membership||"free").toUpperCase()}{up?.role==="admin"?" · ADMIN":""}
       </div>
     </div>
+    <ReferralSection userId={user?.id} token={token} userProfile={up}/>
     <div onClick={toggle} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:14,marginBottom:6,cursor:"pointer"}}>
       <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{color:"var(--mu)"}}>{dark?IC.moon:IC.sun}</span><span style={{fontSize:13,fontWeight:500}}>{dark?t.darkMode:t.lightMode}</span></div>
       <div style={{width:40,height:22,borderRadius:11,background:dark?"var(--R)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:dark?20:2,transition:".2s"}}/></div>
@@ -1206,22 +1404,39 @@ function App(){
   const[up,setUp]=useState(null),[adm,setAdm]=useState(false);
   const[tab,setTab]=useState(0),[posts,setP]=useState([]),[sigs,setS]=useState([]);
   const[lang,setLangState]=useState(()=>{try{return localStorage.getItem("fxlang")||"en"}catch(e){return"en"}});
+  const[showSplash,setShowSplash]=useState(()=>{try{return!sessionStorage.getItem("fx_splash")}catch(e){return true}});
+  const[showOnb,setShowOnb]=useState(()=>{try{return!localStorage.getItem("fx_onb")}catch(e){return true}});
+  const[lastPostCount,setLastPostCount]=useState(()=>{try{return parseInt(localStorage.getItem("fx_pc")||"0")}catch(e){return 0}});
+  const[lastSigCount,setLastSigCount]=useState(()=>{try{return parseInt(localStorage.getItem("fx_sc")||"0")}catch(e){return 0}});
   const{P,ok}=usePrices();const{dark,toggle}=useTheme();
   const t=T[lang]||T.en;
   const handleAuth=(token,user)=>{setTk(token);setUsr(user);try{localStorage.setItem("fx_tk",token);localStorage.setItem("fx_usr",JSON.stringify(user))}catch(e){}};
   const handleLogout=()=>{setTk(null);setUsr(null);setAdm(false);setUp(null);setTab(0);try{localStorage.removeItem("fx_tk");localStorage.removeItem("fx_usr")}catch(e){}};
   const setLang=(l)=>{setLangState(l);try{localStorage.setItem("fxlang",l)}catch(e){};const isRtl=RTL_LANGS.includes(l);document.documentElement.setAttribute("dir",isRtl?"rtl":"ltr");document.documentElement.setAttribute("lang",l)};
   useEffect(()=>{const isRtl=RTL_LANGS.includes(lang);document.documentElement.setAttribute("dir",isRtl?"rtl":"ltr");document.documentElement.setAttribute("lang",lang)},[]);
-  const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p))setP(p);else if(p?.message){handleLogout();return}const s=await api.get("Signals",tk);if(Array.isArray(s))setS(s)}catch(e){}},[tk]);
+  const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p)){setP(p);try{localStorage.setItem("fx_pc",String(p.length))}catch(e){}}else if(p?.message){handleLogout();return}const s=await api.get("Signals",tk);if(Array.isArray(s)){setS(s);try{localStorage.setItem("fx_sc",String(s.length))}catch(e){}}}catch(e){}},[tk]);
   const chk=useCallback(async(u,t)=>{try{const r=await fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{headers:H(t)});const d=await r.json();if(Array.isArray(d)&&d[0]){setUp(d[0]);if(d[0].role==="admin")setAdm(true)}}catch(e){}},[]);
   useEffect(()=>{if(tk)load()},[tk,load]);
   useEffect(()=>{if(tk&&usr)chk(usr,tk)},[tk,usr,chk]);
   useEffect(()=>{if(tk){const i=setInterval(load,30000);return()=>clearInterval(i)}},[tk,load]);
-  if(!tk)return<Auth onAuth={handleAuth} lang={lang} setLang={setLang}/>;
+  const{PTR}=usePullToRefresh(load);
+  // Notification badges
+  const newPosts=posts.length>lastPostCount?posts.length-lastPostCount:0;
+  const newSigs=sigs.length>lastSigCount?sigs.length-lastSigCount:0;
+  const clearBadge=(key)=>{
+    if(key==="analysis"&&newPosts>0){setLastPostCount(posts.length);try{localStorage.setItem("fx_pc",String(posts.length))}catch(e){}}
+    if(key==="signals"&&newSigs>0){setLastSigCount(sigs.length);try{localStorage.setItem("fx_sc",String(sigs.length))}catch(e){}}
+  };
+  const splashDone=()=>{setShowSplash(false);try{sessionStorage.setItem("fx_splash","1")}catch(e){}};
+  const onbDone=()=>{setShowOnb(false);try{localStorage.setItem("fx_onb","1")}catch(e){}};
+  if(showSplash)return<SplashScreen onDone={splashDone}/>;
+  if(!tk){
+    return<>{showOnb&&<Onboarding onDone={onbDone} lang={lang}/>}<Auth onAuth={handleAuth} lang={lang} setLang={setLang}/></>;
+  }
   const AT=[
     {l:t.home,k:"home",i:IC.home},
-    {l:t.analysis,k:"analysis",i:IC.analysis},
-    {l:t.signals,k:"signals",i:IC.sig},
+    {l:t.analysis,k:"analysis",i:IC.analysis,badge:newPosts},
+    {l:t.signals,k:"signals",i:IC.sig,badge:newSigs},
     {l:t.plans,k:"plans",i:IC.pla},
     {l:t.admin,k:"admin",i:IC.adm,ao:true},
     {l:t.profile,k:"profile",i:IC.usr}
@@ -1229,14 +1444,14 @@ function App(){
   const VT=AT.filter(tab=>!tab.ao||adm);
   const st=Math.min(tab,VT.length-1);
   const cur=VT[st];
-  const goTab=i=>setTab(i);
+  const goTab=i=>{setTab(i);clearBadge(VT[i]?.k)};
   const scr=()=>{switch(cur?.k){
     case"home":return<Home posts={posts} signals={sigs} go={goTab} P={P} ok={ok} dark={dark} toggle={toggle} userProfile={up}/>;
     case"analysis":return<Analysis posts={posts} userProfile={up}/>;
     case"signals":return<Sigs signals={sigs} userProfile={up}/>;
     case"plans":return<Plans userProfile={up}/>;
     case"admin":return<Adm token={tk} posts={posts} signals={sigs} onR={load}/>;
-    case"profile":return<Prof user={usr} up={up} onOut={handleLogout} dark={dark} toggle={toggle} lang={lang} setLang={setLang}/>;
+    case"profile":return<Prof user={usr} up={up} onOut={handleLogout} dark={dark} toggle={toggle} lang={lang} setLang={setLang} token={tk}/>;
     default:return null;
   }};
   return(
@@ -1249,10 +1464,16 @@ function App(){
             <span style={{fontSize:12,color:"var(--mu)",fontWeight:500}}>{cur?.l}</span>
           </div>
         </div>
-        <div className="ct">{scr()}</div>
+        <div className="ct">
+          <PTR/>
+          {scr()}
+        </div>
         <div className="tb">{VT.map((tab,i)=>
-          <div key={i} className={`ti${st===i?" ti-active":""}`} onClick={()=>setTab(i)} style={{color:st===i?"var(--tx)":"var(--dm)"}}>
-            {tab.i}
+          <div key={i} className={`ti${st===i?" ti-active":""}`} onClick={()=>goTab(i)} style={{color:st===i?"var(--tx)":"var(--dm)"}}>
+            <div style={{position:"relative"}}>
+              {tab.i}
+              {tab.badge>0&&st!==i&&<div className="nb"/>}
+            </div>
             <span style={{fontSize:9,fontWeight:600,color:st===i?"var(--R)":"var(--dm)"}}>{tab.l}</span>
           </div>
         )}</div>
