@@ -700,7 +700,7 @@ function usePullToRefresh(onRefresh){
 
 /* ─── Referral Section (Profile) ─── */
 function ReferralSection({userId,token,userProfile}){
-  const{t}=useLang();
+  const{t,lang}=useLang();
   const[refCode,setRefCode]=useState("");
   const[referrals,setReferrals]=useState(0);
   const[inputCode,setInputCode]=useState("");
@@ -758,7 +758,7 @@ function ReferralSection({userId,token,userProfile}){
     <div style={{marginBottom:12}}>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
         <span style={{fontSize:11,fontWeight:600,color:"var(--tx2)"}}>{t.invites||"Invites"}: {referrals}/{needed}</span>
-        <span style={{fontSize:11,fontWeight:600,color:remaining===0?"var(--G)":"var(--dm)"}}>{remaining===0?"🎉 Unlocked!":`${remaining} ${t.invitesNeeded||"more needed"}`}</span>
+        <span style={{fontSize:11,fontWeight:600,color:remaining===0?"var(--G)":"var(--dm)"}}>{remaining===0?(lang==="fa"?"⏳ منتظر فعال‌سازی باشید":"⏳ Awaiting activation"):`${remaining} ${t.invitesNeeded||"more needed"}`}</span>
       </div>
       <div style={{height:8,borderRadius:4,background:"var(--brd)",overflow:"hidden"}}>
         <div style={{height:"100%",borderRadius:4,background:pct>=100?"var(--G)":"var(--R)",width:`${pct}%`,transition:"width .5s ease"}}/>
@@ -766,6 +766,10 @@ function ReferralSection({userId,token,userProfile}){
       <div style={{display:"flex",justifyContent:"space-between",marginTop:6}}>
         {Array.from({length:needed}).map((_,i)=><div key={i} style={{width:8,height:8,borderRadius:"50%",background:i<referrals?"var(--G)":"var(--brd)",transition:".3s"}}/>)}
       </div>
+      {remaining===0&&<div style={{marginTop:10,padding:12,borderRadius:10,background:"color-mix(in srgb,var(--G) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 15%,transparent)",textAlign:"center"}}>
+        <div style={{fontSize:13,fontWeight:700,color:"var(--G)",marginBottom:4}}>🎉 {lang==="fa"?"تبریک! ۱۰ دعوت تکمیل شد":"Congratulations! 10 invites completed"}</div>
+        <div style={{fontSize:11,color:"var(--tx2)"}}>{lang==="fa"?"اشتراک ویژه شما به زودی توسط ادمین فعال می‌شود":"Your premium will be activated by admin shortly"}</div>
+      </div>}
     </div>
     <button className="bt" style={{background:"var(--R)",marginBottom:10}} onClick={shareCode}>{t.shareCode||"Share your code"}</button>
     <div style={{display:"flex",gap:6}}>
@@ -1224,7 +1228,7 @@ function PostEditModal({post,onClose,onSave}){
 }
 
 function Adm({token,posts,signals,onR}){
-  const{t}=useLang();
+  const{t,lang}=useLang();
   const[tb,setTb]=useState("post");
   const[ti,setTi]=useState(""),[de,setDe]=useState(""),[ca,setCa]=useState("gold"),[pr,setPr]=useState(false),[fi2,setFi]=useState(null),[pv,setPv]=useState(null);
   const[pa,setPa]=useState(""),[st,setSt]=useState("BUY"),[en,setEn]=useState(""),[tp1,setTp1]=useState(""),[tp2,setTp2]=useState(""),[tp3,setTp3]=useState(""),[sl,setSl]=useState(""),[sigPr,setSigPr]=useState(false);
@@ -1236,8 +1240,9 @@ function Adm({token,posts,signals,onR}){
   const[sigCustomDate,setSigCustomDate]=useState(false),[sigDate,setSigDate]=useState("");
   const[editUserExp,setEditUserExp]=useState(null);
   const[expDate,setExpDate]=useState("");
+  const[refCounts,setRefCounts]=useState({});
   const noti=useNotifications();
-  useEffect(()=>{if(tb==="users")api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})},[tb,token]);
+  useEffect(()=>{if(tb==="users"){api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)});fetch(`${SB}/rest/v1/Referrals?select=referrer_id`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const counts={};d.forEach(r=>{counts[r.referrer_id]=(counts[r.referrer_id]||0)+1});setRefCounts(counts)}}).catch(()=>{})}},[tb,token]);
   const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}const data={title:ti,description:de,category:ca,image_url:u,is_premium:pr,likes:0};if(customDate&&postDate)data.created_at=new Date(postDate).toISOString();await api.add("Posts",data,token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);setCustomDate(false);setPostDate("");onR();noti.notify("Fxscalproom","New analysis: "+ti)}catch(e){setMs(e.message)}setLd(false)};
   const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{const data={pair:pa,type:st,entry_price:en,take_profit:tp1,tp2:tp2||null,tp3:tp3||null,stop_loss:sl,status:"active",pnl:null,closed_at:null,is_premium:sigPr};if(sigCustomDate&&sigDate)data.created_at=new Date(sigDate).toISOString();await api.add("Signals",data,token);setMs(t.signalPub);setPa("");setEn("");setTp1("");setTp2("");setTp3("");setSl("");setSigPr(false);setSigCustomDate(false);setSigDate("");onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st)}catch(e){setMs(e.message)}setLd(false)};
   const delP=async id=>{if(!confirm("Delete?"))return;await api.del("Posts",id,token);onR()};
@@ -1332,6 +1337,7 @@ function Adm({token,posts,signals,onR}){
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:12,fontWeight:600}}>{u.full_name||"No name"}</div>
             <div style={{fontSize:10,color:"var(--dm)"}}>{u.email}</div>
+            {refCounts[u.id]>0&&<div style={{fontSize:9,fontWeight:700,color:"var(--Y)",marginTop:2,display:"flex",alignItems:"center",gap:3}}>🎁 {refCounts[u.id]}/10 {lang==="fa"?"دعوت":"invites"}{refCounts[u.id]>=10?<span style={{color:"var(--G)",marginLeft:4}}>✅ READY</span>:""}</div>}
             {u.membership==="premium"&&exp&&<div style={{fontSize:9,color:dLeft<=7?"var(--R)":"var(--G)",marginTop:2,fontWeight:600}}>{dLeft} days left · {exp.toLocaleDateString()}</div>}
           </div>
           {u.membership==="premium"?
@@ -1360,14 +1366,34 @@ function Adm({token,posts,signals,onR}){
 }
 
 /* ─── Profile ─── */
-function Prof({user,up,onOut,dark,toggle,lang,setLang,token}){
+function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange}){
   const{t}=useLang();
   const noti=useNotifications();
   const[showLang,setShowLang]=useState(false);
+  const[editingName,setEditingName]=useState(false);
+  const[newName,setNewName]=useState(up?.full_name||"");
+  const[nameSaving,setNameSaving]=useState(false);
+  const saveName=async()=>{
+    if(!newName.trim())return;
+    setNameSaving(true);
+    try{
+      await fetch(`${SB}/rest/v1/Users?id=eq.${user.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({full_name:newName.trim()})});
+      if(onNameChange)onNameChange(newName.trim());
+      setEditingName(false);
+    }catch(e){}
+    setNameSaving(false);
+  };
   return(<div className="fi">
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"28px 0 30px"}}>
       <div style={{width:72,height:72,borderRadius:"50%",background:"var(--bg2)",border:"2px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,fontWeight:700,marginBottom:14}}>{(up?.full_name||user?.email||"U")[0].toUpperCase()}</div>
-      <div style={{fontSize:17,fontWeight:600}}>{up?.full_name||"User"}</div>
+      {editingName?<div style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
+        <input className="ip" value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveName()} style={{marginBottom:0,width:180,textAlign:"center",fontSize:15,fontWeight:600}} autoFocus/>
+        <div onClick={saveName} style={{cursor:"pointer",color:"var(--G)",padding:4,opacity:nameSaving?.5:1}}>{IC.ck}</div>
+        <div onClick={()=>{setEditingName(false);setNewName(up?.full_name||"")}} style={{cursor:"pointer",color:"var(--mu)",padding:4}}>{IC.x}</div>
+      </div>:<div style={{display:"flex",alignItems:"center",gap:6}}>
+        <div style={{fontSize:17,fontWeight:600}}>{up?.full_name||"User"}</div>
+        <div onClick={()=>{setNewName(up?.full_name||"");setEditingName(true)}} style={{cursor:"pointer",color:"var(--mu)",padding:2}}>{IC.edit}</div>
+      </div>}
       <div style={{fontSize:12,color:"var(--dm)",marginTop:4}}>{user?.email}</div>
       <div style={{marginTop:10,fontSize:11,fontWeight:600,color:up?.membership==="premium"?"var(--G)":"var(--mu)",background:up?.membership==="premium"?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--mu) 10%,transparent)",padding:"4px 12px",borderRadius:20}}>
         {(up?.membership||"free").toUpperCase()}{up?.role==="admin"?" · ADMIN":""}
@@ -1451,7 +1477,7 @@ function App(){
     case"signals":return<Sigs signals={sigs} userProfile={up}/>;
     case"plans":return<Plans userProfile={up}/>;
     case"admin":return<Adm token={tk} posts={posts} signals={sigs} onR={load}/>;
-    case"profile":return<Prof user={usr} up={up} onOut={handleLogout} dark={dark} toggle={toggle} lang={lang} setLang={setLang} token={tk}/>;
+    case"profile":return<Prof user={usr} up={up} onOut={handleLogout} dark={dark} toggle={toggle} lang={lang} setLang={setLang} token={tk} onNameChange={(name)=>{setUp(prev=>prev?{...prev,full_name:name}:prev)}}/>;
     default:return null;
   }};
   return(
