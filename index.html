@@ -706,16 +706,34 @@ function ReferralSection({userId,token,userProfile}){
   const[inputCode,setInputCode]=useState("");
   const[msg,setMsg]=useState("");
   const[copied,setCopied]=useState(false);
+  const[alreadyReferred,setAlreadyReferred]=useState(false);
+  const[applyLoading,setApplyLoading]=useState(false);
   const needed=10;
   useEffect(()=>{
     if(!userId)return;
-    const code="FX"+userId.slice(0,6).toUpperCase();
-    setRefCode(code);
+    // Read invite_code from profile, or generate fallback
+    if(userProfile?.invite_code){
+      setRefCode(userProfile.invite_code);
+    } else {
+      // Generate a code client-side as fallback and save it
+      const fallback="FX"+userId.replace(/-/g,'').slice(0,8).toUpperCase();
+      setRefCode(fallback);
+      const saveCode=async()=>{
+        try{
+          await fetch(`${SB}/rest/v1/Users?id=eq.${userId}`,{method:"PATCH",headers:H(token),body:JSON.stringify({invite_code:fallback})});
+        }catch(e){}
+      };
+      saveCode();
+    }
     const loadRefs=async()=>{
       try{
         const r=await fetch(`${SB}/rest/v1/Referrals?referrer_id=eq.${userId}&select=id`,{headers:H(token)});
         const d=await r.json();
         if(Array.isArray(d))setReferrals(d.length);
+        // Check if current user already used a referral code
+        const myRef=await fetch(`${SB}/rest/v1/Referrals?referred_id=eq.${userId}&select=id`,{headers:H(token)});
+        const myRefData=await myRef.json();
+        if(Array.isArray(myRefData)&&myRefData.length>0)setAlreadyReferred(true);
       }catch(e){}
     };
     loadRefs();
@@ -723,19 +741,32 @@ function ReferralSection({userId,token,userProfile}){
   const copyCode=()=>{navigator.clipboard?.writeText(refCode);setCopied(true);setTimeout(()=>setCopied(false),2000)};
   const shareCode=()=>{if(navigator.share){navigator.share({title:"Fxscalproom",text:`Join Fxscalproom with my invite code: ${refCode}`,url:window.location.origin})}else copyCode()};
   const applyRef=async()=>{
-    if(!inputCode.trim()||inputCode.trim()===refCode){setMsg(t.refInvalid||"Invalid code");return}
+    const code=inputCode.trim().toUpperCase();
+    if(!code){setMsg(t.refInvalid||"Invalid code");return}
+    if(code===refCode){setMsg(t.refInvalid||"Invalid code");return}
+    if(alreadyReferred){setMsg(lang==="fa"?"شما قبلاً کد دعوت استفاده کرده‌اید":"You already used a referral code");return}
+    setApplyLoading(true);
     try{
-      const chk=await fetch(`${SB}/rest/v1/Users?id=like.*${inputCode.replace("FX","").toLowerCase()}*&select=id`,{headers:H(token)});
+      // Search by invite_code field in Users table
+      const chk=await fetch(`${SB}/rest/v1/Users?invite_code=eq.${code}&select=id,invite_code`,{headers:H(token)});
       const d=await chk.json();
-      if(!Array.isArray(d)||!d.length){setMsg(t.refInvalid||"Invalid code");return}
+      if(!Array.isArray(d)||!d.length){setMsg(t.refInvalid||"Invalid code");setApplyLoading(false);return}
       const referrerId=d[0].id;
+      if(referrerId===userId){setMsg(t.refInvalid||"Invalid code");setApplyLoading(false);return}
+      // Check if already referred by this person
       const exists=await fetch(`${SB}/rest/v1/Referrals?referrer_id=eq.${referrerId}&referred_id=eq.${userId}`,{headers:H(token)});
       const ex=await exists.json();
-      if(Array.isArray(ex)&&ex.length>0){setMsg("Already applied!");return}
-      await fetch(`${SB}/rest/v1/Referrals`,{method:"POST",headers:H(token),body:JSON.stringify({referrer_id:referrerId,referred_id:userId,code:inputCode.trim()})});
+      if(Array.isArray(ex)&&ex.length>0){setMsg(lang==="fa"?"قبلاً اعمال شده!":"Already applied!");setApplyLoading(false);return}
+      // Check if this user already used ANY referral code
+      const anyRef=await fetch(`${SB}/rest/v1/Referrals?referred_id=eq.${userId}&select=id`,{headers:H(token)});
+      const anyRefData=await anyRef.json();
+      if(Array.isArray(anyRefData)&&anyRefData.length>0){setMsg(lang==="fa"?"شما قبلاً کد دعوت استفاده کرده‌اید":"You already used a referral code");setAlreadyReferred(true);setApplyLoading(false);return}
+      await fetch(`${SB}/rest/v1/Referrals`,{method:"POST",headers:H(token),body:JSON.stringify({referrer_id:referrerId,referred_id:userId,code:code})});
       setMsg(t.refApplied||"Referral code applied!");
       setInputCode("");
+      setAlreadyReferred(true);
     }catch(e){setMsg(e.message)}
+    setApplyLoading(false);
     setTimeout(()=>setMsg(""),3000);
   };
   const pct=Math.min(100,(referrals/needed)*100);
@@ -772,10 +803,12 @@ function ReferralSection({userId,token,userProfile}){
       </div>}
     </div>
     <button className="bt" style={{background:"var(--R)",marginBottom:10}} onClick={shareCode}>{t.shareCode||"Share your code"}</button>
-    <div style={{display:"flex",gap:6}}>
+    {!alreadyReferred?<div style={{display:"flex",gap:6}}>
       <input className="ip" placeholder={t.enterRef||"Have a referral code?"} value={inputCode} onChange={e=>setInputCode(e.target.value)} style={{marginBottom:0,flex:1}}/>
-      <button className="bt" style={{background:"var(--B)",width:"auto",padding:"12px 18px"}} onClick={applyRef}>{t.applyCode||"Apply"}</button>
-    </div>
+      <button className="bt" style={{background:"var(--B)",width:"auto",padding:"12px 18px",opacity:applyLoading?.6:1}} onClick={applyRef} disabled={applyLoading}>{applyLoading?"...":(t.applyCode||"Apply")}</button>
+    </div>:<div style={{padding:10,borderRadius:10,background:"color-mix(in srgb,var(--G) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 15%,transparent)",textAlign:"center"}}>
+      <span style={{fontSize:12,fontWeight:600,color:"var(--G)"}}>✓ {lang==="fa"?"کد دعوت قبلاً استفاده شده":"Referral code already used"}</span>
+    </div>}
     {msg&&<div style={{marginTop:8,fontSize:12,fontWeight:600,color:msg.includes("!")?"var(--G)":"var(--R)",textAlign:"center"}}>{msg}</div>}
   </div>);
 }
@@ -895,7 +928,7 @@ function Auth({onAuth,lang,setLang}){
     else{if(!n){setEr(t.enterName);setLd(false);return}const r=await api.up(e,p);if(r.error){setEr(r.error_description||r.error.message||"Error");setLd(false);return}
     const tk=r.access_token||(r.session?.access_token);const u=r.user||(r.data?.user);
     if(tk&&u){await api.add("Users",{id:u.id,email:e,full_name:n,membership:"free",role:"user"},tk);onAuth(tk,u)}
-    else{setOk("Check your email to confirm your account!");setM("login")}}}catch(x){setEr(x.message)}setLd(false)};
+    else{setOk(lang==="fa"?"لطفاً ایمیل خود را بررسی کنید و لینک تأیید را بزنید!":"Check your email and click the confirmation link to activate your account!");setM("login")}}}catch(x){setEr(x.message)}setLd(false)};
   const googleLogin=()=>{window.location.href=`${SB}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin)}`};
   useEffect(()=>{
     const hash=window.location.hash;
