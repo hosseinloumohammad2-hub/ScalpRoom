@@ -254,13 +254,121 @@ function TVEconomicCalendar({colorTheme}){
       colorTheme:colorTheme||"dark",
       isTransparent:true,
       locale:"en",
-      importanceFilter:"-1,0,1",
+      importanceFilter:"0,1",
+      countryFilter:"us,eu,gb,jp,cn,de,in,fr,it,br,ca,ru,kr,au,es,mx,id,nl,sa,tr",
     });
     ref.current.appendChild(s);
   },[colorTheme]);
   return(<div ref={ref} style={{position:"relative"}}>
     <div className="tradingview-widget-container__widget"></div>
     <div style={{position:"absolute",bottom:0,left:0,right:0,height:30,background:"var(--card)",zIndex:2}}></div>
+  </div>);
+}
+
+/* ─── Market Sessions ─── */
+function MarketSessions(){
+  const[now,setNow]=useState(new Date());
+  useEffect(()=>{const i=setInterval(()=>setNow(new Date()),10000);return()=>clearInterval(i)},[]);
+  const utcH=now.getUTCHours(),utcM=now.getUTCMinutes();
+  const t=utcH*60+utcM;
+  const sessions=[
+    {name:"Sydney",flag:"🇦🇺",open:21*60,close:6*60,color:"#8b5cf6"},
+    {name:"Tokyo",flag:"🇯🇵",open:0,close:9*60,color:"#f59e0b"},
+    {name:"London",flag:"🇬🇧",open:7*60,close:16*60,color:"#3b82f6"},
+    {name:"New York",flag:"🇺🇸",open:13*60,close:22*60,color:"#ef4444"},
+  ];
+  const isOpen=(s)=>{
+    if(s.open<s.close)return t>=s.open&&t<s.close;
+    return t>=s.open||t<s.close;
+  };
+  const getProgress=(s)=>{
+    let dur,elapsed;
+    if(s.open<s.close){dur=s.close-s.open;elapsed=t-s.open}
+    else{dur=(24*60-s.open)+s.close;elapsed=t>=s.open?t-s.open:(24*60-s.open)+t}
+    return Math.max(0,Math.min(100,(elapsed/dur)*100));
+  };
+  const fmtTime=(m)=>{const h=Math.floor((m/60)%24);const mi=m%60;return`${String(h).padStart(2,"0")}:${String(mi).padStart(2,"0")}`};
+  const openCount=sessions.filter(isOpen).length;
+  return(<div className="cd" style={{marginBottom:12}}>
+    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+      <span style={{fontSize:13,fontWeight:700}}>🕐 Market Sessions</span>
+      <span style={{marginLeft:"auto",fontSize:10,fontWeight:600,color:openCount>0?"var(--G)":"var(--dm)"}}>{openCount} open</span>
+    </div>
+    {sessions.map((s,i)=>{
+      const open=isOpen(s);
+      const prog=open?getProgress(s):0;
+      return<div key={i} style={{display:"flex",alignItems:"center",gap:10,marginBottom:i<3?10:0}}>
+        <span style={{fontSize:14,width:22}}>{s.flag}</span>
+        <div style={{flex:1}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+            <span style={{fontSize:12,fontWeight:600,color:open?"var(--tx)":"var(--dm)"}}>{s.name}</span>
+            <span style={{fontSize:10,fontWeight:600,color:open?"var(--G)":"var(--dm)"}}>{open?"OPEN":"CLOSED"}</span>
+          </div>
+          <div style={{height:4,borderRadius:2,background:"var(--brd)",overflow:"hidden"}}>
+            {open&&<div style={{height:"100%",borderRadius:2,background:s.color,width:`${prog}%`,transition:"width 10s linear"}}/>}
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",marginTop:3}}>
+            <span className="m" style={{fontSize:9,color:"var(--dm)"}}>{fmtTime(s.open)} UTC</span>
+            <span className="m" style={{fontSize:9,color:"var(--dm)"}}>{fmtTime(s.close)} UTC</span>
+          </div>
+        </div>
+      </div>
+    })}
+  </div>);
+}
+
+/* ─── Position Size Calculator ─── */
+function PositionCalc({lang}){
+  const[show,setShow]=useState(false);
+  const[bal,setBal]=useState("10000");
+  const[risk,setRisk]=useState("1");
+  const[entry,setEntry]=useState("");
+  const[sl,setSl]=useState("");
+  const riskAmt=parseFloat(bal||0)*parseFloat(risk||0)/100;
+  const pipDiff=entry&&sl?Math.abs(parseFloat(entry)-parseFloat(sl)):0;
+  const lots=pipDiff>0?(riskAmt/(pipDiff*10)).toFixed(2):"0.00";
+  const isFa=lang==="fa";
+  return(<div className="cd" style={{marginBottom:12}}>
+    <div onClick={()=>setShow(!show)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
+      <span style={{fontSize:13,fontWeight:700}}>🧮 {isFa?"ماشین حساب لات":"Position Calculator"}</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{transform:show?"rotate(180deg)":"rotate(0)",transition:".2s"}}><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    {show&&<div style={{marginTop:14}}>
+      <div className="g2" style={{marginBottom:8}}>
+        <div>
+          <div style={{fontSize:10,color:"var(--dm)",marginBottom:4,fontWeight:600}}>{isFa?"موجودی ($)":"Balance ($)"}</div>
+          <input className="ip" type="number" value={bal} onChange={e=>setBal(e.target.value)} style={{marginBottom:0}}/>
+        </div>
+        <div>
+          <div style={{fontSize:10,color:"var(--dm)",marginBottom:4,fontWeight:600}}>{isFa?"ریسک (%)":"Risk (%)"}</div>
+          <input className="ip" type="number" value={risk} onChange={e=>setRisk(e.target.value)} style={{marginBottom:0}}/>
+        </div>
+      </div>
+      <div className="g2" style={{marginBottom:8}}>
+        <div>
+          <div style={{fontSize:10,color:"var(--dm)",marginBottom:4,fontWeight:600}}>{isFa?"قیمت ورود":"Entry Price"}</div>
+          <input className="ip" type="number" value={entry} onChange={e=>setEntry(e.target.value)} style={{marginBottom:0}} placeholder="e.g. 2650"/>
+        </div>
+        <div>
+          <div style={{fontSize:10,color:"var(--dm)",marginBottom:4,fontWeight:600}}>{isFa?"حد ضرر":"Stop Loss"}</div>
+          <input className="ip" type="number" value={sl} onChange={e=>setSl(e.target.value)} style={{marginBottom:0}} placeholder="e.g. 2640"/>
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+        <div style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:10,padding:12,textAlign:"center"}}>
+          <div style={{fontSize:9,color:"var(--dm)",marginBottom:4,fontWeight:500}}>{isFa?"ریسک ($)":"Risk ($)"}</div>
+          <div className="m" style={{fontSize:15,fontWeight:600,color:"var(--R)"}}>${riskAmt.toFixed(0)}</div>
+        </div>
+        <div style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:10,padding:12,textAlign:"center"}}>
+          <div style={{fontSize:9,color:"var(--dm)",marginBottom:4,fontWeight:500}}>{isFa?"فاصله پیپ":"Pip Distance"}</div>
+          <div className="m" style={{fontSize:15,fontWeight:600,color:"var(--Y)"}}>{pipDiff>0?(pipDiff*10).toFixed(0):"—"}</div>
+        </div>
+        <div style={{background:"color-mix(in srgb,var(--G) 5%,var(--bg))",border:"1px solid color-mix(in srgb,var(--G) 20%,transparent)",borderRadius:10,padding:12,textAlign:"center"}}>
+          <div style={{fontSize:9,color:"var(--dm)",marginBottom:4,fontWeight:500}}>{isFa?"حجم لات":"Lot Size"}</div>
+          <div className="m" style={{fontSize:15,fontWeight:700,color:"var(--G)"}}>{lots}</div>
+        </div>
+      </div>
+    </div>}
   </div>);
 }
 
@@ -544,6 +652,10 @@ function Home({posts,go,P,ok,dark,toggle,userProfile}){
     <div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}>
       <TVEconomicCalendar colorTheme={theme}/>
     </div>
+    {/* Market Sessions */}
+    <MarketSessions/>
+    {/* Position Size Calculator */}
+    <PositionCalc lang={lang}/>
     {/* Social Links */}
     <div style={{display:"flex",gap:8,marginBottom:24}}>
       <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:13,borderRadius:12,background:"color-mix(in srgb,#0088cc 8%,transparent)",border:"1px solid color-mix(in srgb,#0088cc 15%,transparent)",color:"#0088cc",fontSize:13,fontWeight:600}}>{IC.tg} Telegram</a>
