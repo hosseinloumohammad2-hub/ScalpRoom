@@ -271,28 +271,37 @@ function MarketSessions(){
   useEffect(()=>{const i=setInterval(()=>setNow(new Date()),10000);return()=>clearInterval(i)},[]);
   const utcH=now.getUTCHours(),utcM=now.getUTCMinutes();
   const t=utcH*60+utcM;
+  const day=now.getUTCDay(); // 0=Sun,6=Sat
+  const isWeekend=(day===6)||(day===0&&t<22*60)||(day===5&&t>=22*60);
+  // Accurate UTC times (standard time)
   const sessions=[
-    {name:"Sydney",flag:"🇦🇺",open:21*60,close:6*60,color:"#8b5cf6"},
-    {name:"Tokyo",flag:"🇯🇵",open:0,close:9*60,color:"#f59e0b"},
-    {name:"London",flag:"🇬🇧",open:7*60,close:16*60,color:"#3b82f6"},
+    {name:"Sydney",flag:"🇦🇺",open:22*60,close:7*60,color:"#8b5cf6"},
+    {name:"Tokyo",flag:"🇯🇵",open:0*60,close:9*60,color:"#f59e0b"},
+    {name:"London",flag:"🇬🇧",open:8*60,close:17*60,color:"#3b82f6"},
     {name:"New York",flag:"🇺🇸",open:13*60,close:22*60,color:"#ef4444"},
   ];
   const isOpen=(s)=>{
+    if(isWeekend)return false;
     if(s.open<s.close)return t>=s.open&&t<s.close;
     return t>=s.open||t<s.close;
   };
   const getProgress=(s)=>{
+    if(!isOpen(s))return 0;
     let dur,elapsed;
     if(s.open<s.close){dur=s.close-s.open;elapsed=t-s.open}
     else{dur=(24*60-s.open)+s.close;elapsed=t>=s.open?t-s.open:(24*60-s.open)+t}
     return Math.max(0,Math.min(100,(elapsed/dur)*100));
   };
-  const fmtTime=(m)=>{const h=Math.floor((m/60)%24);const mi=m%60;return`${String(h).padStart(2,"0")}:${String(mi).padStart(2,"0")}`};
+  // Convert UTC minutes to local time string
+  const toLocal=(utcMin)=>{
+    const d=new Date();d.setUTCHours(Math.floor(utcMin/60),utcMin%60,0,0);
+    return d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+  };
   const openCount=sessions.filter(isOpen).length;
   return(<div className="cd" style={{marginBottom:12}}>
     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
       <span style={{fontSize:13,fontWeight:700}}>🕐 Market Sessions</span>
-      <span style={{marginLeft:"auto",fontSize:10,fontWeight:600,color:openCount>0?"var(--G)":"var(--dm)"}}>{openCount} open</span>
+      <span style={{marginLeft:"auto",fontSize:10,fontWeight:600,color:isWeekend?"var(--R)":openCount>0?"var(--G)":"var(--dm)"}}>{isWeekend?"WEEKEND — CLOSED":openCount+" open"}</span>
     </div>
     {sessions.map((s,i)=>{
       const open=isOpen(s);
@@ -308,8 +317,8 @@ function MarketSessions(){
             {open&&<div style={{height:"100%",borderRadius:2,background:s.color,width:`${prog}%`,transition:"width 10s linear"}}/>}
           </div>
           <div style={{display:"flex",justifyContent:"space-between",marginTop:3}}>
-            <span className="m" style={{fontSize:9,color:"var(--dm)"}}>{fmtTime(s.open)} UTC</span>
-            <span className="m" style={{fontSize:9,color:"var(--dm)"}}>{fmtTime(s.close)} UTC</span>
+            <span className="m" style={{fontSize:9,color:"var(--dm)"}}>{toLocal(s.open)}</span>
+            <span className="m" style={{fontSize:9,color:"var(--dm)"}}>{toLocal(s.close)}</span>
           </div>
         </div>
       </div>
@@ -324,9 +333,22 @@ function PositionCalc({lang}){
   const[risk,setRisk]=useState("1");
   const[entry,setEntry]=useState("");
   const[sl,setSl]=useState("");
+  const[pair,setPair]=useState("XAUUSD");
+  const pairs={
+    "XAUUSD":{pipSize:0.1,pipVal:1,label:"Gold"},
+    "EURUSD":{pipSize:0.0001,pipVal:10,label:"EUR/USD"},
+    "GBPUSD":{pipSize:0.0001,pipVal:10,label:"GBP/USD"},
+    "USDJPY":{pipSize:0.01,pipVal:6.6,label:"USD/JPY"},
+    "AUDUSD":{pipSize:0.0001,pipVal:10,label:"AUD/USD"},
+    "BTCUSD":{pipSize:1,pipVal:1,label:"BTC/USD"},
+    "XAGUSD":{pipSize:0.001,pipVal:50,label:"Silver"},
+    "USOIL":{pipSize:0.01,pipVal:10,label:"Crude Oil"},
+  };
+  const p=pairs[pair]||pairs["XAUUSD"];
   const riskAmt=parseFloat(bal||0)*parseFloat(risk||0)/100;
-  const pipDiff=entry&&sl?Math.abs(parseFloat(entry)-parseFloat(sl)):0;
-  const lots=pipDiff>0?(riskAmt/(pipDiff*10)).toFixed(2):"0.00";
+  const priceDiff=entry&&sl?Math.abs(parseFloat(entry)-parseFloat(sl)):0;
+  const pips=priceDiff>0?priceDiff/p.pipSize:0;
+  const lots=pips>0?(riskAmt/(pips*p.pipVal)).toFixed(2):"0.00";
   const isFa=lang==="fa";
   return(<div className="cd" style={{marginBottom:12}}>
     <div onClick={()=>setShow(!show)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
@@ -334,6 +356,14 @@ function PositionCalc({lang}){
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{transform:show?"rotate(180deg)":"rotate(0)",transition:".2s"}}><polyline points="6 9 12 15 18 9"/></svg>
     </div>
     {show&&<div style={{marginTop:14}}>
+      <div style={{fontSize:10,color:"var(--dm)",marginBottom:4,fontWeight:600}}>{isFa?"جفت ارز":"Pair"}</div>
+      <div style={{display:"flex",gap:4,marginBottom:10,flexWrap:"wrap"}}>
+        {Object.entries(pairs).map(([k,v])=><div key={k} onClick={()=>setPair(k)} style={{padding:"6px 10px",borderRadius:8,cursor:"pointer",fontSize:10,fontWeight:600,
+          background:pair===k?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",
+          border:`1px solid ${pair===k?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,
+          color:pair===k?"var(--R)":"var(--mu)"
+        }}>{v.label}</div>)}
+      </div>
       <div className="g2" style={{marginBottom:8}}>
         <div>
           <div style={{fontSize:10,color:"var(--dm)",marginBottom:4,fontWeight:600}}>{isFa?"موجودی ($)":"Balance ($)"}</div>
@@ -347,11 +377,11 @@ function PositionCalc({lang}){
       <div className="g2" style={{marginBottom:8}}>
         <div>
           <div style={{fontSize:10,color:"var(--dm)",marginBottom:4,fontWeight:600}}>{isFa?"قیمت ورود":"Entry Price"}</div>
-          <input className="ip" type="number" value={entry} onChange={e=>setEntry(e.target.value)} style={{marginBottom:0}} placeholder="e.g. 2650"/>
+          <input className="ip" type="number" value={entry} onChange={e=>setEntry(e.target.value)} style={{marginBottom:0}} placeholder={pair==="XAUUSD"?"e.g. 3050":"e.g. 1.0850"}/>
         </div>
         <div>
           <div style={{fontSize:10,color:"var(--dm)",marginBottom:4,fontWeight:600}}>{isFa?"حد ضرر":"Stop Loss"}</div>
-          <input className="ip" type="number" value={sl} onChange={e=>setSl(e.target.value)} style={{marginBottom:0}} placeholder="e.g. 2640"/>
+          <input className="ip" type="number" value={sl} onChange={e=>setSl(e.target.value)} style={{marginBottom:0}} placeholder={pair==="XAUUSD"?"e.g. 3040":"e.g. 1.0800"}/>
         </div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
@@ -360,8 +390,8 @@ function PositionCalc({lang}){
           <div className="m" style={{fontSize:15,fontWeight:600,color:"var(--R)"}}>${riskAmt.toFixed(0)}</div>
         </div>
         <div style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:10,padding:12,textAlign:"center"}}>
-          <div style={{fontSize:9,color:"var(--dm)",marginBottom:4,fontWeight:500}}>{isFa?"فاصله پیپ":"Pip Distance"}</div>
-          <div className="m" style={{fontSize:15,fontWeight:600,color:"var(--Y)"}}>{pipDiff>0?(pipDiff*10).toFixed(0):"—"}</div>
+          <div style={{fontSize:9,color:"var(--dm)",marginBottom:4,fontWeight:500}}>{isFa?"پیپ":"Pips"}</div>
+          <div className="m" style={{fontSize:15,fontWeight:600,color:"var(--Y)"}}>{pips>0?pips.toFixed(1):"—"}</div>
         </div>
         <div style={{background:"color-mix(in srgb,var(--G) 5%,var(--bg))",border:"1px solid color-mix(in srgb,var(--G) 20%,transparent)",borderRadius:10,padding:12,textAlign:"center"}}>
           <div style={{fontSize:9,color:"var(--dm)",marginBottom:4,fontWeight:500}}>{isFa?"حجم لات":"Lot Size"}</div>
