@@ -8,7 +8,6 @@
 <meta name="theme-color" content="#050507">
 <title>Fxscalproom.</title>
 <link rel="manifest" href="manifest.json">
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style id="theme-style">
 :root{--bg:#050507;--bg2:#0a0a0c;--card:#0f0f12;--brd:#18181b;--brd2:#27272a;--tx:#e4e4e7;--tx2:#a1a1aa;--mu:#71717a;--dm:#52525b;--R:#FF4136;--G:#22c55e;--B:#3b82f6;--Y:#eab308}
@@ -123,22 +122,6 @@ const api={
   getUsers:(tk)=>fetch(`${SB}/rest/v1/Users?order=created_at.desc`,{headers:H(tk)}).then(r=>r.json()),
   img:async(f,tk)=>{const n=`${Date.now()}_${Math.random().toString(36).slice(2,8)}.${f.name?.split('.').pop()||'jpg'}`;const r=await fetch(`${SB}/storage/v1/object/charts/${n}`,{method:"POST",headers:{apikey:SK,Authorization:`Bearer ${tk}`,"Content-Type":f.type||"image/jpeg"},body:f});if(!r.ok)return null;return`${SB}/storage/v1/object/public/charts/${n}`},
 };
-
-/* ─── Telegram WebApp ─── */
-const TG=window.Telegram?.WebApp;
-const isTelegram=!!TG?.initDataUnsafe?.user;
-if(TG){
-  TG.ready();TG.expand();
-  TG.setHeaderColor("#050507");TG.setBackgroundColor("#050507");
-  // Disable closing confirmation so users don't accidentally close
-  if(TG.enableClosingConfirmation)TG.enableClosingConfirmation();
-}
-function getTgUser(){
-  if(!TG?.initDataUnsafe?.user)return null;
-  const u=TG.initDataUnsafe.user;
-  return{id:u.id,first_name:u.first_name||"",last_name:u.last_name||"",username:u.username||"",photo_url:u.photo_url||"",language_code:u.language_code||"en"};
-}
-function getTgStartParam(){return TG?.initDataUnsafe?.start_param||null}
 
 /* ─── SVG Icons ─── */
 const IC={
@@ -923,7 +906,6 @@ function RewardSection({userId,token,userProfile}){
         const myRef=await fetch(`${SB}/rest/v1/RewardReferrals?referred_id=eq.${userId}&select=id`,{headers:H(token)});
         const myRefData=await myRef.json();
         if(Array.isArray(myRefData)&&myRefData.length>0)setAlreadyReferred(true);
-        else{const sp=getTgStartParam();if(sp&&sp.startsWith("RW"))setInputCode(sp)}
       }catch(e){}
     };
     load();
@@ -931,9 +913,7 @@ function RewardSection({userId,token,userProfile}){
 
   const copyCode=()=>{navigator.clipboard?.writeText(rewardCode);setCopied(true);setTimeout(()=>setCopied(false),2000)};
   const shareCode=()=>{
-    const tgLink=`https://t.me/FxScalpRoomBot/myapp?startapp=${rewardCode}`;
-    if(isTelegram&&TG?.openTelegramLink){TG.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(tgLink)}&text=${encodeURIComponent(lang==="fa"?"با این لینک عضو شو و جایزه بگیر! 💰":"Join & earn cash rewards! 💰")}`)}
-    else if(navigator.share){navigator.share({title:"Fxscalproom Rewards",text:(lang==="fa"?`با کد ${rewardCode} ثبت‌نام کن و جایزه بگیر! 💰`:`Join with code: ${rewardCode} & earn rewards! 💰`),url:tgLink})}
+    if(navigator.share){navigator.share({title:"Fxscalproom Rewards",text:(lang==="fa"?`با کد ${rewardCode} ثبت‌نام کن و جایزه بگیر! 💰`:`Join with code: ${rewardCode} & earn rewards! 💰`),url:window.location.origin})}
     else copyCode()
   };
 
@@ -1299,52 +1279,6 @@ function SignalEditModal({sig,onClose,onSave}){
   </div></div>);
 }
 
-/* ─── Telegram Auto-Auth ─── */
-async function telegramAutoAuth(){
-  if(!isTelegram)return null;
-  const tgU=getTgUser();
-  if(!tgU)return null;
-  const tgId=String(tgU.id);
-  const tgEmail=`tg_${tgId}@telegram.fxscalproom.app`;
-  const tgPass=`TG_${tgId}_${tgId.split("").reverse().join("")}_FX`;
-  const tgName=[tgU.first_name,tgU.last_name].filter(Boolean).join(" ")||tgU.username||"Telegram User";
-  
-  // Try login first
-  try{
-    const r=await api.in(tgEmail,tgPass);
-    if(r.access_token&&r.user){
-      return{token:r.access_token,user:r.user};
-    }
-  }catch(e){}
-  
-  // If login failed, signup
-  try{
-    const r=await api.up(tgEmail,tgPass);
-    const tk=r.access_token||(r.session?.access_token);
-    const u=r.user||(r.data?.user);
-    if(tk&&u){
-      await api.add("Users",{id:u.id,email:tgEmail,full_name:tgName,membership:"free",role:"user",telegram_id:tgId},tk);
-      return{token:tk,user:u};
-    }
-    // If email confirmation is required, try to login anyway (Supabase might have auto-confirmed)
-    // Wait a moment and retry login
-    await new Promise(r=>setTimeout(r,500));
-    const r2=await api.in(tgEmail,tgPass);
-    if(r2.access_token&&r2.user){
-      // Create Users row if needed
-      try{
-        const chk=await fetch(`${SB}/rest/v1/Users?id=eq.${r2.user.id}`,{headers:H(r2.access_token)});
-        const d=await chk.json();
-        if(!Array.isArray(d)||!d.length){
-          await api.add("Users",{id:r2.user.id,email:tgEmail,full_name:tgName,membership:"free",role:"user",telegram_id:tgId},r2.access_token);
-        }
-      }catch(e){}
-      return{token:r2.access_token,user:r2.user};
-    }
-  }catch(e){}
-  return null;
-}
-
 /* ─── Auth Screen ─── */
 function Auth({onAuth,lang,setLang}){
   const t=T[lang];
@@ -1373,7 +1307,7 @@ function Auth({onAuth,lang,setLang}){
     else{if(!n){setEr(t.enterName);setLd(false);return}const r=await api.up(e,p);if(r.error){setEr(r.error_description||r.error.message||"Error");setLd(false);return}
     const tk=r.access_token||(r.session?.access_token);const u=r.user||(r.data?.user);
     // If Supabase returned a token AND user is already confirmed (e.g. email confirmation is disabled), proceed
-    if(tk&&u&&(u.email_confirmed_at||u.confirmed_at)){const tgU=getTgUser();const userData={id:u.id,email:e,full_name:n,membership:"free",role:"user"};if(tgU)userData.telegram_id=String(tgU.id);await api.add("Users",userData,tk);onAuth(tk,u)}
+    if(tk&&u&&(u.email_confirmed_at||u.confirmed_at)){await api.add("Users",{id:u.id,email:e,full_name:n,membership:"free",role:"user"},tk);onAuth(tk,u)}
     // Otherwise show "check your email" message — user MUST confirm before logging in
     else{setOk(t.confirmEmailSent||"✉️ A confirmation link has been sent to your email. Please verify your email, then sign in.");setM("login");setE(e);setP("")}}}catch(x){setEr(x.message)}setLd(false)};
   const googleLogin=()=>{window.location.href=`${SB}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin)}`};
@@ -1386,7 +1320,7 @@ function Auth({onAuth,lang,setLang}){
         fetch(`${SB}/auth/v1/user`,{headers:{apikey:SK,Authorization:`Bearer ${token}`}})
           .then(r=>r.json()).then(async u=>{
             if(u?.id){
-              try{const chk=await fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{headers:{apikey:SK,Authorization:`Bearer ${token}`,"Content-Type":"application/json"}});const d=await chk.json();if(!Array.isArray(d)||!d.length){const tgU=getTgUser();const userData={id:u.id,email:u.email,full_name:u.user_metadata?.full_name||u.user_metadata?.name||u.email?.split("@")[0],membership:"free",role:"user"};if(tgU)userData.telegram_id=String(tgU.id);await fetch(`${SB}/rest/v1/Users`,{method:"POST",headers:{apikey:SK,Authorization:`Bearer ${token}`,"Content-Type":"application/json",Prefer:"return=representation"},body:JSON.stringify(userData)})}}catch(e){}
+              try{const chk=await fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{headers:{apikey:SK,Authorization:`Bearer ${token}`,"Content-Type":"application/json"}});const d=await chk.json();if(!Array.isArray(d)||!d.length){await fetch(`${SB}/rest/v1/Users`,{method:"POST",headers:{apikey:SK,Authorization:`Bearer ${token}`,"Content-Type":"application/json",Prefer:"return=representation"},body:JSON.stringify({id:u.id,email:u.email,full_name:u.user_metadata?.full_name||u.user_metadata?.name||u.email?.split("@")[0],membership:"free",role:"user"})})}}catch(e){}
               onAuth(token,u);window.history.replaceState(null,"",window.location.pathname);
             }
           }).catch(()=>{});
@@ -1899,21 +1833,13 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange}){
         <div key={k} onClick={()=>{setLang(k);setShowLang(false)}} style={{padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,background:lang===k?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${lang===k?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,color:lang===k?"var(--R)":"var(--mu)"}}>{v}</div>
       )}
     </div>}
-    {isTelegram&&<div className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:14,marginBottom:6,background:"color-mix(in srgb,#0088cc 6%,transparent)",borderColor:"color-mix(in srgb,#0088cc 15%,transparent)"}}>
-      <span style={{color:"#0088cc"}}>{IC.tg}</span>
-      <div style={{flex:1}}>
-        <div style={{fontSize:12,fontWeight:600,color:"#0088cc"}}>{lang==="fa"?"متصل به تلگرام":"Connected via Telegram"}</div>
-        <div style={{fontSize:10,color:"var(--dm)"}}>{getTgUser()?.username?"@"+getTgUser().username:getTgUser()?.first_name||""}</div>
-      </div>
-      <span style={{fontSize:9,fontWeight:700,color:"var(--G)",background:"color-mix(in srgb,var(--G) 10%,transparent)",padding:"3px 8px",borderRadius:6}}>✓</span>
-    </div>}
-    {!isTelegram&&<div onClick={async()=>{if(!noti.enabled)await noti.enable()}} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:14,marginBottom:6,cursor:"pointer"}}>
+    <div onClick={async()=>{if(!noti.enabled)await noti.enable()}} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:14,marginBottom:6,cursor:"pointer"}}>
       <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{color:"var(--mu)"}}>{IC.bell}</span><span style={{fontSize:13,fontWeight:500}}>{noti.enabled?t.pushEnabled:t.pushEnable}</span></div>
       <div style={{width:40,height:22,borderRadius:11,background:noti.enabled?"var(--G)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:noti.enabled?20:2,transition:".2s"}}/></div>
-    </div>}
+    </div>
     <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginBottom:4,cursor:"pointer"}}><span style={{color:"#0088cc"}}>{IC.tg}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Telegram</span></a>
     <a href="https://www.instagram.com/forexscalproom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginBottom:4,cursor:"pointer"}}><span style={{color:"#E1306C"}}>{IC.ig}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Instagram</span></a>
-    {!isTelegram&&<div onClick={onOut} className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginTop:12,cursor:"pointer",background:"color-mix(in srgb,var(--R) 5%,transparent)",borderColor:"color-mix(in srgb,var(--R) 12%,transparent)"}}><span style={{fontSize:13,color:"var(--R)",fontWeight:600}}>{t.signOut}</span></div>}
+    <div onClick={onOut} className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginTop:12,cursor:"pointer",background:"color-mix(in srgb,var(--R) 5%,transparent)",borderColor:"color-mix(in srgb,var(--R) 12%,transparent)"}}><span style={{fontSize:13,color:"var(--R)",fontWeight:600}}>{t.signOut}</span></div>
   </div>);
 }
 
@@ -1923,18 +1849,9 @@ function App(){
   const[usr,setUsr]=useState(()=>{try{const u=localStorage.getItem("fx_usr");return u?JSON.parse(u):null}catch(e){return null}});
   const[up,setUp]=useState(null),[adm,setAdm]=useState(false);
   const[tab,setTab]=useState(0),[posts,setP]=useState([]),[sigs,setS]=useState([]);
-  const[lang,setLangState]=useState(()=>{try{
-    // Auto-detect language from Telegram
-    const tgU=getTgUser();
-    if(tgU?.language_code){
-      const tgLang=tgU.language_code.slice(0,2);
-      if(T[tgLang])return tgLang;
-      if(tgLang==="fa"||tgLang==="ar"||tgLang==="tr"||tgLang==="ru")return tgLang;
-    }
-    return localStorage.getItem("fxlang")||"en"
-  }catch(e){return"en"}});
-  const[showSplash,setShowSplash]=useState(()=>{if(isTelegram)return false;try{return!sessionStorage.getItem("fx_splash")}catch(e){return true}});
-  const[showOnb,setShowOnb]=useState(()=>{if(isTelegram)return false;try{return!localStorage.getItem("fx_onb")}catch(e){return true}});
+  const[lang,setLangState]=useState(()=>{try{return localStorage.getItem("fxlang")||"en"}catch(e){return"en"}});
+  const[showSplash,setShowSplash]=useState(()=>{try{return!sessionStorage.getItem("fx_splash")}catch(e){return true}});
+  const[showOnb,setShowOnb]=useState(()=>{try{return!localStorage.getItem("fx_onb")}catch(e){return true}});
   const[lastPostCount,setLastPostCount]=useState(()=>{try{return parseInt(localStorage.getItem("fx_pc")||"0")}catch(e){return 0}});
   const[lastSigCount,setLastSigCount]=useState(()=>{try{return parseInt(localStorage.getItem("fx_sc")||"0")}catch(e){return 0}});
   const{P,ok}=usePrices();const{dark,toggle}=useTheme();
@@ -1944,11 +1861,7 @@ function App(){
   const setLang=(l)=>{setLangState(l);try{localStorage.setItem("fxlang",l)}catch(e){};const isRtl=RTL_LANGS.includes(l);document.documentElement.setAttribute("dir",isRtl?"rtl":"ltr");document.documentElement.setAttribute("lang",l)};
   useEffect(()=>{const isRtl=RTL_LANGS.includes(lang);document.documentElement.setAttribute("dir",isRtl?"rtl":"ltr");document.documentElement.setAttribute("lang",lang)},[]);
   const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p)){setP(p);try{localStorage.setItem("fx_pc",String(p.length))}catch(e){}}else if(p?.message){handleLogout();return}const s=await api.get("Signals",tk);if(Array.isArray(s)){setS(s);try{localStorage.setItem("fx_sc",String(s.length))}catch(e){}}}catch(e){}},[tk]);
-  const chk=useCallback(async(u,t)=>{try{const r=await fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{headers:H(t)});const d=await r.json();if(Array.isArray(d)&&d[0]){setUp(d[0]);if(d[0].role==="admin")setAdm(true);
-    // Save telegram_id if in Telegram and not already saved
-    const tgU=getTgUser();
-    if(tgU&&!d[0].telegram_id){fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{method:"PATCH",headers:H(t),body:JSON.stringify({telegram_id:String(tgU.id)})}).catch(()=>{})}
-  }}catch(e){}},[]);
+  const chk=useCallback(async(u,t)=>{try{const r=await fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{headers:H(t)});const d=await r.json();if(Array.isArray(d)&&d[0]){setUp(d[0]);if(d[0].role==="admin")setAdm(true)}}catch(e){}},[]);
   useEffect(()=>{if(tk)load()},[tk,load]);
   useEffect(()=>{if(tk&&usr)chk(usr,tk)},[tk,usr,chk]);
   useEffect(()=>{if(tk){const i=setInterval(load,30000);return()=>clearInterval(i)}},[tk,load]);
@@ -1964,16 +1877,6 @@ function App(){
   const splashDone=()=>{setShowSplash(false);try{sessionStorage.setItem("fx_splash","1")}catch(e){}};
   const onbDone=()=>{setShowOnb(false);try{localStorage.setItem("fx_onb","1")}catch(e){}};
   if(showSplash)return<SplashScreen onDone={splashDone}/>;
-  // Telegram auto-login
-  const[tgAuthDone,setTgAuthDone]=useState(!isTelegram);
-  useEffect(()=>{
-    if(!isTelegram||tk){setTgAuthDone(true);return}
-    telegramAutoAuth().then(res=>{
-      if(res){handleAuth(res.token,res.user)}
-      setTgAuthDone(true);
-    }).catch(()=>setTgAuthDone(true));
-  },[]);
-  if(!tgAuthDone)return<SplashScreen onDone={()=>{}}/>;
   if(!tk){
     return<>{showOnb&&<Onboarding onDone={onbDone} lang={lang}/>}<Auth onAuth={handleAuth} lang={lang} setLang={setLang}/></>;
   }
