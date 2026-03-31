@@ -1630,7 +1630,7 @@ function Home({posts,signals,msgs,go,P,ok,lastUpdate,dark,toggle,userProfile,tok
   const firstName=(userProfile?.full_name||"").split(" ")[0]||"";
   const hour=new Date().getHours();
   const greeting=hour<12?(lang==="fa"?"صبح بخیر":"Good morning"):hour<18?(lang==="fa"?"عصر بخیر":"Good afternoon"):(lang==="fa"?"شب بخیر":"Good evening");
-  const visibleMsgs=(msgs||[]).filter(m=>m.target==="all"||(m.target==="premium"&&isPremiumUser));
+  const visibleMsgs=(msgs||[]);
   const unreadCount=Math.max(0,visibleMsgs.length-lastMsgRead);
   const openMsgs=()=>{setShowMsgs(true);setLastMsgRead(visibleMsgs.length);try{localStorage.setItem("fx_mc",String(visibleMsgs.length))}catch(e){}};
   return(<div className="fi">
@@ -1651,16 +1651,22 @@ function Home({posts,signals,msgs,go,P,ok,lastUpdate,dark,toggle,userProfile,tok
         <div onClick={()=>setShowMsgs(false)} style={{cursor:"pointer",color:"var(--mu)"}}>{IC.x}</div>
       </div>
       {visibleMsgs.length===0?<div style={{textAlign:"center",color:"var(--dm)",fontSize:12,padding:16}}>{lang==="fa"?"پیامی نیست":"No messages yet"}</div>
-      :visibleMsgs.slice(0,10).map(m=><div key={m.id} style={{padding:10,marginBottom:6,background:"var(--bg)",borderRadius:10,border:"1px solid var(--brd)"}}>
+      :visibleMsgs.slice(0,10).map(m=>{
+        const isLocked=m.target==="premium"&&!isPremiumUser;
+        return<div key={m.id} style={{padding:10,marginBottom:6,background:"var(--bg)",borderRadius:10,border:"1px solid var(--brd)",position:"relative",overflow:"hidden"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-          <span style={{fontSize:12,fontWeight:700}}>{m.title}</span>
+          <span style={{fontSize:12,fontWeight:700,filter:isLocked?"blur(3px)":"none"}}>{m.title}</span>
           <div style={{display:"flex",alignItems:"center",gap:4}}>
             {m.target==="premium"&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 5px",borderRadius:4}}>VIP</span>}
             <span style={{fontSize:9,color:"var(--dm)"}}>{new Date(m.created_at).toLocaleDateString()}</span>
           </div>
         </div>
-        <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{m.body}</div>
-      </div>)}
+        {m.image_url&&<img src={m.image_url} style={{width:"100%",borderRadius:8,marginBottom:6,maxHeight:200,objectFit:"cover",filter:isLocked?"blur(12px)":"none"}} alt=""/>}
+        <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.6,whiteSpace:"pre-wrap",filter:isLocked?"blur(5px)":"none"}}>{m.body}</div>
+        {isLocked&&<div style={{position:"absolute",top:0,left:0,right:0,bottom:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.15)",borderRadius:10}}>
+          <span style={{fontSize:11,fontWeight:700,color:"var(--R)",background:"var(--bg)",padding:"6px 14px",borderRadius:8,border:"1px solid color-mix(in srgb,var(--R) 20%,transparent)"}}>⭐ Premium</span>
+        </div>}
+      </div>})}
     </div>}
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
       <div style={{display:"flex",alignItems:"center",gap:8}}><div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/></div>
@@ -1948,11 +1954,10 @@ function Adm({token,posts,signals,onR}){
   const[editUserExp,setEditUserExp]=useState(null);
   const[expDate,setExpDate]=useState("");
   const[refCounts,setRefCounts]=useState({});
-  const[msgTitle,setMsgTitle]=useState(""),[msgBody,setMsgBody]=useState(""),[msgTarget,setMsgTarget]=useState("all"),[allMsgs,setAllMsgs]=useState([]);
-  const noti=useNotifications();
+  const[msgTitle,setMsgTitle]=useState(""),[msgBody,setMsgBody]=useState(""),[msgTarget,setMsgTarget]=useState("all"),[allMsgs,setAllMsgs]=useState([]),[msgImg,setMsgImg]=useState(null),[msgPv,setMsgPv]=useState(null);  const noti=useNotifications();
   useEffect(()=>{if(tb==="users"){api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)});fetch(`${SB}/rest/v1/Referrals?select=referrer_id,referred_id`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const counts={};d.forEach(r=>{counts[r.referrer_id]=(counts[r.referrer_id]||0)+1});setRefCounts(counts)}}).catch(()=>{})}},[tb,token]);
   useEffect(()=>{if(tb==="msg"){api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}},[tb,token]);
-  const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget},token);setMs("Message sent!");setMsgTitle("");setMsgBody("");setMsgTarget("all");onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
+  const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrl="";if(msgImg){imgUrl=await api.img(msgImg,token);if(!imgUrl){setMs(t.uploadFailed);setLd(false);return}}await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null},token);setMs("Message sent!");setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImg(null);setMsgPv(null);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
   const delMsg=async(id)=>{if(!confirm("Delete?"))return;await api.del("Messages",id,token);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}const data={title:ti,description:de,category:ca,image_url:u,is_premium:pr,likes:0};if(customDate&&postDate)data.created_at=new Date(postDate).toISOString();await api.add("Posts",data,token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);setCustomDate(false);setPostDate("");onR();noti.notify("Fxscalproom","New analysis: "+ti)}catch(e){setMs(e.message)}setLd(false)};
   const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{const data={pair:pa,type:st,entry_price:en,take_profit:tp1,tp2:tp2||null,tp3:tp3||null,stop_loss:sl,status:"active",pnl:null,closed_at:null,is_premium:sigPr};if(sigCustomDate&&sigDate)data.created_at=new Date(sigDate).toISOString();await api.add("Signals",data,token);setMs(t.signalPub);setPa("");setEn("");setTp1("");setTp2("");setTp3("");setSl("");setSigPr(false);setSigCustomDate(false);setSigDate("");onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st)}catch(e){setMs(e.message)}setLd(false)};
@@ -2080,6 +2085,11 @@ function Adm({token,posts,signals,onR}){
       <div style={{fontSize:13,fontWeight:700,marginBottom:10}}>{lang==="fa"?"📬 ارسال پیام":"📬 Send Message"}</div>
       <input className="ip" placeholder={lang==="fa"?"عنوان پیام":"Message title"} value={msgTitle} onChange={e=>setMsgTitle(e.target.value)}/>
       <textarea placeholder={lang==="fa"?"متن پیام":"Message body"} value={msgBody} onChange={e=>setMsgBody(e.target.value)} rows={4}/>
+      <div onClick={()=>document.getElementById("msgfu").click()} style={{border:"1.5px dashed var(--brd2)",borderRadius:14,padding:msgPv?0:18,textAlign:"center",marginBottom:10,background:"var(--bg2)",cursor:"pointer",overflow:"hidden"}}>
+        {msgPv?<div style={{position:"relative"}}><img src={msgPv} style={{width:"100%",maxHeight:180,objectFit:"cover"}} alt=""/><div onClick={e=>{e.stopPropagation();setMsgImg(null);setMsgPv(null)}} style={{position:"absolute",top:6,right:6,width:24,height:24,borderRadius:12,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#fff",fontSize:14}}>✕</div></div>
+        :<div style={{fontSize:12,color:"var(--dm)"}}>{lang==="fa"?"📷 افزودن تصویر (اختیاری)":"📷 Add image (optional)"}</div>}
+      </div>
+      <input id="msgfu" type="file" accept="image/*" onChange={e=>{const f=e.target.files[0];if(f){setMsgImg(f);setMsgPv(URL.createObjectURL(f))}}} style={{display:"none"}}/>
       <div style={{display:"flex",gap:6,marginBottom:10}}>
         {["all","premium"].map(tgt=>
           <div key={tgt} onClick={()=>setMsgTarget(tgt)} style={{flex:1,padding:10,borderRadius:10,textAlign:"center",cursor:"pointer",
@@ -2091,13 +2101,16 @@ function Adm({token,posts,signals,onR}){
       </div>
       <button className="bt" style={{background:"var(--B)",opacity:ld?.5:1}} onClick={pubMsg} disabled={ld}>{ld?"...":(lang==="fa"?"ارسال پیام":"Send Message")}</button>
       <div style={{fontSize:13,fontWeight:600,marginTop:16,marginBottom:8}}>{lang==="fa"?"پیام‌های قبلی":"Previous Messages"} ({allMsgs.length})</div>
-      {allMsgs.map(m=><div key={m.id} className="cd" style={{padding:10,marginBottom:4,display:"flex",alignItems:"center",gap:10}}>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:12,fontWeight:600}}>{m.title}</div>
-          <div style={{fontSize:10,color:"var(--dm)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.body}</div>
-          <div style={{fontSize:9,color:"var(--dm)",marginTop:2}}>{m.target==="premium"?"⭐ Premium":"👥 All"} · {new Date(m.created_at).toLocaleDateString()}</div>
+      {allMsgs.map(m=><div key={m.id} className="cd" style={{padding:10,marginBottom:4}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          {m.image_url&&<img src={m.image_url} style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}} alt=""/>}
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:12,fontWeight:600}}>{m.title}</div>
+            <div style={{fontSize:10,color:"var(--dm)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.body}</div>
+            <div style={{fontSize:9,color:"var(--dm)",marginTop:2}}>{m.target==="premium"?"⭐ Premium":"👥 All"} · {new Date(m.created_at).toLocaleDateString()}</div>
+          </div>
+          <div onClick={()=>delMsg(m.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
         </div>
-        <div onClick={()=>delMsg(m.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
       </div>)}
     </>}
     {editSig&&<SignalEditModal sig={editSig} onClose={()=>setEditSig(null)} onSave={saveSig}/>}
