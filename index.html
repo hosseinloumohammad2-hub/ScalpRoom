@@ -2038,7 +2038,7 @@ function PremiumPopup({onClose,onGoPlans}){
 }
 
 /* ─── Plans ─── */
-function Plans({userProfile,goToProfile}){
+function Plans({userProfile,goToSupport}){
   const{t,lang}=useLang();
   const[showContact,setShowContact]=useState(false);
   const isPremium=userProfile?.membership==="premium";
@@ -2083,7 +2083,7 @@ function Plans({userProfile,goToProfile}){
         <div style={{fontSize:13,color:"var(--mu)",marginBottom:10}}>Renew or extend your subscription</div>
         <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.tg} {lang==="fa"?"تماس با پشتیبانی":"Contact Support"}</div>
       </div>
-      {showContact&&<ContactPopup onClose={()=>setShowContact(false)} onSupport={goToProfile}/>}
+      {showContact&&<ContactPopup onClose={()=>setShowContact(false)} onSupport={goToSupport}/>}
     </div>);
   }
   return(<div className="fi">
@@ -2109,7 +2109,7 @@ function Plans({userProfile,goToProfile}){
       <div style={{fontSize:13,color:"var(--mu)",lineHeight:1.7}}>{t.unlock}</div>
       <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:12,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.tg} {t.contact}</div>
     </div>
-    {showContact&&<ContactPopup onClose={()=>setShowContact(false)} onSupport={goToProfile}/>}
+    {showContact&&<ContactPopup onClose={()=>setShowContact(false)} onSupport={goToSupport}/>}
   </div>);
 }
 
@@ -2560,12 +2560,14 @@ function AdminSupportChat({token}){
 }
 
 /* ─── Profile ─── */
-function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange}){
+function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSupport,onSupportOpened}){
   const{t}=useLang();
   const noti=useNotifications();
   const[showLang,setShowLang]=useState(false);
   const[showChat,setShowChat]=useState(false);
   const[editingName,setEditingName]=useState(false);
+  // Auto-open support chat when navigated from Plans
+  useEffect(()=>{if(openSupport){setShowChat(true);if(onSupportOpened)onSupportOpened()}},[openSupport]);
   const[newName,setNewName]=useState(up?.full_name||"");
   const[nameSaving,setNameSaving]=useState(false);
   const saveName=async()=>{
@@ -2636,6 +2638,7 @@ function App(){
   const[usr,setUsr]=useState(()=>{try{const u=localStorage.getItem("fx_usr");return u?JSON.parse(u):null}catch(e){return null}});
   const[up,setUp]=useState(null),[adm,setAdm]=useState(false);
   const[tab,setTab]=useState(0),[posts,setP]=useState([]),[sigs,setS]=useState([]),[msgs,setMsgs]=useState([]);
+  const[openSupport,setOpenSupport]=useState(false);
   const[lang,setLangState]=useState(()=>{try{return localStorage.getItem("fxlang")||"en"}catch(e){return"en"}});
   const[showSplash,setShowSplash]=useState(()=>{try{return!sessionStorage.getItem("fx_splash")}catch(e){return true}});
   const[showOnb,setShowOnb]=useState(()=>{try{return!localStorage.getItem("fx_onb")}catch(e){return true}});
@@ -2698,9 +2701,9 @@ function App(){
     case"home":return<Home posts={posts} signals={sigs} msgs={msgs} go={goTab} goToPlans={()=>goToTabByKey("plans")} P={P} ok={ok} lastUpdate={lastUpdate} dark={dark} toggle={toggle} userProfile={up} token={tk} onR={load}/>;
     case"analysis":return<Analysis posts={posts} userProfile={up} msgs={msgs} token={tk} onR={load} goToPlans={()=>goToTabByKey("plans")}/>;
     case"signals":return<Sigs signals={sigs} userProfile={up} goToPlans={()=>goToTabByKey("plans")}/>;
-    case"plans":return<Plans userProfile={up} goToProfile={()=>goToTabByKey("profile")}/>;
+    case"plans":return<Plans userProfile={up} goToSupport={()=>{goToTabByKey("profile");setOpenSupport(true)}}/>;
     case"admin":return<Adm token={tk} posts={posts} signals={sigs} onR={load}/>;
-    case"profile":return<Prof user={usr} up={up} onOut={handleLogout} dark={dark} toggle={toggle} lang={lang} setLang={setLang} token={tk} onNameChange={(name)=>{setUp(prev=>prev?{...prev,full_name:name}:prev)}}/>;
+    case"profile":return<Prof user={usr} up={up} onOut={handleLogout} dark={dark} toggle={toggle} lang={lang} setLang={setLang} token={tk} onNameChange={(name)=>{setUp(prev=>prev?{...prev,full_name:name}:prev)}} openSupport={openSupport} onSupportOpened={()=>setOpenSupport(false)}/>;
     default:return null;
   }};
   return(
