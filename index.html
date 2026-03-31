@@ -162,25 +162,33 @@ function usePrices(){
   const[ok,setOk]=useState(false);
   const[lastUpdate,setLastUpdate]=useState(null);
   const prev=useRef({});
-  const mk=(k,v)=>{const n=parseFloat(String(v).replace(/,/g,""))||0;const o=prev.current[k]||n;prev.current[k]=n;return{p:n>0?Number(n).toLocaleString("en"):"---",c:v,u:n>=o}};
+  // mkT = already in Toman (Navasan), mkR = in Rial → convert to Toman (TGJU)
+  const mkT=(k,v)=>{const n=parseFloat(String(v).replace(/,/g,""))||0;const o=prev.current[k]||n;prev.current[k]=n;return{p:n>0?Number(n).toLocaleString("en"):"---",c:v,u:n>=o}};
+  const mkR=(k,v)=>{const n=parseFloat(String(v).replace(/,/g,""))||0;const toman=Math.round(n/10);const o=prev.current[k]||toman;prev.current[k]=toman;return{p:toman>0?Number(toman).toLocaleString("en"):"---",c:v,u:toman>=o}};
 
   const f=useCallback(async()=>{
-    // Try Navasan
+    // Try Navasan (values are in TOMAN)
     try{
       const r=await fetch("https://api.navasan.tech/latest/?api_key=freeX42Ju2HlAIfOKINfOLWUZBNC1smi&item=usd_sell,18ayar,sekkeh,usdt,eur,rub");
       const d=await r.json();
       if(d&&!d.message&&d.usd_sell){
-        setP({usd_sell:mk("usd",d.usd_sell?.value),eur_sell:mk("eur",d.eur?.value||d.eur_sell?.value||"0"),sekkeh:mk("coin",d.sekkeh?.value||"0"),gold18:mk("gold",d["18ayar"]?.value||"0"),tether:mk("tether",d.usdt?.value||d.usdt_sell?.value||"0"),rub:mk("rub",d.rub?.value||"0")});
+        const usdVal=parseFloat(String(d.usd_sell?.value).replace(/,/g,""))||0;
+        const tetherVal=parseFloat(String(d.usdt?.value||d.usdt_sell?.value||"0").replace(/,/g,""))||0;
+        const tetherFinal=(tetherVal>usdVal*0.5)?tetherVal:usdVal;
+        setP({usd_sell:mkT("usd",d.usd_sell?.value),eur_sell:mkT("eur",d.eur?.value||d.eur_sell?.value||"0"),sekkeh:mkT("coin",d.sekkeh?.value||"0"),gold18:mkT("gold",d["18ayar"]?.value||"0"),tether:mkT("tether",String(tetherFinal)),rub:mkT("rub",d.rub?.value||"0")});
         setOk(true);setLastUpdate(new Date());return;
       }
     }catch(e){}
-    // Try TGJU
+    // Try TGJU (values are in RIAL → divide by 10)
     try{
       const r=await fetch("https://call4.tgju.org/ajax.json");
       const d=await r.json();
       if(d&&d.current){
         const get=(k)=>{try{return d.current[k]?.p?.replace(/,/g,"")||"0"}catch(e){return"0"}};
-        setP({usd_sell:mk("usd",get("price_dollar_rl")),eur_sell:mk("eur",get("price_eur")),sekkeh:mk("coin",get("sekee")),gold18:mk("gold",get("geram18")),tether:mk("tether",get("crypto-tether")),rub:mk("rub",get("price_rub"))});
+        const usdRial=parseFloat(get("price_dollar_rl"))||0;
+        const tetherRial=parseFloat(get("crypto-tether"))||0;
+        const tetherFix=(tetherRial>usdRial*0.5)?String(tetherRial):String(usdRial);
+        setP({usd_sell:mkR("usd",get("price_dollar_rl")),eur_sell:mkR("eur",get("price_eur")),sekkeh:mkR("coin",get("sekee")),gold18:mkR("gold",get("geram18")),tether:mkR("tether",tetherFix),rub:mkR("rub",get("price_rub"))});
         setOk(true);setLastUpdate(new Date());return;
       }
     }catch(e){}
@@ -1769,12 +1777,12 @@ function Home({posts,signals,msgs,go,goToPlans,P,ok,lastUpdate,dark,toggle,userP
       {lastUpdate&&<div style={{fontSize:9,color:"var(--dm)",marginBottom:10}}>{lang==="fa"?"آخرین بروزرسانی:":"Last update:"} {lastUpdate.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</div>}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
         {[
-          {label:lang==="fa"?"دلار":"USD",val:P.usd_sell,unit:lang==="fa"?"تومان":"IRR"},
-          {label:lang==="fa"?"یورو":"EUR",val:P.eur_sell,unit:lang==="fa"?"تومان":"IRR"},
-          {label:lang==="fa"?"سکه امامی":"Sekke",val:P.sekkeh,unit:lang==="fa"?"تومان":"IRR"},
-          {label:lang==="fa"?"طلا ۱۸ عیار":"Gold 18K",val:P.gold18,unit:lang==="fa"?"تومان":"IRR"},
-          {label:lang==="fa"?"تتر":"USDT",val:P.tether,unit:lang==="fa"?"تومان":"IRR"},
-          {label:lang==="fa"?"روبل روسیه":"RUB",val:P.rub,unit:lang==="fa"?"تومان":"IRR"},
+          {label:lang==="fa"?"دلار":"USD",val:P.usd_sell,unit:lang==="fa"?"تومان":"Toman"},
+          {label:lang==="fa"?"یورو":"EUR",val:P.eur_sell,unit:lang==="fa"?"تومان":"Toman"},
+          {label:lang==="fa"?"سکه امامی":"Sekke",val:P.sekkeh,unit:lang==="fa"?"تومان":"Toman"},
+          {label:lang==="fa"?"طلا ۱۸ عیار":"Gold 18K",val:P.gold18,unit:lang==="fa"?"تومان":"Toman"},
+          {label:lang==="fa"?"تتر":"USDT",val:P.tether,unit:lang==="fa"?"تومان":"Toman"},
+          {label:lang==="fa"?"روبل روسیه":"RUB",val:P.rub,unit:lang==="fa"?"تومان":"Toman"},
         ].map((item,i)=><div key={i} style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:10,padding:12}}>
           <div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginBottom:6}}>{item.label}</div>
           <div className="m" style={{fontSize:14,fontWeight:600,color:"var(--tx)"}}>{item.val?.p||"---"}</div>
