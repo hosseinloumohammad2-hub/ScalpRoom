@@ -83,6 +83,9 @@ select{background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padd
 .onb-dots span{width:8px;height:8px;border-radius:50%;background:var(--brd);transition:.3s}
 .onb-dots span.act{background:var(--R);width:20px}
 .perf-chart{display:flex;align-items:flex-end;gap:3px;height:60px;margin-top:12px;padding:0 4px}
+.chat-bubble{max-width:82%;padding:10px 14px;border-radius:18px;font-size:13px;line-height:1.5;word-wrap:break-word;animation:fi .2s ease}
+.chat-user{background:var(--R);color:#fff;border-bottom-right-radius:4px;margin-left:auto}
+.chat-admin{background:var(--card);border:1px solid var(--brd);color:var(--tx);border-bottom-left-radius:4px}
 .perf-bar{flex:1;border-radius:3px 3px 0 0;transition:height .5s ease;min-width:0;position:relative}
 .perf-bar:hover::after{content:attr(data-label);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font-size:8px;white-space:nowrap;color:var(--tx2);padding:2px 4px;background:var(--card);border:1px solid var(--brd);border-radius:4px;margin-bottom:2px}
 </style>
@@ -101,11 +104,11 @@ const H=t=>({apikey:SK,Authorization:`Bearer ${t||SK}`,"Content-Type":"applicati
 const LANGS={en:"English",ar:"العربية",fa:"فارسی",tr:"Türkçe",ru:"Русский"};
 const RTL_LANGS=["ar","fa"];
 const T={
-  en:{home:"Home",analysis:"Analysis",signals:"Signals",plans:"Plans",admin:"Admin",profile:"Profile",live:"Live",latest:"Latest analyses",viewAll:"View all",noAnalyses:"No analyses yet",noSignals:"No signals yet",noPosts:"No posts",premium:"Premium Membership",unlock:"Unlock all analyses, signals & VIP content",subscribe:"Subscribe",contact:"Contact on Telegram",signIn:"Sign In",signUp:"Sign Up",createAcc:"Create Account",welcome:"Welcome back",getStarted:"Get started for free",fill:"Fill all fields",enterName:"Enter name",email:"Email address",password:"Password",fullName:"Full name",darkMode:"Dark Mode",lightMode:"Light Mode",signOut:"Sign out",publish:"Publish",publishSignal:"Publish Signal",post:"Post",signal:"Signal",manage:"Manage",users:"Users",title:"Title",description:"Description",pair:"Pair",entry:"Entry Price",tp:"Take Profit",sl:"Stop Loss",tapImage:"Tap to select image",delete:"Delete",setpro:"Set PRO",uploadFailed:"Upload failed",published:"Published!",signalPub:"Signal published!",upgraded:"User upgraded!",downgraded:"Downgraded",language:"Language",bestValue:"Best value",active:"ACTIVE",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"Edit Signal",pnl:"PnL",closedAt:"Closed at",save:"Save",status:"Status",search:"Search...",all:"All",gold:"Gold",forex:"Forex",crypto:"Crypto",indices:"Indices",iran:"Iran Market",month1:"1 Month",month3:"3 Months",month6:"6 Months",year1:"1 Year",free:"FREE",membership:"Membership",role:"Role",joinDate:"Joined",pushEnabled:"Notifications enabled",pushEnable:"Enable Notifications",noPermission:"Notification permission denied",enterTitle:"Enter title",enterPair:"Enter pair & entry",xauusd:"Gold",btcusd:"Bitcoin",eurusd:"EUR/USD",gbpusd:"GBP/USD",xagusd:"Silver",usdirr:"USD/IRR",irgold:"Iran Gold (g)",irbourse:"Iran Bourse",onb1t:"Live Signals",onb1d:"Get real-time trading signals with entry, TP & SL levels",onb2t:"Expert Analysis",onb2d:"Professional chart analysis from experienced traders",onb3t:"Invite & Earn",onb3d:"Invite 10 friends and get 1 month free premium!",next:"Next",start:"Let's Go",referral:"Referral",yourCode:"Your Invite Code",invites:"Invites",invitesNeeded:"invites to free month",shareCode:"Share your code",copied:"Copied!",referralDesc:"Invite 10 friends and unlock 1 month free premium membership!",enterRef:"Have a referral code?",applyCode:"Apply",refApplied:"Referral code applied!",refInvalid:"Invalid code",hello:"Hello",emailNotConfirmed:"Email not confirmed. Please check your inbox and click the confirmation link.",confirmEmailSent:"✉️ A confirmation link has been sent to your email. Please verify your email, then sign in.",refAlreadyUsed:"You already used a referral code",refAlreadyApplied:"Already applied!",refAwaitActivation:"⏳ Awaiting activation",refCongrats:"🎉 Congratulations! 10 invites completed",refAdminActivate:"Your premium will be activated by admin shortly",refCodeUsed:"Referral code already used",dayTrade:"Day Trade",longTerm:"Long Term",addToDayTrade:"Add to Day Trade",addedToDayTrade:"Added to Day Trade!"},
-  fa:{home:"خانه",analysis:"تحلیل‌ها",signals:"سیگنال‌ها",plans:"اشتراک",admin:"مدیریت",profile:"پروفایل",live:"زنده",latest:"آخرین تحلیل‌ها",viewAll:"مشاهده همه",noAnalyses:"هنوز تحلیلی نیست",noSignals:"هنوز سیگنالی نیست",noPosts:"پستی نیست",premium:"اشتراک ویژه",unlock:"دسترسی به تمام تحلیل‌ها، سیگنال‌ها و محتوای VIP",subscribe:"خرید اشتراک",contact:"تماس در تلگرام",signIn:"ورود",signUp:"ثبت‌نام",createAcc:"ساخت حساب",welcome:"خوش آمدید",getStarted:"رایگان شروع کنید",fill:"همه فیلدها را پر کنید",enterName:"نام را وارد کنید",email:"آدرس ایمیل",password:"رمز عبور",fullName:"نام کامل",darkMode:"حالت تاریک",lightMode:"حالت روشن",signOut:"خروج",publish:"انتشار",publishSignal:"انتشار سیگنال",post:"پست",signal:"سیگنال",manage:"مدیریت",users:"کاربران",title:"عنوان",description:"توضیحات",pair:"جفت ارز",entry:"قیمت ورود",tp:"حد سود",sl:"حد ضرر",tapImage:"برای انتخاب عکس بزنید",delete:"حذف",setpro:"تنظیم PRO",uploadFailed:"آپلود ناموفق",published:"منتشر شد!",signalPub:"سیگنال منتشر شد!",upgraded:"کاربر ارتقا یافت!",downgraded:"تنزیل شد",language:"زبان",bestValue:"بهترین ارزش",active:"فعال",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"ویرایش سیگنال",pnl:"سود/ضرر",closedAt:"بسته شده در",save:"ذخیره",status:"وضعیت",search:"جستجو...",all:"همه",gold:"طلا",forex:"فارکس",crypto:"کریپتو",indices:"شاخص‌ها",iran:"بازار ایران",month1:"۱ ماه",month3:"۳ ماه",month6:"۶ ماه",year1:"۱ سال",free:"رایگان",membership:"اشتراک",role:"نقش",joinDate:"تاریخ عضویت",pushEnabled:"اعلان‌ها فعال شد",pushEnable:"فعال‌سازی اعلان‌ها",noPermission:"دسترسی اعلان رد شد",enterTitle:"عنوان را وارد کنید",enterPair:"جفت ارز و قیمت ورود را وارد کنید",xauusd:"طلا",btcusd:"بیت‌کوین",eurusd:"یورو/دلار",gbpusd:"پوند/دلار",xagusd:"نقره",usdirr:"دلار/تومان",irgold:"طلای گرمی",irbourse:"بورس ایران",onb1t:"سیگنال‌ زنده",onb1d:"دریافت سیگنال معاملاتی با نقاط ورود، TP و SL",onb2t:"تحلیل حرفه‌ای",onb2d:"تحلیل چارت توسط تریدرهای باتجربه",onb3t:"دعوت و جایزه",onb3d:"۱۰ نفر دعوت کن و ۱ ماه اشتراک رایگان بگیر!",next:"بعدی",start:"شروع کنیم",referral:"دعوت دوستان",yourCode:"کد دعوت شما",invites:"دعوت‌ها",invitesNeeded:"دعوت تا اشتراک رایگان",shareCode:"کد خود را به اشتراک بگذارید",copied:"کپی شد!",referralDesc:"۱۰ نفر دعوت کنید و ۱ ماه اشتراک ویژه رایگان دریافت کنید!",enterRef:"کد دعوت دارید؟",applyCode:"اعمال",refApplied:"کد دعوت اعمال شد!",refInvalid:"کد نامعتبر",hello:"سلام",emailNotConfirmed:"ایمیل شما هنوز تأیید نشده. لطفاً ایمیل خود را بررسی کنید.",confirmEmailSent:"✉️ لینک تأیید به ایمیل شما ارسال شد. لطفاً ایمیل خود را بررسی و تأیید کنید، سپس وارد شوید.",refAlreadyUsed:"شما قبلاً کد دعوت استفاده کرده‌اید",refAlreadyApplied:"قبلاً اعمال شده!",refAwaitActivation:"⏳ منتظر فعال‌سازی باشید",refCongrats:"🎉 تبریک! ۱۰ دعوت تکمیل شد",refAdminActivate:"اشتراک ویژه شما به زودی توسط ادمین فعال می‌شود",refCodeUsed:"کد دعوت قبلاً استفاده شده",dayTrade:"تحلیل روزانه",longTerm:"بلند مدت",addToDayTrade:"افزودن به تحلیل روزانه",addedToDayTrade:"به تحلیل روزانه اضافه شد!"},
-  ar:{home:"الرئيسية",analysis:"التحليل",signals:"الإشارات",plans:"الاشتراك",admin:"الإدارة",profile:"الملف",live:"مباشر",latest:"آخر التحليلات",viewAll:"عرض الكل",noAnalyses:"لا توجد تحليلات بعد",noSignals:"لا توجد إشارات بعد",noPosts:"لا توجد منشورات",premium:"العضوية المميزة",unlock:"فتح جميع التحليلات والإشارات والمحتوى VIP",subscribe:"اشترك",contact:"تواصل عبر تلغرام",signIn:"تسجيل الدخول",signUp:"إنشاء حساب",createAcc:"إنشاء حساب",welcome:"مرحبا بعودتك",getStarted:"ابدأ مجاناً",fill:"املأ جميع الحقول",enterName:"أدخل الاسم",email:"البريد الإلكتروني",password:"كلمة المرور",fullName:"الاسم الكامل",darkMode:"الوضع الداكن",lightMode:"الوضع الفاتح",signOut:"تسجيل الخروج",publish:"نشر",publishSignal:"نشر الإشارة",post:"منشور",signal:"إشارة",manage:"إدارة",users:"المستخدمون",title:"العنوان",description:"الوصف",pair:"الزوج",entry:"سعر الدخول",tp:"جني الأرباح",sl:"وقف الخسارة",tapImage:"اضغط لاختيار صورة",delete:"حذف",setpro:"تعيين PRO",uploadFailed:"فشل الرفع",published:"تم النشر!",signalPub:"تم نشر الإشارة!",upgraded:"تمت ترقية المستخدم!",downgraded:"تم التخفيض",language:"اللغة",bestValue:"أفضل قيمة",active:"نشط",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"تعديل الإشارة",pnl:"الربح/الخسارة",closedAt:"أغلق في",save:"حفظ",status:"الحالة",search:"بحث...",all:"الكل",gold:"الذهب",forex:"الفوركس",crypto:"العملات الرقمية",indices:"المؤشرات",iran:"السوق الإيرانية",month1:"شهر واحد",month3:"٣ أشهر",month6:"٦ أشهر",year1:"سنة واحدة",free:"مجاني",membership:"العضوية",role:"الدور",joinDate:"تاريخ الانضمام",pushEnabled:"تم تفعيل الإشعارات",pushEnable:"تفعيل الإشعارات",noPermission:"تم رفض إذن الإشعارات",enterTitle:"أدخل العنوان",enterPair:"أدخل الزوج وسعر الدخول",xauusd:"الذهب",btcusd:"البيتكوين",eurusd:"يورو/دولار",gbpusd:"جنيه/دولار",xagusd:"الفضة",usdirr:"دولار/تومان",irgold:"ذهب إيراني (غ)",irbourse:"بورصة إيران",emailNotConfirmed:"لم يتم تأكيد بريدك الإلكتروني. يرجى التحقق من صندوق الوارد والنقر على رابط التأكيد.",confirmEmailSent:"✉️ تم إرسال رابط التأكيد إلى بريدك الإلكتروني. يرجى التحقق من بريدك ثم تسجيل الدخول.",refAlreadyUsed:"لقد استخدمت رمز إحالة بالفعل",refAlreadyApplied:"تم التطبيق بالفعل!",refAwaitActivation:"⏳ في انتظار التفعيل",refCongrats:"🎉 تهانينا! اكتملت ١٠ دعوات",refAdminActivate:"سيتم تفعيل اشتراكك من قبل المسؤول قريباً",refCodeUsed:"تم استخدام رمز الإحالة بالفعل",dayTrade:"تداول يومي",longTerm:"طويل المدى",addToDayTrade:"إضافة للتداول اليومي",addedToDayTrade:"تمت الإضافة!"},
-  tr:{home:"Ana Sayfa",analysis:"Analiz",signals:"Sinyaller",plans:"Planlar",admin:"Yönetici",profile:"Profil",live:"Canlı",latest:"Son analizler",viewAll:"Tümünü gör",noAnalyses:"Henüz analiz yok",noSignals:"Henüz sinyal yok",noPosts:"Gönderi yok",premium:"Premium Üyelik",unlock:"Tüm analizlere, sinyallere ve VIP içeriklere erişin",subscribe:"Abone Ol",contact:"Telegram'da iletişim",signIn:"Giriş Yap",signUp:"Kayıt Ol",createAcc:"Hesap Oluştur",welcome:"Tekrar hoş geldiniz",getStarted:"Ücretsiz başla",fill:"Tüm alanları doldurun",enterName:"İsim girin",email:"E-posta adresi",password:"Şifre",fullName:"Ad Soyad",darkMode:"Karanlık Mod",lightMode:"Aydınlık Mod",signOut:"Çıkış Yap",publish:"Yayınla",publishSignal:"Sinyal Yayınla",post:"Gönderi",signal:"Sinyal",manage:"Yönet",users:"Kullanıcılar",title:"Başlık",description:"Açıklama",pair:"Çift",entry:"Giriş Fiyatı",tp:"Kâr Al",sl:"Zarar Durdur",tapImage:"Resim seçmek için dokunun",delete:"Sil",setpro:"PRO Yap",uploadFailed:"Yükleme başarısız",published:"Yayınlandı!",signalPub:"Sinyal yayınlandı!",upgraded:"Kullanıcı yükseltildi!",downgraded:"İndirildi",language:"Dil",bestValue:"En iyi değer",active:"AKTİF",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"Sinyal Düzenle",pnl:"Kâr/Zarar",closedAt:"Kapandı",save:"Kaydet",status:"Durum",search:"Ara...",all:"Tümü",gold:"Altın",forex:"Forex",crypto:"Kripto",indices:"Endeksler",iran:"İran Piyasası",month1:"1 Ay",month3:"3 Ay",month6:"6 Ay",year1:"1 Yıl",free:"ÜCRETSİZ",membership:"Üyelik",role:"Rol",joinDate:"Katılım",pushEnabled:"Bildirimler aktif",pushEnable:"Bildirimleri Etkinleştir",noPermission:"Bildirim izni reddedildi",enterTitle:"Başlık girin",enterPair:"Çift ve giriş fiyatı girin",xauusd:"Altın",btcusd:"Bitcoin",eurusd:"EUR/USD",gbpusd:"GBP/USD",xagusd:"Gümüş",usdirr:"USD/IRR",irgold:"İran Altın (g)",irbourse:"İran Borsası",emailNotConfirmed:"E-postanız henüz doğrulanmadı. Lütfen gelen kutunuzu kontrol edin ve doğrulama bağlantısına tıklayın.",confirmEmailSent:"✉️ Doğrulama bağlantısı e-postanıza gönderildi. Lütfen e-postanızı doğrulayın, ardından giriş yapın.",refAlreadyUsed:"Zaten bir davet kodu kullandınız",refAlreadyApplied:"Zaten uygulandı!",refAwaitActivation:"⏳ Aktivasyon bekleniyor",refCongrats:"🎉 Tebrikler! 10 davet tamamlandı",refAdminActivate:"Premium üyeliğiniz admin tarafından yakında aktifleştirilecek",refCodeUsed:"Davet kodu zaten kullanılmış",dayTrade:"Günlük İşlem",longTerm:"Uzun Vadeli",addToDayTrade:"Günlük İşleme Ekle",addedToDayTrade:"Eklendi!"},
-  ru:{home:"Главная",analysis:"Анализ",signals:"Сигналы",plans:"Планы",admin:"Админ",profile:"Профиль",live:"Онлайн",latest:"Последние анализы",viewAll:"Все",noAnalyses:"Пока нет анализов",noSignals:"Пока нет сигналов",noPosts:"Нет постов",premium:"Премиум подписка",unlock:"Доступ ко всем анализам, сигналам и VIP контенту",subscribe:"Подписаться",contact:"Связаться в Telegram",signIn:"Войти",signUp:"Регистрация",createAcc:"Создать аккаунт",welcome:"С возвращением",getStarted:"Начните бесплатно",fill:"Заполните все поля",enterName:"Введите имя",email:"Электронная почта",password:"Пароль",fullName:"Полное имя",darkMode:"Тёмная тема",lightMode:"Светлая тема",signOut:"Выйти",publish:"Опубликовать",publishSignal:"Опубликовать сигнал",post:"Пост",signal:"Сигнал",manage:"Управление",users:"Пользователи",title:"Заголовок",description:"Описание",pair:"Пара",entry:"Цена входа",tp:"Тейк-профит",sl:"Стоп-лосс",tapImage:"Нажмите для выбора изображения",delete:"Удалить",setpro:"Установить PRO",uploadFailed:"Загрузка не удалась",published:"Опубликовано!",signalPub:"Сигнал опубликован!",upgraded:"Пользователь повышен!",downgraded:"Понижен",language:"Язык",bestValue:"Лучшая цена",active:"АКТИВНЫЙ",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"Редактировать сигнал",pnl:"PnL",closedAt:"Закрыт",save:"Сохранить",status:"Статус",search:"Поиск...",all:"Все",gold:"Золото",forex:"Форекс",crypto:"Крипто",indices:"Индексы",iran:"Рынок Ирана",month1:"1 Месяц",month3:"3 Месяца",month6:"6 Месяцев",year1:"1 Год",free:"БЕСПЛАТНО",membership:"Подписка",role:"Роль",joinDate:"Дата",pushEnabled:"Уведомления включены",pushEnable:"Включить уведомления",noPermission:"Разрешение на уведомления отклонено",enterTitle:"Введите заголовок",enterPair:"Введите пару и цену входа",xauusd:"Золото",btcusd:"Биткоин",eurusd:"EUR/USD",gbpusd:"GBP/USD",xagusd:"Серебро",usdirr:"USD/IRR",irgold:"Иран Золото (г)",irbourse:"Иран Биржа",emailNotConfirmed:"Ваш email не подтверждён. Проверьте почту и нажмите на ссылку подтверждения.",confirmEmailSent:"✉️ Ссылка подтверждения отправлена на вашу почту. Подтвердите email и войдите.",refAlreadyUsed:"Вы уже использовали реферальный код",refAlreadyApplied:"Уже применено!",refAwaitActivation:"⏳ Ожидание активации",refCongrats:"🎉 Поздравляем! 10 приглашений выполнено",refAdminActivate:"Ваша премиум-подписка будет активирована администратором",refCodeUsed:"Реферальный код уже использован",dayTrade:"Дейтрейд",longTerm:"Долгосрочный",addToDayTrade:"Добавить в Дейтрейд",addedToDayTrade:"Добавлено!"}
+  en:{home:"Home",analysis:"Analysis",signals:"Signals",plans:"Plans",admin:"Admin",profile:"Profile",live:"Live",latest:"Latest analyses",viewAll:"View all",noAnalyses:"No analyses yet",noSignals:"No signals yet",noPosts:"No posts",premium:"Premium Membership",unlock:"Unlock all analyses, signals & VIP content",subscribe:"Subscribe",contact:"Contact on Telegram",signIn:"Sign In",signUp:"Sign Up",createAcc:"Create Account",welcome:"Welcome back",getStarted:"Get started for free",fill:"Fill all fields",enterName:"Enter name",email:"Email address",password:"Password",fullName:"Full name",darkMode:"Dark Mode",lightMode:"Light Mode",signOut:"Sign out",publish:"Publish",publishSignal:"Publish Signal",post:"Post",signal:"Signal",manage:"Manage",users:"Users",title:"Title",description:"Description",pair:"Pair",entry:"Entry Price",tp:"Take Profit",sl:"Stop Loss",tapImage:"Tap to select image",delete:"Delete",setpro:"Set PRO",uploadFailed:"Upload failed",published:"Published!",signalPub:"Signal published!",upgraded:"User upgraded!",downgraded:"Downgraded",language:"Language",bestValue:"Best value",active:"ACTIVE",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"Edit Signal",pnl:"PnL",closedAt:"Closed at",save:"Save",status:"Status",search:"Search...",all:"All",gold:"Gold",forex:"Forex",crypto:"Crypto",indices:"Indices",iran:"Iran Market",month1:"1 Month",month3:"3 Months",month6:"6 Months",year1:"1 Year",free:"FREE",membership:"Membership",role:"Role",joinDate:"Joined",pushEnabled:"Notifications enabled",pushEnable:"Enable Notifications",noPermission:"Notification permission denied",enterTitle:"Enter title",enterPair:"Enter pair & entry",xauusd:"Gold",btcusd:"Bitcoin",eurusd:"EUR/USD",gbpusd:"GBP/USD",xagusd:"Silver",usdirr:"USD/IRR",irgold:"Iran Gold (g)",irbourse:"Iran Bourse",onb1t:"Live Signals",onb1d:"Get real-time trading signals with entry, TP & SL levels",onb2t:"Expert Analysis",onb2d:"Professional chart analysis from experienced traders",onb3t:"Invite & Earn",onb3d:"Invite 10 friends and get 1 month free premium!",next:"Next",start:"Let's Go",referral:"Referral",yourCode:"Your Invite Code",invites:"Invites",invitesNeeded:"invites to free month",shareCode:"Share your code",copied:"Copied!",referralDesc:"Invite 10 friends and unlock 1 month free premium membership!",enterRef:"Have a referral code?",applyCode:"Apply",refApplied:"Referral code applied!",refInvalid:"Invalid code",hello:"Hello",emailNotConfirmed:"Email not confirmed. Please check your inbox and click the confirmation link.",confirmEmailSent:"✉️ A confirmation link has been sent to your email. Please verify your email, then sign in.",refAlreadyUsed:"You already used a referral code",refAlreadyApplied:"Already applied!",refAwaitActivation:"⏳ Awaiting activation",refCongrats:"🎉 Congratulations! 10 invites completed",refAdminActivate:"Your premium will be activated by admin shortly",refCodeUsed:"Referral code already used",dayTrade:"Day Trade",longTerm:"Long Term",addToDayTrade:"Add to Day Trade",addedToDayTrade:"Added to Day Trade!",support:"Support",supportChat:"Support Chat",typeMessage:"Type a message...",noMessages:"No messages yet. Say hi!",supportDesc:"Chat with our support team"},
+  fa:{home:"خانه",analysis:"تحلیل‌ها",signals:"سیگنال‌ها",plans:"اشتراک",admin:"مدیریت",profile:"پروفایل",live:"زنده",latest:"آخرین تحلیل‌ها",viewAll:"مشاهده همه",noAnalyses:"هنوز تحلیلی نیست",noSignals:"هنوز سیگنالی نیست",noPosts:"پستی نیست",premium:"اشتراک ویژه",unlock:"دسترسی به تمام تحلیل‌ها، سیگنال‌ها و محتوای VIP",subscribe:"خرید اشتراک",contact:"تماس در تلگرام",signIn:"ورود",signUp:"ثبت‌نام",createAcc:"ساخت حساب",welcome:"خوش آمدید",getStarted:"رایگان شروع کنید",fill:"همه فیلدها را پر کنید",enterName:"نام را وارد کنید",email:"آدرس ایمیل",password:"رمز عبور",fullName:"نام کامل",darkMode:"حالت تاریک",lightMode:"حالت روشن",signOut:"خروج",publish:"انتشار",publishSignal:"انتشار سیگنال",post:"پست",signal:"سیگنال",manage:"مدیریت",users:"کاربران",title:"عنوان",description:"توضیحات",pair:"جفت ارز",entry:"قیمت ورود",tp:"حد سود",sl:"حد ضرر",tapImage:"برای انتخاب عکس بزنید",delete:"حذف",setpro:"تنظیم PRO",uploadFailed:"آپلود ناموفق",published:"منتشر شد!",signalPub:"سیگنال منتشر شد!",upgraded:"کاربر ارتقا یافت!",downgraded:"تنزیل شد",language:"زبان",bestValue:"بهترین ارزش",active:"فعال",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"ویرایش سیگنال",pnl:"سود/ضرر",closedAt:"بسته شده در",save:"ذخیره",status:"وضعیت",search:"جستجو...",all:"همه",gold:"طلا",forex:"فارکس",crypto:"کریپتو",indices:"شاخص‌ها",iran:"بازار ایران",month1:"۱ ماه",month3:"۳ ماه",month6:"۶ ماه",year1:"۱ سال",free:"رایگان",membership:"اشتراک",role:"نقش",joinDate:"تاریخ عضویت",pushEnabled:"اعلان‌ها فعال شد",pushEnable:"فعال‌سازی اعلان‌ها",noPermission:"دسترسی اعلان رد شد",enterTitle:"عنوان را وارد کنید",enterPair:"جفت ارز و قیمت ورود را وارد کنید",xauusd:"طلا",btcusd:"بیت‌کوین",eurusd:"یورو/دلار",gbpusd:"پوند/دلار",xagusd:"نقره",usdirr:"دلار/تومان",irgold:"طلای گرمی",irbourse:"بورس ایران",onb1t:"سیگنال‌ زنده",onb1d:"دریافت سیگنال معاملاتی با نقاط ورود، TP و SL",onb2t:"تحلیل حرفه‌ای",onb2d:"تحلیل چارت توسط تریدرهای باتجربه",onb3t:"دعوت و جایزه",onb3d:"۱۰ نفر دعوت کن و ۱ ماه اشتراک رایگان بگیر!",next:"بعدی",start:"شروع کنیم",referral:"دعوت دوستان",yourCode:"کد دعوت شما",invites:"دعوت‌ها",invitesNeeded:"دعوت تا اشتراک رایگان",shareCode:"کد خود را به اشتراک بگذارید",copied:"کپی شد!",referralDesc:"۱۰ نفر دعوت کنید و ۱ ماه اشتراک ویژه رایگان دریافت کنید!",enterRef:"کد دعوت دارید؟",applyCode:"اعمال",refApplied:"کد دعوت اعمال شد!",refInvalid:"کد نامعتبر",hello:"سلام",emailNotConfirmed:"ایمیل شما هنوز تأیید نشده. لطفاً ایمیل خود را بررسی کنید.",confirmEmailSent:"✉️ لینک تأیید به ایمیل شما ارسال شد. لطفاً ایمیل خود را بررسی و تأیید کنید، سپس وارد شوید.",refAlreadyUsed:"شما قبلاً کد دعوت استفاده کرده‌اید",refAlreadyApplied:"قبلاً اعمال شده!",refAwaitActivation:"⏳ منتظر فعال‌سازی باشید",refCongrats:"🎉 تبریک! ۱۰ دعوت تکمیل شد",refAdminActivate:"اشتراک ویژه شما به زودی توسط ادمین فعال می‌شود",refCodeUsed:"کد دعوت قبلاً استفاده شده",dayTrade:"تحلیل روزانه",longTerm:"بلند مدت",addToDayTrade:"افزودن به تحلیل روزانه",addedToDayTrade:"به تحلیل روزانه اضافه شد!",support:"پشتیبانی",supportChat:"چت پشتیبانی",typeMessage:"پیام خود را بنویسید...",noMessages:"هنوز پیامی نیست. سلام کنید!",supportDesc:"با تیم پشتیبانی ما چت کنید"},
+  ar:{home:"الرئيسية",analysis:"التحليل",signals:"الإشارات",plans:"الاشتراك",admin:"الإدارة",profile:"الملف",live:"مباشر",latest:"آخر التحليلات",viewAll:"عرض الكل",noAnalyses:"لا توجد تحليلات بعد",noSignals:"لا توجد إشارات بعد",noPosts:"لا توجد منشورات",premium:"العضوية المميزة",unlock:"فتح جميع التحليلات والإشارات والمحتوى VIP",subscribe:"اشترك",contact:"تواصل عبر تلغرام",signIn:"تسجيل الدخول",signUp:"إنشاء حساب",createAcc:"إنشاء حساب",welcome:"مرحبا بعودتك",getStarted:"ابدأ مجاناً",fill:"املأ جميع الحقول",enterName:"أدخل الاسم",email:"البريد الإلكتروني",password:"كلمة المرور",fullName:"الاسم الكامل",darkMode:"الوضع الداكن",lightMode:"الوضع الفاتح",signOut:"تسجيل الخروج",publish:"نشر",publishSignal:"نشر الإشارة",post:"منشور",signal:"إشارة",manage:"إدارة",users:"المستخدمون",title:"العنوان",description:"الوصف",pair:"الزوج",entry:"سعر الدخول",tp:"جني الأرباح",sl:"وقف الخسارة",tapImage:"اضغط لاختيار صورة",delete:"حذف",setpro:"تعيين PRO",uploadFailed:"فشل الرفع",published:"تم النشر!",signalPub:"تم نشر الإشارة!",upgraded:"تمت ترقية المستخدم!",downgraded:"تم التخفيض",language:"اللغة",bestValue:"أفضل قيمة",active:"نشط",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"تعديل الإشارة",pnl:"الربح/الخسارة",closedAt:"أغلق في",save:"حفظ",status:"الحالة",search:"بحث...",all:"الكل",gold:"الذهب",forex:"الفوركس",crypto:"العملات الرقمية",indices:"المؤشرات",iran:"السوق الإيرانية",month1:"شهر واحد",month3:"٣ أشهر",month6:"٦ أشهر",year1:"سنة واحدة",free:"مجاني",membership:"العضوية",role:"الدور",joinDate:"تاريخ الانضمام",pushEnabled:"تم تفعيل الإشعارات",pushEnable:"تفعيل الإشعارات",noPermission:"تم رفض إذن الإشعارات",enterTitle:"أدخل العنوان",enterPair:"أدخل الزوج وسعر الدخول",xauusd:"الذهب",btcusd:"البيتكوين",eurusd:"يورو/دولار",gbpusd:"جنيه/دولار",xagusd:"الفضة",usdirr:"دولار/تومان",irgold:"ذهب إيراني (غ)",irbourse:"بورصة إيران",emailNotConfirmed:"لم يتم تأكيد بريدك الإلكتروني. يرجى التحقق من صندوق الوارد والنقر على رابط التأكيد.",confirmEmailSent:"✉️ تم إرسال رابط التأكيد إلى بريدك الإلكتروني. يرجى التحقق من بريدك ثم تسجيل الدخول.",refAlreadyUsed:"لقد استخدمت رمز إحالة بالفعل",refAlreadyApplied:"تم التطبيق بالفعل!",refAwaitActivation:"⏳ في انتظار التفعيل",refCongrats:"🎉 تهانينا! اكتملت ١٠ دعوات",refAdminActivate:"سيتم تفعيل اشتراكك من قبل المسؤول قريباً",refCodeUsed:"تم استخدام رمز الإحالة بالفعل",dayTrade:"تداول يومي",longTerm:"طويل المدى",addToDayTrade:"إضافة للتداول اليومي",addedToDayTrade:"تمت الإضافة!",support:"الدعم",supportChat:"دردشة الدعم",typeMessage:"اكتب رسالة...",noMessages:"لا توجد رسائل بعد",supportDesc:"تحدث مع فريق الدعم"},
+  tr:{home:"Ana Sayfa",analysis:"Analiz",signals:"Sinyaller",plans:"Planlar",admin:"Yönetici",profile:"Profil",live:"Canlı",latest:"Son analizler",viewAll:"Tümünü gör",noAnalyses:"Henüz analiz yok",noSignals:"Henüz sinyal yok",noPosts:"Gönderi yok",premium:"Premium Üyelik",unlock:"Tüm analizlere, sinyallere ve VIP içeriklere erişin",subscribe:"Abone Ol",contact:"Telegram'da iletişim",signIn:"Giriş Yap",signUp:"Kayıt Ol",createAcc:"Hesap Oluştur",welcome:"Tekrar hoş geldiniz",getStarted:"Ücretsiz başla",fill:"Tüm alanları doldurun",enterName:"İsim girin",email:"E-posta adresi",password:"Şifre",fullName:"Ad Soyad",darkMode:"Karanlık Mod",lightMode:"Aydınlık Mod",signOut:"Çıkış Yap",publish:"Yayınla",publishSignal:"Sinyal Yayınla",post:"Gönderi",signal:"Sinyal",manage:"Yönet",users:"Kullanıcılar",title:"Başlık",description:"Açıklama",pair:"Çift",entry:"Giriş Fiyatı",tp:"Kâr Al",sl:"Zarar Durdur",tapImage:"Resim seçmek için dokunun",delete:"Sil",setpro:"PRO Yap",uploadFailed:"Yükleme başarısız",published:"Yayınlandı!",signalPub:"Sinyal yayınlandı!",upgraded:"Kullanıcı yükseltildi!",downgraded:"İndirildi",language:"Dil",bestValue:"En iyi değer",active:"AKTİF",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"Sinyal Düzenle",pnl:"Kâr/Zarar",closedAt:"Kapandı",save:"Kaydet",status:"Durum",search:"Ara...",all:"Tümü",gold:"Altın",forex:"Forex",crypto:"Kripto",indices:"Endeksler",iran:"İran Piyasası",month1:"1 Ay",month3:"3 Ay",month6:"6 Ay",year1:"1 Yıl",free:"ÜCRETSİZ",membership:"Üyelik",role:"Rol",joinDate:"Katılım",pushEnabled:"Bildirimler aktif",pushEnable:"Bildirimleri Etkinleştir",noPermission:"Bildirim izni reddedildi",enterTitle:"Başlık girin",enterPair:"Çift ve giriş fiyatı girin",xauusd:"Altın",btcusd:"Bitcoin",eurusd:"EUR/USD",gbpusd:"GBP/USD",xagusd:"Gümüş",usdirr:"USD/IRR",irgold:"İran Altın (g)",irbourse:"İran Borsası",emailNotConfirmed:"E-postanız henüz doğrulanmadı. Lütfen gelen kutunuzu kontrol edin ve doğrulama bağlantısına tıklayın.",confirmEmailSent:"✉️ Doğrulama bağlantısı e-postanıza gönderildi. Lütfen e-postanızı doğrulayın, ardından giriş yapın.",refAlreadyUsed:"Zaten bir davet kodu kullandınız",refAlreadyApplied:"Zaten uygulandı!",refAwaitActivation:"⏳ Aktivasyon bekleniyor",refCongrats:"🎉 Tebrikler! 10 davet tamamlandı",refAdminActivate:"Premium üyeliğiniz admin tarafından yakında aktifleştirilecek",refCodeUsed:"Davet kodu zaten kullanılmış",dayTrade:"Günlük İşlem",longTerm:"Uzun Vadeli",addToDayTrade:"Günlük İşleme Ekle",addedToDayTrade:"Eklendi!",support:"Destek",supportChat:"Destek Sohbeti",typeMessage:"Bir mesaj yazın...",noMessages:"Henüz mesaj yok",supportDesc:"Destek ekibimizle sohbet edin"},
+  ru:{home:"Главная",analysis:"Анализ",signals:"Сигналы",plans:"Планы",admin:"Админ",profile:"Профиль",live:"Онлайн",latest:"Последние анализы",viewAll:"Все",noAnalyses:"Пока нет анализов",noSignals:"Пока нет сигналов",noPosts:"Нет постов",premium:"Премиум подписка",unlock:"Доступ ко всем анализам, сигналам и VIP контенту",subscribe:"Подписаться",contact:"Связаться в Telegram",signIn:"Войти",signUp:"Регистрация",createAcc:"Создать аккаунт",welcome:"С возвращением",getStarted:"Начните бесплатно",fill:"Заполните все поля",enterName:"Введите имя",email:"Электронная почта",password:"Пароль",fullName:"Полное имя",darkMode:"Тёмная тема",lightMode:"Светлая тема",signOut:"Выйти",publish:"Опубликовать",publishSignal:"Опубликовать сигнал",post:"Пост",signal:"Сигнал",manage:"Управление",users:"Пользователи",title:"Заголовок",description:"Описание",pair:"Пара",entry:"Цена входа",tp:"Тейк-профит",sl:"Стоп-лосс",tapImage:"Нажмите для выбора изображения",delete:"Удалить",setpro:"Установить PRO",uploadFailed:"Загрузка не удалась",published:"Опубликовано!",signalPub:"Сигнал опубликован!",upgraded:"Пользователь повышен!",downgraded:"Понижен",language:"Язык",bestValue:"Лучшая цена",active:"АКТИВНЫЙ",tpHit:"TP HIT",slHit:"SL HIT",editSignal:"Редактировать сигнал",pnl:"PnL",closedAt:"Закрыт",save:"Сохранить",status:"Статус",search:"Поиск...",all:"Все",gold:"Золото",forex:"Форекс",crypto:"Крипто",indices:"Индексы",iran:"Рынок Ирана",month1:"1 Месяц",month3:"3 Месяца",month6:"6 Месяцев",year1:"1 Год",free:"БЕСПЛАТНО",membership:"Подписка",role:"Роль",joinDate:"Дата",pushEnabled:"Уведомления включены",pushEnable:"Включить уведомления",noPermission:"Разрешение на уведомления отклонено",enterTitle:"Введите заголовок",enterPair:"Введите пару и цену входа",xauusd:"Золото",btcusd:"Биткоин",eurusd:"EUR/USD",gbpusd:"GBP/USD",xagusd:"Серебро",usdirr:"USD/IRR",irgold:"Иран Золото (г)",irbourse:"Иран Биржа",emailNotConfirmed:"Ваш email не подтверждён. Проверьте почту и нажмите на ссылку подтверждения.",confirmEmailSent:"✉️ Ссылка подтверждения отправлена на вашу почту. Подтвердите email и войдите.",refAlreadyUsed:"Вы уже использовали реферальный код",refAlreadyApplied:"Уже применено!",refAwaitActivation:"⏳ Ожидание активации",refCongrats:"🎉 Поздравляем! 10 приглашений выполнено",refAdminActivate:"Ваша премиум-подписка будет активирована администратором",refCodeUsed:"Реферальный код уже использован",dayTrade:"Дейтрейд",longTerm:"Долгосрочный",addToDayTrade:"Добавить в Дейтрейд",addedToDayTrade:"Добавлено!",support:"Поддержка",supportChat:"Чат поддержки",typeMessage:"Напишите сообщение...",noMessages:"Сообщений пока нет",supportDesc:"Чат с командой поддержки"}
 };
 
 const LangCtx=createContext();
@@ -146,6 +149,8 @@ const IC={
   arrowDown:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>,
   search:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
   crown:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M3 20h18"/></svg>,
+  chat:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
+  send:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
 };
 
 const CE={all:"all",gold:"gold",forex:"forex",crypto:"crypto",indices:"indices",iran:"iran"};
@@ -2107,8 +2112,8 @@ function Adm({token,posts,signals,onR}){
   const savePost=async(id,data)=>{await api.patch("Posts",id,data,token);onR();setMs("Post updated!")};
   return(<div className="fi">
     <div style={{display:"flex",gap:4,marginBottom:14}}>
-      {["post","signal","manage","users","rewards","msg"].map(tab=>
-        <div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:11,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{tab==="post"?t.post:tab==="signal"?t.signal:tab==="manage"?t.manage:tab==="users"?t.users:tab==="rewards"?"💰":tab==="msg"?"📬":""}</div>
+      {["post","signal","manage","users","rewards","msg","support"].map(tab=>
+        <div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:10,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{tab==="post"?t.post:tab==="signal"?t.signal:tab==="manage"?t.manage:tab==="users"?t.users:tab==="rewards"?"💰":tab==="msg"?"📬":tab==="support"?"💬":""}</div>
       )}
     </div>
     {ms&&<div style={{background:ms.includes("!")&&!ms.includes("failed")?"color-mix(in srgb,var(--G) 8%,transparent)":"color-mix(in srgb,var(--R) 8%,transparent)",border:`1px solid ${ms.includes("!")&&!ms.includes("failed")?"color-mix(in srgb,var(--G) 15%,transparent)":"color-mix(in srgb,var(--R) 15%,transparent)"}`,borderRadius:10,padding:10,marginBottom:10,fontSize:13,color:ms.includes("!")&&!ms.includes("failed")?"var(--G)":"var(--R)"}}>{ms}</div>}
@@ -2218,6 +2223,7 @@ function Adm({token,posts,signals,onR}){
       </div>})}
     </>}
     {tb==="rewards"&&<AdminRewards token={token}/>}
+    {tb==="support"&&<AdminSupportChat token={token}/>}
     {tb==="msg"&&<>
       <div style={{fontSize:13,fontWeight:700,marginBottom:10}}>{lang==="fa"?"📬 ارسال پیام":"📬 Send Message"}</div>
       <input className="ip" placeholder={lang==="fa"?"عنوان پیام":"Message title"} value={msgTitle} onChange={e=>setMsgTitle(e.target.value)}/>
@@ -2262,11 +2268,242 @@ function Adm({token,posts,signals,onR}){
   </div>);
 }
 
+/* ─── Support Chat (iOS 26 style) ─── */
+function SupportChat({userId,token,onClose}){
+  const{t,lang}=useLang();
+  const[msgs,setMsgs]=useState([]);
+  const[txt,setTxt]=useState("");
+  const[sending,setSending]=useState(false);
+  const[loading,setLoading]=useState(true);
+  const endRef=useRef(null);
+  const scrollToBottom=()=>{setTimeout(()=>{endRef.current?.scrollIntoView({behavior:"smooth"})},100)};
+  const load=useCallback(async()=>{
+    try{
+      const r=await fetch(`${SB}/rest/v1/SupportChats?user_id=eq.${userId}&order=created_at.asc`,{headers:H(token)});
+      const d=await r.json();
+      if(Array.isArray(d))setMsgs(d);
+    }catch(e){}
+    setLoading(false);
+  },[userId,token]);
+  useEffect(()=>{load();const i=setInterval(load,5000);return()=>clearInterval(i)},[load]);
+  useEffect(()=>{scrollToBottom()},[msgs.length]);
+  const send=async()=>{
+    const m=txt.trim();if(!m)return;
+    setTxt("");setSending(true);
+    try{
+      await fetch(`${SB}/rest/v1/SupportChats`,{method:"POST",headers:H(token),body:JSON.stringify({user_id:userId,sender:"user",message:m})});
+      load();
+    }catch(e){}
+    setSending(false);
+  };
+  const formatTime=(d)=>{const dt=new Date(d);return dt.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})};
+  const formatDate=(d)=>{const dt=new Date(d);const today=new Date();if(dt.toDateString()===today.toDateString())return lang==="fa"?"امروز":"Today";const y=new Date(today);y.setDate(y.getDate()-1);if(dt.toDateString()===y.toDateString())return lang==="fa"?"دیروز":"Yesterday";return dt.toLocaleDateString()};
+  // Group messages by date
+  const grouped=useMemo(()=>{
+    const g=[];let lastDate="";
+    msgs.forEach(m=>{
+      const d=new Date(m.created_at).toDateString();
+      if(d!==lastDate){g.push({type:"date",label:formatDate(m.created_at)});lastDate=d}
+      g.push({type:"msg",...m});
+    });
+    return g;
+  },[msgs]);
+  return(<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:200,background:"var(--bg)",display:"flex",flexDirection:"column"}}>
+    {/* Header */}
+    <div style={{padding:"12px 16px",borderBottom:"1px solid var(--brd)",background:"color-mix(in srgb,var(--bg) 92%,transparent)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
+      <div onClick={onClose} style={{cursor:"pointer",color:"var(--mu)",display:"flex",alignItems:"center"}}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </div>
+      <div style={{width:40,height:40,borderRadius:"50%",background:"var(--card)",border:"2px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+        <span style={{fontSize:11,fontWeight:800,color:"var(--tx)"}}>Fx<span style={{color:"var(--R)"}}>.</span></span>
+      </div>
+      <div style={{flex:1}}>
+        <div style={{fontSize:15,fontWeight:700}}>Fxscalproom<span style={{color:"var(--R)"}}>.</span> Admin</div>
+        <div style={{fontSize:11,color:"var(--G)",fontWeight:600,display:"flex",alignItems:"center",gap:4}}>
+          <div style={{width:6,height:6,borderRadius:"50%",background:"var(--G)"}}/>
+          {lang==="fa"?"آنلاین":"Online"}
+        </div>
+      </div>
+    </div>
+
+    {/* Messages */}
+    <div style={{flex:1,overflowY:"auto",padding:"12px 16px",display:"flex",flexDirection:"column",gap:6}}>
+      {loading&&<div style={{textAlign:"center",padding:40}}><div className="ptr-spinner"/></div>}
+      {!loading&&msgs.length===0&&<div style={{textAlign:"center",color:"var(--dm)",padding:"60px 0"}}>
+        <div style={{width:56,height:56,borderRadius:"50%",background:"var(--card)",border:"2px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px"}}>
+          <span style={{fontSize:14,fontWeight:800,color:"var(--tx)"}}>Fx<span style={{color:"var(--R)"}}>.</span></span>
+        </div>
+        <div style={{fontSize:14,fontWeight:600,marginBottom:4}}>Fxscalproom<span style={{color:"var(--R)"}}>.</span> Admin</div>
+        <div style={{fontSize:12,color:"var(--dm)"}}>{t.noMessages||"No messages yet. Say hi!"}</div>
+      </div>}
+      {grouped.map((item,i)=>item.type==="date"
+        ?<div key={"d"+i} style={{textAlign:"center",margin:"8px 0"}}>
+          <span style={{fontSize:10,color:"var(--dm)",fontWeight:600,background:"var(--bg2)",padding:"4px 12px",borderRadius:10}}>{item.label}</span>
+        </div>
+        :<div key={item.id||i} style={{display:"flex",flexDirection:"column",alignItems:item.sender==="user"?"flex-end":"flex-start"}}>
+          {item.sender==="admin"&&<div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+            <div style={{width:18,height:18,borderRadius:"50%",background:"var(--card)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <span style={{fontSize:6,fontWeight:800,color:"var(--tx)"}}>Fx</span>
+            </div>
+            <span style={{fontSize:9,color:"var(--dm)",fontWeight:600}}>Admin</span>
+          </div>}
+          <div className={`chat-bubble ${item.sender==="user"?"chat-user":"chat-admin"}`}>{item.message}</div>
+          <span style={{fontSize:9,color:"var(--dm)",marginTop:2,padding:"0 4px"}}>{formatTime(item.created_at)}</span>
+        </div>
+      )}
+      <div ref={endRef}/>
+    </div>
+
+    {/* Input */}
+    <div style={{padding:"10px 16px calc(env(safe-area-inset-bottom,8px) + 10px)",borderTop:"1px solid var(--brd)",background:"color-mix(in srgb,var(--bg) 92%,transparent)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",display:"flex",gap:8,alignItems:"flex-end",flexShrink:0}}>
+      <input value={txt} onChange={e=>setTxt(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}}} placeholder={t.typeMessage||"Type a message..."} style={{flex:1,background:"var(--bg2)",border:"1px solid var(--brd)",borderRadius:22,padding:"10px 16px",fontSize:14,color:"var(--tx)",outline:"none"}}/>
+      <div onClick={send} style={{width:40,height:40,borderRadius:"50%",background:txt.trim()?"var(--R)":"var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",cursor:txt.trim()?"pointer":"default",transition:".2s",flexShrink:0,opacity:sending?.5:1}}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </div>
+    </div>
+  </div>);
+}
+
+/* ─── Admin Support Chat View ─── */
+function AdminSupportChat({token}){
+  const{lang}=useLang();
+  const[convos,setConvos]=useState([]);
+  const[users,setUsers]=useState({});
+  const[selUser,setSelUser]=useState(null);
+  const[msgs,setMsgs]=useState([]);
+  const[txt,setTxt]=useState("");
+  const[sending,setSending]=useState(false);
+  const[loading,setLoading]=useState(true);
+  const endRef=useRef(null);
+  const scrollToBottom=()=>{setTimeout(()=>{endRef.current?.scrollIntoView({behavior:"smooth"})},100)};
+
+  // Load all conversations (grouped by user)
+  const loadConvos=useCallback(async()=>{
+    try{
+      const r=await fetch(`${SB}/rest/v1/SupportChats?select=user_id,message,sender,created_at&order=created_at.desc`,{headers:H(token)});
+      const d=await r.json();
+      if(Array.isArray(d)){
+        const byUser={};
+        d.forEach(m=>{
+          if(!byUser[m.user_id]){byUser[m.user_id]={user_id:m.user_id,lastMsg:m.message,lastSender:m.sender,lastTime:m.created_at,count:0,unread:0}}
+          byUser[m.user_id].count++;
+          if(m.sender==="user"&&!byUser[m.user_id]._seenAdmin)byUser[m.user_id].unread++;
+          if(m.sender==="admin")byUser[m.user_id]._seenAdmin=true;
+        });
+        setConvos(Object.values(byUser).sort((a,b)=>new Date(b.lastTime)-new Date(a.lastTime)));
+      }
+      const us=await fetch(`${SB}/rest/v1/Users?select=id,full_name,email,membership`,{headers:H(token)});
+      const usData=await us.json();
+      if(Array.isArray(usData)){const m={};usData.forEach(u=>m[u.id]=u);setUsers(m)}
+    }catch(e){}
+    setLoading(false);
+  },[token]);
+
+  useEffect(()=>{loadConvos()},[loadConvos]);
+
+  // Load messages for selected user
+  const loadMsgs=useCallback(async()=>{
+    if(!selUser)return;
+    try{
+      const r=await fetch(`${SB}/rest/v1/SupportChats?user_id=eq.${selUser}&order=created_at.asc`,{headers:H(token)});
+      const d=await r.json();
+      if(Array.isArray(d))setMsgs(d);
+    }catch(e){}
+  },[selUser,token]);
+
+  useEffect(()=>{if(selUser){loadMsgs();const i=setInterval(loadMsgs,4000);return()=>clearInterval(i)}},[selUser,loadMsgs]);
+  useEffect(()=>{scrollToBottom()},[msgs.length]);
+
+  const send=async()=>{
+    const m=txt.trim();if(!m||!selUser)return;
+    setTxt("");setSending(true);
+    try{
+      await fetch(`${SB}/rest/v1/SupportChats`,{method:"POST",headers:H(token),body:JSON.stringify({user_id:selUser,sender:"admin",message:m})});
+      loadMsgs();
+    }catch(e){}
+    setSending(false);
+  };
+  const formatTime=(d)=>{const dt=new Date(d);return dt.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})};
+  const timeSince=(d)=>{const s=Math.floor((new Date()-new Date(d))/1000);if(s<60)return"now";if(s<3600)return Math.floor(s/60)+"m";if(s<86400)return Math.floor(s/3600)+"h";return Math.floor(s/86400)+"d"};
+
+  if(selUser){
+    const u=users[selUser];
+    return(<div>
+      <div onClick={()=>{setSelUser(null);loadConvos()}} style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,cursor:"pointer",color:"var(--B)",fontSize:13,fontWeight:600}}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        {lang==="fa"?"بازگشت":"Back"}
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+        <div style={{width:36,height:36,borderRadius:"50%",background:"var(--bg)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700}}>{(u?.full_name||"?")[0].toUpperCase()}</div>
+        <div>
+          <div style={{fontSize:14,fontWeight:700}}>{u?.full_name||"Unknown"}</div>
+          <div style={{fontSize:10,color:"var(--dm)"}}>{u?.email}</div>
+        </div>
+        {u?.membership==="premium"&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 6px",borderRadius:4,marginLeft:"auto"}}>PRO</span>}
+      </div>
+      <div style={{background:"var(--bg2)",border:"1px solid var(--brd)",borderRadius:16,padding:12,maxHeight:400,overflowY:"auto",marginBottom:10}}>
+        {msgs.length===0&&<div style={{textAlign:"center",color:"var(--dm)",padding:20,fontSize:12}}>{lang==="fa"?"پیامی نیست":"No messages"}</div>}
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+        {msgs.map(m=><div key={m.id} style={{display:"flex",flexDirection:"column",alignItems:m.sender==="user"?"flex-start":"flex-end"}}>
+          {m.sender==="user"&&<span style={{fontSize:9,color:"var(--dm)",marginBottom:2}}>{u?.full_name||"User"}</span>}
+          {m.sender==="admin"&&<span style={{fontSize:9,color:"var(--B)",marginBottom:2}}>Admin</span>}
+          <div style={{maxWidth:"85%",padding:"8px 12px",borderRadius:14,fontSize:12,lineHeight:1.5,wordWrap:"break-word",
+            background:m.sender==="admin"?"color-mix(in srgb,var(--B) 10%,transparent)":"var(--card)",
+            border:`1px solid ${m.sender==="admin"?"color-mix(in srgb,var(--B) 20%,transparent)":"var(--brd)"}`,
+            color:"var(--tx)",
+            borderBottomRightRadius:m.sender==="admin"?4:14,
+            borderBottomLeftRadius:m.sender==="user"?4:14,
+          }}>{m.message}</div>
+          <span style={{fontSize:8,color:"var(--dm)",marginTop:2}}>{formatTime(m.created_at)}</span>
+        </div>)}
+        <div ref={endRef}/>
+        </div>
+      </div>
+      <div style={{display:"flex",gap:6}}>
+        <input className="ip" value={txt} onChange={e=>setTxt(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();send()}}} placeholder={lang==="fa"?"پاسخ...":"Reply..."} style={{marginBottom:0,flex:1,borderRadius:22}}/>
+        <div onClick={send} style={{width:42,height:42,borderRadius:"50%",background:txt.trim()?"var(--B)":"var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",cursor:txt.trim()?"pointer":"default",transition:".2s",flexShrink:0,opacity:sending?.5:1}}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </div>
+      </div>
+    </div>);
+  }
+
+  return(<div>
+    <div style={{fontSize:14,fontWeight:700,marginBottom:12}}>{lang==="fa"?"💬 چت‌های پشتیبانی":"💬 Support Chats"}</div>
+    {loading&&<div style={{textAlign:"center",padding:30}}><div className="ptr-spinner"/></div>}
+    {!loading&&convos.length===0&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:13}}>{lang==="fa"?"هنوز چتی نیست":"No chats yet"}</div>}
+    {convos.map(c=>{
+      const u=users[c.user_id];
+      return<div key={c.user_id} onClick={()=>setSelUser(c.user_id)} className="cd" style={{padding:12,marginBottom:6,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
+        <div style={{position:"relative"}}>
+          <div style={{width:42,height:42,borderRadius:"50%",background:"var(--bg)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700}}>{(u?.full_name||"?")[0].toUpperCase()}</div>
+          {c.unread>0&&<div style={{position:"absolute",top:-2,right:-2,width:10,height:10,borderRadius:"50%",background:"var(--R)",border:"2px solid var(--card)"}}/>}
+        </div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontSize:13,fontWeight:600}}>{u?.full_name||"Unknown"}</span>
+            {u?.membership==="premium"&&<span style={{fontSize:7,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"1px 4px",borderRadius:3}}>PRO</span>}
+          </div>
+          <div style={{fontSize:11,color:c.unread>0?"var(--tx)":"var(--dm)",fontWeight:c.unread>0?600:400,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:2}}>
+            {c.lastSender==="admin"&&<span style={{color:"var(--B)"}}>You: </span>}{c.lastMsg}
+          </div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2,flexShrink:0}}>
+          <span style={{fontSize:9,color:"var(--dm)"}}>{timeSince(c.lastTime)}</span>
+          {c.unread>0&&<span style={{fontSize:9,fontWeight:700,color:"#fff",background:"var(--R)",width:18,height:18,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center"}}>{c.unread}</span>}
+          <span style={{fontSize:9,color:"var(--dm)"}}>{c.count} msgs</span>
+        </div>
+      </div>
+    })}
+  </div>);
+}
+
 /* ─── Profile ─── */
 function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange}){
   const{t}=useLang();
   const noti=useNotifications();
   const[showLang,setShowLang]=useState(false);
+  const[showChat,setShowChat]=useState(false);
   const[editingName,setEditingName]=useState(false);
   const[newName,setNewName]=useState(up?.full_name||"");
   const[nameSaving,setNameSaving]=useState(false);
@@ -2315,9 +2552,20 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange}){
       <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{color:"var(--mu)"}}>{IC.bell}</span><span style={{fontSize:13,fontWeight:500}}>{noti.enabled?t.pushEnabled:t.pushEnable}</span></div>
       <div style={{width:40,height:22,borderRadius:11,background:noti.enabled?"var(--G)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:noti.enabled?20:2,transition:".2s"}}/></div>
     </div>
+    <div onClick={()=>setShowChat(true)} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:14,marginBottom:6,cursor:"pointer",background:"color-mix(in srgb,var(--B) 4%,transparent)",borderColor:"color-mix(in srgb,var(--B) 15%,transparent)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <span style={{color:"var(--B)"}}>{IC.chat}</span>
+        <div>
+          <span style={{fontSize:13,fontWeight:600,color:"var(--B)"}}>{t.support||"Support"}</span>
+          <div style={{fontSize:10,color:"var(--dm)",marginTop:1}}>{t.supportDesc||"Chat with our support team"}</div>
+        </div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
     <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginBottom:4,cursor:"pointer"}}><span style={{color:"#0088cc"}}>{IC.tg}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Telegram</span></a>
     <a href="https://www.instagram.com/forexscalproom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginBottom:4,cursor:"pointer"}}><span style={{color:"#E1306C"}}>{IC.ig}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Instagram</span></a>
     <div onClick={onOut} className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginTop:12,cursor:"pointer",background:"color-mix(in srgb,var(--R) 5%,transparent)",borderColor:"color-mix(in srgb,var(--R) 12%,transparent)"}}><span style={{fontSize:13,color:"var(--R)",fontWeight:600}}>{t.signOut}</span></div>
+    {showChat&&<SupportChat userId={user?.id} token={token} onClose={()=>setShowChat(false)}/>}
   </div>);
 }
 
