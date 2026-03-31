@@ -16,7 +16,6 @@
 [data-theme="light"]{--bg:#f4f4f5;--bg2:#ffffff;--card:#ffffff;--brd:#e4e4e7;--brd2:#d4d4d8;--tx:#18181b;--tx2:#3f3f46;--mu:#71717a;--dm:#a1a1aa;--R:#dc2626;--G:#16a34a;--B:#2563eb;--Y:#ca8a04}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);-webkit-tap-highlight-color:transparent;overflow-x:hidden;transition:background .3s,color .3s}
-[dir="rtl"] body{direction:rtl}
 ::-webkit-scrollbar{width:0}
 input,button,textarea,select{font-family:inherit;border:none;outline:none;color:var(--tx)}
 input::placeholder,textarea::placeholder{color:var(--dm)}
@@ -1474,24 +1473,25 @@ async function generateShareCard(type,data){
   });
 }
 
-/* ─── Translate Button (inline with Anthropic API) ─── */
+/* ─── Translate Button (inline with Google Translate API) ─── */
 function TranslateBtn({text}){
   const{lang}=useLang();
   const[translated,setTranslated]=useState(null);
   const[loading,setLoading]=useState(false);
   const[open,setOpen]=useState(false);
   if(!text||lang==="en")return null;
-  const langName={fa:"Persian/Farsi",ar:"Arabic",tr:"Turkish",ru:"Russian",es:"Spanish"}[lang]||"English";
+  const tl={fa:"fa",ar:"ar",tr:"tr",ru:"ru",es:"es"}[lang]||"en";
   const label=lang==="fa"?"ترجمه":lang==="ar"?"ترجمة":lang==="tr"?"Çevir":lang==="ru"?"Перевести":lang==="es"?"Traducir":"Translate";
   const doTranslate=async()=>{
     if(translated){setOpen(!open);return}
     setLoading(true);
     try{
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:`Translate the following text to ${langName}. Only output the translation, nothing else:\n\n${text}`}]})});
+      const url=`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`;
+      const r=await fetch(url);
       const d=await r.json();
-      const t=d.content?.find(c=>c.type==="text")?.text||"";
-      if(t){setTranslated(t);setOpen(true)}
-    }catch(e){setTranslated("Translation failed");setOpen(true)}
+      const result=d[0]?.map(s=>s[0]).join("")||"";
+      if(result){setTranslated(result);setOpen(true)}else{setTranslated("⚠");setOpen(true)}
+    }catch(e){setTranslated("⚠ Translation unavailable");setOpen(true)}
     setLoading(false);
   };
   return<div style={{marginTop:6}}>
@@ -2925,8 +2925,8 @@ function App(){
     }catch(e){}
   },[]);
   useEffect(()=>{refreshSession();const i=setInterval(refreshSession,30*60*1000);return()=>clearInterval(i)},[refreshSession]);
-  const setLang=(l)=>{setLangState(l);try{localStorage.setItem("fxlang",l)}catch(e){};const isRtl=RTL_LANGS.includes(l);document.documentElement.setAttribute("dir",isRtl?"rtl":"ltr");document.documentElement.setAttribute("lang",l)};
-  useEffect(()=>{const isRtl=RTL_LANGS.includes(lang);document.documentElement.setAttribute("dir",isRtl?"rtl":"ltr");document.documentElement.setAttribute("lang",lang)},[]);
+  const setLang=(l)=>{setLangState(l);try{localStorage.setItem("fxlang",l)}catch(e){};document.documentElement.setAttribute("lang",l)};
+  useEffect(()=>{document.documentElement.setAttribute("lang",lang)},[]);
   const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p)){setP(p);try{localStorage.setItem("fx_pc",String(p.length))}catch(e){}}else if(p?.message){handleLogout();return}const s=await api.get("Signals",tk);if(Array.isArray(s)){setS(s);try{localStorage.setItem("fx_sc",String(s.length))}catch(e){}}const m=await api.get("Messages",tk);if(Array.isArray(m))setMsgs(m)}catch(e){}},[tk]);
   const chk=useCallback(async(u,t)=>{try{const r=await fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{headers:H(t)});const d=await r.json();if(Array.isArray(d)&&d[0]){setUp(d[0]);if(d[0].role==="admin")setAdm(true)}}catch(e){}},[]);
   useEffect(()=>{if(tk)load()},[tk,load]);
