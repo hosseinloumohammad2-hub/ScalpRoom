@@ -620,7 +620,7 @@ function SignalScoreboard({signals}){
 
 /* ─── Theme Hook ─── */
 function useTheme(){
-  const[dark,setDark]=useState(()=>{try{return localStorage.getItem("fxtheme")!=="light"}catch(e){return true}});
+  const[dark,setDark]=useState(()=>{try{const saved=localStorage.getItem("fxtheme");return saved==="dark"}catch(e){return false}});
   useEffect(()=>{document.documentElement.setAttribute("data-theme",dark?"dark":"light");try{localStorage.setItem("fxtheme",dark?"dark":"light")}catch(e){};document.querySelector('meta[name="theme-color"]').content=dark?"#050507":"#f4f4f5"},[dark]);
   return{dark,toggle:()=>setDark(d=>!d)};
 }
@@ -1303,11 +1303,11 @@ function Auth({onAuth,lang,setLang}){
         setEr(t.emailNotConfirmed||"Email not confirmed. Please check your inbox and click the confirmation link.");
         setLd(false);return;
       }
-      onAuth(r.access_token,r.user)}
+      onAuth(r.access_token,r.user,r.refresh_token)}
     else{if(!n){setEr(t.enterName);setLd(false);return}const r=await api.up(e,p);if(r.error){setEr(r.error_description||r.error.message||"Error");setLd(false);return}
     const tk=r.access_token||(r.session?.access_token);const u=r.user||(r.data?.user);
     // If Supabase returned a token AND user is already confirmed (e.g. email confirmation is disabled), proceed
-    if(tk&&u&&(u.email_confirmed_at||u.confirmed_at)){await api.add("Users",{id:u.id,email:e,full_name:n,membership:"free",role:"user"},tk);onAuth(tk,u)}
+    if(tk&&u&&(u.email_confirmed_at||u.confirmed_at)){await api.add("Users",{id:u.id,email:e,full_name:n,membership:"free",role:"user"},tk);onAuth(tk,u,r.refresh_token||(r.session?.refresh_token))}
     // Otherwise show "check your email" message — user MUST confirm before logging in
     else{setOk(t.confirmEmailSent||"✉️ A confirmation link has been sent to your email. Please verify your email, then sign in.");setM("login");setE(e);setP("")}}}catch(x){setEr(x.message)}setLd(false)};
   const googleLogin=()=>{window.location.href=`${SB}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin)}`};
@@ -1367,18 +1367,47 @@ function LiveClock(){
 }
 
 /* ─── Home ─── */
-function Home({posts,signals,go,P,ok,dark,toggle,userProfile}){
+function Home({posts,signals,msgs,go,P,ok,dark,toggle,userProfile,token,onR}){
   const{t,lang}=useLang();
   const[sel,setSel]=useState(null);
+  const[showMsgs,setShowMsgs]=useState(false);
+  const[lastMsgRead,setLastMsgRead]=useState(()=>{try{return parseInt(localStorage.getItem("fx_mc")||"0")}catch(e){return 0}});
   const theme=dark?"dark":"light";
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
   const firstName=(userProfile?.full_name||"").split(" ")[0]||"";
   const hour=new Date().getHours();
   const greeting=hour<12?(lang==="fa"?"صبح بخیر":"Good morning"):hour<18?(lang==="fa"?"عصر بخیر":"Good afternoon"):(lang==="fa"?"شب بخیر":"Good evening");
+  const visibleMsgs=(msgs||[]).filter(m=>m.target==="all"||(m.target==="premium"&&isPremiumUser));
+  const unreadCount=Math.max(0,visibleMsgs.length-lastMsgRead);
+  const openMsgs=()=>{setShowMsgs(true);setLastMsgRead(visibleMsgs.length);try{localStorage.setItem("fx_mc",String(visibleMsgs.length))}catch(e){}};
   return(<div className="fi">
-    {firstName&&<div style={{marginBottom:14,padding:"14px 0 4px"}}>
-      <div style={{fontSize:20,fontWeight:700,lineHeight:1.3}}>{greeting}، {firstName} 👋</div>
-      <div style={{fontSize:12,color:"var(--tx2)",marginTop:4}}>{lang==="fa"?"بازارها رو رصد کن و بهترین فرصت‌ها رو پیدا کن":"Track markets and find the best opportunities"}</div>
+    {firstName&&<div style={{marginBottom:14,padding:"14px 0 4px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+      <div>
+        <div style={{fontSize:20,fontWeight:700,lineHeight:1.3}}>{greeting}، {firstName} 👋</div>
+        <div style={{fontSize:12,color:"var(--tx2)",marginTop:4}}>{lang==="fa"?"بازارها رو رصد کن و بهترین فرصت‌ها رو پیدا کن":"Track markets and find the best opportunities"}</div>
+      </div>
+      <div onClick={openMsgs} style={{position:"relative",cursor:"pointer",padding:6}}>
+        {IC.bell}
+        {unreadCount>0&&<div style={{position:"absolute",top:2,right:2,width:8,height:8,borderRadius:"50%",background:"var(--R)",border:"2px solid var(--bg)"}}/>}
+      </div>
+    </div>}
+    {/* Messages Panel */}
+    {showMsgs&&<div className="cd" style={{marginBottom:12}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <span style={{fontSize:14,fontWeight:700}}>{lang==="fa"?"📬 پیام‌ها":"📬 Messages"}</span>
+        <div onClick={()=>setShowMsgs(false)} style={{cursor:"pointer",color:"var(--mu)"}}>{IC.x}</div>
+      </div>
+      {visibleMsgs.length===0?<div style={{textAlign:"center",color:"var(--dm)",fontSize:12,padding:16}}>{lang==="fa"?"پیامی نیست":"No messages yet"}</div>
+      :visibleMsgs.slice(0,10).map(m=><div key={m.id} style={{padding:10,marginBottom:6,background:"var(--bg)",borderRadius:10,border:"1px solid var(--brd)"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+          <span style={{fontSize:12,fontWeight:700}}>{m.title}</span>
+          <div style={{display:"flex",alignItems:"center",gap:4}}>
+            {m.target==="premium"&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 5px",borderRadius:4}}>VIP</span>}
+            <span style={{fontSize:9,color:"var(--dm)"}}>{new Date(m.created_at).toLocaleDateString()}</span>
+          </div>
+        </div>
+        <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{m.body}</div>
+      </div>)}
     </div>}
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
       <div style={{display:"flex",alignItems:"center",gap:8}}><div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/></div>
@@ -1655,8 +1684,12 @@ function Adm({token,posts,signals,onR}){
   const[editUserExp,setEditUserExp]=useState(null);
   const[expDate,setExpDate]=useState("");
   const[refCounts,setRefCounts]=useState({});
+  const[msgTitle,setMsgTitle]=useState(""),[msgBody,setMsgBody]=useState(""),[msgTarget,setMsgTarget]=useState("all"),[allMsgs,setAllMsgs]=useState([]);
   const noti=useNotifications();
   useEffect(()=>{if(tb==="users"){api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)});fetch(`${SB}/rest/v1/Referrals?select=referrer_id,referred_id`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const counts={};d.forEach(r=>{counts[r.referrer_id]=(counts[r.referrer_id]||0)+1});setRefCounts(counts)}}).catch(()=>{})}},[tb,token]);
+  useEffect(()=>{if(tb==="msg"){api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}},[tb,token]);
+  const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget},token);setMs("Message sent!");setMsgTitle("");setMsgBody("");setMsgTarget("all");onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
+  const delMsg=async(id)=>{if(!confirm("Delete?"))return;await api.del("Messages",id,token);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}const data={title:ti,description:de,category:ca,image_url:u,is_premium:pr,likes:0};if(customDate&&postDate)data.created_at=new Date(postDate).toISOString();await api.add("Posts",data,token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);setCustomDate(false);setPostDate("");onR();noti.notify("Fxscalproom","New analysis: "+ti)}catch(e){setMs(e.message)}setLd(false)};
   const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{const data={pair:pa,type:st,entry_price:en,take_profit:tp1,tp2:tp2||null,tp3:tp3||null,stop_loss:sl,status:"active",pnl:null,closed_at:null,is_premium:sigPr};if(sigCustomDate&&sigDate)data.created_at=new Date(sigDate).toISOString();await api.add("Signals",data,token);setMs(t.signalPub);setPa("");setEn("");setTp1("");setTp2("");setTp3("");setSl("");setSigPr(false);setSigCustomDate(false);setSigDate("");onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st)}catch(e){setMs(e.message)}setLd(false)};
   const delP=async id=>{if(!confirm("Delete?"))return;await api.del("Posts",id,token);onR()};
@@ -1668,8 +1701,8 @@ function Adm({token,posts,signals,onR}){
   const savePost=async(id,data)=>{await api.patch("Posts",id,data,token);onR();setMs("Post updated!")};
   return(<div className="fi">
     <div style={{display:"flex",gap:4,marginBottom:14}}>
-      {["post","signal","manage","users","rewards"].map(tab=>
-        <div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:11,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{tab==="post"?t.post:tab==="signal"?t.signal:tab==="manage"?t.manage:tab==="users"?t.users:"💰"}</div>
+      {["post","signal","manage","users","rewards","msg"].map(tab=>
+        <div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:11,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{tab==="post"?t.post:tab==="signal"?t.signal:tab==="manage"?t.manage:tab==="users"?t.users:tab==="rewards"?"💰":tab==="msg"?"📬":""}</div>
       )}
     </div>
     {ms&&<div style={{background:ms.includes("!")&&!ms.includes("failed")?"color-mix(in srgb,var(--G) 8%,transparent)":"color-mix(in srgb,var(--R) 8%,transparent)",border:`1px solid ${ms.includes("!")&&!ms.includes("failed")?"color-mix(in srgb,var(--G) 15%,transparent)":"color-mix(in srgb,var(--R) 15%,transparent)"}`,borderRadius:10,padding:10,marginBottom:10,fontSize:13,color:ms.includes("!")&&!ms.includes("failed")?"var(--G)":"var(--R)"}}>{ms}</div>}
@@ -1779,6 +1812,30 @@ function Adm({token,posts,signals,onR}){
       </div>})}
     </>}
     {tb==="rewards"&&<AdminRewards token={token}/>}
+    {tb==="msg"&&<>
+      <div style={{fontSize:13,fontWeight:700,marginBottom:10}}>{lang==="fa"?"📬 ارسال پیام":"📬 Send Message"}</div>
+      <input className="ip" placeholder={lang==="fa"?"عنوان پیام":"Message title"} value={msgTitle} onChange={e=>setMsgTitle(e.target.value)}/>
+      <textarea placeholder={lang==="fa"?"متن پیام":"Message body"} value={msgBody} onChange={e=>setMsgBody(e.target.value)} rows={4}/>
+      <div style={{display:"flex",gap:6,marginBottom:10}}>
+        {["all","premium"].map(tgt=>
+          <div key={tgt} onClick={()=>setMsgTarget(tgt)} style={{flex:1,padding:10,borderRadius:10,textAlign:"center",cursor:"pointer",
+            background:msgTarget===tgt?(tgt==="all"?"color-mix(in srgb,var(--B) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)"):"transparent",
+            border:`1px solid ${msgTarget===tgt?(tgt==="all"?"color-mix(in srgb,var(--B) 25%,transparent)":"color-mix(in srgb,var(--R) 25%,transparent)"):"var(--brd)"}`,
+            fontSize:12,fontWeight:600,color:msgTarget===tgt?(tgt==="all"?"var(--B)":"var(--R)"):"var(--mu)"
+          }}>{tgt==="all"?(lang==="fa"?"همه کاربران":"All Users"):(lang==="fa"?"فقط پرمیوم":"Premium Only")}</div>
+        )}
+      </div>
+      <button className="bt" style={{background:"var(--B)",opacity:ld?.5:1}} onClick={pubMsg} disabled={ld}>{ld?"...":(lang==="fa"?"ارسال پیام":"Send Message")}</button>
+      <div style={{fontSize:13,fontWeight:600,marginTop:16,marginBottom:8}}>{lang==="fa"?"پیام‌های قبلی":"Previous Messages"} ({allMsgs.length})</div>
+      {allMsgs.map(m=><div key={m.id} className="cd" style={{padding:10,marginBottom:4,display:"flex",alignItems:"center",gap:10}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:600}}>{m.title}</div>
+          <div style={{fontSize:10,color:"var(--dm)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.body}</div>
+          <div style={{fontSize:9,color:"var(--dm)",marginTop:2}}>{m.target==="premium"?"⭐ Premium":"👥 All"} · {new Date(m.created_at).toLocaleDateString()}</div>
+        </div>
+        <div onClick={()=>delMsg(m.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
+      </div>)}
+    </>}
     {editSig&&<SignalEditModal sig={editSig} onClose={()=>setEditSig(null)} onSave={saveSig}/>}
     {editPost&&<PostEditModal post={editPost} onClose={()=>setEditPost(null)} onSave={savePost}/>}
   </div>);
@@ -1848,7 +1905,7 @@ function App(){
   const[tk,setTk]=useState(()=>{try{return localStorage.getItem("fx_tk")||null}catch(e){return null}});
   const[usr,setUsr]=useState(()=>{try{const u=localStorage.getItem("fx_usr");return u?JSON.parse(u):null}catch(e){return null}});
   const[up,setUp]=useState(null),[adm,setAdm]=useState(false);
-  const[tab,setTab]=useState(0),[posts,setP]=useState([]),[sigs,setS]=useState([]);
+  const[tab,setTab]=useState(0),[posts,setP]=useState([]),[sigs,setS]=useState([]),[msgs,setMsgs]=useState([]);
   const[lang,setLangState]=useState(()=>{try{return localStorage.getItem("fxlang")||"en"}catch(e){return"en"}});
   const[showSplash,setShowSplash]=useState(()=>{try{return!sessionStorage.getItem("fx_splash")}catch(e){return true}});
   const[showOnb,setShowOnb]=useState(()=>{try{return!localStorage.getItem("fx_onb")}catch(e){return true}});
@@ -1856,11 +1913,25 @@ function App(){
   const[lastSigCount,setLastSigCount]=useState(()=>{try{return parseInt(localStorage.getItem("fx_sc")||"0")}catch(e){return 0}});
   const{P,ok}=usePrices();const{dark,toggle}=useTheme();
   const t=T[lang]||T.en;
-  const handleAuth=(token,user)=>{setTk(token);setUsr(user);try{localStorage.setItem("fx_tk",token);localStorage.setItem("fx_usr",JSON.stringify(user))}catch(e){}};
-  const handleLogout=()=>{setTk(null);setUsr(null);setAdm(false);setUp(null);setTab(0);try{localStorage.removeItem("fx_tk");localStorage.removeItem("fx_usr")}catch(e){}};
+  const handleAuth=(token,user,refreshToken)=>{setTk(token);setUsr(user);try{localStorage.setItem("fx_tk",token);localStorage.setItem("fx_usr",JSON.stringify(user));if(refreshToken)localStorage.setItem("fx_rt",refreshToken)}catch(e){}};
+  const handleLogout=()=>{setTk(null);setUsr(null);setAdm(false);setUp(null);setTab(0);try{localStorage.removeItem("fx_tk");localStorage.removeItem("fx_usr");localStorage.removeItem("fx_rt")}catch(e){}};
+  // Auto-refresh token on load and every 30 minutes
+  const refreshSession=useCallback(async()=>{
+    try{
+      const rt=localStorage.getItem("fx_rt");
+      if(!rt)return;
+      const r=await fetch(`${SB}/auth/v1/token?grant_type=refresh_token`,{method:"POST",headers:{apikey:SK,"Content-Type":"application/json"},body:JSON.stringify({refresh_token:rt})});
+      const d=await r.json();
+      if(d.access_token){
+        setTk(d.access_token);
+        try{localStorage.setItem("fx_tk",d.access_token);if(d.refresh_token)localStorage.setItem("fx_rt",d.refresh_token)}catch(e){}
+      }else if(d.error){handleLogout()}
+    }catch(e){}
+  },[]);
+  useEffect(()=>{refreshSession();const i=setInterval(refreshSession,30*60*1000);return()=>clearInterval(i)},[refreshSession]);
   const setLang=(l)=>{setLangState(l);try{localStorage.setItem("fxlang",l)}catch(e){};const isRtl=RTL_LANGS.includes(l);document.documentElement.setAttribute("dir",isRtl?"rtl":"ltr");document.documentElement.setAttribute("lang",l)};
   useEffect(()=>{const isRtl=RTL_LANGS.includes(lang);document.documentElement.setAttribute("dir",isRtl?"rtl":"ltr");document.documentElement.setAttribute("lang",lang)},[]);
-  const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p)){setP(p);try{localStorage.setItem("fx_pc",String(p.length))}catch(e){}}else if(p?.message){handleLogout();return}const s=await api.get("Signals",tk);if(Array.isArray(s)){setS(s);try{localStorage.setItem("fx_sc",String(s.length))}catch(e){}}}catch(e){}},[tk]);
+  const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p)){setP(p);try{localStorage.setItem("fx_pc",String(p.length))}catch(e){}}else if(p?.message){handleLogout();return}const s=await api.get("Signals",tk);if(Array.isArray(s)){setS(s);try{localStorage.setItem("fx_sc",String(s.length))}catch(e){}}const m=await api.get("Messages",tk);if(Array.isArray(m))setMsgs(m)}catch(e){}},[tk]);
   const chk=useCallback(async(u,t)=>{try{const r=await fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{headers:H(t)});const d=await r.json();if(Array.isArray(d)&&d[0]){setUp(d[0]);if(d[0].role==="admin")setAdm(true)}}catch(e){}},[]);
   useEffect(()=>{if(tk)load()},[tk,load]);
   useEffect(()=>{if(tk&&usr)chk(usr,tk)},[tk,usr,chk]);
@@ -1893,7 +1964,7 @@ function App(){
   const cur=VT[st];
   const goTab=i=>{setTab(i);clearBadge(VT[i]?.k)};
   const scr=()=>{switch(cur?.k){
-    case"home":return<Home posts={posts} signals={sigs} go={goTab} P={P} ok={ok} dark={dark} toggle={toggle} userProfile={up}/>;
+    case"home":return<Home posts={posts} signals={sigs} msgs={msgs} go={goTab} P={P} ok={ok} dark={dark} toggle={toggle} userProfile={up} token={tk} onR={load}/>;
     case"analysis":return<Analysis posts={posts} userProfile={up}/>;
     case"signals":return<Sigs signals={sigs} userProfile={up}/>;
     case"plans":return<Plans userProfile={up}/>;
