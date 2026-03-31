@@ -1603,6 +1603,60 @@ function SignalEditModal({sig,onClose,onSave}){
   </div></div>);
 }
 
+/* ─── Install App Banner ─── */
+function InstallBanner(){
+  const[dismissed,setDismissed]=useState(()=>{try{return!!localStorage.getItem("fx_install_d")}catch(e){return false}});
+  // Detect if already running as PWA (standalone)
+  const isStandalone=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
+  if(isStandalone||dismissed)return null;
+  // Detect platform
+  const ua=navigator.userAgent||"";
+  const isIOS=/iPad|iPhone|iPod/.test(ua);
+  const isAndroid=/Android/.test(ua);
+  if(!isIOS&&!isAndroid)return null;
+  const dismiss=()=>{setDismissed(true);try{localStorage.setItem("fx_install_d","1")}catch(e){}};
+  return(<div style={{background:"color-mix(in srgb,var(--B) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--B) 15%,transparent)",borderRadius:16,padding:16,marginBottom:20,position:"relative",animation:"fi .3s ease"}}>
+    <div onClick={dismiss} style={{position:"absolute",top:10,right:12,cursor:"pointer",color:"var(--dm)",fontSize:16}}>✕</div>
+    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+      <div style={{width:42,height:42,borderRadius:10,background:"#09090b",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+        <span style={{fontSize:14,fontWeight:800,color:"#fff"}}>Fx<span style={{color:"#FF4136"}}>.</span></span>
+      </div>
+      <div>
+        <div style={{fontSize:14,fontWeight:700}}>Install Fxscalproom App</div>
+        <div style={{fontSize:11,color:"var(--tx2)",marginTop:2}}>Get the best experience</div>
+      </div>
+    </div>
+    {isIOS&&<div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.8}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+        <span style={{width:22,height:22,borderRadius:6,background:"var(--B)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>1</span>
+        <span>Tap the <b style={{color:"var(--B)"}}>Share</b> button <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--B)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign:"middle",margin:"0 2px"}}><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> at the bottom of Safari</span>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+        <span style={{width:22,height:22,borderRadius:6,background:"var(--B)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>2</span>
+        <span>Scroll down and tap <b style={{color:"var(--B)"}}>Add to Home Screen</b></span>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <span style={{width:22,height:22,borderRadius:6,background:"var(--B)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>3</span>
+        <span>Tap <b style={{color:"var(--B)"}}>Add</b> — Done!</span>
+      </div>
+    </div>}
+    {isAndroid&&<div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.8}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+        <span style={{width:22,height:22,borderRadius:6,background:"var(--B)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>1</span>
+        <span>Tap the <b style={{color:"var(--B)"}}>menu</b> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--B)" strokeWidth="3" strokeLinecap="round" style={{verticalAlign:"middle",margin:"0 2px"}}><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg> in Chrome (top right)</span>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+        <span style={{width:22,height:22,borderRadius:6,background:"var(--B)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>2</span>
+        <span>Tap <b style={{color:"var(--B)"}}>Install app</b> or <b style={{color:"var(--B)"}}>Add to Home screen</b></span>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <span style={{width:22,height:22,borderRadius:6,background:"var(--B)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>3</span>
+        <span>Tap <b style={{color:"var(--B)"}}>Install</b> — Done!</span>
+      </div>
+    </div>}
+  </div>);
+}
+
 /* ─── Auth Screen ─── */
 function Auth({onAuth,lang,setLang}){
   const t=T[lang];
@@ -1653,6 +1707,7 @@ function Auth({onAuth,lang,setLang}){
   },[]);
   return(<div style={{minHeight:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"var(--bg)"}}>
     <div style={{width:"100%",maxWidth:360}} className="fi">
+      <InstallBanner/>
       <div style={{textAlign:"center",marginBottom:48}}>
         <div className="lg" style={{fontSize:34}}>Fxscalproom<b>.</b></div>
         <p style={{fontSize:13,color:"var(--mu)",marginTop:10}}>{m==="login"?t.welcome:m==="forgot"?(t.forgotPassword||"Reset Password"):t.getStarted}</p>
