@@ -2046,6 +2046,149 @@ function Sigs({signals,userProfile,goToPlans}){
   </div>);
 }
 
+/* ─── Promo Hook (shared between Plans & Admin) ─── */
+function usePromo(token){
+  const[promo,setPromo]=useState(null);
+  const load=useCallback(async()=>{
+    try{
+      const r=await fetch(`${SB}/rest/v1/PromoSales?is_active=eq.true&order=created_at.desc&limit=1`,{headers:H(token||SK)});
+      const d=await r.json();
+      if(Array.isArray(d)&&d[0]){
+        const p=d[0];
+        const now=new Date();
+        const end=new Date(p.end_date);
+        if(end>now){setPromo(p);return}
+      }
+      setPromo(null);
+    }catch(e){setPromo(null)}
+  },[token]);
+  useEffect(()=>{load();const i=setInterval(load,60000);return()=>clearInterval(i)},[load]);
+  return{promo,reloadPromo:load};
+}
+
+/* ─── Countdown Timer ─── */
+function Countdown({endDate}){
+  const[left,setLeft]=useState({d:0,h:0,m:0,s:0});
+  useEffect(()=>{
+    const calc=()=>{
+      const diff=Math.max(0,new Date(endDate)-new Date());
+      setLeft({d:Math.floor(diff/86400000),h:Math.floor((diff%86400000)/3600000),m:Math.floor((diff%3600000)/60000),s:Math.floor((diff%60000)/1000)});
+    };
+    calc();const i=setInterval(calc,1000);return()=>clearInterval(i);
+  },[endDate]);
+  const Box=({v,l})=><div style={{textAlign:"center",flex:1}}>
+    <div className="m" style={{fontSize:22,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 8%,transparent)",borderRadius:10,padding:"8px 0"}}>{String(v).padStart(2,"0")}</div>
+    <div style={{fontSize:9,color:"var(--dm)",marginTop:4,fontWeight:600}}>{l}</div>
+  </div>;
+  return<div style={{display:"flex",gap:6}}>
+    {left.d>0&&<Box v={left.d} l="Day"/>}
+    <Box v={left.h} l="Hour"/><Box v={left.m} l="Min"/><Box v={left.s} l="Sec"/>
+  </div>;
+}
+
+/* ─── Admin Promo/Sale Manager ─── */
+function AdminPromo({token}){
+  const{lang}=useLang();
+  const{promo,reloadPromo}=usePromo(token);
+  const[pct,setPct]=useState("30");
+  const[days,setDays]=useState("7");
+  const[saving,setSaving]=useState(false);
+  const[msg,setMsg]=useState("");
+
+  const basePlans=[{dur:"1 Month",p:54},{dur:"3 Months",p:100},{dur:"6 Months",p:170},{dur:"1 Year",p:300}];
+  const discPct=parseInt(pct)||0;
+
+  const activate=async()=>{
+    if(discPct<1||discPct>90){setMsg("Discount 1-90%");return}
+    const d=parseInt(days)||7;
+    if(d<1){setMsg("Min 1 day");return}
+    setSaving(true);
+    try{
+      // Deactivate old promos
+      await fetch(`${SB}/rest/v1/PromoSales?is_active=eq.true`,{method:"PATCH",headers:H(token),body:JSON.stringify({is_active:false})});
+      // Create new
+      const end=new Date();end.setDate(end.getDate()+d);
+      await fetch(`${SB}/rest/v1/PromoSales`,{method:"POST",headers:H(token),body:JSON.stringify({discount_pct:discPct,end_date:end.toISOString(),is_active:true})});
+      setMsg("Sale activated!");
+      reloadPromo();
+    }catch(e){setMsg(e.message)}
+    setSaving(false);
+    setTimeout(()=>setMsg(""),3000);
+  };
+
+  const deactivate=async()=>{
+    if(!confirm(lang==="fa"?"غیرفعال شود؟":"Deactivate?"))return;
+    setSaving(true);
+    try{
+      await fetch(`${SB}/rest/v1/PromoSales?is_active=eq.true`,{method:"PATCH",headers:H(token),body:JSON.stringify({is_active:false})});
+      setMsg("Sale deactivated");
+      reloadPromo();
+    }catch(e){setMsg(e.message)}
+    setSaving(false);
+    setTimeout(()=>setMsg(""),3000);
+  };
+
+  return(<div>
+    <div style={{fontSize:14,fontWeight:700,marginBottom:14}}>{lang==="fa"?"🏷 مدیریت تخفیف":"🏷 Sale Manager"}</div>
+
+    {/* Active promo */}
+    {promo&&<div className="cd" style={{marginBottom:14,padding:16,borderColor:"color-mix(in srgb,var(--G) 25%,transparent)",background:"color-mix(in srgb,var(--G) 3%,transparent)"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          <div style={{width:8,height:8,borderRadius:"50%",background:"var(--G)",animation:"pl 2s infinite"}}/>
+          <span style={{fontSize:13,fontWeight:700,color:"var(--G)"}}>{lang==="fa"?"فعال":"ACTIVE"}</span>
+        </div>
+        <span className="m" style={{fontSize:24,fontWeight:700,color:"var(--R)"}}>{promo.discount_pct}% OFF</span>
+      </div>
+      <div style={{marginBottom:12}}><Countdown endDate={promo.end_date}/></div>
+      <div style={{fontSize:11,color:"var(--dm)",marginBottom:4}}>Ends: {new Date(promo.end_date).toLocaleDateString()} {new Date(promo.end_date).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>
+      {/* Preview */}
+      <div style={{fontSize:11,fontWeight:600,color:"var(--tx2)",marginBottom:8,marginTop:12}}>{lang==="fa"?"پیش‌نمایش قیمت‌ها:":"Price preview:"}</div>
+      {basePlans.map((pl,i)=>{const disc=Math.round(pl.p*(1-promo.discount_pct/100));return<div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",fontSize:12}}>
+        <span>{pl.dur}</span>
+        <div><span style={{textDecoration:"line-through",color:"var(--dm)",marginRight:8}}>${pl.p}</span><span style={{fontWeight:700,color:"var(--G)"}}>${disc}</span></div>
+      </div>})}
+      <div onClick={deactivate} className="bt" style={{background:"var(--R)",marginTop:12,opacity:saving?.5:1}} disabled={saving}>{saving?"...":(lang==="fa"?"غیرفعال کردن":"Deactivate Sale")}</div>
+    </div>}
+
+    {/* Create new */}
+    <div className="cd" style={{padding:16}}>
+      <div style={{fontSize:13,fontWeight:700,marginBottom:12}}>{lang==="fa"?"ایجاد تخفیف جدید":"Create New Sale"}</div>
+      <div style={{fontSize:11,fontWeight:600,color:"var(--tx2)",marginBottom:6}}>{lang==="fa"?"درصد تخفیف":"Discount %"}</div>
+      <div style={{display:"flex",gap:6,marginBottom:12}}>
+        {["10","20","30","40","50"].map(v=><div key={v} onClick={()=>setPct(v)} style={{flex:1,padding:10,borderRadius:10,textAlign:"center",cursor:"pointer",fontSize:14,fontWeight:700,
+          background:pct===v?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",
+          border:`1px solid ${pct===v?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,
+          color:pct===v?"var(--R)":"var(--mu)"
+        }}>{v}%</div>)}
+      </div>
+      <input className="ip" type="number" placeholder={lang==="fa"?"درصد دلخواه":"Custom %"} value={pct} onChange={e=>setPct(e.target.value)} style={{marginBottom:8}}/>
+
+      <div style={{fontSize:11,fontWeight:600,color:"var(--tx2)",marginBottom:6}}>{lang==="fa"?"مدت (روز)":"Duration (days)"}</div>
+      <div style={{display:"flex",gap:6,marginBottom:12}}>
+        {["3","5","7","10","14"].map(v=><div key={v} onClick={()=>setDays(v)} style={{flex:1,padding:10,borderRadius:10,textAlign:"center",cursor:"pointer",fontSize:13,fontWeight:700,
+          background:days===v?"color-mix(in srgb,var(--B) 10%,transparent)":"transparent",
+          border:`1px solid ${days===v?"color-mix(in srgb,var(--B) 25%,transparent)":"var(--brd)"}`,
+          color:days===v?"var(--B)":"var(--mu)"
+        }}>{v}</div>)}
+      </div>
+      <input className="ip" type="number" placeholder={lang==="fa"?"مدت دلخواه (روز)":"Custom days"} value={days} onChange={e=>setDays(e.target.value)} style={{marginBottom:10}}/>
+
+      {/* Preview */}
+      {discPct>0&&<div style={{marginBottom:12,padding:12,background:"var(--bg)",borderRadius:12,border:"1px solid var(--brd)"}}>
+        <div style={{fontSize:11,fontWeight:600,color:"var(--tx2)",marginBottom:8}}>{lang==="fa"?"پیش‌نمایش:":"Preview:"}</div>
+        {basePlans.map((pl,i)=>{const disc=Math.round(pl.p*(1-discPct/100));return<div key={i} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",fontSize:12}}>
+          <span style={{color:"var(--tx2)"}}>{pl.dur}</span>
+          <div><span style={{textDecoration:"line-through",color:"var(--dm)",marginRight:8}}>${pl.p}</span><span className="m" style={{fontWeight:700,color:"var(--G)"}}>${disc}</span><span style={{fontSize:9,color:"var(--R)",marginLeft:4}}>-{discPct}%</span></div>
+        </div>})}
+      </div>}
+
+      {msg&&<div style={{marginBottom:10,padding:10,borderRadius:10,fontSize:12,fontWeight:600,textAlign:"center",background:msg.includes("!")?"color-mix(in srgb,var(--G) 8%,transparent)":"color-mix(in srgb,var(--R) 8%,transparent)",color:msg.includes("!")?"var(--G)":"var(--R)"}}>{msg}</div>}
+      <div onClick={activate} className="bt" style={{background:"var(--G)",opacity:saving?.5:1}} disabled={saving}>{saving?"...":(lang==="fa"?"فعال‌سازی تخفیف":"Activate Sale")}</div>
+    </div>
+  </div>);
+}
+
 /* ─── Contact Popup (iOS 26 style) ─── */
 function ContactPopup({onClose,onSupport}){
   const{t,lang}=useLang();
@@ -2102,6 +2245,7 @@ function PremiumPopup({onClose,onGoPlans}){
 function Plans({userProfile,goToSupport}){
   const{t,lang}=useLang();
   const[showContact,setShowContact]=useState(false);
+  const{promo}=usePromo();
   const isPremium=userProfile?.membership==="premium";
   const expiresAt=userProfile?.premium_expires_at?new Date(userProfile.premium_expires_at):null;
   const now=new Date();
@@ -2119,7 +2263,8 @@ function Plans({userProfile,goToSupport}){
     return null;
   };
   const upgrade=getUpgradePrice();
-  const plans=[{dur:t.month1,p:"$54",days:30},{dur:t.month3,p:"$100",save:"38%",days:90},{dur:t.month6,p:"$170",save:"47%",days:180},{dur:t.year1,p:"$300",best:true,save:"54%",days:365}];
+  const basePlans=[{dur:t.month1,p:54,days:30},{dur:t.month3,p:100,save:"38%",days:90},{dur:t.month6,p:170,save:"47%",days:180},{dur:t.year1,p:300,best:true,save:"54%",days:365}];
+  const disc=promo?.discount_pct||0;
   if(isPremium&&expiresAt){
     return(<div className="fi">
       <div style={{textAlign:"center",marginBottom:24}}>
@@ -2153,19 +2298,41 @@ function Plans({userProfile,goToSupport}){
       <div style={{fontSize:22,fontWeight:700,marginBottom:6}}>{t.premium}</div>
       <div style={{fontSize:13,color:"var(--mu)"}}>{t.unlock}</div>
     </div>
-    {plans.map((p,i)=><div key={i} className="cd" style={{marginBottom:8,padding:16,display:"flex",justifyContent:"space-between",alignItems:"center",borderColor:p.best?"color-mix(in srgb,var(--R) 30%,transparent)":"var(--brd)",background:p.best?"color-mix(in srgb,var(--R) 3%,transparent)":"var(--card)"}}>
-      <div>
-        <div style={{fontSize:15,fontWeight:600}}>{p.dur}</div>
-        <div style={{display:"flex",gap:6,marginTop:3}}>
-          {p.best&&<span style={{fontSize:10,fontWeight:700,color:"var(--G)"}}>{t.bestValue}</span>}
-          {p.save&&<span style={{fontSize:10,fontWeight:600,color:"var(--Y)"}}>Save {p.save}</span>}
+
+    {/* Sale Banner with Countdown */}
+    {disc>0&&promo&&<div className="cd" style={{marginBottom:14,padding:16,borderColor:"color-mix(in srgb,var(--R) 30%,transparent)",background:"color-mix(in srgb,var(--R) 4%,transparent)",position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:0,right:0,background:"var(--R)",color:"#fff",fontSize:10,fontWeight:700,padding:"4px 14px 4px 18px",borderRadius:"0 0 0 14px"}}>{disc}% OFF</div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+        <span style={{fontSize:22}}>🔥</span>
+        <div>
+          <div style={{fontSize:15,fontWeight:700,color:"var(--R)"}}>{lang==="fa"?"حراج ویژه!":"Special Sale!"}</div>
+          <div style={{fontSize:11,color:"var(--tx2)",marginTop:2}}>{lang==="fa"?"تخفیف محدود — عجله کنید":"Limited time offer — hurry up"}</div>
         </div>
       </div>
-      <div style={{display:"flex",alignItems:"center",gap:12}}>
-        <span className="m" style={{fontSize:22,fontWeight:600}}>{p.p}</span>
-        <div onClick={()=>setShowContact(true)} className="bt" style={{background:"var(--R)",padding:"10px 20px",width:"auto",fontSize:13,cursor:"pointer"}}>{t.subscribe}</div>
+      <Countdown endDate={promo.end_date}/>
+    </div>}
+
+    {basePlans.map((p,i)=>{
+      const discPrice=disc>0?Math.round(p.p*(1-disc/100)):0;
+      return<div key={i} className="cd" style={{marginBottom:8,padding:16,borderColor:p.best?"color-mix(in srgb,var(--R) 30%,transparent)":"var(--brd)",background:p.best?"color-mix(in srgb,var(--R) 3%,transparent)":"var(--card)"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontSize:15,fontWeight:600}}>{p.dur}</div>
+          <div style={{display:"flex",gap:6,marginTop:3,flexWrap:"wrap",alignItems:"center"}}>
+            {p.best&&<span style={{fontSize:10,fontWeight:700,color:"var(--G)"}}>{t.bestValue}</span>}
+            {p.save&&!disc&&<span style={{fontSize:10,fontWeight:600,color:"var(--Y)"}}>Save {p.save}</span>}
+            {disc>0&&<span style={{fontSize:10,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 6px",borderRadius:4}}>{disc}% OFF</span>}
+          </div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{textAlign:"right"}}>
+            {disc>0&&<div className="m" style={{fontSize:13,color:"var(--dm)",textDecoration:"line-through",fontWeight:500}}>${p.p}</div>}
+            <span className="m" style={{fontSize:disc>0?24:22,fontWeight:700,color:disc>0?"var(--G)":"var(--tx)"}}>${disc>0?discPrice:p.p}</span>
+          </div>
+          <div onClick={()=>setShowContact(true)} className="bt" style={{background:"var(--R)",padding:"10px 20px",width:"auto",fontSize:13,cursor:"pointer"}}>{t.subscribe}</div>
+        </div>
       </div>
-    </div>)}
+    </div>})}
     <div className="cd" style={{marginTop:16,padding:16,textAlign:"center"}}>
       <div style={{fontSize:13,color:"var(--mu)",lineHeight:1.7}}>{t.unlock}</div>
       <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:12,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.tg} {t.contact}</div>
@@ -2234,8 +2401,8 @@ function Adm({token,posts,signals,onR}){
   const savePost=async(id,data)=>{await api.patch("Posts",id,data,token);onR();setMs("Post updated!")};
   return(<div className="fi">
     <div style={{display:"flex",gap:4,marginBottom:14}}>
-      {["post","signal","manage","users","rewards","msg","support"].map(tab=>
-        <div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:10,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{tab==="post"?t.post:tab==="signal"?t.signal:tab==="manage"?t.manage:tab==="users"?t.users:tab==="rewards"?"💰":tab==="msg"?"📬":tab==="support"?"💬":""}</div>
+      {["post","signal","manage","users","rewards","msg","support","sale"].map(tab=>
+        <div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:10,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{tab==="post"?t.post:tab==="signal"?t.signal:tab==="manage"?t.manage:tab==="users"?t.users:tab==="rewards"?"💰":tab==="msg"?"📬":tab==="support"?"💬":tab==="sale"?"🏷":""}</div>
       )}
     </div>
     {ms&&<div style={{background:ms.includes("!")&&!ms.includes("failed")?"color-mix(in srgb,var(--G) 8%,transparent)":"color-mix(in srgb,var(--R) 8%,transparent)",border:`1px solid ${ms.includes("!")&&!ms.includes("failed")?"color-mix(in srgb,var(--G) 15%,transparent)":"color-mix(in srgb,var(--R) 15%,transparent)"}`,borderRadius:10,padding:10,marginBottom:10,fontSize:13,color:ms.includes("!")&&!ms.includes("failed")?"var(--G)":"var(--R)"}}>{ms}</div>}
@@ -2346,6 +2513,7 @@ function Adm({token,posts,signals,onR}){
     </>}
     {tb==="rewards"&&<AdminRewards token={token}/>}
     {tb==="support"&&<AdminSupportChat token={token}/>}
+    {tb==="sale"&&<AdminPromo token={token}/>}
     {tb==="msg"&&<>
       <div style={{fontSize:13,fontWeight:700,marginBottom:10}}>{lang==="fa"?"📬 ارسال پیام":"📬 Send Message"}</div>
       <input className="ip" placeholder={lang==="fa"?"عنوان پیام":"Message title"} value={msgTitle} onChange={e=>setMsgTitle(e.target.value)}/>
