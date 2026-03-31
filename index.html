@@ -1801,6 +1801,12 @@ function Analysis({posts,userProfile,msgs,token,onR}){
     }catch(e){}
     setAddingDT(null);
   };
+  // Admin: remove day trade post
+  const removeDayTrade=async(id)=>{
+    if(!token||!id)return;
+    if(!confirm(lang==="fa"?"حذف شود؟":"Delete?"))return;
+    try{await api.del("Posts",id,token);if(onR)onR()}catch(e){}
+  };
   return(<div className="fi">
     {/* Section toggle: Long Term / Day Trade */}
     <div style={{display:"flex",gap:6,marginBottom:12}}>
@@ -1862,9 +1868,14 @@ function Analysis({posts,userProfile,msgs,token,onR}){
             <span style={{fontSize:10,color:"var(--dm)"}}>{p.created_at?new Date(p.created_at).toLocaleDateString():""}</span>
             {p.is_premium&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 6px",borderRadius:4}}>PRO</span>}
           </div>
-          {isAdmin&&<div onClick={(e)=>{e.stopPropagation();generateShareCard("analysis",p)}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:6,borderRadius:6,background:"color-mix(in srgb,var(--B) 8%,transparent)",cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)",marginTop:6}}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-            Share
+          {isAdmin&&<div style={{display:"flex",gap:4,marginTop:6}}>
+            <div onClick={(e)=>{e.stopPropagation();generateShareCard("analysis",p)}} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:6,borderRadius:6,background:"color-mix(in srgb,var(--B) 8%,transparent)",cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)"}}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              Share
+            </div>
+            <div onClick={(e)=>{e.stopPropagation();removeDayTrade(p.id)}} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:6,borderRadius:6,background:"color-mix(in srgb,var(--R) 8%,transparent)",cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--R)"}}>
+              {IC.del} {lang==="fa"?"حذف":"Remove"}
+            </div>
           </div>}
         </div>
       </div>})}</div>}
