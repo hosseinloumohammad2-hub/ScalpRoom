@@ -155,54 +155,34 @@ function usePrices(){
   const init=()=>({p:"---",c:"0",u:true});
   const[P,setP]=useState({usd_sell:init(),eur_sell:init(),sekkeh:init(),gold18:init(),tether:init(),rub:init()});
   const[ok,setOk]=useState(false);
+  const[lastUpdate,setLastUpdate]=useState(null);
   const prev=useRef({});
-  const mk=(k,v)=>{const n=parseFloat(String(v).replace(/,/g,""))||0;const o=prev.current[k]||n;prev.current[k]=n;return{p:Number(n).toLocaleString("en"),c:v,u:n>=o}};
+  const mk=(k,v)=>{const n=parseFloat(String(v).replace(/,/g,""))||0;const o=prev.current[k]||n;prev.current[k]=n;return{p:n>0?Number(n).toLocaleString("en"):"---",c:v,u:n>=o}};
 
   const f=useCallback(async()=>{
-    // Source 1: Navasan
+    // Try Navasan
     try{
       const r=await fetch("https://api.navasan.tech/latest/?api_key=freeX42Ju2HlAIfOKINfOLWUZBNC1smi&item=usd_sell,18ayar,sekkeh,usdt,eur,rub");
       const d=await r.json();
       if(d&&!d.message&&d.usd_sell){
         setP({usd_sell:mk("usd",d.usd_sell?.value),eur_sell:mk("eur",d.eur?.value||d.eur_sell?.value||"0"),sekkeh:mk("coin",d.sekkeh?.value||"0"),gold18:mk("gold",d["18ayar"]?.value||"0"),tether:mk("tether",d.usdt?.value||d.usdt_sell?.value||"0"),rub:mk("rub",d.rub?.value||"0")});
-        setOk(true);return;
+        setOk(true);setLastUpdate(new Date());return;
       }
     }catch(e){}
-
-    // Source 2: TGJU
+    // Try TGJU
     try{
       const r=await fetch("https://call4.tgju.org/ajax.json");
       const d=await r.json();
-      if(d){
-        const get=(k)=>d[k]?.p?.replace(/,/g,"")||"0";
-        setP({usd_sell:mk("usd",get("price_dollar_rl")),eur_sell:mk("eur",get("price_eur")),sekkeh:mk("coin",get("sekee")),gold18:mk("gold",get("geram18")),tether:mk("tether",get("crypto-tether-irr")),rub:mk("rub",get("price_rub"))});
-        setOk(true);return;
-      }
-    }catch(e){}
-
-    // Source 3: Bonbast
-    try{
-      const r=await fetch("https://www.bonbast.com/json",{headers:{"Accept":"application/json"}});
-      const d=await r.json();
-      if(d&&d.usd1){
-        setP({usd_sell:mk("usd",d.usd1||d.usd_sell||"0"),eur_sell:mk("eur",d.eur1||d.eur_sell||"0"),sekkeh:mk("coin",d.emami1||d.coin||"0"),gold18:mk("gold",d.gol18||"0"),tether:mk("tether",d.usdt||"0"),rub:mk("rub","0")});
-        setOk(true);return;
-      }
-    }catch(e){}
-
-    // Source 4: Nobitex (only USDT price in Toman)
-    try{
-      const r=await fetch("https://api.nobitex.ir/v2/orderbook/USDTIRT");
-      const d=await r.json();
-      if(d&&d.lastTradePrice){
-        const usdtPrice=Math.round(parseInt(d.lastTradePrice)/10); // Rial to Toman
-        setP(prev=>({...prev,tether:mk("tether",String(usdtPrice))}));
+      if(d&&d.current){
+        const get=(k)=>{try{return d.current[k]?.p?.replace(/,/g,"")||"0"}catch(e){return"0"}};
+        setP({usd_sell:mk("usd",get("price_dollar_rl")),eur_sell:mk("eur",get("price_eur")),sekkeh:mk("coin",get("sekee")),gold18:mk("gold",get("geram18")),tether:mk("tether",get("crypto-tether")),rub:mk("rub",get("price_rub"))});
+        setOk(true);setLastUpdate(new Date());return;
       }
     }catch(e){}
   },[]);
 
   useEffect(()=>{f();const i=setInterval(f,60000);return()=>clearInterval(i)},[f]);
-  return{P,ok};
+  return{P,ok,lastUpdate};
 }
 
 // TradingView symbols config
@@ -1615,8 +1595,32 @@ function LiveClock(){
   return<span className="m" style={{fontSize:11,color:"var(--tx2)",fontWeight:500}}>{time.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</span>;
 }
 
+/* ─── Iran Market Widget (fallback when API fails) ─── */
+function IranMarketWidget(){
+  const{lang}=useLang();
+  const ref=useRef(null);
+  const loaded=useRef(false);
+  useEffect(()=>{
+    if(!ref.current||loaded.current)return;
+    loaded.current=true;
+    const iframe=document.createElement("iframe");
+    iframe.src="https://www.tgju.org/widgets/mini-table?theme=light&items=price_dollar_rl,price_eur,sekee,geram18,crypto-tether,price_rub&header=true";
+    iframe.style.width="100%";iframe.style.height="380px";iframe.style.border="none";iframe.style.borderRadius="12px";
+    iframe.setAttribute("loading","lazy");
+    iframe.setAttribute("sandbox","allow-scripts allow-same-origin");
+    ref.current.appendChild(iframe);
+  },[]);
+  return(<div className="cd" style={{marginBottom:12,padding:0,overflow:"hidden"}}>
+    <div style={{padding:"12px 14px 0",display:"flex",alignItems:"center",gap:8}}>
+      <img src="https://flagofiran.com/files/flag-of-iran-emoji-ios.png" width="18" height="18" alt="" style={{borderRadius:2}}/>
+      <span style={{fontSize:13,fontWeight:700}}>{lang==="fa"?"بازار ایران":"Iran Market"}</span>
+    </div>
+    <div ref={ref}/>
+  </div>);
+}
+
 /* ─── Home ─── */
-function Home({posts,signals,msgs,go,P,ok,dark,toggle,userProfile,token,onR}){
+function Home({posts,signals,msgs,go,P,ok,lastUpdate,dark,toggle,userProfile,token,onR}){
   const{t,lang}=useLang();
   const[sel,setSel]=useState(null);
   const[showMsgs,setShowMsgs]=useState(false);
@@ -1664,12 +1668,13 @@ function Home({posts,signals,msgs,go,P,ok,dark,toggle,userProfile,token,onR}){
     </div>
     <div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVTickerTape colorTheme={theme}/></div>
     <div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVMarketOverview colorTheme={theme}/></div>
-    {ok&&<div className="cd" style={{marginBottom:12}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+    {ok?<div className="cd" style={{marginBottom:12}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
         <img src="https://flagofiran.com/files/flag-of-iran-emoji-ios.png" width="18" height="18" alt="" style={{borderRadius:2}}/>
         <span style={{fontSize:13,fontWeight:700}}>{t.iran||"Iran Market"}</span>
         <div className="ld" style={{marginLeft:"auto"}}/>
       </div>
+      {lastUpdate&&<div style={{fontSize:9,color:"var(--dm)",marginBottom:10}}>{lang==="fa"?"آخرین بروزرسانی:":"Last update:"} {lastUpdate.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</div>}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
         {[
           {label:lang==="fa"?"دلار":"USD",val:P.usd_sell,unit:lang==="fa"?"تومان":"IRR"},
@@ -1680,11 +1685,12 @@ function Home({posts,signals,msgs,go,P,ok,dark,toggle,userProfile,token,onR}){
           {label:lang==="fa"?"روبل روسیه":"RUB",val:P.rub,unit:lang==="fa"?"تومان":"IRR"},
         ].map((item,i)=><div key={i} style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:10,padding:12}}>
           <div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginBottom:6}}>{item.label}</div>
-          <div className="m" style={{fontSize:14,fontWeight:600,color:item.val?.u?"var(--G)":"var(--R)"}}>{item.val?.p||"---"}</div>
+          <div className="m" style={{fontSize:14,fontWeight:600,color:"var(--tx)"}}>{item.val?.p||"---"}</div>
           <div style={{fontSize:9,color:"var(--dm)",marginTop:3}}>{item.unit}</div>
         </div>)}
       </div>
-    </div>}
+    </div>
+    :<IranMarketWidget/>}
     <div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVEconomicCalendar colorTheme={theme}/></div>
     <MarketSessions/>
     <PositionCalc lang={lang}/>
@@ -2169,7 +2175,7 @@ function App(){
   const[showOnb,setShowOnb]=useState(()=>{try{return!localStorage.getItem("fx_onb")}catch(e){return true}});
   const[lastPostCount,setLastPostCount]=useState(()=>{try{return parseInt(localStorage.getItem("fx_pc")||"0")}catch(e){return 0}});
   const[lastSigCount,setLastSigCount]=useState(()=>{try{return parseInt(localStorage.getItem("fx_sc")||"0")}catch(e){return 0}});
-  const{P,ok}=usePrices();const{dark,toggle}=useTheme();
+  const{P,ok,lastUpdate}=usePrices();const{dark,toggle}=useTheme();
   const t=T[lang]||T.en;
   const handleAuth=(token,user,refreshToken)=>{setTk(token);setUsr(user);try{localStorage.setItem("fx_tk",token);localStorage.setItem("fx_usr",JSON.stringify(user));if(refreshToken)localStorage.setItem("fx_rt",refreshToken)}catch(e){}};
   const handleLogout=()=>{setTk(null);setUsr(null);setAdm(false);setUp(null);setTab(0);try{localStorage.removeItem("fx_tk");localStorage.removeItem("fx_usr");localStorage.removeItem("fx_rt")}catch(e){}};
@@ -2222,7 +2228,7 @@ function App(){
   const cur=VT[st];
   const goTab=i=>{setTab(i);clearBadge(VT[i]?.k)};
   const scr=()=>{switch(cur?.k){
-    case"home":return<Home posts={posts} signals={sigs} msgs={msgs} go={goTab} P={P} ok={ok} dark={dark} toggle={toggle} userProfile={up} token={tk} onR={load}/>;
+    case"home":return<Home posts={posts} signals={sigs} msgs={msgs} go={goTab} P={P} ok={ok} lastUpdate={lastUpdate} dark={dark} toggle={toggle} userProfile={up} token={tk} onR={load}/>;
     case"analysis":return<Analysis posts={posts} userProfile={up}/>;
     case"signals":return<Sigs signals={sigs} userProfile={up}/>;
     case"plans":return<Plans userProfile={up}/>;
