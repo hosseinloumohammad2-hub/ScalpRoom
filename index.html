@@ -1233,11 +1233,20 @@ async function generateShareCard(type,data){
   // Pre-calculate height
   let calcH=160;
   if(type==="signal"){
-    calcH+=80+60+30;
-    const levels=[data.entry_price,data.take_profit,data.tp2,data.tp3,data.stop_loss].filter(Boolean);
-    calcH+=levels.length*80+20;
-    if(data.pnl)calcH+=100;
-    calcH+=140;
+    const s=data;
+    calcH+=70; // pair + badges row
+    calcH+=20; // gap
+    // Entry + SL row
+    calcH+=100;
+    calcH+=12; // gap
+    // TP row
+    const tpCount=[s.take_profit,s.tp2,s.tp3].filter(Boolean).length;
+    if(tpCount>0)calcH+=100;
+    calcH+=20; // gap
+    // Date + PnL row
+    calcH+=40;
+    if(s.pnl)calcH+=20;
+    calcH+=140; // footer
   } else {
     calcH+=20; // no category badge anymore
     ctx.font="bold 40px system-ui";
@@ -1274,57 +1283,97 @@ async function generateShareCard(type,data){
   if(type==="signal"){
     const s=data;
     const isBuy=s.type==="BUY";
+    const innerW=W-PAD*2;
 
-    // Type badge
+    // ─── Main card background ───
+    const cardTop=Y-10;
+
+    // ─── Pair + BUY/SELL badge + Status ───
+    // Pair name
+    ctx.font="bold 42px 'DM Mono',monospace";
+    ctx.fillStyle="#18181b";ctx.fillText(s.pair||"",PAD,Y+36);
+
+    // BUY/SELL badge
     const badgeColor=isBuy?"#16a34a":"#dc2626";
     const badgeBg=isBuy?"#f0fdf4":"#fef2f2";
-    rr(PAD,Y,100,38,20);ctx.fillStyle=badgeBg;ctx.fill();
-    rr(PAD,Y,100,38,20);ctx.strokeStyle=badgeColor;ctx.lineWidth=1.5;ctx.stroke();
-    ctx.font="bold 17px 'DM Sans',system-ui,sans-serif";
+    const pairW=ctx.measureText(s.pair||"").width;
+    const bx=PAD+pairW+16;
+    rr(bx,Y+10,80,32,16);ctx.fillStyle=badgeBg;ctx.fill();
+    rr(bx,Y+10,80,32,16);ctx.strokeStyle=badgeColor;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.font="bold 15px 'DM Sans',system-ui,sans-serif";
     ctx.fillStyle=badgeColor;
-    const badgeTextW=ctx.measureText(s.type).width;
-    ctx.fillText(s.type,PAD+50-badgeTextW/2,Y+25);
-    Y+=60;
+    const btW=ctx.measureText(s.type).width;
+    ctx.fillText(s.type,bx+40-btW/2,Y+31);
 
-    // Pair name
-    ctx.font="bold 56px 'DM Mono',monospace";
-    ctx.fillStyle="#18181b";ctx.fillText(s.pair||"",PAD,Y+46);
-    Y+=76;
+    // Status badge (right side)
+    const statusLabel=s.status==="active"?"ACTIVE":s.status==="tp_hit"?"TP HIT":"SL HIT";
+    const statusColor=s.status==="active"?"#2563eb":s.status==="tp_hit"?"#16a34a":"#dc2626";
+    const statusBg=s.status==="active"?"#eff6ff":s.status==="tp_hit"?"#f0fdf4":"#fef2f2";
+    ctx.font="bold 14px 'DM Sans',system-ui,sans-serif";
+    const slW=ctx.measureText(statusLabel).width;
+    const sx=W-PAD-slW-24;
+    rr(sx,Y+10,slW+24,32,16);ctx.fillStyle=statusBg;ctx.fill();
+    rr(sx,Y+10,slW+24,32,16);ctx.strokeStyle=statusColor;ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle=statusColor;ctx.fillText(statusLabel,sx+12,Y+31);
+    Y+=65;
 
-    // Separator
-    ctx.strokeStyle="#f4f4f5";ctx.lineWidth=2;
-    ctx.beginPath();ctx.moveTo(PAD,Y);ctx.lineTo(W-PAD,Y);ctx.stroke();
-    Y+=28;
+    // ─── Helper: draw a box with label + value ───
+    const drawBox=(x,y,w,h,label,value,valueColor)=>{
+      rr(x,y,w,h,14);ctx.fillStyle="#f9fafb";ctx.fill();
+      rr(x,y,w,h,14);ctx.strokeStyle="#e4e4e7";ctx.lineWidth=1;ctx.stroke();
+      ctx.textAlign="center";
+      ctx.font="500 14px 'DM Sans',system-ui,sans-serif";
+      ctx.fillStyle="#a1a1aa";ctx.fillText(label,x+w/2,y+28);
+      ctx.font="bold 22px 'DM Mono',monospace";
+      ctx.fillStyle=valueColor||"#71717a";ctx.fillText(value||"",x+w/2,y+h-18);
+      ctx.textAlign="left";
+    };
 
-    // Price levels
-    const levels=[
-      {label:"Entry Price",value:s.entry_price,color:"#2563eb",bg:"#eff6ff"},
-      {label:"Take Profit 1",value:s.take_profit,color:"#16a34a",bg:"#f0fdf4"},
-      {label:"Take Profit 2",value:s.tp2,color:"#16a34a",bg:"#f0fdf4"},
-      {label:"Take Profit 3",value:s.tp3,color:"#16a34a",bg:"#f0fdf4"},
-      {label:"Stop Loss",value:s.stop_loss,color:"#dc2626",bg:"#fef2f2"},
-    ].filter(l=>l.value);
+    // ─── Entry + SL row (2 columns) ───
+    const colGap=12;
+    const col2W=(innerW-colGap)/2;
+    drawBox(PAD,Y,col2W,90,"Entry",s.entry_price,"#71717a");
+    drawBox(PAD+col2W+colGap,Y,col2W,90,"SL",s.stop_loss,"#dc2626");
+    Y+=102;
 
-    levels.forEach(l=>{
-      rr(PAD,Y,W-PAD*2,66,16);ctx.fillStyle=l.bg;ctx.fill();
-      ctx.font="500 16px 'DM Sans',system-ui,sans-serif";
-      ctx.fillStyle="#71717a";ctx.fillText(l.label,PAD+20,Y+28);
-      ctx.font="bold 24px 'DM Mono',monospace";
-      ctx.fillStyle=l.color;ctx.textAlign="right";
-      ctx.fillText(l.value,W-PAD-20,Y+44);ctx.textAlign="left";
-      Y+=78;
-    });
+    // ─── TP row (dynamic columns) ───
+    const tps=[{l:"TP1",v:s.take_profit},{l:"TP2",v:s.tp2},{l:"TP3",v:s.tp3}].filter(t=>t.v);
+    if(tps.length>0){
+      const tpColW=(innerW-(tps.length-1)*colGap)/tps.length;
+      tps.forEach((tp,i)=>{
+        drawBox(PAD+i*(tpColW+colGap),Y,tpColW,90,tp.l,tp.v,"#16a34a");
+      });
+      Y+=102;
+    }
+
+    // ─── Date + PnL row ───
+    Y+=6;
+    const dateStr=s.created_at?new Date(s.created_at).toLocaleDateString()+" "+new Date(s.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"";
+    ctx.font="500 16px 'DM Sans',system-ui,sans-serif";
+    ctx.fillStyle="#a1a1aa";ctx.fillText(dateStr,PAD,Y+16);
 
     if(s.pnl){
-      Y+=10;
       const pnlNeg=s.pnl.startsWith("-");
-      rr(PAD,Y,W-PAD*2,66,16);ctx.fillStyle=pnlNeg?"#fef2f2":"#f0fdf4";ctx.fill();
-      ctx.font="500 16px 'DM Sans',system-ui,sans-serif";
-      ctx.fillStyle="#71717a";ctx.fillText("PnL Result",PAD+20,Y+28);
-      ctx.font="bold 24px 'DM Mono',monospace";
+      ctx.font="bold 20px 'DM Mono',monospace";
       ctx.fillStyle=pnlNeg?"#dc2626":"#16a34a";
-      ctx.textAlign="right";ctx.fillText(s.pnl,W-PAD-20,Y+44);ctx.textAlign="left";
-      Y+=80;
+      ctx.textAlign="right";
+      ctx.fillText(s.pnl,W-PAD,Y+16);
+      // Checkmark
+      if(s.status==="tp_hit"){
+        ctx.font="bold 18px system-ui";ctx.fillText(" ✓",W-PAD,Y+16);
+      }
+      ctx.textAlign="left";
+      Y+=30;
+    } else {
+      Y+=24;
+    }
+
+    if(s.closed_at){
+      ctx.font="400 14px 'DM Sans',system-ui,sans-serif";
+      ctx.fillStyle="#a1a1aa";ctx.textAlign="right";
+      ctx.fillText("Closed: "+new Date(s.closed_at).toLocaleDateString(),W-PAD,Y+14);
+      ctx.textAlign="left";
+      Y+=24;
     }
 
   } else if(type==="analysis"){
@@ -1454,6 +1503,10 @@ function PostModal({post,onClose}){
         <div onClick={downloadImg} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:10,borderRadius:10,background:"var(--bg2)",border:"1px solid var(--brd)",cursor:"pointer",fontSize:12,fontWeight:600,color:"var(--mu)"}}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download
+        </div>
+        <div onClick={()=>generateShareCard("analysis",post)} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:10,borderRadius:10,background:"color-mix(in srgb,var(--B) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--B) 15%,transparent)",cursor:"pointer",fontSize:12,fontWeight:600,color:"var(--B)"}}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          Share
         </div>
       </div>
     </div>}
@@ -1850,7 +1903,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
         <span style={{fontSize:10,color:"var(--dm)"}}>{p.created_at?new Date(p.created_at).toLocaleDateString():""}</span>
         {p.is_premium&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 6px",borderRadius:4}}>PRO</span>}
       </div>
-      {isAdmin&&<div onClick={(e)=>{e.stopPropagation();generateShareCard("analysis",p)}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:6,borderRadius:6,background:"color-mix(in srgb,var(--B) 8%,transparent)",cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)",marginTop:6}}>
+      {!locked&&<div onClick={(e)=>{e.stopPropagation();generateShareCard("analysis",p)}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:6,borderRadius:6,background:"color-mix(in srgb,var(--B) 8%,transparent)",cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)",marginTop:6}}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
         Share
       </div>}
@@ -1884,6 +1937,10 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
             <div onClick={(e)=>{e.stopPropagation();removeDayTrade(p.id)}} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:6,borderRadius:6,background:"color-mix(in srgb,var(--R) 8%,transparent)",cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--R)"}}>
               {IC.del} {lang==="fa"?"حذف":"Remove"}
             </div>
+          </div>}
+          {!isAdmin&&!locked&&<div onClick={(e)=>{e.stopPropagation();generateShareCard("analysis",p)}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:6,borderRadius:6,background:"color-mix(in srgb,var(--B) 8%,transparent)",cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)",marginTop:6}}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            Share
           </div>}
         </div>
       </div>})}</div>}
