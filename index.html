@@ -2081,7 +2081,7 @@ function Plans({userProfile,goToProfile}){
       </div>}
       <div className="cd" style={{padding:16,textAlign:"center"}}>
         <div style={{fontSize:13,color:"var(--mu)",marginBottom:10}}>Renew or extend your subscription</div>
-        <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.chat} {lang==="fa"?"تماس با پشتیبانی":"Contact Support"}</div>
+        <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.tg} {lang==="fa"?"تماس با پشتیبانی":"Contact Support"}</div>
       </div>
       {showContact&&<ContactPopup onClose={()=>setShowContact(false)} onSupport={goToProfile}/>}
     </div>);
@@ -2107,7 +2107,7 @@ function Plans({userProfile,goToProfile}){
     </div>)}
     <div className="cd" style={{marginTop:16,padding:16,textAlign:"center"}}>
       <div style={{fontSize:13,color:"var(--mu)",lineHeight:1.7}}>{t.unlock}</div>
-      <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:12,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.chat} {t.contact}</div>
+      <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:12,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.tg} {t.contact}</div>
     </div>
     {showContact&&<ContactPopup onClose={()=>setShowContact(false)} onSupport={goToProfile}/>}
   </div>);
