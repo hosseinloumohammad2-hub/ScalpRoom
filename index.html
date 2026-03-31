@@ -1072,6 +1072,35 @@ function RewardSection({userId,token,userProfile}){
 }
 
 /* ─── Admin Rewards Panel ─── */
+/* ─── App Settings Hook (key-value from AppSettings table) ─── */
+function useAppSetting(key,token){
+  const[val,setVal]=useState(null);
+  const[loading,setLoading]=useState(true);
+  const load=useCallback(async()=>{
+    try{
+      const r=await fetch(`${SB}/rest/v1/AppSettings?key=eq.${key}&limit=1`,{headers:H(token||SK)});
+      const d=await r.json();
+      if(Array.isArray(d)&&d[0]){setVal(d[0].value)}else{setVal(null)}
+    }catch(e){}
+    setLoading(false);
+  },[key,token]);
+  useEffect(()=>{load()},[load]);
+  const update=async(newVal)=>{
+    try{
+      // Try update first
+      const r=await fetch(`${SB}/rest/v1/AppSettings?key=eq.${key}`,{headers:H(token)});
+      const d=await r.json();
+      if(Array.isArray(d)&&d[0]){
+        await fetch(`${SB}/rest/v1/AppSettings?key=eq.${key}`,{method:"PATCH",headers:H(token),body:JSON.stringify({value:newVal})});
+      }else{
+        await fetch(`${SB}/rest/v1/AppSettings`,{method:"POST",headers:H(token),body:JSON.stringify({key,value:newVal})});
+      }
+      setVal(newVal);
+    }catch(e){}
+  };
+  return{val,loading,update,reload:load};
+}
+
 function AdminRewards({token}){
   const{lang}=useLang();
   const[claims,setClaims]=useState([]);
@@ -1127,8 +1156,22 @@ function AdminRewards({token}){
   };
 
   const statusColor=(s)=>s==="paid"?"var(--G)":s==="approved"?"var(--B)":s==="rejected"?"var(--R)":"var(--Y)";
+  const{val:rewardsEnabled,update:setRewardsEnabled}=useAppSetting("rewards_enabled",token);
+  const isEnabled=rewardsEnabled==="true";
 
   return(<div>
+    {/* Enable/Disable Toggle */}
+    <div onClick={()=>setRewardsEnabled(isEnabled?"false":"true")} className="cd" style={{padding:14,marginBottom:14,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",borderColor:isEnabled?"color-mix(in srgb,var(--G) 25%,transparent)":"var(--brd)",background:isEnabled?"color-mix(in srgb,var(--G) 3%,transparent)":"var(--card)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <span style={{fontSize:18}}>💰</span>
+        <div>
+          <div style={{fontSize:13,fontWeight:700}}>{lang==="fa"?"جوایز نقدی":"Cash Rewards"}</div>
+          <div style={{fontSize:10,color:"var(--dm)",marginTop:2}}>{isEnabled?(lang==="fa"?"فعال — در پروفایل کاربران نمایش داده میشود":"Active — visible to users in profile"):(lang==="fa"?"غیرفعال — کاربران نمیبینند":"Disabled — hidden from users")}</div>
+        </div>
+      </div>
+      <div style={{width:44,height:24,borderRadius:12,background:isEnabled?"var(--G)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:20,height:20,borderRadius:10,background:"#fff",position:"absolute",top:2,left:isEnabled?22:2,transition:".2s"}}/></div>
+    </div>
+
     <div style={{display:"flex",gap:4,marginBottom:12}}>
       {["claims","flagged","stats"].map(t=><div key={t} onClick={()=>setTab(t)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tab===t?"color-mix(in srgb,var(--B) 10%,transparent)":"transparent",border:`1px solid ${tab===t?"color-mix(in srgb,var(--B) 25%,transparent)":"var(--brd)"}`,fontSize:11,fontWeight:600,color:tab===t?"var(--B)":"var(--mu)"}}>{t==="claims"?(lang==="fa"?"درخواست‌ها":"Claims"):t==="flagged"?(lang==="fa"?"مشکوک":"Flagged"):(lang==="fa"?"آمار":"Stats")}</div>)}
     </div>
@@ -1763,7 +1806,7 @@ function IranMarketWidget(){
   return(<div className="cd" style={{marginBottom:12,padding:0,overflow:"hidden"}}>
     <div style={{padding:"12px 14px 0",display:"flex",alignItems:"center",gap:8}}>
       <img src="https://flagofiran.com/files/flag-of-iran-emoji-ios.png" width="18" height="18" alt="" style={{borderRadius:2}}/>
-      <span style={{fontSize:13,fontWeight:700}}>{lang==="fa"?"بازار ایران":"Iran Market"}</span>
+      <span style={{fontSize:13,fontWeight:700}}>{{fa:"بازار ایران",ar:"السوق الإيرانية",tr:"İran Piyasası",ru:"Рынок Ирана",es:"Mercado Iraní"}[lang]||"Iran Market"}</span>
     </div>
     <div ref={ref}/>
   </div>);
@@ -1781,7 +1824,16 @@ function Home({posts,signals,msgs,go,goToPlans,P,ok,lastUpdate,dark,toggle,userP
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
   const firstName=(userProfile?.full_name||"").split(" ")[0]||"";
   const hour=new Date().getHours();
-  const greeting=hour<12?(lang==="fa"?"صبح بخیر":"Good morning"):hour<18?(lang==="fa"?"عصر بخیر":"Good afternoon"):(lang==="fa"?"شب بخیر":"Good evening");
+  const greetings={
+    en:["Good morning","Good afternoon","Good evening"],
+    fa:["صبح بخیر","عصر بخیر","شب بخیر"],
+    ar:["صباح الخير","مساء الخير","مساء الخير"],
+    tr:["Günaydın","İyi günler","İyi akşamlar"],
+    ru:["Доброе утро","Добрый день","Добрый вечер"],
+    es:["Buenos días","Buenas tardes","Buenas noches"]
+  };
+  const g=greetings[lang]||greetings.en;
+  const greeting=hour<12?g[0]:hour<18?g[1]:g[2];
   const visibleMsgs=(msgs||[]);
   const unreadCount=Math.max(0,visibleMsgs.length-lastMsgRead);
   const openMsgs=()=>{setShowMsgs(true);setLastMsgRead(visibleMsgs.length);try{localStorage.setItem("fx_mc",String(visibleMsgs.length))}catch(e){}};
@@ -1789,7 +1841,7 @@ function Home({posts,signals,msgs,go,goToPlans,P,ok,lastUpdate,dark,toggle,userP
     {firstName&&<div style={{marginBottom:14,padding:"14px 0 4px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <div>
         <div style={{fontSize:20,fontWeight:700,lineHeight:1.3}}>{greeting}، {firstName} 👋</div>
-        <div style={{fontSize:12,color:"var(--tx2)",marginTop:4}}>{lang==="fa"?"بازارها رو رصد کن و بهترین فرصت‌ها رو پیدا کن":"Track markets and find the best opportunities"}</div>
+        <div style={{fontSize:12,color:"var(--tx2)",marginTop:4}}>{{fa:"بازارها رو رصد کن و بهترین فرصت‌ها رو پیدا کن",ar:"تابع الأسواق واعثر على أفضل الفرص",tr:"Piyasaları takip edin ve en iyi fırsatları bulun",ru:"Следите за рынками и находите лучшие возможности",es:"Sigue los mercados y encuentra las mejores oportunidades"}[lang]||"Track markets and find the best opportunities"}</div>
       </div>
       <div onClick={openMsgs} style={{position:"relative",cursor:"pointer",padding:6}}>
         {IC.bell}
@@ -1803,14 +1855,14 @@ function Home({posts,signals,msgs,go,goToPlans,P,ok,lastUpdate,dark,toggle,userP
           {openMsgId&&<div onClick={()=>setOpenMsgId(null)} style={{cursor:"pointer",color:"var(--mu)",display:"flex",alignItems:"center"}}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           </div>}
-          <span style={{fontSize:14,fontWeight:700}}>{lang==="fa"?"📬 پیام‌ها":"📬 Messages"}</span>
+          <span style={{fontSize:14,fontWeight:700}}>{{fa:"📬 پیام‌ها",ar:"📬 الرسائل",tr:"📬 Mesajlar",ru:"📬 Сообщения",es:"📬 Mensajes"}[lang]||"📬 Messages"}</span>
           <span style={{fontSize:11,color:"var(--dm)"}}>{visibleMsgs.length}</span>
         </div>
         <div onClick={()=>{setShowMsgs(false);setOpenMsgId(null)}} style={{cursor:"pointer",color:"var(--mu)"}}>{IC.x}</div>
       </div>
 
       <div style={{maxHeight:360,overflowY:"auto"}}>
-      {visibleMsgs.length===0?<div style={{textAlign:"center",color:"var(--dm)",fontSize:12,padding:24}}>{lang==="fa"?"پیامی نیست":"No messages yet"}</div>
+      {visibleMsgs.length===0?<div style={{textAlign:"center",color:"var(--dm)",fontSize:12,padding:24}}>{{fa:"پیامی نیست",ar:"لا توجد رسائل",tr:"Henüz mesaj yok",ru:"Сообщений нет",es:"Sin mensajes"}[lang]||"No messages yet"}</div>
 
       :openMsgId?(() => {
         const m=visibleMsgs.find(x=>x.id===openMsgId);
@@ -1826,7 +1878,7 @@ function Home({posts,signals,msgs,go,goToPlans,P,ok,lastUpdate,dark,toggle,userP
           <div style={{fontSize:13,color:"var(--tx2)",lineHeight:1.7,whiteSpace:"pre-wrap",filter:isLocked?"blur(5px)":"none"}}>{m.body}</div>
           {!isLocked&&<TranslateBtn text={[m.title,m.body].filter(Boolean).join("\n\n")}/>}
           {isLocked&&<div style={{position:"absolute",top:0,left:0,right:0,bottom:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"color-mix(in srgb,var(--bg) 60%,transparent)",borderRadius:10}}>
-            <span style={{fontSize:12,fontWeight:700,color:"var(--R)",background:"var(--bg)",padding:"8px 18px",borderRadius:10,border:"1px solid color-mix(in srgb,var(--R) 20%,transparent)",boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}}>⭐ {lang==="fa"?"محتوای ویژه":"Premium Content"}</span>
+            <span style={{fontSize:12,fontWeight:700,color:"var(--R)",background:"var(--bg)",padding:"8px 18px",borderRadius:10,border:"1px solid color-mix(in srgb,var(--R) 20%,transparent)",boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}}>⭐ {{fa:"محتوای ویژه",ar:"محتوى مميز",tr:"Premium İçerik",ru:"Премиум контент",es:"Contenido Premium"}[lang]||"Premium Content"}</span>
           </div>}
         </div>
       })()
@@ -1863,15 +1915,15 @@ function Home({posts,signals,msgs,go,goToPlans,P,ok,lastUpdate,dark,toggle,userP
         <span style={{fontSize:13,fontWeight:700}}>{t.iran||"Iran Market"}</span>
         <div className="ld" style={{marginLeft:"auto"}}/>
       </div>
-      {lastUpdate&&<div style={{fontSize:9,color:"var(--dm)",marginBottom:10}}>{lang==="fa"?"آخرین بروزرسانی:":"Last update:"} {lastUpdate.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</div>}
+      {lastUpdate&&<div style={{fontSize:9,color:"var(--dm)",marginBottom:10}}>{{fa:"آخرین بروزرسانی:",ar:"آخر تحديث:",tr:"Son güncelleme:",ru:"Обновлено:",es:"Última actualización:"}[lang]||"Last update:"} {lastUpdate.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</div>}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
         {[
-          {label:lang==="fa"?"دلار":"USD",val:P.usd_sell,unit:lang==="fa"?"تومان":"Toman"},
-          {label:lang==="fa"?"یورو":"EUR",val:P.eur_sell,unit:lang==="fa"?"تومان":"Toman"},
-          {label:lang==="fa"?"سکه امامی":"Sekke",val:P.sekkeh,unit:lang==="fa"?"تومان":"Toman"},
-          {label:lang==="fa"?"طلا ۱۸ عیار":"Gold 18K",val:P.gold18,unit:lang==="fa"?"تومان":"Toman"},
-          {label:lang==="fa"?"تتر":"USDT",val:P.tether,unit:lang==="fa"?"تومان":"Toman"},
-          {label:lang==="fa"?"روبل روسیه":"RUB",val:P.rub,unit:lang==="fa"?"تومان":"Toman"},
+          {label:{fa:"دلار",ar:"دولار",tr:"Dolar",ru:"Доллар",es:"Dólar"}[lang]||"USD",val:P.usd_sell,unit:{fa:"تومان",ar:"تومان",tr:"Toman",ru:"Томан",es:"Toman"}[lang]||"Toman"},
+          {label:{fa:"یورو",ar:"يورو",tr:"Euro",ru:"Евро",es:"Euro"}[lang]||"EUR",val:P.eur_sell,unit:{fa:"تومان",ar:"تومان",tr:"Toman",ru:"Томан",es:"Toman"}[lang]||"Toman"},
+          {label:{fa:"سکه امامی",ar:"سكة إمامي",tr:"Sekke",ru:"Секке",es:"Sekke"}[lang]||"Sekke",val:P.sekkeh,unit:{fa:"تومان",ar:"تومان",tr:"Toman",ru:"Томан",es:"Toman"}[lang]||"Toman"},
+          {label:{fa:"طلا ۱۸ عیار",ar:"ذهب ١٨ عيار",tr:"18 Ayar Altın",ru:"Золото 18К",es:"Oro 18K"}[lang]||"Gold 18K",val:P.gold18,unit:{fa:"تومان",ar:"تومان",tr:"Toman",ru:"Томан",es:"Toman"}[lang]||"Toman"},
+          {label:{fa:"تتر",ar:"تيثر",tr:"Tether",ru:"Тезер",es:"Tether"}[lang]||"USDT",val:P.tether,unit:{fa:"تومان",ar:"تومان",tr:"Toman",ru:"Томан",es:"Toman"}[lang]||"Toman"},
+          {label:{fa:"روبل روسیه",ar:"روبل روسي",tr:"Rus Rublesi",ru:"Рубль",es:"Rublo ruso"}[lang]||"RUB",val:P.rub,unit:{fa:"تومان",ar:"تومان",tr:"Toman",ru:"Томан",es:"Toman"}[lang]||"Toman"},
         ].map((item,i)=><div key={i} style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:10,padding:12}}>
           <div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginBottom:6}}>{item.label}</div>
           <div className="m" style={{fontSize:14,fontWeight:600,color:"var(--tx)"}}>{item.val?.p||"---"}</div>
@@ -2028,7 +2080,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
               Share
             </div>
             <div onClick={(e)=>{e.stopPropagation();removeDayTrade(p.id)}} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:6,borderRadius:6,background:"color-mix(in srgb,var(--R) 8%,transparent)",cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--R)"}}>
-              {IC.del} {lang==="fa"?"حذف":"Remove"}
+              {IC.del} {{fa:"حذف",ar:"حذف",tr:"Kaldır",ru:"Удалить",es:"Eliminar"}[lang]||"Remove"}
             </div>
           </div>}
           {!isAdmin&&!locked&&<div onClick={(e)=>{e.stopPropagation();generateShareCard("analysis",p)}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:6,borderRadius:6,background:"color-mix(in srgb,var(--B) 8%,transparent)",cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)",marginTop:6}}>
@@ -2057,8 +2109,8 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
         </div>)}
       </>}
 
-      {!dtFiltered.length&&!isAdmin&&<div style={{textAlign:"center",color:"var(--dm)",padding:"60px 0",fontSize:13}}>{lang==="fa"?"هنوز تحلیل روزانه‌ای نیست":"No day trade analyses yet"}</div>}
-      {!dtFiltered.length&&isAdmin&&!dtMsgs.length&&<div style={{textAlign:"center",color:"var(--dm)",padding:"60px 0",fontSize:13}}>{lang==="fa"?"هنوز تحلیل روزانه‌ای نیست":"No day trade analyses yet"}</div>}
+      {!dtFiltered.length&&!isAdmin&&<div style={{textAlign:"center",color:"var(--dm)",padding:"60px 0",fontSize:13}}>{{fa:"هنوز تحلیل روزانه‌ای نیست",ar:"لا توجد تحليلات يومية بعد",tr:"Henüz günlük analiz yok",ru:"Дневных анализов пока нет",es:"Aún no hay análisis diarios"}[lang]||"No day trade analyses yet"}</div>}
+      {!dtFiltered.length&&isAdmin&&!dtMsgs.length&&<div style={{textAlign:"center",color:"var(--dm)",padding:"60px 0",fontSize:13}}>{{fa:"هنوز تحلیل روزانه‌ای نیست",ar:"لا توجد تحليلات يومية بعد",tr:"Henüz günlük analiz yok",ru:"Дневных анализов пока нет",es:"Aún no hay análisis diarios"}[lang]||"No day trade analyses yet"}</div>}
     </>}
 
     {showPremPop&&<PremiumPopup onClose={()=>setShowPremPop(false)} onGoPlans={goToPlans}/>}
@@ -2285,13 +2337,13 @@ function ContactPopup({onClose,onSupport}){
     <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:430,background:"var(--bg)",borderRadius:"20px 20px 0 0",padding:"8px 16px calc(env(safe-area-inset-bottom,12px) + 16px)",animation:"fi .2s ease"}}>
       <div style={{width:36,height:4,borderRadius:2,background:"var(--brd2)",margin:"0 auto 16px"}}/>
       <div style={{textAlign:"center",marginBottom:18}}>
-        <div style={{fontSize:15,fontWeight:700}}>{lang==="fa"?"چطور میخواید ارتباط برقرار کنید؟":"How would you like to connect?"}</div>
+        <div style={{fontSize:15,fontWeight:700}}>{{fa:"چطور میخواید ارتباط برقرار کنید؟",ar:"كيف تريد التواصل؟",tr:"Nasıl iletişim kurmak istersiniz?",ru:"Как вы хотите связаться?",es:"¿Cómo te gustaría conectarte?"}[lang]||"How would you like to connect?"}</div>
       </div>
       <a href="https://t.me/hosenlou" target="_blank" rel="noopener" onClick={onClose} style={{display:"flex",alignItems:"center",gap:12,padding:14,borderRadius:14,background:"color-mix(in srgb,#0088cc 6%,transparent)",border:"1px solid color-mix(in srgb,#0088cc 15%,transparent)",marginBottom:8,cursor:"pointer",textDecoration:"none"}}>
         <div style={{width:44,height:44,borderRadius:12,background:"#0088cc",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{IC.tg}</div>
         <div style={{flex:1}}>
           <div style={{fontSize:14,fontWeight:600,color:"#0088cc"}}>Telegram</div>
-          <div style={{fontSize:11,color:"var(--dm)",marginTop:2}}>{lang==="fa"?"چت در تلگرام":"Chat on Telegram"}</div>
+          <div style={{fontSize:11,color:"var(--dm)",marginTop:2}}>{{fa:"چت در تلگرام",ar:"الدردشة في تلغرام",tr:"Telegram'da sohbet",ru:"Чат в Телеграм",es:"Chat en Telegram"}[lang]||"Chat on Telegram"}</div>
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </a>
@@ -2300,12 +2352,12 @@ function ContactPopup({onClose,onSupport}){
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
         </div>
         <div style={{flex:1}}>
-          <div style={{fontSize:14,fontWeight:600,color:"var(--B)"}}>{lang==="fa"?"پشتیبانی اپ":"In-App Support"}</div>
-          <div style={{fontSize:11,color:"var(--dm)",marginTop:2}}>{lang==="fa"?"چت مستقیم با ادمین":"Direct chat with admin"}</div>
+          <div style={{fontSize:14,fontWeight:600,color:"var(--B)"}}>{{fa:"پشتیبانی اپ",ar:"دعم التطبيق",tr:"Uygulama Desteği",ru:"Поддержка в приложении",es:"Soporte en la app"}[lang]||"In-App Support"}</div>
+          <div style={{fontSize:11,color:"var(--dm)",marginTop:2}}>{{fa:"چت مستقیم با ادمین",ar:"دردشة مباشرة مع المسؤول",tr:"Admin ile doğrudan sohbet",ru:"Прямой чат с админом",es:"Chat directo con admin"}[lang]||"Direct chat with admin"}</div>
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
-      <div onClick={onClose} style={{textAlign:"center",padding:12,fontSize:13,color:"var(--dm)",fontWeight:600,cursor:"pointer"}}>{lang==="fa"?"بستن":"Cancel"}</div>
+      <div onClick={onClose} style={{textAlign:"center",padding:12,fontSize:13,color:"var(--dm)",fontWeight:600,cursor:"pointer"}}>{{fa:"بستن",ar:"إلغاء",tr:"İptal",ru:"Отмена",es:"Cancelar"}[lang]||"Cancel"}</div>
     </div>
   </div>);
 }
@@ -2318,14 +2370,14 @@ function PremiumPopup({onClose,onGoPlans}){
       <div style={{width:36,height:4,borderRadius:2,background:"var(--brd2)",margin:"0 auto 16px"}}/>
       <div style={{textAlign:"center",marginBottom:20}}>
         <div style={{fontSize:32,marginBottom:10}}>👑</div>
-        <div style={{fontSize:17,fontWeight:700,marginBottom:6}}>{lang==="fa"?"محتوای ویژه":"Premium Content"}</div>
-        <div style={{fontSize:13,color:"var(--tx2)",lineHeight:1.6}}>{lang==="fa"?"برای دسترسی به این محتوا، اشتراک ویژه تهیه کنید":"Subscribe to premium to unlock this content"}</div>
+        <div style={{fontSize:17,fontWeight:700,marginBottom:6}}>{{fa:"محتوای ویژه",ar:"محتوى مميز",tr:"Premium İçerik",ru:"Премиум контент",es:"Contenido Premium"}[lang]||"Premium Content"}</div>
+        <div style={{fontSize:13,color:"var(--tx2)",lineHeight:1.6}}>{{fa:"برای دسترسی به این محتوا، اشتراک ویژه تهیه کنید",ar:"اشترك في البريميوم لفتح هذا المحتوى",tr:"Bu içeriği açmak için premium abone olun",ru:"Подпишитесь на премиум для доступа",es:"Suscríbete a premium para desbloquear"}[lang]||"Subscribe to premium to unlock this content"}</div>
       </div>
       <div onClick={()=>{onClose();if(onGoPlans)onGoPlans()}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:16,borderRadius:14,background:"var(--R)",cursor:"pointer",marginBottom:8}}>
-        <span style={{fontSize:14,fontWeight:700,color:"#fff"}}>{lang==="fa"?"مشاهده پلن‌ها":"View Plans"}</span>
+        <span style={{fontSize:14,fontWeight:700,color:"#fff"}}>{{fa:"مشاهده پلن‌ها",ar:"عرض الخطط",tr:"Planları Gör",ru:"Смотреть планы",es:"Ver planes"}[lang]||"View Plans"}</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
-      <div onClick={onClose} style={{textAlign:"center",padding:12,fontSize:13,color:"var(--dm)",fontWeight:600,cursor:"pointer"}}>{lang==="fa"?"بعداً":"Not now"}</div>
+      <div onClick={onClose} style={{textAlign:"center",padding:12,fontSize:13,color:"var(--dm)",fontWeight:600,cursor:"pointer"}}>{{fa:"بعداً",ar:"ليس الآن",tr:"Şimdi değil",ru:"Не сейчас",es:"Ahora no"}[lang]||"Not now"}</div>
     </div>
   </div>);
 }
@@ -2376,7 +2428,7 @@ function Plans({userProfile,goToSupport}){
       </div>}
       <div className="cd" style={{padding:16,textAlign:"center"}}>
         <div style={{fontSize:13,color:"var(--mu)",marginBottom:10}}>Renew or extend your subscription</div>
-        <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.tg} {lang==="fa"?"تماس با پشتیبانی":"Contact Support"}</div>
+        <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.tg} {{fa:"تماس با پشتیبانی",ar:"اتصل بالدعم",tr:"Destek İletişim",ru:"Связаться с поддержкой",es:"Contactar soporte"}[lang]||"Contact Support"}</div>
       </div>
       {showContact&&<ContactPopup onClose={()=>setShowContact(false)} onSupport={goToSupport}/>}
     </div>);
@@ -2394,8 +2446,8 @@ function Plans({userProfile,goToSupport}){
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
         <span style={{fontSize:22}}>🔥</span>
         <div>
-          <div style={{fontSize:15,fontWeight:700,color:"var(--R)"}}>{lang==="fa"?"حراج ویژه!":"Special Sale!"}</div>
-          <div style={{fontSize:11,color:"var(--tx2)",marginTop:2}}>{lang==="fa"?"تخفیف محدود — عجله کنید":"Limited time offer — hurry up"}</div>
+          <div style={{fontSize:15,fontWeight:700,color:"var(--R)"}}>{{fa:"حراج ویژه!",ar:"!تخفيضات خاصة",tr:"Özel İndirim!",ru:"Распродажа!",es:"¡Oferta especial!"}[lang]||"Special Sale!"}</div>
+          <div style={{fontSize:11,color:"var(--tx2)",marginTop:2}}>{{fa:"تخفیف محدود — عجله کنید",ar:"عرض محدود — أسرع",tr:"Sınırlı süre — acele edin",ru:"Ограниченное предложение — торопитесь",es:"Oferta limitada — date prisa"}[lang]||"Limited time offer — hurry up"}</div>
         </div>
       </div>
       <Countdown endDate={promo.end_date}/>
@@ -2877,6 +2929,13 @@ function AdminSupportChat({token}){
   </div>);
 }
 
+/* ─── Reward Section Wrapper (checks if enabled) ─── */
+function RewardSectionWrapper({userId,token,userProfile}){
+  const{val,loading}=useAppSetting("rewards_enabled",token);
+  if(loading||val!=="true")return null;
+  return<RewardSection userId={userId} token={token} userProfile={userProfile}/>;
+}
+
 /* ─── Profile ─── */
 function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSupport,onSupportOpened}){
   const{t}=useLang();
@@ -2915,7 +2974,7 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
       </div>
     </div>
     <ReferralSection userId={user?.id} token={token} userProfile={up}/>
-    <RewardSection userId={user?.id} token={token} userProfile={up}/>
+    <RewardSectionWrapper userId={user?.id} token={token} userProfile={up}/>
     <div onClick={toggle} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:14,marginBottom:6,cursor:"pointer"}}>
       <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{color:"var(--mu)"}}>{dark?IC.moon:IC.sun}</span><span style={{fontSize:13,fontWeight:500}}>{dark?t.darkMode:t.lightMode}</span></div>
       <div style={{width:40,height:22,borderRadius:11,background:dark?"var(--R)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:dark?20:2,transition:".2s"}}/></div>
