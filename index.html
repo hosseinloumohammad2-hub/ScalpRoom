@@ -1203,84 +1203,44 @@ function AdminRewards({token}){
 
 /* ─── Share Card Generator (Admin Only) ─── */
 async function generateShareCard(type,data){
-  const W=1080;
+  const W=1080,H=1350; // Instagram post 4:5
   const PAD=72;
-  const c=document.createElement("canvas");
+  const c=document.createElement("canvas");c.width=W;c.height=H;
   const ctx=c.getContext("2d");
 
-  // Helper: rounded rect
   const rr=(x,y,w,h,r)=>{ctx.beginPath();ctx.roundRect(x,y,w,h,r);};
 
-  // Helper: wrap text, returns final Y
-  const wrapText=(text,x,y,maxW,lineH,font,color)=>{
+  const wrapText=(text,x,y,maxW,lineH,font,color,maxLines)=>{
     ctx.font=font;ctx.fillStyle=color;
-    const words=text.split(" ");let line="";
+    const words=text.split(" ");let line="";let lines=0;
     words.forEach(w=>{
       const test=line+w+" ";
-      if(ctx.measureText(test).width>maxW&&line){ctx.fillText(line.trim(),x,y);y+=lineH;line=w+" "}
-      else line=test;
+      if(ctx.measureText(test).width>maxW&&line){
+        if(maxLines&&lines>=maxLines-1){line=line.trim()+"...";ctx.fillText(line,x,y);return y}
+        ctx.fillText(line.trim(),x,y);y+=lineH;lines++;line=w+" ";
+      } else line=test;
     });
-    if(line)ctx.fillText(line.trim(),x,y);
+    if(line){ctx.fillText(line.trim(),x,y);lines++}
     return y;
   };
-
-  // Pre-calculate height based on content
-  let calcH=0;
-  // Top: logo area + spacing
-  calcH+=160;
-
-  if(type==="signal"){
-    calcH+=80; // badge + pair
-    calcH+=60; // pair name
-    calcH+=30; // divider
-    const levels=[data.entry_price,data.take_profit,data.tp2,data.tp3,data.stop_loss].filter(Boolean);
-    calcH+=levels.length*80+20;
-    if(data.pnl)calcH+=100;
-    calcH+=140; // watermark
-  } else {
-    calcH+=60; // category badge
-    // Title height estimate
-    ctx.font="bold 40px system-ui";
-    const titleW=ctx.measureText(data.title||"").width;
-    const titleLines=Math.ceil(titleW/(W-PAD*2))||1;
-    calcH+=titleLines*50+20;
-    // Description height estimate
-    if(data.description){
-      ctx.font="400 20px system-ui";
-      const descW=ctx.measureText(data.description.slice(0,400)).width;
-      const descLines=Math.ceil(descW/(W-PAD*2))||1;
-      calcH+=Math.min(descLines,8)*30+30;
-    }
-    // Image
-    if(data.image_url)calcH+=620;
-    calcH+=140; // watermark
-  }
-
-  const H=Math.max(800,calcH);
-  c.width=W;c.height=H;
 
   // ─── Background: clean white ───
   ctx.fillStyle="#ffffff";ctx.fillRect(0,0,W,H);
 
-  // Subtle top accent line
-  const topGrad=ctx.createLinearGradient(0,0,W,0);
-  topGrad.addColorStop(0,"#ef4444");topGrad.addColorStop(0.5,"#f97316");topGrad.addColorStop(1,"#ef4444");
-  ctx.fillStyle=topGrad;ctx.fillRect(0,0,W,5);
-
-  // ─── Header: Logo + Date ───
+  // ─── Header ───
   ctx.font="bold 38px 'DM Sans',system-ui,sans-serif";
-  ctx.fillStyle="#18181b";ctx.fillText("Fxscalproom",PAD,70);
+  ctx.fillStyle="#18181b";ctx.fillText("Fxscalproom",PAD,68);
   const logoW=ctx.measureText("Fxscalproom").width;
-  ctx.fillStyle="#ef4444";ctx.fillText(".",PAD+logoW,70);
+  ctx.fillStyle="#ef4444";ctx.fillText(".",PAD+logoW+4,68);
 
   ctx.font="500 16px 'DM Sans',system-ui,sans-serif";
   ctx.fillStyle="#a1a1aa";ctx.textAlign="right";
-  ctx.fillText(new Date().toLocaleDateString("en",{year:"numeric",month:"long",day:"numeric"}),W-PAD,65);
+  ctx.fillText(new Date().toLocaleDateString("en",{year:"numeric",month:"long",day:"numeric"}),W-PAD,63);
   ctx.textAlign="left";
 
-  // Thin separator
+  // Separator
   ctx.strokeStyle="#e4e4e7";ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(PAD,100);ctx.lineTo(W-PAD,100);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(PAD,95);ctx.lineTo(W-PAD,95);ctx.stroke();
 
   let Y=130;
 
@@ -1288,26 +1248,28 @@ async function generateShareCard(type,data){
     const s=data;
     const isBuy=s.type==="BUY";
 
-    // Type badge - pill shape
+    // Type badge
     const badgeColor=isBuy?"#16a34a":"#dc2626";
     const badgeBg=isBuy?"#f0fdf4":"#fef2f2";
     rr(PAD,Y,100,38,20);ctx.fillStyle=badgeBg;ctx.fill();
     rr(PAD,Y,100,38,20);ctx.strokeStyle=badgeColor;ctx.lineWidth=1.5;ctx.stroke();
-    ctx.font="bold 16px 'DM Sans',system-ui,sans-serif";
-    ctx.fillStyle=badgeColor;ctx.fillText(s.type,PAD+isBuy?30:28,Y+25);
+    ctx.font="bold 17px 'DM Sans',system-ui,sans-serif";
+    ctx.fillStyle=badgeColor;
+    const badgeTextW=ctx.measureText(s.type).width;
+    ctx.fillText(s.type,PAD+50-badgeTextW/2,Y+25);
     Y+=60;
 
-    // Pair name - large
+    // Pair name
     ctx.font="bold 56px 'DM Mono',monospace";
-    ctx.fillStyle="#18181b";ctx.fillText(s.pair||"",PAD,Y+50);
-    Y+=80;
+    ctx.fillStyle="#18181b";ctx.fillText(s.pair||"",PAD,Y+46);
+    Y+=76;
 
     // Separator
     ctx.strokeStyle="#f4f4f5";ctx.lineWidth=2;
     ctx.beginPath();ctx.moveTo(PAD,Y);ctx.lineTo(W-PAD,Y);ctx.stroke();
-    Y+=30;
+    Y+=28;
 
-    // Price levels - clean cards
+    // Price levels
     const levels=[
       {label:"Entry Price",value:s.entry_price,color:"#2563eb",bg:"#eff6ff"},
       {label:"Take Profit 1",value:s.take_profit,color:"#16a34a",bg:"#f0fdf4"},
@@ -1335,85 +1297,63 @@ async function generateShareCard(type,data){
       ctx.font="bold 24px 'DM Mono',monospace";
       ctx.fillStyle=pnlNeg?"#dc2626":"#16a34a";
       ctx.textAlign="right";ctx.fillText(s.pnl,W-PAD-20,Y+44);ctx.textAlign="left";
-      Y+=80;
     }
 
   } else if(type==="analysis"){
     const p=data;
 
-    // Category pill
-    rr(PAD,Y,ctx.measureText((p.category||"GOLD").toUpperCase()).width+40,32,16);
-    ctx.fillStyle="#fef2f2";ctx.fill();
-    ctx.font="bold 14px 'DM Sans',system-ui,sans-serif";
-    ctx.fillStyle="#dc2626";ctx.fillText((p.category||"").toUpperCase(),PAD+20,Y+22);
-    Y+=55;
-
-    // Title
-    Y=wrapText(p.title||"",PAD,Y,"bold 40px 'DM Sans',system-ui,sans-serif".length>0?W-PAD*2:W,50,"bold 40px 'DM Sans',system-ui,sans-serif","#18181b");
-    Y+=30;
+    // Title (no category badge)
+    Y=wrapText(p.title||"",PAD,Y,W-PAD*2,50,"bold 40px 'DM Sans',system-ui,sans-serif","#18181b",3);
+    Y+=28;
 
     // Description
     if(p.description){
-      Y=wrapText(p.description.slice(0,400)+(p.description.length>400?"...":""),PAD,Y,W-PAD*2,28,"400 19px 'DM Sans',system-ui,sans-serif","#71717a");
-      Y+=30;
+      const maxDescLines=p.image_url?4:10;
+      Y=wrapText(p.description.slice(0,500)+(p.description.length>500?"...":""),PAD,Y,W-PAD*2,28,"400 19px 'DM Sans',system-ui,sans-serif","#71717a",maxDescLines);
+      Y+=28;
     }
 
-    // Image - FULL SIZE with rounded corners
+    // Image - fit within remaining space
     if(p.image_url){
       try{
         const img=new Image();img.crossOrigin="anonymous";
         await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=p.image_url});
         const imgW=W-PAD*2;
-        // Scale to fit width, keep full aspect ratio
-        const imgH=Math.round((img.height/img.width)*imgW);
-        // Resize canvas if image is tall
-        if(Y+imgH+140>c.height){
-          const newH=Y+imgH+140;
-          const tempData=ctx.getImageData(0,0,W,c.height);
-          c.height=newH;
-          ctx.fillStyle="#ffffff";ctx.fillRect(0,0,W,newH);
-          ctx.putImageData(tempData,0,0);
-        }
-        // Draw shadow
-        ctx.shadowColor="rgba(0,0,0,0.08)";ctx.shadowBlur=20;ctx.shadowOffsetY=4;
-        rr(PAD,Y,imgW,imgH,16);ctx.fillStyle="#f4f4f5";ctx.fill();
+        const maxImgH=H-Y-100; // leave room for watermark
+        let imgH=Math.round((img.height/img.width)*imgW);
+        if(imgH>maxImgH)imgH=maxImgH;
+        // Shadow
+        ctx.shadowColor="rgba(0,0,0,0.06)";ctx.shadowBlur=16;ctx.shadowOffsetY=3;
+        rr(PAD,Y,imgW,imgH,14);ctx.fillStyle="#f4f4f5";ctx.fill();
         ctx.shadowColor="transparent";
-        // Clip & draw image
-        ctx.save();rr(PAD,Y,imgW,imgH,16);ctx.clip();
-        ctx.drawImage(img,PAD,Y,imgW,imgH);
+        // Clip & draw
+        ctx.save();rr(PAD,Y,imgW,imgH,14);ctx.clip();
+        // Scale to fill width, crop height if needed
+        const scale=imgW/img.width;
+        ctx.drawImage(img,PAD,Y,imgW,img.height*scale);
         ctx.restore();
-        // Thin border
-        rr(PAD,Y,imgW,imgH,16);ctx.strokeStyle="#e4e4e7";ctx.lineWidth=1;ctx.stroke();
-        Y+=imgH+20;
+        // Border
+        rr(PAD,Y,imgW,imgH,14);ctx.strokeStyle="#e4e4e7";ctx.lineWidth=1;ctx.stroke();
       }catch(e){}
     }
   }
 
-  // ─── Watermark footer ───
-  // Ensure canvas is tall enough
-  const footerH=100;
-  if(Y+footerH>c.height){
-    const newH=Y+footerH;
-    const tempData=ctx.getImageData(0,0,W,c.height);
-    c.height=newH;
-    ctx.fillStyle="#ffffff";ctx.fillRect(0,0,W,newH);
-    ctx.putImageData(tempData,0,0);
-  }
-
-  const wmY=c.height-70;
-  // Subtle separator
+  // ─── Watermark footer (always at bottom) ───
+  const wmY=H-55;
   ctx.strokeStyle="#f4f4f5";ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(PAD,wmY-25);ctx.lineTo(W-PAD,wmY-25);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(PAD,wmY-30);ctx.lineTo(W-PAD,wmY-30);ctx.stroke();
 
   ctx.textAlign="center";
-  ctx.font="bold 28px 'DM Sans',system-ui,sans-serif";
-  ctx.fillStyle="#d4d4d8";ctx.fillText("Fxscalproom",W/2,wmY+5);
-  const wmLogoW=ctx.measureText("Fxscalproom").width;
-  ctx.fillStyle="#fca5a5";ctx.fillText(".",W/2+wmLogoW/2,wmY+5);
+  ctx.font="bold 26px 'DM Sans',system-ui,sans-serif";
+  ctx.fillStyle="#d4d4d8";
+  const wmText="Fxscalproom";
+  const wmTextW=ctx.measureText(wmText).width;
+  ctx.fillText(wmText,W/2-6,wmY);
+  ctx.fillStyle="#fca5a5";ctx.fillText(".",W/2+wmTextW/2-2,wmY);
 
   ctx.font="400 13px 'DM Sans',system-ui,sans-serif";
   ctx.fillStyle="#d4d4d8";
-  ctx.fillText("t.me/FxScalpRoom  ·  fxscalproom.com",W/2,wmY+30);
+  ctx.fillText("t.me/FxScalpRoom  ·  fxscalproom.com",W/2,wmY+24);
   ctx.textAlign="left";
 
   // ─── Export ───
