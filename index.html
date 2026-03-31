@@ -1625,11 +1625,12 @@ function IranMarketWidget(){
 }
 
 /* ─── Home ─── */
-function Home({posts,signals,msgs,go,P,ok,lastUpdate,dark,toggle,userProfile,token,onR}){
+function Home({posts,signals,msgs,go,goToPlans,P,ok,lastUpdate,dark,toggle,userProfile,token,onR}){
   const{t,lang}=useLang();
   const[sel,setSel]=useState(null);
   const[showMsgs,setShowMsgs]=useState(false);
   const[openMsgId,setOpenMsgId]=useState(null);
+  const[showPremPop,setShowPremPop]=useState(false);
   const[lastMsgRead,setLastMsgRead]=useState(()=>{try{return parseInt(localStorage.getItem("fx_mc")||"0")}catch(e){return 0}});
   const theme=dark?"dark":"light";
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
@@ -1750,7 +1751,7 @@ function Home({posts,signals,msgs,go,P,ok,lastUpdate,dark,toggle,userProfile,tok
     </div>
     {(posts||[]).filter(p=>p.category!=="daytrade").slice(0,6).map(p=>{
       const locked=p.is_premium&&!isPremiumUser;
-      return<div key={p.id} onClick={()=>{if(!locked)setSel(p)}} className="cd" style={{display:"flex",gap:12,marginBottom:6,alignItems:"center",padding:12,cursor:locked?"default":"pointer",position:"relative"}}>
+      return<div key={p.id} onClick={()=>{if(locked){setShowPremPop(true)}else setSel(p)}} className="cd" style={{display:"flex",gap:12,marginBottom:6,alignItems:"center",padding:12,cursor:"pointer",position:"relative"}}>
       {p.image_url?<img src={p.image_url} style={{width:50,height:50,borderRadius:10,objectFit:"cover",flexShrink:0,filter:locked?"blur(6px)":"none"}} alt=""/>:<div style={{width:50,height:50,borderRadius:10,background:"var(--bg2)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"var(--dm)",flexShrink:0,fontWeight:600,filter:locked?"blur(6px)":"none"}}>{p.category?.toUpperCase()?.slice(0,4)}</div>}
       <div style={{flex:1,minWidth:0}}>
         <div style={{fontSize:14,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
@@ -1759,17 +1760,19 @@ function Home({posts,signals,msgs,go,P,ok,lastUpdate,dark,toggle,userProfile,tok
       {p.is_premium&&<span style={{fontSize:9,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"3px 8px",borderRadius:6,flexShrink:0,display:"flex",alignItems:"center",gap:3}}>{IC.crown} PRO</span>}
     </div>})}
     {(!posts||!posts.length)&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:13}}>{t.noAnalyses}</div>}
+    {showPremPop&&<PremiumPopup onClose={()=>setShowPremPop(false)} onGoPlans={goToPlans}/>}
     <PostModal post={sel} onClose={()=>setSel(null)}/>
   </div>);
 }
 
 /* ─── Analysis Tab ─── */
-function Analysis({posts,userProfile,msgs,token,onR}){
+function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
   const{t,lang}=useLang();
   const cats={all:t.all,gold:t.gold,forex:t.forex,crypto:t.crypto,indices:t.indices,iran:t.iran};
   const[section,setSection]=useState("longterm");
   const[cat,setCat]=useState("all"),[sel,setSel]=useState(null),[q,setQ]=useState("");
   const[openMsgId,setOpenMsgId]=useState(null);
+  const[showPremPop,setShowPremPop]=useState(false);
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
   const isAdmin=userProfile?.role==="admin";
   const[addingDT,setAddingDT]=useState(null);
@@ -1835,7 +1838,7 @@ function Analysis({posts,userProfile,msgs,token,onR}){
     </div>
     <div className="g2">{f.map(p=>{
       const locked=p.is_premium&&!isPremiumUser;
-      return<div key={p.id} onClick={()=>{if(!locked)setSel(p)}} className="cd" style={{padding:0,overflow:"hidden",cursor:locked?"default":"pointer",position:"relative"}}>
+      return<div key={p.id} onClick={()=>{if(locked){setShowPremPop(true)}else setSel(p)}} className="cd" style={{padding:0,overflow:"hidden",cursor:"pointer",position:"relative"}}>
       {p.image_url?<img src={p.image_url} style={{width:"100%",height:120,objectFit:"cover",filter:locked?"blur(8px)":"none"}} alt=""/>:<div style={{width:"100%",height:120,background:"var(--bg2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"var(--dm)",fontWeight:600,filter:locked?"blur(8px)":"none"}}>{p.category?.toUpperCase()}</div>}
       {locked&&<div style={{position:"absolute",top:0,left:0,right:0,height:120,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.4)",borderRadius:"14px 14px 0 0"}}>
         <span style={{color:"#fff",display:"flex",alignItems:"center",gap:4}}>{IC.crown}</span>
@@ -1860,7 +1863,7 @@ function Analysis({posts,userProfile,msgs,token,onR}){
       {/* Day Trade posts (saved from notifications) */}
       {dtFiltered.length>0&&<div className="g2" style={{marginBottom:16}}>{dtFiltered.map(p=>{
         const locked=p.is_premium&&!isPremiumUser;
-        return<div key={p.id} onClick={()=>{if(!locked)setSel(p)}} className="cd" style={{padding:0,overflow:"hidden",cursor:locked?"default":"pointer",position:"relative"}}>
+        return<div key={p.id} onClick={()=>{if(locked){setShowPremPop(true)}else setSel(p)}} className="cd" style={{padding:0,overflow:"hidden",cursor:"pointer",position:"relative"}}>
         {p.image_url?<img src={p.image_url} style={{width:"100%",height:120,objectFit:"cover",filter:locked?"blur(8px)":"none"}} alt=""/>:<div style={{width:"100%",height:120,background:"color-mix(in srgb,var(--Y) 6%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>⚡</div>}
         {locked&&<div style={{position:"absolute",top:0,left:0,right:0,height:120,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.4)",borderRadius:"14px 14px 0 0"}}>
           <span style={{color:"#fff",display:"flex",alignItems:"center",gap:4}}>{IC.crown}</span>
@@ -1908,14 +1911,16 @@ function Analysis({posts,userProfile,msgs,token,onR}){
       {!dtFiltered.length&&isAdmin&&!dtMsgs.length&&<div style={{textAlign:"center",color:"var(--dm)",padding:"60px 0",fontSize:13}}>{lang==="fa"?"هنوز تحلیل روزانه‌ای نیست":"No day trade analyses yet"}</div>}
     </>}
 
+    {showPremPop&&<PremiumPopup onClose={()=>setShowPremPop(false)} onGoPlans={goToPlans}/>}
     <PostModal post={sel} onClose={()=>setSel(null)}/>
   </div>);
 }
 
 /* ─── Signals ─── */
-function Sigs({signals,userProfile}){
+function Sigs({signals,userProfile,goToPlans}){
   const{t}=useLang();
   const[filter,setFilter]=useState("all");
+  const[showPremPop,setShowPremPop]=useState(false);
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
   const filtered=useMemo(()=>{if(filter==="all")return signals||[];return(signals||[]).filter(s=>s.status===filter)},[signals,filter]);
   return(<div className="fi">
@@ -1924,7 +1929,7 @@ function Sigs({signals,userProfile}){
     </div>
     {filtered.map(s=>{
       const locked=s.is_premium&&!isPremiumUser;
-      return<div key={s.id} className="cd" style={{marginBottom:8,padding:0,position:"relative",overflow:"hidden"}}>
+      return<div key={s.id} className="cd" style={{marginBottom:8,padding:0,position:"relative",overflow:"hidden",cursor:locked?"pointer":"default"}} onClick={()=>{if(locked)setShowPremPop(true)}}>
       {locked&&<div style={{position:"absolute",top:0,left:0,right:0,bottom:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.35)",zIndex:3,borderRadius:14}}>
         <span style={{color:"#fff",display:"flex",alignItems:"center",gap:4}}>{IC.crown}</span>
         <span style={{fontSize:13,fontWeight:700,color:"#fff",marginTop:6}}>PREMIUM</span>
@@ -1976,12 +1981,66 @@ function Sigs({signals,userProfile}){
       </div>
     </div>})}
     {!filtered.length&&<div style={{textAlign:"center",color:"var(--dm)",padding:"60px 0",fontSize:13}}>{t.noSignals}</div>}
+    {showPremPop&&<PremiumPopup onClose={()=>setShowPremPop(false)} onGoPlans={goToPlans}/>}
+  </div>);
+}
+
+/* ─── Contact Popup (iOS 26 style) ─── */
+function ContactPopup({onClose,onSupport}){
+  const{t,lang}=useLang();
+  return(<div className="modal-overlay" onClick={onClose} style={{alignItems:"flex-end",padding:0}}>
+    <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:430,background:"var(--bg)",borderRadius:"20px 20px 0 0",padding:"8px 16px calc(env(safe-area-inset-bottom,12px) + 16px)",animation:"fi .2s ease"}}>
+      <div style={{width:36,height:4,borderRadius:2,background:"var(--brd2)",margin:"0 auto 16px"}}/>
+      <div style={{textAlign:"center",marginBottom:18}}>
+        <div style={{fontSize:15,fontWeight:700}}>{lang==="fa"?"چطور میخواید ارتباط برقرار کنید؟":"How would you like to connect?"}</div>
+      </div>
+      <a href="https://t.me/hosenlou" target="_blank" rel="noopener" onClick={onClose} style={{display:"flex",alignItems:"center",gap:12,padding:14,borderRadius:14,background:"color-mix(in srgb,#0088cc 6%,transparent)",border:"1px solid color-mix(in srgb,#0088cc 15%,transparent)",marginBottom:8,cursor:"pointer",textDecoration:"none"}}>
+        <div style={{width:44,height:44,borderRadius:12,background:"#0088cc",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{IC.tg}</div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:14,fontWeight:600,color:"#0088cc"}}>Telegram</div>
+          <div style={{fontSize:11,color:"var(--dm)",marginTop:2}}>{lang==="fa"?"چت در تلگرام":"Chat on Telegram"}</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+      <div onClick={()=>{onClose();if(onSupport)onSupport()}} style={{display:"flex",alignItems:"center",gap:12,padding:14,borderRadius:14,background:"color-mix(in srgb,var(--B) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--B) 15%,transparent)",marginBottom:8,cursor:"pointer"}}>
+        <div style={{width:44,height:44,borderRadius:12,background:"var(--B)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:14,fontWeight:600,color:"var(--B)"}}>{lang==="fa"?"پشتیبانی اپ":"In-App Support"}</div>
+          <div style={{fontSize:11,color:"var(--dm)",marginTop:2}}>{lang==="fa"?"چت مستقیم با ادمین":"Direct chat with admin"}</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div onClick={onClose} style={{textAlign:"center",padding:12,fontSize:13,color:"var(--dm)",fontWeight:600,cursor:"pointer"}}>{lang==="fa"?"بستن":"Cancel"}</div>
+    </div>
+  </div>);
+}
+
+/* ─── Premium Upgrade Popup (iOS 26 style) ─── */
+function PremiumPopup({onClose,onGoPlans}){
+  const{lang}=useLang();
+  return(<div className="modal-overlay" onClick={onClose} style={{alignItems:"flex-end",padding:0}}>
+    <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:430,background:"var(--bg)",borderRadius:"20px 20px 0 0",padding:"8px 16px calc(env(safe-area-inset-bottom,12px) + 16px)",animation:"fi .2s ease"}}>
+      <div style={{width:36,height:4,borderRadius:2,background:"var(--brd2)",margin:"0 auto 16px"}}/>
+      <div style={{textAlign:"center",marginBottom:20}}>
+        <div style={{fontSize:32,marginBottom:10}}>👑</div>
+        <div style={{fontSize:17,fontWeight:700,marginBottom:6}}>{lang==="fa"?"محتوای ویژه":"Premium Content"}</div>
+        <div style={{fontSize:13,color:"var(--tx2)",lineHeight:1.6}}>{lang==="fa"?"برای دسترسی به این محتوا، اشتراک ویژه تهیه کنید":"Subscribe to premium to unlock this content"}</div>
+      </div>
+      <div onClick={()=>{onClose();if(onGoPlans)onGoPlans()}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:16,borderRadius:14,background:"var(--R)",cursor:"pointer",marginBottom:8}}>
+        <span style={{fontSize:14,fontWeight:700,color:"#fff"}}>{lang==="fa"?"مشاهده پلن‌ها":"View Plans"}</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div onClick={onClose} style={{textAlign:"center",padding:12,fontSize:13,color:"var(--dm)",fontWeight:600,cursor:"pointer"}}>{lang==="fa"?"بعداً":"Not now"}</div>
+    </div>
   </div>);
 }
 
 /* ─── Plans ─── */
-function Plans({userProfile}){
-  const{t}=useLang();
+function Plans({userProfile,goToProfile}){
+  const{t,lang}=useLang();
+  const[showContact,setShowContact]=useState(false);
   const isPremium=userProfile?.membership==="premium";
   const expiresAt=userProfile?.premium_expires_at?new Date(userProfile.premium_expires_at):null;
   const now=new Date();
@@ -2018,12 +2077,13 @@ function Plans({userProfile}){
       {canUpgrade&&upgrade&&<div className="cd" style={{padding:16,marginBottom:16,borderColor:"color-mix(in srgb,var(--Y) 25%,transparent)",background:"color-mix(in srgb,var(--Y) 3%,transparent)"}}>
         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}><span style={{fontSize:14}}>⬆️</span><span style={{fontSize:14,fontWeight:700}}>Upgrade to Annual</span></div>
         <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.6,marginBottom:12}}>You're on <b>{upgrade.from}</b> plan. Upgrade to <b>{upgrade.to}</b> for just <b>{upgrade.price}</b> more (save {upgrade.save} total!)</div>
-        <a href="https://t.me/hosenlou" target="_blank" rel="noopener" className="bt" style={{background:"var(--Y)",color:"#000",fontSize:13}}>Upgrade Now — {upgrade.price}</a>
+        <div onClick={()=>setShowContact(true)} className="bt" style={{background:"var(--Y)",color:"#000",fontSize:13,cursor:"pointer"}}>Upgrade Now — {upgrade.price}</div>
       </div>}
       <div className="cd" style={{padding:16,textAlign:"center"}}>
         <div style={{fontSize:13,color:"var(--mu)",marginBottom:10}}>Renew or extend your subscription</div>
-        <a href="https://t.me/hosenlou" target="_blank" rel="noopener" style={{display:"inline-flex",alignItems:"center",gap:8,color:"#0088cc",fontSize:14,fontWeight:600}}>{IC.tg} Contact on Telegram</a>
+        <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.chat} {lang==="fa"?"تماس با پشتیبانی":"Contact Support"}</div>
       </div>
+      {showContact&&<ContactPopup onClose={()=>setShowContact(false)} onSupport={goToProfile}/>}
     </div>);
   }
   return(<div className="fi">
@@ -2042,13 +2102,14 @@ function Plans({userProfile}){
       </div>
       <div style={{display:"flex",alignItems:"center",gap:12}}>
         <span className="m" style={{fontSize:22,fontWeight:600}}>{p.p}</span>
-        <a href="https://t.me/hosenlou" target="_blank" rel="noopener" className="bt" style={{background:"var(--R)",padding:"10px 20px",width:"auto",fontSize:13}}>{t.subscribe}</a>
+        <div onClick={()=>setShowContact(true)} className="bt" style={{background:"var(--R)",padding:"10px 20px",width:"auto",fontSize:13,cursor:"pointer"}}>{t.subscribe}</div>
       </div>
     </div>)}
     <div className="cd" style={{marginTop:16,padding:16,textAlign:"center"}}>
       <div style={{fontSize:13,color:"var(--mu)",lineHeight:1.7}}>{t.unlock}</div>
-      <a href="https://t.me/hosenlou" target="_blank" rel="noopener" style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:12,color:"#0088cc",fontSize:14,fontWeight:600}}>{IC.tg} {t.contact}</a>
+      <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:12,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.chat} {t.contact}</div>
     </div>
+    {showContact&&<ContactPopup onClose={()=>setShowContact(false)} onSupport={goToProfile}/>}
   </div>);
 }
 
@@ -2632,11 +2693,12 @@ function App(){
   const st=Math.min(tab,VT.length-1);
   const cur=VT[st];
   const goTab=i=>{setTab(i);clearBadge(VT[i]?.k)};
+  const goToTabByKey=(k)=>{const idx=VT.findIndex(t=>t.k===k);if(idx>=0)goTab(idx)};
   const scr=()=>{switch(cur?.k){
-    case"home":return<Home posts={posts} signals={sigs} msgs={msgs} go={goTab} P={P} ok={ok} lastUpdate={lastUpdate} dark={dark} toggle={toggle} userProfile={up} token={tk} onR={load}/>;
-    case"analysis":return<Analysis posts={posts} userProfile={up} msgs={msgs} token={tk} onR={load}/>;
-    case"signals":return<Sigs signals={sigs} userProfile={up}/>;
-    case"plans":return<Plans userProfile={up}/>;
+    case"home":return<Home posts={posts} signals={sigs} msgs={msgs} go={goTab} goToPlans={()=>goToTabByKey("plans")} P={P} ok={ok} lastUpdate={lastUpdate} dark={dark} toggle={toggle} userProfile={up} token={tk} onR={load}/>;
+    case"analysis":return<Analysis posts={posts} userProfile={up} msgs={msgs} token={tk} onR={load} goToPlans={()=>goToTabByKey("plans")}/>;
+    case"signals":return<Sigs signals={sigs} userProfile={up} goToPlans={()=>goToTabByKey("plans")}/>;
+    case"plans":return<Plans userProfile={up} goToProfile={()=>goToTabByKey("profile")}/>;
     case"admin":return<Adm token={tk} posts={posts} signals={sigs} onR={load}/>;
     case"profile":return<Prof user={usr} up={up} onOut={handleLogout} dark={dark} toggle={toggle} lang={lang} setLang={setLang} token={tk} onNameChange={(name)=>{setUp(prev=>prev?{...prev,full_name:name}:prev)}}/>;
     default:return null;
