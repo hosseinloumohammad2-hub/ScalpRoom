@@ -2911,7 +2911,7 @@ function App(){
   const t=T[lang]||T.en;
   const handleAuth=(token,user,refreshToken)=>{setTk(token);setUsr(user);try{localStorage.setItem("fx_tk",token);localStorage.setItem("fx_usr",JSON.stringify(user));if(refreshToken)localStorage.setItem("fx_rt",refreshToken)}catch(e){}};
   const handleLogout=()=>{setTk(null);setUsr(null);setAdm(false);setUp(null);setTab(0);try{localStorage.removeItem("fx_tk");localStorage.removeItem("fx_usr");localStorage.removeItem("fx_rt")}catch(e){}};
-  // Auto-refresh token on load and every 30 minutes
+  // Auto-refresh token on load and every 30 minutes — NEVER auto-logout
   const refreshSession=useCallback(async()=>{
     try{
       const rt=localStorage.getItem("fx_rt");
@@ -2921,13 +2921,14 @@ function App(){
       if(d.access_token){
         setTk(d.access_token);
         try{localStorage.setItem("fx_tk",d.access_token);if(d.refresh_token)localStorage.setItem("fx_rt",d.refresh_token)}catch(e){}
-      }else if(d.error){handleLogout()}
+      }
+      // If refresh fails, keep existing token — don't logout
     }catch(e){}
   },[]);
   useEffect(()=>{refreshSession();const i=setInterval(refreshSession,30*60*1000);return()=>clearInterval(i)},[refreshSession]);
   const setLang=(l)=>{setLangState(l);try{localStorage.setItem("fxlang",l)}catch(e){};document.documentElement.setAttribute("lang",l)};
   useEffect(()=>{document.documentElement.setAttribute("lang",lang)},[]);
-  const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p)){setP(p);try{localStorage.setItem("fx_pc",String(p.length))}catch(e){}}else if(p?.message){handleLogout();return}const s=await api.get("Signals",tk);if(Array.isArray(s)){setS(s);try{localStorage.setItem("fx_sc",String(s.length))}catch(e){}}const m=await api.get("Messages",tk);if(Array.isArray(m))setMsgs(m)}catch(e){}},[tk]);
+  const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p)){setP(p);try{localStorage.setItem("fx_pc",String(p.length))}catch(e){}}const s=await api.get("Signals",tk);if(Array.isArray(s)){setS(s);try{localStorage.setItem("fx_sc",String(s.length))}catch(e){}}const m=await api.get("Messages",tk);if(Array.isArray(m))setMsgs(m)}catch(e){}},[tk]);
   const chk=useCallback(async(u,t)=>{try{const r=await fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{headers:H(t)});const d=await r.json();if(Array.isArray(d)&&d[0]){setUp(d[0]);if(d[0].role==="admin")setAdm(true)}}catch(e){}},[]);
   useEffect(()=>{if(tk)load()},[tk,load]);
   useEffect(()=>{if(tk&&usr)chk(usr,tk)},[tk,usr,chk]);
