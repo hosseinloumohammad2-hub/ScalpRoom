@@ -1203,161 +1203,235 @@ function AdminRewards({token}){
 
 /* ─── Share Card Generator (Admin Only) ─── */
 async function generateShareCard(type,data){
-  const W=1080,H=1350;
-  const c=document.createElement("canvas");c.width=W;c.height=H;
+  const W=1080;
+  const PAD=72;
+  const c=document.createElement("canvas");
   const ctx=c.getContext("2d");
 
-  // Background gradient
-  const grad=ctx.createLinearGradient(0,0,0,H);
-  grad.addColorStop(0,"#0a0a0c");grad.addColorStop(0.5,"#111114");grad.addColorStop(1,"#0a0a0c");
-  ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+  // Helper: rounded rect
+  const rr=(x,y,w,h,r)=>{ctx.beginPath();ctx.roundRect(x,y,w,h,r);};
 
-  // Subtle grid pattern
-  ctx.strokeStyle="rgba(255,255,255,0.03)";ctx.lineWidth=1;
-  for(let i=0;i<W;i+=40){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke()}
-  for(let i=0;i<H;i+=40){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(W,i);ctx.stroke()}
+  // Helper: wrap text, returns final Y
+  const wrapText=(text,x,y,maxW,lineH,font,color)=>{
+    ctx.font=font;ctx.fillStyle=color;
+    const words=text.split(" ");let line="";
+    words.forEach(w=>{
+      const test=line+w+" ";
+      if(ctx.measureText(test).width>maxW&&line){ctx.fillText(line.trim(),x,y);y+=lineH;line=w+" "}
+      else line=test;
+    });
+    if(line)ctx.fillText(line.trim(),x,y);
+    return y;
+  };
 
-  // Top bar
-  ctx.fillStyle="#FF4136";ctx.fillRect(0,0,W,6);
+  // Pre-calculate height based on content
+  let calcH=0;
+  // Top: logo area + spacing
+  calcH+=160;
 
-  // Logo
-  ctx.font="bold 42px 'DM Sans',system-ui,sans-serif";
-  ctx.fillStyle="#e4e4e7";ctx.fillText("Fxscalproom",60,80);
-  ctx.fillStyle="#FF4136";ctx.fillText(".",332,80);
+  if(type==="signal"){
+    calcH+=80; // badge + pair
+    calcH+=60; // pair name
+    calcH+=30; // divider
+    const levels=[data.entry_price,data.take_profit,data.tp2,data.tp3,data.stop_loss].filter(Boolean);
+    calcH+=levels.length*80+20;
+    if(data.pnl)calcH+=100;
+    calcH+=140; // watermark
+  } else {
+    calcH+=60; // category badge
+    // Title height estimate
+    ctx.font="bold 40px system-ui";
+    const titleW=ctx.measureText(data.title||"").width;
+    const titleLines=Math.ceil(titleW/(W-PAD*2))||1;
+    calcH+=titleLines*50+20;
+    // Description height estimate
+    if(data.description){
+      ctx.font="400 20px system-ui";
+      const descW=ctx.measureText(data.description.slice(0,400)).width;
+      const descLines=Math.ceil(descW/(W-PAD*2))||1;
+      calcH+=Math.min(descLines,8)*30+30;
+    }
+    // Image
+    if(data.image_url)calcH+=620;
+    calcH+=140; // watermark
+  }
 
-  // Date
-  ctx.font="500 18px 'DM Sans',system-ui,sans-serif";
-  ctx.fillStyle="#71717a";
-  ctx.textAlign="right";
-  ctx.fillText(new Date().toLocaleDateString("en",{year:"numeric",month:"long",day:"numeric"}),W-60,75);
+  const H=Math.max(800,calcH);
+  c.width=W;c.height=H;
+
+  // ─── Background: clean white ───
+  ctx.fillStyle="#ffffff";ctx.fillRect(0,0,W,H);
+
+  // Subtle top accent line
+  const topGrad=ctx.createLinearGradient(0,0,W,0);
+  topGrad.addColorStop(0,"#ef4444");topGrad.addColorStop(0.5,"#f97316");topGrad.addColorStop(1,"#ef4444");
+  ctx.fillStyle=topGrad;ctx.fillRect(0,0,W,5);
+
+  // ─── Header: Logo + Date ───
+  ctx.font="bold 38px 'DM Sans',system-ui,sans-serif";
+  ctx.fillStyle="#18181b";ctx.fillText("Fxscalproom",PAD,70);
+  const logoW=ctx.measureText("Fxscalproom").width;
+  ctx.fillStyle="#ef4444";ctx.fillText(".",PAD+logoW,70);
+
+  ctx.font="500 16px 'DM Sans',system-ui,sans-serif";
+  ctx.fillStyle="#a1a1aa";ctx.textAlign="right";
+  ctx.fillText(new Date().toLocaleDateString("en",{year:"numeric",month:"long",day:"numeric"}),W-PAD,65);
   ctx.textAlign="left";
+
+  // Thin separator
+  ctx.strokeStyle="#e4e4e7";ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(PAD,100);ctx.lineTo(W-PAD,100);ctx.stroke();
+
+  let Y=130;
 
   if(type==="signal"){
     const s=data;
     const isBuy=s.type==="BUY";
 
-    // Signal type badge
-    ctx.fillStyle=isBuy?"#22c55e":"#FF4136";
-    const badgeW=140,badgeH=50,badgeX=60,badgeY=140;
-    ctx.beginPath();ctx.roundRect(badgeX,badgeY,badgeW,badgeH,12);ctx.fill();
-    ctx.font="bold 24px 'DM Sans',system-ui,sans-serif";
-    ctx.fillStyle="#fff";ctx.fillText(s.type,badgeX+isBuy?42:36,badgeY+34);
+    // Type badge - pill shape
+    const badgeColor=isBuy?"#16a34a":"#dc2626";
+    const badgeBg=isBuy?"#f0fdf4":"#fef2f2";
+    rr(PAD,Y,100,38,20);ctx.fillStyle=badgeBg;ctx.fill();
+    rr(PAD,Y,100,38,20);ctx.strokeStyle=badgeColor;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.font="bold 16px 'DM Sans',system-ui,sans-serif";
+    ctx.fillStyle=badgeColor;ctx.fillText(s.type,PAD+isBuy?30:28,Y+25);
+    Y+=60;
 
-    // Pair name
-    ctx.font="bold 64px 'DM Mono',monospace";
-    ctx.fillStyle="#e4e4e7";ctx.fillText(s.pair||"",60,280);
+    // Pair name - large
+    ctx.font="bold 56px 'DM Mono',monospace";
+    ctx.fillStyle="#18181b";ctx.fillText(s.pair||"",PAD,Y+50);
+    Y+=80;
 
-    // Divider
-    ctx.strokeStyle="rgba(255,255,255,0.08)";ctx.lineWidth=2;
-    ctx.beginPath();ctx.moveTo(60,320);ctx.lineTo(W-60,320);ctx.stroke();
+    // Separator
+    ctx.strokeStyle="#f4f4f5";ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(PAD,Y);ctx.lineTo(W-PAD,Y);ctx.stroke();
+    Y+=30;
 
-    // Price levels
+    // Price levels - clean cards
     const levels=[
-      {label:"Entry Price",value:s.entry_price,color:"#3b82f6",icon:"📍"},
-      {label:"Take Profit 1",value:s.take_profit,color:"#22c55e",icon:"🎯"},
-      {label:"Take Profit 2",value:s.tp2,color:"#22c55e",icon:"🎯"},
-      {label:"Take Profit 3",value:s.tp3,color:"#22c55e",icon:"🎯"},
-      {label:"Stop Loss",value:s.stop_loss,color:"#FF4136",icon:"🛑"},
+      {label:"Entry Price",value:s.entry_price,color:"#2563eb",bg:"#eff6ff"},
+      {label:"Take Profit 1",value:s.take_profit,color:"#16a34a",bg:"#f0fdf4"},
+      {label:"Take Profit 2",value:s.tp2,color:"#16a34a",bg:"#f0fdf4"},
+      {label:"Take Profit 3",value:s.tp3,color:"#16a34a",bg:"#f0fdf4"},
+      {label:"Stop Loss",value:s.stop_loss,color:"#dc2626",bg:"#fef2f2"},
     ].filter(l=>l.value);
 
-    let y=380;
     levels.forEach(l=>{
-      ctx.fillStyle="rgba(255,255,255,0.04)";
-      ctx.beginPath();ctx.roundRect(60,y,W-120,70,14);ctx.fill();
-      ctx.font="500 18px 'DM Sans',system-ui,sans-serif";
-      ctx.fillStyle="#71717a";ctx.fillText(l.icon+" "+l.label,85,y+30);
-      ctx.font="bold 28px 'DM Mono',monospace";
+      rr(PAD,Y,W-PAD*2,66,16);ctx.fillStyle=l.bg;ctx.fill();
+      ctx.font="500 16px 'DM Sans',system-ui,sans-serif";
+      ctx.fillStyle="#71717a";ctx.fillText(l.label,PAD+20,Y+28);
+      ctx.font="bold 24px 'DM Mono',monospace";
       ctx.fillStyle=l.color;ctx.textAlign="right";
-      ctx.fillText(l.value,W-85,y+48);ctx.textAlign="left";
-      y+=85;
+      ctx.fillText(l.value,W-PAD-20,Y+44);ctx.textAlign="left";
+      Y+=78;
     });
 
     if(s.pnl){
-      y+=20;
-      ctx.fillStyle=s.pnl.startsWith("-")?"rgba(255,65,54,0.1)":"rgba(34,197,94,0.1)";
-      ctx.beginPath();ctx.roundRect(60,y,W-120,70,14);ctx.fill();
-      ctx.font="500 18px 'DM Sans',system-ui,sans-serif";
-      ctx.fillStyle="#71717a";ctx.fillText("📊 PnL",85,y+30);
-      ctx.font="bold 28px 'DM Mono',monospace";
-      ctx.fillStyle=s.pnl.startsWith("-")?"#FF4136":"#22c55e";
-      ctx.textAlign="right";ctx.fillText(s.pnl,W-85,y+48);ctx.textAlign="left";
+      Y+=10;
+      const pnlNeg=s.pnl.startsWith("-");
+      rr(PAD,Y,W-PAD*2,66,16);ctx.fillStyle=pnlNeg?"#fef2f2":"#f0fdf4";ctx.fill();
+      ctx.font="500 16px 'DM Sans',system-ui,sans-serif";
+      ctx.fillStyle="#71717a";ctx.fillText("PnL Result",PAD+20,Y+28);
+      ctx.font="bold 24px 'DM Mono',monospace";
+      ctx.fillStyle=pnlNeg?"#dc2626":"#16a34a";
+      ctx.textAlign="right";ctx.fillText(s.pnl,W-PAD-20,Y+44);ctx.textAlign="left";
+      Y+=80;
     }
+
   } else if(type==="analysis"){
     const p=data;
 
-    // Category badge
-    ctx.fillStyle="rgba(255,65,54,0.15)";
-    ctx.beginPath();ctx.roundRect(60,140,120,36,8);ctx.fill();
-    ctx.font="bold 16px 'DM Sans',system-ui,sans-serif";
-    ctx.fillStyle="#FF4136";ctx.fillText((p.category||"").toUpperCase(),80,165);
+    // Category pill
+    rr(PAD,Y,ctx.measureText((p.category||"GOLD").toUpperCase()).width+40,32,16);
+    ctx.fillStyle="#fef2f2";ctx.fill();
+    ctx.font="bold 14px 'DM Sans',system-ui,sans-serif";
+    ctx.fillStyle="#dc2626";ctx.fillText((p.category||"").toUpperCase(),PAD+20,Y+22);
+    Y+=55;
 
     // Title
-    ctx.font="bold 44px 'DM Sans',system-ui,sans-serif";
-    ctx.fillStyle="#e4e4e7";
-    const words=(p.title||"").split(" ");
-    let line="",ty=250;
-    words.forEach(w=>{
-      const test=line+w+" ";
-      if(ctx.measureText(test).width>W-120&&line){ctx.fillText(line.trim(),60,ty);ty+=55;line=w+" "}
-      else line=test;
-    });
-    if(line)ctx.fillText(line.trim(),60,ty);
+    Y=wrapText(p.title||"",PAD,Y,"bold 40px 'DM Sans',system-ui,sans-serif".length>0?W-PAD*2:W,50,"bold 40px 'DM Sans',system-ui,sans-serif","#18181b");
+    Y+=30;
 
     // Description
     if(p.description){
-      ty+=50;
-      ctx.font="400 22px 'DM Sans',system-ui,sans-serif";
-      ctx.fillStyle="#a1a1aa";
-      const dWords=p.description.slice(0,300).split(" ");
-      line="";
-      dWords.forEach(w=>{
-        const test=line+w+" ";
-        if(ctx.measureText(test).width>W-120&&line){ctx.fillText(line.trim(),60,ty);ty+=32;line=w+" "}
-        else line=test;
-      });
-      if(line)ctx.fillText(line.trim(),60,ty);
+      Y=wrapText(p.description.slice(0,400)+(p.description.length>400?"...":""),PAD,Y,W-PAD*2,28,"400 19px 'DM Sans',system-ui,sans-serif","#71717a");
+      Y+=30;
     }
 
-    // Image if exists
+    // Image - FULL SIZE with rounded corners
     if(p.image_url){
       try{
         const img=new Image();img.crossOrigin="anonymous";
         await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=p.image_url});
-        const imgY=ty+50;const imgH=Math.min(500,H-imgY-200);
-        const imgW=W-120;
-        ctx.save();ctx.beginPath();ctx.roundRect(60,imgY,imgW,imgH,14);ctx.clip();
-        const scale=Math.max(imgW/img.width,imgH/img.height);
-        const sw=img.width*scale,sh=img.height*scale;
-        ctx.drawImage(img,60+(imgW-sw)/2,imgY+(imgH-sh)/2,sw,sh);
+        const imgW=W-PAD*2;
+        // Scale to fit width, keep full aspect ratio
+        const imgH=Math.round((img.height/img.width)*imgW);
+        // Resize canvas if image is tall
+        if(Y+imgH+140>c.height){
+          const newH=Y+imgH+140;
+          const tempData=ctx.getImageData(0,0,W,c.height);
+          c.height=newH;
+          ctx.fillStyle="#ffffff";ctx.fillRect(0,0,W,newH);
+          ctx.putImageData(tempData,0,0);
+        }
+        // Draw shadow
+        ctx.shadowColor="rgba(0,0,0,0.08)";ctx.shadowBlur=20;ctx.shadowOffsetY=4;
+        rr(PAD,Y,imgW,imgH,16);ctx.fillStyle="#f4f4f5";ctx.fill();
+        ctx.shadowColor="transparent";
+        // Clip & draw image
+        ctx.save();rr(PAD,Y,imgW,imgH,16);ctx.clip();
+        ctx.drawImage(img,PAD,Y,imgW,imgH);
         ctx.restore();
+        // Thin border
+        rr(PAD,Y,imgW,imgH,16);ctx.strokeStyle="#e4e4e7";ctx.lineWidth=1;ctx.stroke();
+        Y+=imgH+20;
       }catch(e){}
     }
   }
 
-  // Watermark: "Fxscalproom." at bottom with transparent look
-  const wmY=H-80;
-  ctx.fillStyle="rgba(255,255,255,0.06)";
-  ctx.fillRect(0,wmY-30,W,110);
-  ctx.font="bold 36px 'DM Sans',system-ui,sans-serif";
-  ctx.fillStyle="rgba(255,255,255,0.25)";
+  // ─── Watermark footer ───
+  // Ensure canvas is tall enough
+  const footerH=100;
+  if(Y+footerH>c.height){
+    const newH=Y+footerH;
+    const tempData=ctx.getImageData(0,0,W,c.height);
+    c.height=newH;
+    ctx.fillStyle="#ffffff";ctx.fillRect(0,0,W,newH);
+    ctx.putImageData(tempData,0,0);
+  }
+
+  const wmY=c.height-70;
+  // Subtle separator
+  ctx.strokeStyle="#f4f4f5";ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(PAD,wmY-25);ctx.lineTo(W-PAD,wmY-25);ctx.stroke();
+
   ctx.textAlign="center";
-  ctx.fillText("Fxscalproom.",W/2,wmY+15);
-  ctx.font="400 14px 'DM Sans',system-ui,sans-serif";
-  ctx.fillStyle="rgba(255,255,255,0.15)";
-  ctx.fillText("t.me/FxScalpRoom · fxscalproom.com",W/2,wmY+45);
+  ctx.font="bold 28px 'DM Sans',system-ui,sans-serif";
+  ctx.fillStyle="#d4d4d8";ctx.fillText("Fxscalproom",W/2,wmY+5);
+  const wmLogoW=ctx.measureText("Fxscalproom").width;
+  ctx.fillStyle="#fca5a5";ctx.fillText(".",W/2+wmLogoW/2,wmY+5);
+
+  ctx.font="400 13px 'DM Sans',system-ui,sans-serif";
+  ctx.fillStyle="#d4d4d8";
+  ctx.fillText("t.me/FxScalpRoom  ·  fxscalproom.com",W/2,wmY+30);
   ctx.textAlign="left";
 
-  // Convert to blob and share/download
+  // ─── Export ───
   return new Promise(res=>{
     c.toBlob(blob=>{
       if(!blob){res(null);return}
       const url=URL.createObjectURL(blob);
       const fname=`fxscalproom_${type}_${Date.now()}.png`;
-      if(navigator.share&&navigator.canShare&&navigator.canShare({files:[new File([blob],fname,{type:"image/png"})]})){
-        navigator.share({files:[new File([blob],fname,{type:"image/png"})],title:"Fxscalproom"}).catch(()=>{});
-      }else{
-        const a=document.createElement("a");a.href=url;a.download=fname;a.click();
+      if(navigator.share&&navigator.canShare){
+        try{
+          const file=new File([blob],fname,{type:"image/png"});
+          if(navigator.canShare({files:[file]})){
+            navigator.share({files:[file],title:"Fxscalproom"}).catch(()=>{});
+            res(url);return;
+          }
+        }catch(e){}
       }
+      const a=document.createElement("a");a.href=url;a.download=fname;a.click();
       res(url);
     },"image/png");
   });
