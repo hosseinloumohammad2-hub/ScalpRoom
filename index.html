@@ -157,28 +157,51 @@ function usePrices(){
   const[ok,setOk]=useState(false);
   const prev=useRef({});
   const mk=(k,v)=>{const n=parseFloat(String(v).replace(/,/g,""))||0;const o=prev.current[k]||n;prev.current[k]=n;return{p:Number(n).toLocaleString("en"),c:v,u:n>=o}};
-  const f=useCallback(async()=>{try{
-    const r=await fetch("https://api.navasan.tech/latest/?api_key=freeX42Ju2HlAIfOKINfOLWUZBNC1smi&item=usd_sell,18ayar,sekkeh,usdt,eur,rub");
-    const d=await r.json();
-    if(d&&!d.message){
-      const usd=d.usd_sell?.value||"0";
-      const eur=d.eur?.value||d.eur_sell?.value||"0";
-      const gold=d["18ayar"]?.value||"0";
-      const coin=d.sekkeh?.value||"0";
-      const tether=d.usdt?.value||d.usdt_sell?.value||"0";
-      const rub=d.rub?.value||"0";
-      setP({
-        usd_sell:mk("usd",usd),
-        eur_sell:mk("eur",eur),
-        sekkeh:mk("coin",coin),
-        gold18:mk("gold",gold),
-        tether:mk("tether",tether),
-        rub:mk("rub",rub),
-      });
-      setOk(true);
-    }
-  }catch(e){console.error(e)}},[]);
-  useEffect(()=>{f();const i=setInterval(f,30000);return()=>clearInterval(i)},[f]);
+
+  const f=useCallback(async()=>{
+    // Source 1: Navasan
+    try{
+      const r=await fetch("https://api.navasan.tech/latest/?api_key=freeX42Ju2HlAIfOKINfOLWUZBNC1smi&item=usd_sell,18ayar,sekkeh,usdt,eur,rub");
+      const d=await r.json();
+      if(d&&!d.message&&d.usd_sell){
+        setP({usd_sell:mk("usd",d.usd_sell?.value),eur_sell:mk("eur",d.eur?.value||d.eur_sell?.value||"0"),sekkeh:mk("coin",d.sekkeh?.value||"0"),gold18:mk("gold",d["18ayar"]?.value||"0"),tether:mk("tether",d.usdt?.value||d.usdt_sell?.value||"0"),rub:mk("rub",d.rub?.value||"0")});
+        setOk(true);return;
+      }
+    }catch(e){}
+
+    // Source 2: TGJU
+    try{
+      const r=await fetch("https://call4.tgju.org/ajax.json");
+      const d=await r.json();
+      if(d){
+        const get=(k)=>d[k]?.p?.replace(/,/g,"")||"0";
+        setP({usd_sell:mk("usd",get("price_dollar_rl")),eur_sell:mk("eur",get("price_eur")),sekkeh:mk("coin",get("sekee")),gold18:mk("gold",get("geram18")),tether:mk("tether",get("crypto-tether-irr")),rub:mk("rub",get("price_rub"))});
+        setOk(true);return;
+      }
+    }catch(e){}
+
+    // Source 3: Bonbast
+    try{
+      const r=await fetch("https://www.bonbast.com/json",{headers:{"Accept":"application/json"}});
+      const d=await r.json();
+      if(d&&d.usd1){
+        setP({usd_sell:mk("usd",d.usd1||d.usd_sell||"0"),eur_sell:mk("eur",d.eur1||d.eur_sell||"0"),sekkeh:mk("coin",d.emami1||d.coin||"0"),gold18:mk("gold",d.gol18||"0"),tether:mk("tether",d.usdt||"0"),rub:mk("rub","0")});
+        setOk(true);return;
+      }
+    }catch(e){}
+
+    // Source 4: Nobitex (only USDT price in Toman)
+    try{
+      const r=await fetch("https://api.nobitex.ir/v2/orderbook/USDTIRT");
+      const d=await r.json();
+      if(d&&d.lastTradePrice){
+        const usdtPrice=Math.round(parseInt(d.lastTradePrice)/10); // Rial to Toman
+        setP(prev=>({...prev,tether:mk("tether",String(usdtPrice))}));
+      }
+    }catch(e){}
+  },[]);
+
+  useEffect(()=>{f();const i=setInterval(f,60000);return()=>clearInterval(i)},[f]);
   return{P,ok};
 }
 
