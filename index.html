@@ -1650,6 +1650,7 @@ function Home({posts,signals,msgs,go,P,ok,lastUpdate,dark,toggle,userProfile,tok
         <span style={{fontSize:14,fontWeight:700}}>{lang==="fa"?"📬 پیام‌ها":"📬 Messages"}</span>
         <div onClick={()=>setShowMsgs(false)} style={{cursor:"pointer",color:"var(--mu)"}}>{IC.x}</div>
       </div>
+      <div style={{maxHeight:320,overflowY:"auto",paddingRight:4}}>
       {visibleMsgs.length===0?<div style={{textAlign:"center",color:"var(--dm)",fontSize:12,padding:16}}>{lang==="fa"?"پیامی نیست":"No messages yet"}</div>
       :visibleMsgs.slice(0,10).map(m=>{
         const isLocked=m.target==="premium"&&!isPremiumUser;
@@ -1667,6 +1668,7 @@ function Home({posts,signals,msgs,go,P,ok,lastUpdate,dark,toggle,userProfile,tok
           <span style={{fontSize:11,fontWeight:700,color:"var(--R)",background:"var(--bg)",padding:"6px 14px",borderRadius:8,border:"1px solid color-mix(in srgb,var(--R) 20%,transparent)"}}>⭐ Premium</span>
         </div>}
       </div>})}
+      </div>
     </div>}
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
       <div style={{display:"flex",alignItems:"center",gap:8}}><div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/></div>
