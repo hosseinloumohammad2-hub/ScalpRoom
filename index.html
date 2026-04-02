@@ -2388,6 +2388,187 @@ function PremiumPopup({onClose,onGoPlans}){
   </div>);
 }
 
+/* ─── What We Cover (Plans page) ─── */
+function WhatWeCover({lang}){
+  const[open,setOpen]=useState(null);
+  const tx={
+    en:{
+      title:"What's Included",
+      subtitle:"Markets we analyze & signal",
+      fxTitle:"FX Market",
+      fxPairs:"EUR/USD, GBP/USD, AUD/USD, USD/CAD, NZD/USD, USD/CHF, USD/JPY, USD INDEX, EUR/JPY, GBP/JPY, AUD/JPY, CAD/JPY, EUR/AUD, GBP/AUD, AUD/NZD",
+      fxComm:"GOLD, SILVER, CRUDE OIL, 10 YR US NOTES, GERMAN BUNDS, S&P500, DAX",
+      cryptoTitle:"Crypto Market",
+      cryptoList:"BTC/USD, ETH/USD, XRP/USD, BCH/USD, DASH/USD + different Alt coins",
+      stocksTitle:"US Single Stocks",
+      stocksList:"AAL, AAPL, ADBE, AMD, AMZN, ASML, BABA, BAC, BRK.A, EBAY, COIN, F, GOOGL, JNJ, JPM, KO, MCD, MSFT, MSTR, NFLX, NKE, NVDA, META, PYPL, TSLA, V, XOM, SMH",
+      iranTitle:"Iran Market",
+      iranList:"Dollar Index, 18K Gold, Tehran Dollar, Tether, Sekke, Foolad, Fameli, Kegal, Kechad, Fars, Shepna, Shabandar, Shetran, Vabmelt, Khodro",
+      iranNote:"Updated weekly",
+      ltTitle:"Long-term Analysis",
+      ltDesc:"Forex / Crypto / Indices / Gold / Iran Market — updated weekly",
+      dtTitle:"Daily Analysis",
+      dtDesc:"20 Forex pairs + 5 Crypto + 2 Iran Market symbols — Mon-Fri at 12:00",
+      sigTitle:"Signals",
+      sigDesc:"3 to 7 signals per week with SL & TP — whenever entry conditions are met",
+    },
+    fa:{
+      title:"چه چیزهایی شامل میشه",
+      subtitle:"بازارهایی که تحلیل و سیگنال میدیم",
+      fxTitle:"بازار فارکس",
+      fxPairs:"EUR/USD, GBP/USD, AUD/USD, USD/CAD, NZD/USD, USD/CHF, USD/JPY, USD INDEX, EUR/JPY, GBP/JPY, AUD/JPY, CAD/JPY, EUR/AUD, GBP/AUD, AUD/NZD",
+      fxComm:"طلا، نقره، نفت خام، اوراق ۱۰ ساله آمریکا، بوندز آلمان، S&P500، DAX",
+      cryptoTitle:"بازار کریپتو",
+      cryptoList:"BTC/USD, ETH/USD, XRP/USD, BCH/USD, DASH/USD + آلت‌کوین‌های مختلف",
+      stocksTitle:"سهام آمریکا",
+      stocksList:"AAL, AAPL, ADBE, AMD, AMZN, ASML, BABA, BAC, BRK.A, EBAY, COIN, F, GOOGL, JNJ, JPM, KO, MCD, MSFT, MSTR, NFLX, NKE, NVDA, META, PYPL, TSLA, V, XOM, SMH",
+      iranTitle:"بازار ایران",
+      iranList:"شاخص دلار، طلا ۱۸ گرمی، دلار تهران، تتر، سکه، فولاد، فملی، کگل، کچاد، فارس، شپنا، شبندر، شتران، وبملت، خودرو",
+      iranNote:"هر هفته بروزرسانی میشه",
+      ltTitle:"تحلیل‌های بلندمدت",
+      ltDesc:"فارکس / کریپتو / شاخص‌ها / طلا / بازار ایران — هر هفته بروزرسانی",
+      dtTitle:"تحلیل‌های روزانه",
+      dtDesc:"۲۰ نماد فارکس + ۵ نماد کریپتو + ۲ نماد ایرانی — دوشنبه تا جمعه ساعت ۱۲:۰۰",
+      sigTitle:"سیگنال‌ها",
+      sigDesc:"۳ تا ۷ سیگنال در هفته با حد ضرر و تی‌پی — هروقت شرایط ورود پیش بیاد",
+    },
+    ar:{
+      title:"ماذا يشمل",
+      subtitle:"الأسواق التي نحللها ونرسل إشارات عنها",
+      fxTitle:"سوق الفوركس",
+      fxPairs:"EUR/USD, GBP/USD, AUD/USD, USD/CAD, NZD/USD, USD/CHF, USD/JPY, USD INDEX, EUR/JPY, GBP/JPY, AUD/JPY, CAD/JPY, EUR/AUD, GBP/AUD, AUD/NZD",
+      fxComm:"الذهب، الفضة، النفط الخام، سندات الخزانة الأمريكية، البوندز الألماني، S&P500، DAX",
+      cryptoTitle:"سوق الكريبتو",
+      cryptoList:"BTC/USD, ETH/USD, XRP/USD, BCH/USD, DASH/USD + عملات بديلة أخرى",
+      stocksTitle:"الأسهم الأمريكية",
+      stocksList:"AAL, AAPL, ADBE, AMD, AMZN, ASML, BABA, BAC, BRK.A, EBAY, COIN, F, GOOGL, JNJ, JPM, KO, MCD, MSFT, MSTR, NFLX, NKE, NVDA, META, PYPL, TSLA, V, XOM, SMH",
+      iranTitle:"السوق الإيرانية",
+      iranList:"مؤشر الدولار، ذهب ١٨ عيار، دولار طهران، تيثر، سكة، فولاد، فملي، كگل، كچاد، فارس، شپنا، شبندر، شتران، وبملت، خودرو",
+      iranNote:"يتم التحديث أسبوعياً",
+      ltTitle:"التحليلات طويلة المدى",
+      ltDesc:"فوركس / كريبتو / مؤشرات / ذهب / السوق الإيرانية — تحديث أسبوعي",
+      dtTitle:"التحليلات اليومية",
+      dtDesc:"٢٠ زوج فوركس + ٥ كريبتو + ٢ إيراني — الاثنين-الجمعة الساعة ١٢:٠٠",
+      sigTitle:"الإشارات",
+      sigDesc:"٣ إلى ٧ إشارات أسبوعياً مع SL و TP — عند توفر شروط الدخول",
+    },
+    tr:{
+      title:"Neler Dahil",
+      subtitle:"Analiz ve sinyal verdiğimiz piyasalar",
+      fxTitle:"Forex Piyasası",
+      fxPairs:"EUR/USD, GBP/USD, AUD/USD, USD/CAD, NZD/USD, USD/CHF, USD/JPY, USD INDEX, EUR/JPY, GBP/JPY, AUD/JPY, CAD/JPY, EUR/AUD, GBP/AUD, AUD/NZD",
+      fxComm:"Altın, Gümüş, Ham Petrol, 10Y ABD Tahvili, Alman Bunds, S&P500, DAX",
+      cryptoTitle:"Kripto Piyasası",
+      cryptoList:"BTC/USD, ETH/USD, XRP/USD, BCH/USD, DASH/USD + farklı Alt coinler",
+      stocksTitle:"ABD Hisse Senetleri",
+      stocksList:"AAL, AAPL, ADBE, AMD, AMZN, ASML, BABA, BAC, BRK.A, EBAY, COIN, F, GOOGL, JNJ, JPM, KO, MCD, MSFT, MSTR, NFLX, NKE, NVDA, META, PYPL, TSLA, V, XOM, SMH",
+      iranTitle:"İran Piyasası",
+      iranList:"Dolar Endeksi, 18K Altın, Tahran Doları, Tether, Sekke, Foolad, Fameli, Kegal, Kechad, Fars, Shepna, Shabandar, Shetran, Vabmelt, Khodro",
+      iranNote:"Haftalık güncellenir",
+      ltTitle:"Uzun Vadeli Analizler",
+      ltDesc:"Forex / Kripto / Endeksler / Altın / İran Piyasası — haftalık güncelleme",
+      dtTitle:"Günlük Analizler",
+      dtDesc:"20 Forex çifti + 5 Kripto + 2 İran sembolü — Pzt-Cum saat 12:00",
+      sigTitle:"Sinyaller",
+      sigDesc:"Haftada 3 ila 7 sinyal SL ve TP ile — giriş koşulları oluştuğunda",
+    },
+    ru:{
+      title:"Что включено",
+      subtitle:"Рынки, которые мы анализируем",
+      fxTitle:"Рынок Форекс",
+      fxPairs:"EUR/USD, GBP/USD, AUD/USD, USD/CAD, NZD/USD, USD/CHF, USD/JPY, USD INDEX, EUR/JPY, GBP/JPY, AUD/JPY, CAD/JPY, EUR/AUD, GBP/AUD, AUD/NZD",
+      fxComm:"Золото, Серебро, Нефть, 10-летние казначейские облигации США, немецкие Бунды, S&P500, DAX",
+      cryptoTitle:"Крипторынок",
+      cryptoList:"BTC/USD, ETH/USD, XRP/USD, BCH/USD, DASH/USD + различные альткоины",
+      stocksTitle:"Акции США",
+      stocksList:"AAL, AAPL, ADBE, AMD, AMZN, ASML, BABA, BAC, BRK.A, EBAY, COIN, F, GOOGL, JNJ, JPM, KO, MCD, MSFT, MSTR, NFLX, NKE, NVDA, META, PYPL, TSLA, V, XOM, SMH",
+      iranTitle:"Рынок Ирана",
+      iranList:"Индекс доллара, Золото 18К, Доллар Тегерана, Тезер, Секке, Фулад, Фамели, Кегал, Кечад, Фарс, Шепна, Шабандар, Шетран, Вабмелт, Ходро",
+      iranNote:"Обновляется еженедельно",
+      ltTitle:"Долгосрочный анализ",
+      ltDesc:"Форекс / Крипто / Индексы / Золото / Иран — еженедельное обновление",
+      dtTitle:"Ежедневный анализ",
+      dtDesc:"20 пар Форекс + 5 Крипто + 2 Иран — Пн-Пт в 12:00",
+      sigTitle:"Сигналы",
+      sigDesc:"3-7 сигналов в неделю с SL и TP — при возникновении условий входа",
+    },
+    es:{
+      title:"Qué incluye",
+      subtitle:"Mercados que analizamos y señalizamos",
+      fxTitle:"Mercado Forex",
+      fxPairs:"EUR/USD, GBP/USD, AUD/USD, USD/CAD, NZD/USD, USD/CHF, USD/JPY, USD INDEX, EUR/JPY, GBP/JPY, AUD/JPY, CAD/JPY, EUR/AUD, GBP/AUD, AUD/NZD",
+      fxComm:"Oro, Plata, Petróleo crudo, Bonos 10Y EEUU, Bunds alemanes, S&P500, DAX",
+      cryptoTitle:"Mercado Cripto",
+      cryptoList:"BTC/USD, ETH/USD, XRP/USD, BCH/USD, DASH/USD + diferentes altcoins",
+      stocksTitle:"Acciones EEUU",
+      stocksList:"AAL, AAPL, ADBE, AMD, AMZN, ASML, BABA, BAC, BRK.A, EBAY, COIN, F, GOOGL, JNJ, JPM, KO, MCD, MSFT, MSTR, NFLX, NKE, NVDA, META, PYPL, TSLA, V, XOM, SMH",
+      iranTitle:"Mercado Iraní",
+      iranList:"Índice Dólar, Oro 18K, Dólar Teherán, Tether, Sekke, Foolad, Fameli, Kegal, Kechad, Fars, Shepna, Shabandar, Shetran, Vabmelt, Khodro",
+      iranNote:"Actualizado semanalmente",
+      ltTitle:"Análisis a largo plazo",
+      ltDesc:"Forex / Cripto / Índices / Oro / Irán — actualización semanal",
+      dtTitle:"Análisis diarios",
+      dtDesc:"20 pares Forex + 5 Cripto + 2 Irán — Lun-Vie a las 12:00",
+      sigTitle:"Señales",
+      sigDesc:"3 a 7 señales por semana con SL y TP — cuando surjan condiciones de entrada",
+    },
+  };
+  const l=tx[lang]||tx.en;
+  const toggle=(k)=>setOpen(open===k?null:k);
+  const Section=({k,icon,title,children})=>(
+    <div className="cd" style={{padding:0,marginBottom:6,overflow:"hidden"}}>
+      <div onClick={()=>toggle(k)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",cursor:"pointer"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:16}}>{icon}</span>
+          <span style={{fontSize:13,fontWeight:600}}>{title}</span>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{transform:open===k?"rotate(180deg)":"rotate(0)",transition:".2s"}}><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      {open===k&&<div style={{padding:"0 14px 14px",fontSize:12,color:"var(--tx2)",lineHeight:1.7}}>{children}</div>}
+    </div>
+  );
+  return(<div style={{marginTop:16}}>
+    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+      <div style={{width:3,height:16,borderRadius:2,background:"var(--R)"}}/>
+      <div>
+        <div style={{fontSize:15,fontWeight:700}}>{l.title}</div>
+        <div style={{fontSize:11,color:"var(--dm)",marginTop:2}}>{l.subtitle}</div>
+      </div>
+    </div>
+    <Section k="fx" icon="💱" title={l.fxTitle}>
+      <div style={{fontWeight:600,marginBottom:4,color:"var(--tx)"}}>{lang==="fa"?"جفت ارزها:":"Pairs:"}</div>
+      <div style={{fontSize:11,marginBottom:8,wordBreak:"break-word"}}>{l.fxPairs}</div>
+      <div style={{fontWeight:600,marginBottom:4,color:"var(--tx)"}}>{lang==="fa"?"کالاها و شاخص‌ها:":"Commodities & Indices:"}</div>
+      <div style={{fontSize:11}}>{l.fxComm}</div>
+    </Section>
+    <Section k="crypto" icon="₿" title={l.cryptoTitle}>
+      <div style={{fontSize:11}}>{l.cryptoList}</div>
+    </Section>
+    <Section k="stocks" icon="📈" title={l.stocksTitle}>
+      <div style={{fontSize:11,wordBreak:"break-word"}}>{l.stocksList}</div>
+    </Section>
+    <Section k="iran" icon="🇮🇷" title={l.iranTitle}>
+      <div style={{fontSize:11,marginBottom:6}}>{l.iranList}</div>
+      <div style={{fontSize:10,fontWeight:600,color:"var(--Y)"}}>{l.iranNote}</div>
+    </Section>
+
+    <div style={{marginTop:12}}>
+      <div className="cd" style={{padding:14,marginBottom:6,display:"flex",alignItems:"flex-start",gap:10}}>
+        <span style={{fontSize:16,flexShrink:0,marginTop:2}}>📊</span>
+        <div><div style={{fontSize:13,fontWeight:600,marginBottom:3}}>{l.ltTitle}</div><div style={{fontSize:11,color:"var(--tx2)",lineHeight:1.6}}>{l.ltDesc}</div></div>
+      </div>
+      <div className="cd" style={{padding:14,marginBottom:6,display:"flex",alignItems:"flex-start",gap:10}}>
+        <span style={{fontSize:16,flexShrink:0,marginTop:2}}>⚡</span>
+        <div><div style={{fontSize:13,fontWeight:600,marginBottom:3}}>{l.dtTitle}</div><div style={{fontSize:11,color:"var(--tx2)",lineHeight:1.6}}>{l.dtDesc}</div></div>
+      </div>
+      <div className="cd" style={{padding:14,marginBottom:6,display:"flex",alignItems:"flex-start",gap:10}}>
+        <span style={{fontSize:16,flexShrink:0,marginTop:2}}>📡</span>
+        <div><div style={{fontSize:13,fontWeight:600,marginBottom:3}}>{l.sigTitle}</div><div style={{fontSize:11,color:"var(--tx2)",lineHeight:1.6}}>{l.sigDesc}</div></div>
+      </div>
+    </div>
+  </div>);
+}
+
 /* ─── Plans ─── */
 function Plans({userProfile,goToSupport}){
   const{t,lang}=useLang();
@@ -2480,6 +2661,10 @@ function Plans({userProfile,goToSupport}){
         </div>
       </div>
     </div>})}
+
+    {/* What's Included - Market Coverage */}
+    <WhatWeCover lang={lang}/>
+
     <div className="cd" style={{marginTop:16,padding:16,textAlign:"center"}}>
       <div style={{fontSize:13,color:"var(--mu)",lineHeight:1.7}}>{t.unlock}</div>
       <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:12,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.tg} {t.contact}</div>
