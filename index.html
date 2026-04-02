@@ -2636,31 +2636,50 @@ function Plans({userProfile,goToSupport}){
   };
   const upgrade=getUpgradePrice();
   const basePlans=[{dur:t.month1,p:54,days:30},{dur:t.month3,p:100,save:"38%",days:90},{dur:t.month6,p:170,save:"47%",days:180},{dur:t.year1,p:300,best:true,save:"54%",days:365}];
+  const isAdmin=userProfile?.role==="admin";
   const disc=promo?.discount_pct||0;
-  if(isPremium&&expiresAt){
+  const premText={
+    premActive:{fa:"اشتراک فعال",ar:"الاشتراك نشط",tr:"Premium Aktif",ru:"Премиум активен",es:"Premium activo"},
+    yourSub:{fa:"اشتراک شما",ar:"اشتراكك",tr:"Aboneliğiniz",ru:"Ваша подписка",es:"Tu suscripción"},
+    timeLeft:{fa:"زمان باقی‌مانده",ar:"الوقت المتبقي",tr:"Kalan Süre",ru:"Осталось времени",es:"Tiempo restante"},
+    days:{fa:"روز",ar:"يوم",tr:"Gün",ru:"Дней",es:"Días"},
+    hours:{fa:"ساعت",ar:"ساعة",tr:"Saat",ru:"Часов",es:"Horas"},
+    expires:{fa:"انقضا:",ar:"تنتهي:",tr:"Bitiş:",ru:"Истекает:",es:"Expira:"},
+    expireSoon:{fa:"⚠ به زودی منقضی میشه! تمدید کنید",ar:"⚠ ينتهي قريباً! جدد الآن",tr:"⚠ Yakında sona eriyor! Yenileyin",ru:"⚠ Скоро истекает! Продлите",es:"⚠ Expira pronto! Renueva"},
+    upgradeAnnual:{fa:"ارتقا به سالانه",ar:"الترقية للسنوي",tr:"Yıllığa Yükselt",ru:"Перейти на год",es:"Mejora a anual"},
+    renew:{fa:"تمدید یا تمدید اشتراک",ar:"تجديد أو تمديد الاشتراك",tr:"Aboneliği yenileyin veya uzatın",ru:"Продлить подписку",es:"Renovar o extender suscripción"},
+    adminAccount:{fa:"حساب ادمین",ar:"حساب المسؤول",tr:"Admin Hesabı",ru:"Аккаунт админа",es:"Cuenta admin"},
+  };
+  const pt=(k)=>premText[k]?.[lang]||premText[k]?.en||"";
+  if(isPremium&&(expiresAt||isAdmin)){
     return(<div className="fi">
       <div style={{textAlign:"center",marginBottom:24}}>
-        <div style={{display:"inline-flex",alignItems:"center",gap:6,color:"var(--G)",marginBottom:10}}>{IC.crown}<span style={{fontSize:12,fontWeight:700,letterSpacing:1}}>PREMIUM ACTIVE</span></div>
-        <div style={{fontSize:20,fontWeight:700,marginBottom:16}}>Your Subscription</div>
+        <div style={{display:"inline-flex",alignItems:"center",gap:6,color:isAdmin?"var(--R)":"var(--G)",marginBottom:10}}>{IC.crown}<span style={{fontSize:12,fontWeight:700,letterSpacing:1}}>{isAdmin?"ADMIN":pt("premActive")||"PREMIUM ACTIVE"}</span></div>
+        <div style={{fontSize:20,fontWeight:700,marginBottom:16}}>{isAdmin?(pt("adminAccount")||"Admin Account"):(pt("yourSub")||"Your Subscription")}</div>
       </div>
-      <div className="cd" style={{textAlign:"center",padding:24,marginBottom:16,borderColor:"color-mix(in srgb,var(--G) 25%,transparent)",background:"color-mix(in srgb,var(--G) 3%,transparent)"}}>
-        <div style={{fontSize:12,color:"var(--mu)",marginBottom:12,fontWeight:600}}>Time Remaining</div>
+      {isAdmin?<div className="cd" style={{textAlign:"center",padding:24,marginBottom:16,borderColor:"color-mix(in srgb,var(--R) 25%,transparent)",background:"color-mix(in srgb,var(--R) 3%,transparent)"}}>
+        <div style={{fontSize:14,fontWeight:700,color:"var(--R)",marginBottom:6}}>ADMIN</div>
+        <div style={{fontSize:12,color:"var(--dm)"}}>HosseinlouMohammad@gmail.com</div>
+      </div>
+      :<div className="cd" style={{textAlign:"center",padding:24,marginBottom:16,borderColor:"color-mix(in srgb,var(--G) 25%,transparent)",background:"color-mix(in srgb,var(--G) 3%,transparent)"}}>
+        <div style={{fontSize:12,color:"var(--mu)",marginBottom:12,fontWeight:600}}>{pt("timeLeft")||"Time Remaining"}</div>
         <div style={{display:"flex",justifyContent:"center",gap:16}}>
-          <div><div className="m" style={{fontSize:36,fontWeight:700,color:daysLeft<=7?"var(--R)":"var(--G)"}}>{daysLeft}</div><div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginTop:2}}>Days</div></div>
-          <div><div className="m" style={{fontSize:36,fontWeight:700,color:daysLeft<=7?"var(--R)":"var(--G)"}}>{hoursLeft}</div><div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginTop:2}}>Hours</div></div>
+          <div><div className="m" style={{fontSize:36,fontWeight:700,color:daysLeft<=7?"var(--R)":"var(--G)"}}>{daysLeft}</div><div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginTop:2}}>{pt("days")||"Days"}</div></div>
+          <div><div className="m" style={{fontSize:36,fontWeight:700,color:daysLeft<=7?"var(--R)":"var(--G)"}}>{hoursLeft}</div><div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginTop:2}}>{pt("hours")||"Hours"}</div></div>
         </div>
-        <div style={{fontSize:11,color:"var(--dm)",marginTop:14}}>Expires: {expiresAt.toLocaleDateString()} {expiresAt.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>
-        {daysLeft<=7&&<div style={{fontSize:12,fontWeight:600,color:"var(--R)",marginTop:10,background:"color-mix(in srgb,var(--R) 8%,transparent)",padding:"8px 14px",borderRadius:8,display:"inline-block"}}>⚠ Expiring soon! Renew now</div>}
-      </div>
-      {canUpgrade&&upgrade&&<div className="cd" style={{padding:16,marginBottom:16,borderColor:"color-mix(in srgb,var(--Y) 25%,transparent)",background:"color-mix(in srgb,var(--Y) 3%,transparent)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}><span style={{fontSize:14}}>⬆️</span><span style={{fontSize:14,fontWeight:700}}>Upgrade to Annual</span></div>
-        <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.6,marginBottom:12}}>You're on <b>{upgrade.from}</b> plan. Upgrade to <b>{upgrade.to}</b> for just <b>{upgrade.price}</b> more (save {upgrade.save} total!)</div>
-        <div onClick={()=>setShowContact(true)} className="bt" style={{background:"var(--Y)",color:"#000",fontSize:13,cursor:"pointer"}}>Upgrade Now — {upgrade.price}</div>
+        <div style={{fontSize:11,color:"var(--dm)",marginTop:14}}>{pt("expires")||"Expires:"} {expiresAt?.toLocaleDateString()} {expiresAt?.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>
+        {daysLeft<=7&&<div style={{fontSize:12,fontWeight:600,color:"var(--R)",marginTop:10,background:"color-mix(in srgb,var(--R) 8%,transparent)",padding:"8px 14px",borderRadius:8,display:"inline-block"}}>{pt("expireSoon")||"⚠ Expiring soon! Renew now"}</div>}
       </div>}
-      <div className="cd" style={{padding:16,textAlign:"center"}}>
-        <div style={{fontSize:13,color:"var(--mu)",marginBottom:10}}>Renew or extend your subscription</div>
+      {!isAdmin&&canUpgrade&&upgrade&&<div className="cd" style={{padding:16,marginBottom:16,borderColor:"color-mix(in srgb,var(--Y) 25%,transparent)",background:"color-mix(in srgb,var(--Y) 3%,transparent)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}><span style={{fontSize:14}}>⬆️</span><span style={{fontSize:14,fontWeight:700}}>{pt("upgradeAnnual")||"Upgrade to Annual"}</span></div>
+        <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.6,marginBottom:12}}>You're on <b>{upgrade.from}</b> plan. Upgrade to <b>{upgrade.to}</b> for just <b>{upgrade.price}</b> more (save {upgrade.save} total!)</div>
+        <div onClick={()=>setShowContact(true)} className="bt" style={{background:"var(--Y)",color:"#000",fontSize:13,cursor:"pointer"}}>{pt("upgradeAnnual")||"Upgrade Now"} — {upgrade.price}</div>
+      </div>}
+      <WhatWeCover lang={lang}/>
+      {!isAdmin&&<div className="cd" style={{padding:16,textAlign:"center",marginTop:16}}>
+        <div style={{fontSize:13,color:"var(--mu)",marginBottom:10}}>{pt("renew")||"Renew or extend your subscription"}</div>
         <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.tg} {{fa:"تماس با پشتیبانی",ar:"اتصل بالدعم",tr:"Destek İletişim",ru:"Связаться с поддержкой",es:"Contactar soporte"}[lang]||"Contact Support"}</div>
-      </div>
+      </div>}
       {showContact&&<ContactPopup onClose={()=>setShowContact(false)} onSupport={goToSupport}/>}
     </div>);
   }
