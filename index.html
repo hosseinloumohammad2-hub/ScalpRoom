@@ -2096,17 +2096,23 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
           <div style={{width:3,height:14,borderRadius:2,background:"var(--Y)"}}/>
           <span style={{fontSize:13,fontWeight:700}}>{lang==="fa"?"📬 پیام‌ها (برای افزودن)":"📬 Messages (tap to add)"}</span>
         </div>
-        {dtMsgs.map(m=><div key={m.id} className="cd" style={{padding:12,marginBottom:6,display:"flex",alignItems:"center",gap:10}}>
+        {dtMsgs.map(m=>{
+          const alreadyAdded=dayTradePosts.some(p=>p.title===m.title);
+          return<div key={m.id} className="cd" style={{padding:12,marginBottom:6,display:"flex",alignItems:"center",gap:10}}>
           {m.image_url?<img src={m.image_url} style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}} alt=""/>
           :<div style={{width:40,height:40,borderRadius:8,background:"color-mix(in srgb,var(--Y) 8%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:16}}>📬</div>}
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.title}</div>
             <div style={{fontSize:10,color:"var(--dm)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:2}}>{m.body}</div>
           </div>
-          <div onClick={()=>addMsgToDayTrade(m)} style={{padding:"6px 10px",borderRadius:8,background:"color-mix(in srgb,var(--Y) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 25%,transparent)",cursor:"pointer",fontSize:10,fontWeight:700,color:"var(--Y)",flexShrink:0,opacity:addingDT===m.id?.5:1}}>
+          {alreadyAdded?
+            <div style={{padding:"6px 10px",borderRadius:8,background:"color-mix(in srgb,var(--G) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 25%,transparent)",fontSize:10,fontWeight:700,color:"var(--G)",flexShrink:0}}>
+              ✓ {lang==="fa"?"افزوده شده":"Added"}
+            </div>
+          :<div onClick={()=>addMsgToDayTrade(m)} style={{padding:"6px 10px",borderRadius:8,background:"color-mix(in srgb,var(--Y) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 25%,transparent)",cursor:"pointer",fontSize:10,fontWeight:700,color:"var(--Y)",flexShrink:0,opacity:addingDT===m.id?.5:1}}>
             {addingDT===m.id?"...":"+ "+(lang==="fa"?"افزودن":"Add")}
-          </div>
-        </div>)}
+          </div>}
+        </div>})}
       </>}
 
       {!dtFiltered.length&&!isAdmin&&<div style={{textAlign:"center",color:"var(--dm)",padding:"60px 0",fontSize:13}}>{{fa:"هنوز تحلیل روزانه‌ای نیست",ar:"لا توجد تحليلات يومية بعد",tr:"Henüz günlük analiz yok",ru:"Дневных анализов пока нет",es:"Aún no hay análisis diarios"}[lang]||"No day trade analyses yet"}</div>}
@@ -2526,11 +2532,12 @@ function Adm({token,posts,signals,onR}){
   const[editUserExp,setEditUserExp]=useState(null);
   const[expDate,setExpDate]=useState("");
   const[refCounts,setRefCounts]=useState({});
-  const[msgTitle,setMsgTitle]=useState(""),[msgBody,setMsgBody]=useState(""),[msgTarget,setMsgTarget]=useState("all"),[allMsgs,setAllMsgs]=useState([]),[msgImg,setMsgImg]=useState(null),[msgPv,setMsgPv]=useState(null),[msgDayTrade,setMsgDayTrade]=useState(false);  const noti=useNotifications();
+  const[msgTitle,setMsgTitle]=useState(""),[msgBody,setMsgBody]=useState(""),[msgTarget,setMsgTarget]=useState("all"),[allMsgs,setAllMsgs]=useState([]),[msgImg,setMsgImg]=useState(null),[msgPv,setMsgPv]=useState(null),[msgDayTrade,setMsgDayTrade]=useState(false),[editMsgId,setEditMsgId]=useState(null),[editMsgTitle,setEditMsgTitle]=useState(""),[editMsgBody,setEditMsgBody]=useState(""),[editMsgTarget,setEditMsgTarget]=useState("all");  const noti=useNotifications();
   useEffect(()=>{if(tb==="users"){api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)});fetch(`${SB}/rest/v1/Referrals?select=referrer_id,referred_id`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const counts={};d.forEach(r=>{counts[r.referrer_id]=(counts[r.referrer_id]||0)+1});setRefCounts(counts)}}).catch(()=>{})}},[tb,token]);
   useEffect(()=>{if(tb==="msg"){api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}},[tb,token]);
   const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrl="";if(msgImg){imgUrl=await api.img(msgImg,token);if(!imgUrl){setMs(t.uploadFailed);setLd(false);return}}await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null},token);if(msgDayTrade){await api.add("Posts",{title:msgTitle,description:msgBody,category:"daytrade",image_url:imgUrl||"",is_premium:msgTarget==="premium",likes:0},token)}setMs("Message sent!");setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImg(null);setMsgPv(null);setMsgDayTrade(false);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
   const delMsg=async(id)=>{if(!confirm("Delete?"))return;await api.del("Messages",id,token);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
+  const saveMsg=async(id)=>{if(!editMsgTitle||!editMsgBody)return;await api.patch("Messages",id,{title:editMsgTitle,body:editMsgBody,target:editMsgTarget},token);setEditMsgId(null);setMs("Message updated!");onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}const data={title:ti,description:de,category:ca,image_url:u,is_premium:pr,likes:0};if(customDate&&postDate)data.created_at=new Date(postDate).toISOString();await api.add("Posts",data,token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);setCustomDate(false);setPostDate("");onR();noti.notify("Fxscalproom","New analysis: "+ti)}catch(e){setMs(e.message)}setLd(false)};
   const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{const data={pair:pa,type:st,entry_price:en,take_profit:tp1,tp2:tp2||null,tp3:tp3||null,stop_loss:sl,status:"active",pnl:null,closed_at:null,is_premium:sigPr};if(sigCustomDate&&sigDate)data.created_at=new Date(sigDate).toISOString();await api.add("Signals",data,token);setMs(t.signalPub);setPa("");setEn("");setTp1("");setTp2("");setTp3("");setSl("");setSigPr(false);setSigCustomDate(false);setSigDate("");onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st)}catch(e){setMs(e.message)}setLd(false)};
   const delP=async id=>{if(!confirm("Delete?"))return;await api.del("Posts",id,token);onR()};
@@ -2683,15 +2690,33 @@ function Adm({token,posts,signals,onR}){
       <button className="bt" style={{background:"var(--B)",opacity:ld?.5:1}} onClick={pubMsg} disabled={ld}>{ld?"...":(lang==="fa"?"ارسال پیام":"Send Message")}</button>
       <div style={{fontSize:13,fontWeight:600,marginTop:16,marginBottom:8}}>{lang==="fa"?"پیام‌های قبلی":"Previous Messages"} ({allMsgs.length})</div>
       {allMsgs.map(m=><div key={m.id} className="cd" style={{padding:10,marginBottom:4}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
+        {editMsgId===m.id?<div>
+          <input className="ip" value={editMsgTitle} onChange={e=>setEditMsgTitle(e.target.value)} placeholder={lang==="fa"?"عنوان":"Title"}/>
+          <textarea value={editMsgBody} onChange={e=>setEditMsgBody(e.target.value)} rows={3} placeholder={lang==="fa"?"متن":"Body"}/>
+          <div style={{display:"flex",gap:6,marginBottom:8}}>
+            {["all","premium"].map(tgt=>
+              <div key={tgt} onClick={()=>setEditMsgTarget(tgt)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",
+                background:editMsgTarget===tgt?(tgt==="all"?"color-mix(in srgb,var(--B) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)"):"transparent",
+                border:`1px solid ${editMsgTarget===tgt?(tgt==="all"?"color-mix(in srgb,var(--B) 25%,transparent)":"color-mix(in srgb,var(--R) 25%,transparent)"):"var(--brd)"}`,
+                fontSize:11,fontWeight:600,color:editMsgTarget===tgt?(tgt==="all"?"var(--B)":"var(--R)"):"var(--mu)"
+              }}>{tgt==="all"?(lang==="fa"?"👥 همه":"👥 All"):(lang==="fa"?"⭐ پرمیوم":"⭐ Premium")}</div>
+            )}
+          </div>
+          <div style={{display:"flex",gap:6}}>
+            <button className="bt" style={{background:"var(--G)",flex:1,padding:10,fontSize:12}} onClick={()=>saveMsg(m.id)}>{lang==="fa"?"ذخیره":"Save"}</button>
+            <button className="bt" style={{background:"var(--brd2)",flex:1,padding:10,fontSize:12,color:"var(--tx)"}} onClick={()=>setEditMsgId(null)}>{lang==="fa"?"انصراف":"Cancel"}</button>
+          </div>
+        </div>
+        :<div style={{display:"flex",alignItems:"center",gap:10}}>
           {m.image_url&&<img src={m.image_url} style={{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0}} alt=""/>}
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:12,fontWeight:600}}>{m.title}</div>
             <div style={{fontSize:10,color:"var(--dm)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.body}</div>
             <div style={{fontSize:9,color:"var(--dm)",marginTop:2}}>{m.target==="premium"?"⭐ Premium":"👥 All"} · {new Date(m.created_at).toLocaleDateString()}</div>
           </div>
+          <div onClick={()=>{setEditMsgId(m.id);setEditMsgTitle(m.title);setEditMsgBody(m.body);setEditMsgTarget(m.target||"all")}} style={{cursor:"pointer",color:"var(--B)",padding:4}}>{IC.edit}</div>
           <div onClick={()=>delMsg(m.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
-        </div>
+        </div>}
       </div>)}
     </>}
     {editSig&&<SignalEditModal sig={editSig} onClose={()=>setEditSig(null)} onSave={saveSig}/>}
