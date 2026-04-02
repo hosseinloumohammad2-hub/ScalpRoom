@@ -2339,8 +2339,12 @@ function AdminPromo({token}){
 /* ─── Contact Popup (iOS 26 style) ─── */
 function ContactPopup({onClose,onSupport}){
   const{t,lang}=useLang();
+  const[showCrypto,setShowCrypto]=useState(false);
+  const[copied,setCopied]=useState("");
+  const copyAddr=(addr,label)=>{navigator.clipboard?.writeText(addr);setCopied(label);setTimeout(()=>setCopied(""),2000)};
+  const payNote={fa:"پس از واریز، فیش پرداخت را به ادمین ارسال کنید",ar:"بعد التحويل، أرسل إيصال الدفع للمسؤول",tr:"Transfer sonrası ödeme dekontunu admin'e gönderin",ru:"После перевода отправьте квитанцию админу",es:"Después de transferir, envía el comprobante al admin"}[lang]||"After payment, send the receipt to admin";
   return(<div className="modal-overlay" onClick={onClose} style={{alignItems:"flex-end",padding:0}}>
-    <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:430,background:"var(--bg)",borderRadius:"20px 20px 0 0",padding:"8px 16px calc(env(safe-area-inset-bottom,12px) + 16px)",animation:"fi .2s ease"}}>
+    <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:430,background:"var(--bg)",borderRadius:"20px 20px 0 0",padding:"8px 16px calc(env(safe-area-inset-bottom,12px) + 16px)",animation:"fi .2s ease",maxHeight:"85vh",overflowY:"auto"}}>
       <div style={{width:36,height:4,borderRadius:2,background:"var(--brd2)",margin:"0 auto 16px"}}/>
       <div style={{textAlign:"center",marginBottom:18}}>
         <div style={{fontSize:15,fontWeight:700}}>{{fa:"چطور میخواید ارتباط برقرار کنید؟",ar:"كيف تريد التواصل؟",tr:"Nasıl iletişim kurmak istersiniz?",ru:"Как вы хотите связаться?",es:"¿Cómo te gustaría conectarte?"}[lang]||"How would you like to connect?"}</div>
@@ -2363,6 +2367,46 @@ function ContactPopup({onClose,onSupport}){
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
+
+      {/* Pay with Tether */}
+      <div onClick={()=>setShowCrypto(!showCrypto)} style={{display:"flex",alignItems:"center",gap:12,padding:14,borderRadius:14,background:"color-mix(in srgb,var(--G) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 15%,transparent)",marginBottom:8,cursor:"pointer"}}>
+        <div style={{width:44,height:44,borderRadius:12,background:"#26A17B",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <span style={{fontSize:20,fontWeight:800,color:"#fff"}}>₮</span>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:14,fontWeight:600,color:"var(--G)"}}>{{fa:"پرداخت با تتر",ar:"الدفع بالتيثر",tr:"Tether ile Öde",ru:"Оплата Tether",es:"Pagar con Tether"}[lang]||"Pay with Tether (USDT)"}</div>
+          <div style={{fontSize:11,color:"var(--dm)",marginTop:2}}>USDT — TRC20 / BEP20</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{transform:showCrypto?"rotate(180deg)":"rotate(0)",transition:".2s"}}><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+
+      {showCrypto&&<div style={{padding:14,borderRadius:14,background:"var(--bg2)",border:"1px solid var(--brd)",marginBottom:8}}>
+        {/* TRC20 */}
+        <div style={{marginBottom:12}}>
+          <div style={{fontSize:11,fontWeight:700,color:"var(--G)",marginBottom:6}}>Tether TRC20</div>
+          <div style={{display:"flex",gap:6,alignItems:"center"}}>
+            <div className="m" style={{flex:1,fontSize:10,fontWeight:500,color:"var(--tx2)",background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:8,padding:"8px 10px",wordBreak:"break-all",lineHeight:1.5}}>TUHhRUzfp9P6WKxoRNBGEWCooNDTLWiEdn</div>
+            <div onClick={()=>copyAddr("TUHhRUzfp9P6WKxoRNBGEWCooNDTLWiEdn","trc20")} style={{padding:"8px 12px",borderRadius:8,background:"color-mix(in srgb,var(--G) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 20%,transparent)",cursor:"pointer",fontSize:10,fontWeight:700,color:"var(--G)",flexShrink:0}}>
+              {copied==="trc20"?"✓":"Copy"}
+            </div>
+          </div>
+        </div>
+        {/* BEP20 */}
+        <div style={{marginBottom:12}}>
+          <div style={{fontSize:11,fontWeight:700,color:"var(--Y)",marginBottom:6}}>Tether BEP20</div>
+          <div style={{display:"flex",gap:6,alignItems:"center"}}>
+            <div className="m" style={{flex:1,fontSize:10,fontWeight:500,color:"var(--tx2)",background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:8,padding:"8px 10px",wordBreak:"break-all",lineHeight:1.5}}>0xC64e0017f48a3b4Ae0A98aeF04f86b1253A1E215</div>
+            <div onClick={()=>copyAddr("0xC64e0017f48a3b4Ae0A98aeF04f86b1253A1E215","bep20")} style={{padding:"8px 12px",borderRadius:8,background:"color-mix(in srgb,var(--Y) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 20%,transparent)",cursor:"pointer",fontSize:10,fontWeight:700,color:"var(--Y)",flexShrink:0}}>
+              {copied==="bep20"?"✓":"Copy"}
+            </div>
+          </div>
+        </div>
+        {/* Note */}
+        <div style={{padding:10,borderRadius:10,background:"color-mix(in srgb,var(--R) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 12%,transparent)",fontSize:11,color:"var(--R)",fontWeight:600,textAlign:"center",lineHeight:1.5}}>
+          ⚠ {payNote}
+        </div>
+      </div>}
+
       <div onClick={onClose} style={{textAlign:"center",padding:12,fontSize:13,color:"var(--dm)",fontWeight:600,cursor:"pointer"}}>{{fa:"بستن",ar:"إلغاء",tr:"İptal",ru:"Отмена",es:"Cancelar"}[lang]||"Cancel"}</div>
     </div>
   </div>);
@@ -2408,7 +2452,7 @@ function WhatWeCover({lang}){
       ltTitle:"Long-term Analysis",
       ltDesc:"Forex / Crypto / Indices / Gold / Iran Market — updated weekly",
       dtTitle:"Daily Analysis",
-      dtDesc:"20 Forex pairs + 5 Crypto + 2 Iran Market symbols — Mon-Fri at 12:00",
+      dtDesc:"20 Forex pairs + 5 Crypto + 2 Iran Market symbols — Mon-Fri at 12:00 UTC+3",
       sigTitle:"Signals",
       sigDesc:"3 to 7 signals per week with SL & TP — whenever entry conditions are met",
     },
@@ -2428,7 +2472,7 @@ function WhatWeCover({lang}){
       ltTitle:"تحلیل‌های بلندمدت",
       ltDesc:"فارکس / کریپتو / شاخص‌ها / طلا / بازار ایران — هر هفته بروزرسانی",
       dtTitle:"تحلیل‌های روزانه",
-      dtDesc:"۲۰ نماد فارکس + ۵ نماد کریپتو + ۲ نماد ایرانی — دوشنبه تا جمعه ساعت ۱۲:۰۰",
+      dtDesc:"۲۰ نماد فارکس + ۵ نماد کریپتو + ۲ نماد ایرانی — دوشنبه تا جمعه ساعت ۱۲:۰۰ UTC+3",
       sigTitle:"سیگنال‌ها",
       sigDesc:"۳ تا ۷ سیگنال در هفته با حد ضرر و تی‌پی — هروقت شرایط ورود پیش بیاد",
     },
@@ -2448,7 +2492,7 @@ function WhatWeCover({lang}){
       ltTitle:"التحليلات طويلة المدى",
       ltDesc:"فوركس / كريبتو / مؤشرات / ذهب / السوق الإيرانية — تحديث أسبوعي",
       dtTitle:"التحليلات اليومية",
-      dtDesc:"٢٠ زوج فوركس + ٥ كريبتو + ٢ إيراني — الاثنين-الجمعة الساعة ١٢:٠٠",
+      dtDesc:"٢٠ زوج فوركس + ٥ كريبتو + ٢ إيراني — الاثنين-الجمعة الساعة ١٢:٠٠ UTC+3",
       sigTitle:"الإشارات",
       sigDesc:"٣ إلى ٧ إشارات أسبوعياً مع SL و TP — عند توفر شروط الدخول",
     },
@@ -2468,7 +2512,7 @@ function WhatWeCover({lang}){
       ltTitle:"Uzun Vadeli Analizler",
       ltDesc:"Forex / Kripto / Endeksler / Altın / İran Piyasası — haftalık güncelleme",
       dtTitle:"Günlük Analizler",
-      dtDesc:"20 Forex çifti + 5 Kripto + 2 İran sembolü — Pzt-Cum saat 12:00",
+      dtDesc:"20 Forex çifti + 5 Kripto + 2 İran sembolü — Pzt-Cum saat 12:00 UTC+3",
       sigTitle:"Sinyaller",
       sigDesc:"Haftada 3 ila 7 sinyal SL ve TP ile — giriş koşulları oluştuğunda",
     },
@@ -2488,7 +2532,7 @@ function WhatWeCover({lang}){
       ltTitle:"Долгосрочный анализ",
       ltDesc:"Форекс / Крипто / Индексы / Золото / Иран — еженедельное обновление",
       dtTitle:"Ежедневный анализ",
-      dtDesc:"20 пар Форекс + 5 Крипто + 2 Иран — Пн-Пт в 12:00",
+      dtDesc:"20 пар Форекс + 5 Крипто + 2 Иран — Пн-Пт в 12:00 UTC+3",
       sigTitle:"Сигналы",
       sigDesc:"3-7 сигналов в неделю с SL и TP — при возникновении условий входа",
     },
@@ -2508,7 +2552,7 @@ function WhatWeCover({lang}){
       ltTitle:"Análisis a largo plazo",
       ltDesc:"Forex / Cripto / Índices / Oro / Irán — actualización semanal",
       dtTitle:"Análisis diarios",
-      dtDesc:"20 pares Forex + 5 Cripto + 2 Irán — Lun-Vie a las 12:00",
+      dtDesc:"20 pares Forex + 5 Cripto + 2 Irán — Lun-Vie a las 12:00 UTC+3",
       sigTitle:"Señales",
       sigDesc:"3 a 7 señales por semana con SL y TP — cuando surjan condiciones de entrada",
     },
