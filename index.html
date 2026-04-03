@@ -2367,7 +2367,7 @@ function ContactPopup({onClose,onSupport,plan,userId,token}){
     doneTitle:{fa:"درخواست ثبت شد!",en:"Request submitted!",ar:"تم تسجيل الطلب!",tr:"Talep kaydedildi!",ru:"Запрос отправлен!",es:"¡Solicitud registrada!"},
     doneDesc:{fa:"پس از تأیید ادمین، اشتراکتون فعال میشه.",en:"Your subscription will be activated after admin confirmation.",ar:"سيتم تفعيل اشتراكك بعد تأكيد المسؤول.",tr:"Admin onayından sonra aboneliğiniz aktif olacak.",ru:"Подписка активируется после подтверждения админа.",es:"Tu suscripción se activará tras la confirmación del admin."},
     cancel:{fa:"بستن",en:"Cancel",ar:"إلغاء",tr:"İptal",ru:"Отмена",es:"Cancelar"},
-  };return tx[k]?.[lang]||tx[k]?.en||""};
+  };return(tx[k]&&tx[k][lang])||(tx[k]&&tx[k].en)||""};
 
   if(payStep==="done"){
     return(<div className="modal-overlay" onClick={onClose} style={{alignItems:"flex-end",padding:0}}>
