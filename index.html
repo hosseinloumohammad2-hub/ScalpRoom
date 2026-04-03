@@ -3314,7 +3314,11 @@ function Adm({token,posts,signals,onR}){
   const[expDate,setExpDate]=useState("");
   const[refCounts,setRefCounts]=useState({});
   const[msgTitle,setMsgTitle]=useState(""),[msgBody,setMsgBody]=useState(""),[msgTarget,setMsgTarget]=useState("all"),[allMsgs,setAllMsgs]=useState([]),[msgImg,setMsgImg]=useState(null),[msgPv,setMsgPv]=useState(null),[msgDayTrade,setMsgDayTrade]=useState(false),[editMsgId,setEditMsgId]=useState(null),[editMsgTitle,setEditMsgTitle]=useState(""),[editMsgBody,setEditMsgBody]=useState(""),[editMsgTarget,setEditMsgTarget]=useState("all");  const noti=useNotifications();
-  useEffect(()=>{if(tb==="users"){const loadUsers=()=>{api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};loadUsers();const ui=setInterval(loadUsers,10000);fetch(`${SB}/rest/v1/Referrals?select=referrer_id,referred_id`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const counts={};d.forEach(r=>{counts[r.referrer_id]=(counts[r.referrer_id]||0)+1});setRefCounts(counts)}}).catch(()=>{});return()=>clearInterval(ui)}},[tb,token]);
+  const[userActivity,setUserActivity]=useState({});
+  useEffect(()=>{if(tb==="users"){const loadUsers=()=>{api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};loadUsers();const ui=setInterval(loadUsers,10000);fetch(`${SB}/rest/v1/Referrals?select=referrer_id,referred_id`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const counts={};d.forEach(r=>{counts[r.referrer_id]=(counts[r.referrer_id]||0)+1});setRefCounts(counts)}}).catch(()=>{});
+  // Load last activity per user
+  fetch(`${SB}/rest/v1/ActivityLog?order=login_date.desc&select=user_id,login_date,created_at`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const act={};d.forEach(a=>{if(!act[a.user_id])act[a.user_id]=a.created_at||a.login_date});setUserActivity(act)}}).catch(()=>{});
+  return()=>clearInterval(ui)}},[tb,token]);
   useEffect(()=>{if(tb==="msg"){api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}},[tb,token]);
   const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrl="";if(msgImg){imgUrl=await api.img(msgImg,token);if(!imgUrl){setMs(t.uploadFailed);setLd(false);return}}await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null},token);if(msgDayTrade){await api.add("Posts",{title:msgTitle,description:msgBody,category:"daytrade",image_url:imgUrl||"",is_premium:msgTarget==="premium",likes:0},token)}setMs("Message sent!");setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImg(null);setMsgPv(null);setMsgDayTrade(false);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
   const delMsg=async(id)=>{if(!confirm("Delete?"))return;await api.del("Messages",id,token);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
@@ -3416,7 +3420,7 @@ function Adm({token,posts,signals,onR}){
       {users.map(u=>{
         const exp=u.premium_expires_at?new Date(u.premium_expires_at):null;
         const dLeft=exp?Math.max(0,Math.ceil((exp-new Date())/(1000*60*60*24))):0;
-        const ls=u.last_seen?new Date(u.last_seen):null;
+        const ls=u.last_seen?new Date(u.last_seen):userActivity[u.id]?new Date(userActivity[u.id]):null;
         const isOnline=ls&&(Date.now()-ls.getTime())<5*60*1000;
         const lastSeenText=(()=>{
           if(!ls)return lang==="fa"?"هرگز":"Never";
