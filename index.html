@@ -2489,7 +2489,18 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
       {dtFiltered.length>0&&<div className="g2" style={{marginBottom:16}}>{dtFiltered.map(p=>{
         const locked=p.is_premium&&!isPremiumUser;
         return<div key={p.id} onClick={()=>{if(locked){setShowPremPop(true)}else setSel(p)}} className="cd" style={{padding:0,overflow:"hidden",cursor:"pointer",position:"relative"}}>
-        {p.image_url?(p.image_url.includes(",")?<ImageCarousel urls={p.image_url} style={{width:"100%",height:120,objectFit:"cover"}} borderRadius={0}/>:<img src={p.image_url} style={{width:"100%",height:120,objectFit:"cover",filter:locked?"blur(8px)":"none"}} alt=""/>):<div style={{width:"100%",height:120,background:"color-mix(in srgb,var(--Y) 6%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>⚡</div>}
+        {p.image_url?(p.image_url.includes(",")?<ImageCarousel urls={p.image_url} style={{width:"100%",height:120,objectFit:"cover"}} borderRadius={0}/>:<img src={p.image_url} style={{width:"100%",height:120,objectFit:"cover",filter:locked?"blur(8px)":"none"}} alt=""/>):<div style={{width:"100%",height:120,background:"color-mix(in srgb,var(--R) 3%,var(--bg2))",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+          <svg width="60" height="70" viewBox="0 0 60 70">
+            <line x1="10" y1="8" x2="10" y2="62" stroke="var(--brd2)" strokeWidth="1.5"/>
+            <rect x="5" y="20" width="10" height="25" rx="2" fill="var(--G)" opacity=".8"><animate attributeName="y" values="20;15;20" dur="2s" repeatCount="indefinite"/><animate attributeName="height" values="25;35;25" dur="2s" repeatCount="indefinite"/></rect>
+            <line x1="25" y1="5" x2="25" y2="65" stroke="var(--brd2)" strokeWidth="1.5"/>
+            <rect x="20" y="12" width="10" height="30" rx="2" fill="var(--R)" opacity=".8"><animate attributeName="y" values="12;18;12" dur="2.5s" repeatCount="indefinite"/><animate attributeName="height" values="30;22;30" dur="2.5s" repeatCount="indefinite"/></rect>
+            <line x1="40" y1="10" x2="40" y2="60" stroke="var(--brd2)" strokeWidth="1.5"/>
+            <rect x="35" y="18" width="10" height="28" rx="2" fill="var(--G)" opacity=".8"><animate attributeName="y" values="18;12;18" dur="1.8s" repeatCount="indefinite"/><animate attributeName="height" values="28;36;28" dur="1.8s" repeatCount="indefinite"/></rect>
+            <line x1="55" y1="8" x2="55" y2="62" stroke="var(--brd2)" strokeWidth="1.5"/>
+            <rect x="50" y="22" width="10" height="20" rx="2" fill="var(--R)" opacity=".8"><animate attributeName="y" values="22;28;22" dur="2.2s" repeatCount="indefinite"/><animate attributeName="height" values="20;14;20" dur="2.2s" repeatCount="indefinite"/></rect>
+          </svg>
+        </div>}
         {locked&&<div style={{position:"absolute",top:0,left:0,right:0,height:120,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.4)",borderRadius:"14px 14px 0 0"}}>
           <span style={{color:"#fff",display:"flex",alignItems:"center",gap:4}}>{IC.crown}</span>
           <span style={{fontSize:11,fontWeight:700,color:"#fff",marginTop:4}}>PREMIUM</span>
