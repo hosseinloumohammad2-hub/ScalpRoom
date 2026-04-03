@@ -2066,35 +2066,27 @@ function LiveClock(){
 
 function useOnlineCount(token){
   const[count,setCount]=useState(0);
-  const fakeExtra=useRef(Math.floor(Math.random()*6)+5);
   useEffect(()=>{
     if(!token)return;
     const fetchCount=async()=>{
       try{
-        // Count users active in last 10 minutes
-        const since=new Date(Date.now()-10*60*1000).toISOString();
-        const r=await fetch(`${SB}/rest/v1/ActivityLog?login_date=gte.${new Date().toISOString().slice(0,10)}&select=user_id`,{headers:H(token)});
+        const today=new Date().toISOString().slice(0,10);
+        const r=await fetch(`${SB}/rest/v1/ActivityLog?login_date=eq.${today}&select=user_id`,{headers:H(token)});
         const d=await r.json();
-        const realCount=Array.isArray(d)?new Set(d.map(x=>x.user_id)).size:1;
-        setCount(realCount+fakeExtra.current);
-      }catch(e){setCount(fakeExtra.current)}
+        const realCount=Array.isArray(d)?new Set(d.map(x=>x.user_id)).size:0;
+        setCount(realCount);
+      }catch(e){setCount(0)}
     };
     fetchCount();
-    // Refresh every 5 minutes and randomize fake extra
-    const i=setInterval(()=>{
-      fakeExtra.current=Math.floor(Math.random()*6)+5;
-      fetchCount();
-    },5*60*1000);
-    // Also update time display every second
-    const t=setInterval(()=>setCount(c=>c),1000);
-    return()=>{clearInterval(i);clearInterval(t)};
+    const i=setInterval(fetchCount,5*60*1000);
+    return()=>clearInterval(i);
   },[token]);
   return count;
 }
 
-function OnlineCounter({token}){
+function OnlineCounter({token,isAdmin}){
   const count=useOnlineCount(token);
-  if(!count)return null;
+  if(!count||!isAdmin)return null;
   return<span className="m" style={{fontSize:11,color:"var(--tx2)",fontWeight:500}}>{count} 👤</span>;
 }
 
@@ -2231,7 +2223,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
       </div>
     </div>}
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-      <div style={{display:"flex",alignItems:"center",gap:8}}><div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/><OnlineCounter token={token}/></div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}><div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/><OnlineCounter token={token} isAdmin={userProfile?.role==="admin"}/></div>
       <div onClick={toggle} style={{cursor:"pointer",color:"var(--mu)",padding:4}}>{dark?IC.sun:IC.moon}</div>
     </div>
     <div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVTickerTape colorTheme={theme}/></div>
