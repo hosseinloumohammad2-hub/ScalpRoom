@@ -2192,6 +2192,24 @@ function IranMarketWidget(){
   </div>);
 }
 
+/* ─── Image Carousel (Instagram-style swipe) ─── */
+function ImageCarousel({urls,style,borderRadius}){
+  const[idx,setIdx]=useState(0);
+  const touchX=useRef(0);
+  const imgs=urls.split(",").filter(Boolean);
+  if(imgs.length<=1)return<img src={imgs[0]||""} style={{...style,borderRadius:borderRadius||12}} alt=""/>;
+  return<div style={{position:"relative",overflow:"hidden",borderRadius:borderRadius||12}}>
+    <div style={{display:"flex",transition:"transform .3s ease",transform:`translateX(-${idx*100}%)`}}
+      onTouchStart={e=>{touchX.current=e.touches[0].clientX}}
+      onTouchEnd={e=>{const dx=e.changedTouches[0].clientX-touchX.current;if(dx<-40&&idx<imgs.length-1)setIdx(idx+1);if(dx>40&&idx>0)setIdx(idx-1)}}>
+      {imgs.map((u,i)=><img key={i} src={u} style={{...style,borderRadius:0,flexShrink:0,width:"100%"}} alt=""/>)}
+    </div>
+    <div style={{position:"absolute",bottom:8,left:"50%",transform:"translateX(-50%)",display:"flex",gap:4}}>
+      {imgs.map((_,i)=><div key={i} style={{width:6,height:6,borderRadius:3,background:i===idx?"#fff":"rgba(255,255,255,.4)",transition:".2s"}}/>)}
+    </div>
+  </div>;
+}
+
 /* ─── Home ─── */
 function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,toggle,userProfile,token,onR}){
   const{t,lang}=useLang();
@@ -2271,7 +2289,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
             <span style={{fontSize:9,color:"var(--dm)"}}>{new Date(m.created_at).toLocaleDateString()+" "+new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span>
           </div>
           <div style={{fontSize:15,fontWeight:700,marginBottom:10}}>{m.title}</div>
-          {m.image_url&&<img src={m.image_url} style={{width:"100%",borderRadius:12,marginBottom:10,filter:isLocked?"blur(14px)":"none"}} alt=""/>}
+          {m.image_url&&(m.image_url.includes(",")?<ImageCarousel urls={m.image_url} style={{width:"100%",maxHeight:300,objectFit:"cover",marginBottom:10}} borderRadius={12}/>:<img src={m.image_url} style={{width:"100%",borderRadius:12,marginBottom:10,filter:isLocked?"blur(14px)":"none"}} alt=""/>)}
           <div style={{fontSize:13,color:"var(--tx2)",lineHeight:1.7,whiteSpace:"pre-wrap",filter:isLocked?"blur(5px)":"none"}}>{m.body}</div>
           {!isLocked&&<TranslateBtn text={[m.title,m.body].filter(Boolean).join("\n\n")}/>}
           {isLocked&&<div style={{position:"absolute",top:0,left:0,right:0,bottom:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"color-mix(in srgb,var(--bg) 60%,transparent)",borderRadius:10}}>
@@ -2283,7 +2301,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
       :visibleMsgs.slice(0,20).map((m,i)=>{
         const isLocked=m.target==="premium"&&!isPremiumUser;
         return<div key={m.id} onClick={()=>setOpenMsgId(m.id)} style={{display:"flex",alignItems:"center",gap:12,padding:"11px 14px",cursor:"pointer",borderTop:i>0?"1px solid var(--brd)":"none",transition:"background .15s"}} onMouseOver={e=>e.currentTarget.style.background="var(--bg2)"} onMouseOut={e=>e.currentTarget.style.background="transparent"}>
-          {m.image_url?<img src={m.image_url} style={{width:44,height:44,borderRadius:10,objectFit:"cover",flexShrink:0,filter:isLocked?"blur(6px)":"none"}} alt=""/>
+          {m.image_url?<div style={{position:"relative",flexShrink:0}}><img src={(m.image_url||"").split(",")[0]} style={{width:44,height:44,borderRadius:10,objectFit:"cover",filter:isLocked?"blur(6px)":"none"}} alt=""/>{m.image_url.includes(",")&&<div style={{position:"absolute",top:2,right:2,width:16,height:16,borderRadius:8,background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#fff",fontWeight:700}}>2</div>}</div>
           :<div style={{width:44,height:44,borderRadius:10,background:"color-mix(in srgb,var(--R) 8%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:18}}>📬</div>}
           <div style={{flex:1,minWidth:0}}>
             <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -3343,7 +3361,7 @@ function Adm({token,posts,signals,onR}){
   const[editUserExp,setEditUserExp]=useState(null);
   const[expDate,setExpDate]=useState("");
   const[refCounts,setRefCounts]=useState({});
-  const[msgTitle,setMsgTitle]=useState(""),[msgBody,setMsgBody]=useState(""),[msgTarget,setMsgTarget]=useState("all"),[allMsgs,setAllMsgs]=useState([]),[msgImg,setMsgImg]=useState(null),[msgPv,setMsgPv]=useState(null),[msgDayTrade,setMsgDayTrade]=useState(false),[msgDtCats,setMsgDtCats]=useState([]),[editMsgId,setEditMsgId]=useState(null),[editMsgTitle,setEditMsgTitle]=useState(""),[editMsgBody,setEditMsgBody]=useState(""),[editMsgTarget,setEditMsgTarget]=useState("all");  const noti=useNotifications();
+  const[msgTitle,setMsgTitle]=useState(""),[msgBody,setMsgBody]=useState(""),[msgTarget,setMsgTarget]=useState("all"),[allMsgs,setAllMsgs]=useState([]),[msgImgs,setMsgImgs]=useState([]),[msgPvs,setMsgPvs]=useState([]),[msgDayTrade,setMsgDayTrade]=useState(false),[msgDtCats,setMsgDtCats]=useState([]),[editMsgId,setEditMsgId]=useState(null),[editMsgTitle,setEditMsgTitle]=useState(""),[editMsgBody,setEditMsgBody]=useState(""),[editMsgTarget,setEditMsgTarget]=useState("all");  const noti=useNotifications();
   const toggleMsgDtCat=(k)=>setMsgDtCats(prev=>prev.includes(k)?prev.filter(x=>x!==k):[...prev,k]);
   const[userActivity,setUserActivity]=useState({});
   useEffect(()=>{if(tb==="users"){const loadUsers=()=>{api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};loadUsers();const ui=setInterval(loadUsers,10000);fetch(`${SB}/rest/v1/Referrals?select=referrer_id,referred_id`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const counts={};d.forEach(r=>{counts[r.referrer_id]=(counts[r.referrer_id]||0)+1});setRefCounts(counts)}}).catch(()=>{});
@@ -3351,7 +3369,7 @@ function Adm({token,posts,signals,onR}){
   fetch(`${SB}/rest/v1/ActivityLog?order=login_date.desc&select=user_id,login_date,created_at`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const act={};d.forEach(a=>{if(!act[a.user_id])act[a.user_id]=a.created_at||a.login_date});setUserActivity(act)}}).catch(()=>{});
   return()=>clearInterval(ui)}},[tb,token]);
   useEffect(()=>{if(tb==="msg"){api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}},[tb,token]);
-  const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrl="";if(msgImg){imgUrl=await api.img(msgImg,token);if(!imgUrl){setMs(t.uploadFailed);setLd(false);return}}await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null},token);if(msgDtCats.length>0){await api.add("Posts",{title:msgTitle,description:msgBody,category:"daytrade",dt_category:msgDtCats.join(","),image_url:imgUrl||"",is_premium:msgTarget==="premium",likes:0},token)}setMs("Message sent!");setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImg(null);setMsgPv(null);setMsgDayTrade(false);setMsgDtCats([]);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
+  const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrls=[];for(const img of msgImgs){const u=await api.img(img,token);if(u)imgUrls.push(u);else{setMs(t.uploadFailed);setLd(false);return}}const imgUrl=imgUrls.join(",");await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null},token);if(msgDtCats.length>0){await api.add("Posts",{title:msgTitle,description:msgBody,category:"daytrade",dt_category:msgDtCats.join(","),image_url:imgUrls[0]||"",is_premium:msgTarget==="premium",likes:0},token)}setMs("Message sent!");setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImgs([]);setMsgPvs([]);setMsgDayTrade(false);setMsgDtCats([]);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
   const delMsg=async(id)=>{if(!confirm("Delete?"))return;await api.del("Messages",id,token);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const saveMsg=async(id)=>{if(!editMsgTitle||!editMsgBody)return;await api.patch("Messages",id,{title:editMsgTitle,body:editMsgBody,target:editMsgTarget},token);setEditMsgId(null);setMs("Message updated!");onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}const data={title:ti,description:de,category:ca,image_url:u,is_premium:pr,likes:0};if(customDate&&postDate)data.created_at=new Date(postDate).toISOString();await api.add("Posts",data,token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);setCustomDate(false);setPostDate("");onR();noti.notify("Fxscalproom","New analysis: "+ti)}catch(e){setMs(e.message)}setLd(false)};
@@ -3512,11 +3530,20 @@ function Adm({token,posts,signals,onR}){
       <div style={{fontSize:13,fontWeight:700,marginBottom:10}}>{lang==="fa"?"📬 ارسال پیام":"📬 Send Message"}</div>
       <input className="ip" placeholder={lang==="fa"?"عنوان پیام":"Message title"} value={msgTitle} onChange={e=>setMsgTitle(e.target.value)}/>
       <textarea placeholder={lang==="fa"?"متن پیام":"Message body"} value={msgBody} onChange={e=>setMsgBody(e.target.value)} rows={4}/>
-      <div onClick={()=>document.getElementById("msgfu").click()} style={{border:"1.5px dashed var(--brd2)",borderRadius:14,padding:msgPv?0:18,textAlign:"center",marginBottom:10,background:"var(--bg2)",cursor:"pointer",overflow:"hidden"}}>
-        {msgPv?<div style={{position:"relative"}}><img src={msgPv} style={{width:"100%",maxHeight:180,objectFit:"cover"}} alt=""/><div onClick={e=>{e.stopPropagation();setMsgImg(null);setMsgPv(null)}} style={{position:"absolute",top:6,right:6,width:24,height:24,borderRadius:12,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#fff",fontSize:14}}>✕</div></div>
-        :<div style={{fontSize:12,color:"var(--dm)"}}>{lang==="fa"?"📷 افزودن تصویر (اختیاری)":"📷 Add image (optional)"}</div>}
+      <div style={{marginBottom:10}}>
+        <div style={{display:"flex",gap:6}}>
+          {msgPvs.map((pv,i)=><div key={i} style={{position:"relative",flex:1,borderRadius:12,overflow:"hidden",border:"1px solid var(--brd)"}}>
+            <img src={pv} style={{width:"100%",height:140,objectFit:"cover"}} alt=""/>
+            <div onClick={()=>{setMsgImgs(prev=>prev.filter((_,j)=>j!==i));setMsgPvs(prev=>prev.filter((_,j)=>j!==i))}} style={{position:"absolute",top:4,right:4,width:22,height:22,borderRadius:11,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#fff",fontSize:12}}>✕</div>
+            <div style={{position:"absolute",bottom:4,left:4,width:20,height:20,borderRadius:10,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:10,fontWeight:700}}>{i+1}</div>
+          </div>)}
+          {msgPvs.length<2&&<div onClick={()=>document.getElementById("msgfu").click()} style={{flex:1,border:"1.5px dashed var(--brd2)",borderRadius:12,padding:msgPvs.length>0?0:18,minHeight:msgPvs.length>0?140:0,textAlign:"center",background:"var(--bg2)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <div style={{fontSize:12,color:"var(--dm)"}}>{msgPvs.length===0?(lang==="fa"?"📷 افزودن تصویر (اختیاری)":"📷 Add image (optional)"):(lang==="fa"?"+ عکس دوم":"+ 2nd image")}</div>
+          </div>}
+        </div>
+        {msgPvs.length===2&&<div style={{display:"flex",justifyContent:"center",gap:4,marginTop:6}}>{[0,1].map(i=><div key={i} style={{width:6,height:6,borderRadius:3,background:"var(--dm)"}}/>)}</div>}
       </div>
-      <input id="msgfu" type="file" accept="image/*" onChange={e=>{const f=e.target.files[0];if(f){setMsgImg(f);setMsgPv(URL.createObjectURL(f))}}} style={{display:"none"}}/>
+      <input id="msgfu" type="file" accept="image/*" onChange={e=>{const f=e.target.files[0];if(f&&msgImgs.length<2){setMsgImgs(prev=>[...prev,f]);setMsgPvs(prev=>[...prev,URL.createObjectURL(f)])}e.target.value=""}} style={{display:"none"}}/>
       <div style={{display:"flex",gap:6,marginBottom:10}}>
         {["all","premium"].map(tgt=>
           <div key={tgt} onClick={()=>setMsgTarget(tgt)} style={{flex:1,padding:10,borderRadius:10,textAlign:"center",cursor:"pointer",
