@@ -206,7 +206,7 @@ function usePrices(){
   const mkR=(k,v)=>{const n=parseFloat(String(v).replace(/,/g,""))||0;const toman=Math.round(n/10);const o=prev.current[k]||toman;prev.current[k]=toman;return{p:toman>0?Number(toman).toLocaleString("en"):"---",c:v,u:toman>=o}};
 
   const f=useCallback(async()=>{
-    // Try Navasan (values are in TOMAN)
+    // === Source 1: Navasan (values in TOMAN) ===
     try{
       const r=await fetch("https://api.navasan.tech/latest/?api_key=freeX42Ju2HlAIfOKINfOLWUZBNC1smi&item=usd_sell,18ayar,sekkeh,usdt,eur,rub");
       const d=await r.json();
@@ -218,7 +218,7 @@ function usePrices(){
         setOk(true);setLastUpdate(new Date());return;
       }
     }catch(e){}
-    // Try TGJU (values are in RIAL → divide by 10)
+    // === Source 2: TGJU (values in RIAL → ÷10) ===
     try{
       const r=await fetch("https://call4.tgju.org/ajax.json");
       const d=await r.json();
@@ -228,6 +228,35 @@ function usePrices(){
         const tetherRial=parseFloat(get("crypto-tether"))||0;
         const tetherFix=(tetherRial>usdRial*0.5)?String(tetherRial):String(usdRial);
         setP({usd_sell:mkR("usd",get("price_dollar_rl")),eur_sell:mkR("eur",get("price_eur")),sekkeh:mkR("coin",get("sekee")),gold18:mkR("gold",get("geram18")),tether:mkR("tether",tetherFix),rub:mkR("rub",get("price_rub"))});
+        setOk(true);setLastUpdate(new Date());return;
+      }
+    }catch(e){}
+    // === Source 3: TGJU v2 endpoint ===
+    try{
+      const r=await fetch("https://call5.tgju.org/ajax.json");
+      const d=await r.json();
+      if(d&&d.current){
+        const get=(k)=>{try{return d.current[k]?.p?.replace(/,/g,"")||"0"}catch(e){return"0"}};
+        setP({usd_sell:mkR("usd",get("price_dollar_rl")),eur_sell:mkR("eur",get("price_eur")),sekkeh:mkR("coin",get("sekee")),gold18:mkR("gold",get("geram18")),tether:mkR("tether",get("crypto-tether")),rub:mkR("rub",get("price_rub"))});
+        setOk(true);setLastUpdate(new Date());return;
+      }
+    }catch(e){}
+    // === Source 4: Bonbast unofficial API ===
+    try{
+      const r=await fetch("https://bonbast.amirhn.com/latest");
+      const d=await r.json();
+      if(d&&(d.usd_sell||d.usd)){
+        setP({usd_sell:mkT("usd",d.usd_sell||d.usd||"0"),eur_sell:mkT("eur",d.eur_sell||d.eur||"0"),sekkeh:mkT("coin",d.emami||d.coin||"0"),gold18:mkT("gold",d.gold18||d.gol18||"0"),tether:mkT("tether",d.usd_sell||d.usd||"0"),rub:mkT("rub",d.rub||"0")});
+        setOk(true);setLastUpdate(new Date());return;
+      }
+    }catch(e){}
+    // === Source 5: Accessban API ===
+    try{
+      const r=await fetch("https://api.accessban.com/v1/market/currency/usd");
+      const d=await r.json();
+      if(d&&d.data){
+        const usdVal=d.data?.value||d.data?.price||"0";
+        setP({usd_sell:mkT("usd",usdVal),eur_sell:init(),sekkeh:init(),gold18:init(),tether:mkT("tether",usdVal),rub:init()});
         setOk(true);setLastUpdate(new Date());return;
       }
     }catch(e){}
@@ -1156,8 +1185,8 @@ function ReferralSection({userId,token,userProfile}){
   const pct=Math.min(100,(referrals/needed)*100);
   const remaining=Math.max(0,needed-referrals);
   return(<div className="cd" style={{marginBottom:6}}>
-    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,paddingLeft:10}}>
-      <span style={{transform:"scale(1.6)",display:"inline-flex"}}>{AE.gift}</span>
+    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+      <span style={{transform:"scale(1.6)",display:"inline-flex",marginLeft:15}}>{AE.gift}</span>
       <div>
         <div style={{fontSize:14,fontWeight:700}}>{t.referral||"Referral"}</div>
         <div style={{fontSize:11,color:"var(--tx2)",marginTop:2}}>{t.referralDesc||"Invite 10 friends for 1 month free premium!"}</div>
@@ -2173,6 +2202,7 @@ function OnlineCounter({token,isAdmin}){
 /* ─── Iran Market Widget (fallback when API fails) ─── */
 function IranMarketWidget(){
   const{lang}=useLang();
+  const[status,setStatus]=useState("loading");
   const ref=useRef(null);
   const loaded=useRef(false);
   useEffect(()=>{
@@ -2183,6 +2213,10 @@ function IranMarketWidget(){
     iframe.style.width="100%";iframe.style.height="380px";iframe.style.border="none";iframe.style.borderRadius="12px";
     iframe.setAttribute("loading","lazy");
     iframe.setAttribute("sandbox","allow-scripts allow-same-origin");
+    iframe.onload=()=>{setStatus("loaded")};
+    iframe.onerror=()=>{setStatus("error")};
+    // Timeout fallback - if iframe shows 404, hide it after 5s
+    setTimeout(()=>{if(status==="loading")setStatus("loaded")},5000);
     ref.current.appendChild(iframe);
   },[]);
   return(<div className="cd" style={{marginBottom:12,padding:0,overflow:"hidden"}}>
@@ -2190,7 +2224,10 @@ function IranMarketWidget(){
       <img src="https://flagofiran.com/files/flag-of-iran-emoji-ios.png" width="18" height="18" alt="" style={{borderRadius:2}}/>
       <span style={{fontSize:13,fontWeight:700}}>{{fa:"بازار ایران",ar:"السوق الإيرانية",tr:"İran Piyasası",ru:"Рынок Ирана",es:"Mercado Iraní"}[lang]||"Iran Market"}</span>
     </div>
-    <div ref={ref}/>
+    <div ref={ref} style={{minHeight:100}}/>
+    {status==="loading"&&<div style={{textAlign:"center",padding:20,fontSize:11,color:"var(--dm)"}}>{
+      {fa:"در حال بارگذاری...",ar:"جاري التحميل...",tr:"Yükleniyor...",ru:"Загрузка...",es:"Cargando..."}[lang]||"Loading..."
+    }</div>}
   </div>);
 }
 
@@ -2349,7 +2386,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
         </div>)}
       </div>
     </div>
-    :<IranMarketWidget/>}
+    :null}
     <div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVEconomicCalendar colorTheme={theme}/></div>
     <MarketSessions/>
     <PositionCalc lang={lang}/>
