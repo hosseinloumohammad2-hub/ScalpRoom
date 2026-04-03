@@ -72,6 +72,7 @@ select{background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padd
 .story-progress-seg .fill{height:100%;border-radius:2px;background:#fff}
 .story-progress-seg .fill.active{animation:storyProgress var(--dur,6s) linear forwards}
 .story-progress-seg .fill.done{width:100%}
+@keyframes storyLikePop{0%{transform:translate(-50%,-50%) scale(0);opacity:1}50%{transform:translate(-50%,-50%) scale(1.3);opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
 @keyframes splashPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.15);opacity:.7}}
 @keyframes splashFadeOut{from{opacity:1}to{opacity:0;pointer-events:none}}
 @keyframes splashSlideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
@@ -603,15 +604,37 @@ function StoryRing({stories,onClick,seen}){
   );
 }
 
-function StoryViewer({stories,onClose,onSeen}){
+function StoryViewer({stories,onClose,onSeen,userId,token}){
   const[idx,setIdx]=useState(0);
   const[paused,setPaused]=useState(false);
+  const[liked,setLiked]=useState({});
+  const[likeAnim,setLikeAnim]=useState(false);
   const touchStart=useRef({x:0,y:0,time:0});
   const timerRef=useRef(null);
   const holdTimer=useRef(null);
   const isHolding=useRef(false);
+  const viewedIds=useRef(new Set());
   const s=stories[idx];
   const dur=s?.duration||6;
+
+  // Load existing likes
+  useEffect(()=>{
+    if(!userId||!token)return;
+    fetch(`${SB}/rest/v1/StoryViews?user_id=eq.${userId}&liked=eq.true&select=story_id`,{headers:H(token)}).then(r=>r.json()).then(d=>{
+      if(Array.isArray(d)){const m={};d.forEach(v=>{m[v.story_id]=true});setLiked(m)}
+    }).catch(()=>{});
+  },[userId,token]);
+
+  // Track view per story
+  useEffect(()=>{
+    if(!s||!userId||!token||viewedIds.current.has(s.id))return;
+    viewedIds.current.add(s.id);
+    fetch(`${SB}/rest/v1/StoryViews?story_id=eq.${s.id}&user_id=eq.${userId}`,{headers:H(token)}).then(r=>r.json()).then(d=>{
+      if(!Array.isArray(d)||!d.length){
+        fetch(`${SB}/rest/v1/StoryViews`,{method:"POST",headers:{...H(token),Prefer:"return=minimal"},body:JSON.stringify({story_id:s.id,user_id:userId,liked:false})}).catch(()=>{});
+      }
+    }).catch(()=>{});
+  },[s?.id,userId,token]);
 
   useEffect(()=>{if(onSeen)onSeen()},[]);
   useEffect(()=>{
@@ -626,80 +649,57 @@ function StoryViewer({stories,onClose,onSeen}){
   const goNext=()=>{clearTimeout(timerRef.current);if(idx<stories.length-1)setIdx(idx+1);else onClose()};
   const goPrev=()=>{clearTimeout(timerRef.current);if(idx>0)setIdx(idx-1);else setIdx(0)};
 
+  const toggleLike=(e)=>{
+    e.stopPropagation();
+    if(!s||!userId||!token)return;
+    const isLiked=!liked[s.id];
+    setLiked(prev=>({...prev,[s.id]:isLiked}));
+    if(isLiked){setLikeAnim(true);setTimeout(()=>setLikeAnim(false),600)}
+    clearTimeout(timerRef.current);setPaused(true);
+    fetch(`${SB}/rest/v1/StoryViews?story_id=eq.${s.id}&user_id=eq.${userId}&select=id`,{headers:H(token)}).then(r=>r.json()).then(d=>{
+      if(Array.isArray(d)&&d.length>0){
+        fetch(`${SB}/rest/v1/StoryViews?id=eq.${d[0].id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({liked:isLiked})}).catch(()=>{});
+      }else{
+        fetch(`${SB}/rest/v1/StoryViews`,{method:"POST",headers:H(token),body:JSON.stringify({story_id:s.id,user_id:userId,liked:isLiked})}).catch(()=>{});
+      }
+    }).catch(()=>{});
+    setTimeout(()=>setPaused(false),100);
+  };
+
   const handleTouchStart=(e)=>{
     e.preventDefault();
     touchStart.current={x:e.touches[0].clientX,y:e.touches[0].clientY,time:Date.now()};
     isHolding.current=false;
-    // Long press = pause after 200ms
-    holdTimer.current=setTimeout(()=>{
-      isHolding.current=true;
-      setPaused(true);
-      clearTimeout(timerRef.current);
-    },200);
+    holdTimer.current=setTimeout(()=>{isHolding.current=true;setPaused(true);clearTimeout(timerRef.current)},200);
   };
   const handleTouchMove=(e)=>{
     e.preventDefault();
     const dx=Math.abs(e.touches[0].clientX-touchStart.current.x);
     const dy=Math.abs(e.touches[0].clientY-touchStart.current.y);
-    if(dx>10||dy>10){clearTimeout(holdTimer.current)}
+    if(dx>10||dy>10)clearTimeout(holdTimer.current);
   };
   const handleTouchEnd=(e)=>{
     e.preventDefault();
     clearTimeout(holdTimer.current);
-    // If was holding (paused), just resume
-    if(isHolding.current){
-      isHolding.current=false;
-      setPaused(false);
-      return;
-    }
+    if(isHolding.current){isHolding.current=false;setPaused(false);return}
     const dx=e.changedTouches[0].clientX-touchStart.current.x;
     const dy=e.changedTouches[0].clientY-touchStart.current.y;
     const dt=Date.now()-touchStart.current.time;
-    // Swipe down to close
     if(dy>100&&Math.abs(dx)<80){onClose();return}
-    // Quick tap
-    if(dt<300&&Math.abs(dx)<30&&Math.abs(dy)<30){
-      const w=window.innerWidth;
-      const x=e.changedTouches[0].clientX;
-      if(x<w*0.3)goPrev();
-      else goNext();
-      return;
-    }
-    // Swipe left/right
-    if(Math.abs(dx)>50){
-      if(dx<0)goNext();
-      else goPrev();
-    }
+    if(dt<300&&Math.abs(dx)<30&&Math.abs(dy)<30){const w=window.innerWidth;const x=e.changedTouches[0].clientX;if(x<w*0.3)goPrev();else goNext();return}
+    if(Math.abs(dx)>50){if(dx<0)goNext();else goPrev()}
   };
-  const handleClick=(e)=>{
-    const w=window.innerWidth;
-    const x=e.clientX;
-    if(x<w*0.3)goPrev();
-    else goNext();
-  };
+  const handleClick=(e)=>{const w=window.innerWidth;const x=e.clientX;if(x<w*0.3)goPrev();else goNext()};
 
-  const timeAgo=(d)=>{
-    const diff=Date.now()-new Date(d).getTime();
-    const mins=Math.floor(diff/60000);
-    if(mins<1)return"Just now";
-    if(mins<60)return`${mins}m`;
-    const hrs=Math.floor(mins/60);
-    if(hrs<24)return`${hrs}h`;
-    return`${Math.floor(hrs/24)}d`;
-  };
+  const timeAgo=(d)=>{const diff=Date.now()-new Date(d).getTime();const mins=Math.floor(diff/60000);if(mins<1)return"Just now";if(mins<60)return`${mins}m`;const hrs=Math.floor(mins/60);if(hrs<24)return`${hrs}h`;return`${Math.floor(hrs/24)}d`};
+  const isLiked=liked[s?.id];
 
   return(
     <div className="story-viewer" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onClick={handleClick}>
-      {/* Progress bars */}
       <div className="story-progress-bar">
-        {stories.map((_,i)=>(
-          <div key={i} className="story-progress-seg">
-            <div className={`fill ${i<idx?"done":i===idx&&!paused?"active":""}`} style={i===idx?{"--dur":`${dur}s`}:{}}/>
-          </div>
-        ))}
+        {stories.map((_,i)=><div key={i} className="story-progress-seg"><div className={`fill ${i<idx?"done":i===idx&&!paused?"active":""}`} style={i===idx?{"--dur":`${dur}s`}:{}}/></div>)}
       </div>
 
-      {/* Header */}
       <div style={{position:"absolute",top:22,left:0,right:0,zIndex:10,display:"flex",alignItems:"center",gap:10,padding:"8px 14px",animation:"storySlideUp .3s ease"}}>
         <div style={{width:34,height:34,borderRadius:"50%",background:"rgba(255,255,255,.12)",border:"2px solid rgba(255,255,255,.3)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
           <span style={{fontSize:9,fontWeight:800,color:"#fff",lineHeight:1}}>Fx<span style={{color:"#FF4136"}}>.</span></span>
@@ -714,15 +714,19 @@ function StoryViewer({stories,onClose,onSeen}){
         </div>
       </div>
 
-      {/* Content */}
       <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",position:"relative"}}>
         {s?.image_url&&<img key={s.id} src={s.image_url} style={{animation:"storyFadeIn .2s ease"}} alt=""/>}
+        {likeAnim&&<div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%) scale(0)",fontSize:80,animation:"storyLikePop .6s ease forwards",pointerEvents:"none",zIndex:20}}>❤️</div>}
       </div>
 
-      {/* Caption */}
-      {s?.caption&&<div style={{position:"absolute",bottom:0,left:0,right:0,padding:"60px 16px 28px",background:"linear-gradient(transparent,rgba(0,0,0,.7))",zIndex:10,animation:"storySlideUp .3s ease"}}>
-        <div style={{fontSize:14,fontWeight:600,color:"#fff",lineHeight:1.6,textShadow:"0 1px 4px rgba(0,0,0,.5)"}}>{s.caption}</div>
-      </div>}
+      <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"50px 16px calc(env(safe-area-inset-bottom,12px) + 16px)",background:"linear-gradient(transparent,rgba(0,0,0,.65))",zIndex:10,display:"flex",alignItems:"flex-end",gap:12}}>
+        <div style={{flex:1}}>
+          {s?.caption&&<div style={{fontSize:14,fontWeight:600,color:"#fff",lineHeight:1.6,textShadow:"0 1px 4px rgba(0,0,0,.5)"}}>{s.caption}</div>}
+        </div>
+        <div onClick={toggleLike} style={{cursor:"pointer",padding:6,flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill={isLiked?"#FF4136":"none"} stroke={isLiked?"#FF4136":"#fff"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{transition:"transform .15s",transform:isLiked?"scale(1.15)":"scale(1)"}}><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        </div>
+      </div>
     </div>
   );
 }
@@ -827,25 +831,78 @@ function AdminStoryManager({token}){
     <button className="bt" style={{background:"var(--R)",opacity:loading?.5:1}} onClick={publish} disabled={loading}>{loading?"...":(lang==="fa"?"انتشار استوری":"Publish Story")}</button>
     {msg&&<div style={{marginTop:8,fontSize:12,fontWeight:600,textAlign:"center",color:msg.includes("!")?"var(--G)":"var(--R)"}}>{msg}</div>}
 
-    {/* Active Stories */}
+    {/* Active Stories with Views & Likes */}
     {stories.length>0&&<div style={{marginTop:20}}>
       <div style={{fontSize:13,fontWeight:600,marginBottom:10}}>{lang==="fa"?"استوری‌های فعال":"Active Stories"} ({stories.length})</div>
       {stories.map(s=>{
         const expired=new Date(s.expires_at)<new Date();
-        return<div key={s.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4,opacity:expired?.5:1}}>
-          <img src={s.image_url} style={{width:48,height:48,borderRadius:10,objectFit:"cover",flexShrink:0}} alt=""/>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:11,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.caption||"(no caption)"}</div>
-            <div style={{display:"flex",gap:8,marginTop:3,fontSize:9,color:"var(--dm)"}}>
-              <span>{s.target==="premium"?"⭐ Premium":"👥 All"}</span>
-              <span>{expired?"❌ Expired":"⏳ "+timeLeft(s.expires_at)}</span>
-            </div>
-          </div>
-          <div onClick={()=>delStory(s.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
-        </div>
+        return<StoryAdminCard key={s.id} story={s} expired={expired} token={token} lang={lang} onDel={()=>delStory(s.id)} timeLeft={timeLeft}/>
       })}
     </div>}
   </div>);
+}
+
+/* ─── Admin Story Card with viewers ─── */
+function StoryAdminCard({story,expired,token,lang,onDel,timeLeft}){
+  const[open,setOpen]=useState(false);
+  const[viewers,setViewers]=useState([]);
+  const[stats,setStats]=useState({views:0,likes:0});
+  const[loaded,setLoaded]=useState(false);
+
+  const loadViewers=async()=>{
+    if(loaded)return;
+    try{
+      const r=await fetch(`${SB}/rest/v1/StoryViews?story_id=eq.${story.id}&select=user_id,liked,created_at`,{headers:H(token)});
+      const d=await r.json();
+      if(Array.isArray(d)){
+        setStats({views:d.length,likes:d.filter(v=>v.liked).length});
+        // Fetch user names
+        const uids=[...new Set(d.map(v=>v.user_id))];
+        if(uids.length>0){
+          const ur=await fetch(`${SB}/rest/v1/Users?id=in.(${uids.join(",")})&select=id,full_name,email`,{headers:H(token)});
+          const ud=await ur.json();
+          const uMap={};if(Array.isArray(ud))ud.forEach(u=>{uMap[u.id]=u});
+          setViewers(d.map(v=>({...v,user:uMap[v.user_id]||null})));
+        }
+      }
+    }catch(e){}
+    setLoaded(true);
+  };
+
+  const toggle=()=>{
+    if(!open)loadViewers();
+    setOpen(!open);
+  };
+
+  return<div className="cd" style={{padding:0,marginBottom:6,opacity:expired?.5:1,overflow:"hidden"}}>
+    <div style={{display:"flex",alignItems:"center",gap:10,padding:10}}>
+      <img src={story.image_url} style={{width:48,height:48,borderRadius:10,objectFit:"cover",flexShrink:0}} alt=""/>
+      <div style={{flex:1,minWidth:0}} onClick={toggle}>
+        <div style={{fontSize:11,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{story.caption||"(no caption)"}</div>
+        <div style={{display:"flex",gap:8,marginTop:3,fontSize:9,color:"var(--dm)"}}>
+          <span>{story.target==="premium"?"⭐ Premium":"👥 All"}</span>
+          <span>{expired?"❌ Expired":"⏳ "+timeLeft(story.expires_at)}</span>
+        </div>
+        <div style={{display:"flex",gap:10,marginTop:4,fontSize:10,fontWeight:600}}>
+          <span style={{color:"var(--B)"}}>👁 {stats.views}</span>
+          <span style={{color:"var(--R)"}}>❤️ {stats.likes}</span>
+        </div>
+      </div>
+      <div onClick={onDel} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
+    </div>
+    {open&&<div style={{borderTop:"1px solid var(--brd)",padding:"8px 10px",maxHeight:200,overflowY:"auto"}}>
+      {!loaded&&<div style={{textAlign:"center",padding:8}}><div className="ptr-spinner" style={{width:16,height:16,borderWidth:1.5}}/></div>}
+      {loaded&&viewers.length===0&&<div style={{textAlign:"center",fontSize:11,color:"var(--dm)",padding:8}}>{lang==="fa"?"هنوز کسی ندیده":"No viewers yet"}</div>}
+      {viewers.map((v,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 0",borderBottom:i<viewers.length-1?"1px solid var(--brd)":"none"}}>
+        <div style={{width:24,height:24,borderRadius:"50%",background:"var(--bg2)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:700,color:"var(--mu)",flexShrink:0}}>{(v.user?.full_name||"?")[0]?.toUpperCase()}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:11,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{v.user?.full_name||v.user?.email||"Unknown"}</div>
+        </div>
+        {v.liked&&<span style={{fontSize:12,flexShrink:0}}>❤️</span>}
+        <span style={{fontSize:9,color:"var(--dm)",flexShrink:0}}>{new Date(v.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span>
+      </div>)}
+    </div>}
+  </div>;
 }
 
 /* ─── Signal Scoreboard ─── */
@@ -2078,7 +2135,7 @@ function useOnlineCount(token){
       }catch(e){setCount(0)}
     };
     fetchCount();
-    const i=setInterval(fetchCount,5*60*1000);
+    const i=setInterval(fetchCount,10000);
     return()=>clearInterval(i);
   },[token]);
   return count;
@@ -2166,7 +2223,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
       </div>
     </div>}
     {/* Story Viewer Fullscreen */}
-    {showStoryViewer&&visibleStories.length>0&&<StoryViewer stories={visibleStories} onClose={()=>setShowStoryViewer(false)} onSeen={markStorySeen}/>}
+    {showStoryViewer&&visibleStories.length>0&&<StoryViewer stories={visibleStories} onClose={()=>setShowStoryViewer(false)} onSeen={markStorySeen} userId={userProfile?.id} token={token}/>}
     {/* Messages Panel — iOS 26 style */}
     {showMsgs&&<div className="cd" style={{marginBottom:12,padding:0,overflow:"hidden"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 14px 10px"}}>
