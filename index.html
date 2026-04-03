@@ -187,6 +187,8 @@ const AE={
   card:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" style={{display:"inline-block",verticalAlign:"middle"}}><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><animate attributeName="opacity" values="1;.6;1" dur="2s" repeatCount="indefinite"/></svg>,
   users:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" style={{display:"inline-block",verticalAlign:"middle"}}><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/><animate attributeName="opacity" values="1;.7;1" dur="2s" repeatCount="indefinite"/></svg>,
   eye:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" style={{display:"inline-block",verticalAlign:"middle"}}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/><animate attributeName="opacity" values="1;.5;1" dur="2s" repeatCount="indefinite"/></svg>,
+  crypto:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" style={{display:"inline-block",verticalAlign:"middle"}}><circle cx="12" cy="12" r="10"/><text x="12" y="16" textAnchor="middle" fill="#f59e0b" stroke="none" fontSize="12" fontWeight="800">₿</text><animateTransform attributeName="transform" type="rotate" values="0 12 12;8 12 12;-8 12 12;0 12 12" dur="2s" repeatCount="indefinite"/></svg>,
+  stocks:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" style={{display:"inline-block",verticalAlign:"middle"}}><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><animateTransform attributeName="transform" type="scale" values="1;1.06;1" dur="2s" repeatCount="indefinite"/></svg>,
   abacus:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" style={{display:"inline-block",verticalAlign:"middle"}}><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="14" x2="20" y2="14"/><circle cx="9" cy="5" r="1.5" fill="#6366f1"><animate attributeName="cx" values="9;14;9" dur="2s" repeatCount="indefinite"/></circle><circle cx="15" cy="11" r="1.5" fill="#6366f1"><animate attributeName="cx" values="15;8;15" dur="2.5s" repeatCount="indefinite"/></circle><circle cx="10" cy="17" r="1.5" fill="#6366f1"><animate attributeName="cx" values="10;16;10" dur="1.8s" repeatCount="indefinite"/></circle></svg>,
 };
 
@@ -986,26 +988,6 @@ function SignalScoreboard({signals}){
       <span style={{fontSize:10,color:"var(--dm)",fontWeight:600}}>Total Pips: </span>
       <span className="m" style={{fontSize:16,fontWeight:700,color:totalPips>0?"var(--G)":"var(--R)"}}>{totalPips>0?"+":""}{totalPips.toLocaleString()}</span>
     </div>}
-    {equityData.length>1&&<div style={{marginTop:12}}>
-      <div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginBottom:6}}>{AE.chart} Equity Curve (Cumulative Pips)</div>
-      <div style={{position:"relative",height:80,background:"var(--bg)",borderRadius:10,border:"1px solid var(--brd)",padding:"8px 4px",overflow:"hidden"}}>
-        <svg width="100%" height="100%" viewBox={`0 0 ${equityData.length*20} 60`} preserveAspectRatio="none" style={{display:"block"}}>
-          <defs>
-            <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={totalPips>=0?"#22c55e":"#ef4444"} stopOpacity="0.3"/>
-              <stop offset="100%" stopColor={totalPips>=0?"#22c55e":"#ef4444"} stopOpacity="0"/>
-            </linearGradient>
-          </defs>
-          <path d={`M0,${30-equityData[0].pips/maxPips*25} ${equityData.map((d,i)=>`L${i*(equityData.length>1?((equityData.length)*20-20)/(equityData.length-1):0)},${30-d.pips/maxPips*25}`).join(" ")} L${(equityData.length-1)*(equityData.length>1?((equityData.length)*20-20)/(equityData.length-1):0)},60 L0,60 Z`} fill="url(#eqGrad)"/>
-          <polyline points={equityData.map((d,i)=>`${i*(equityData.length>1?((equityData.length)*20-20)/(equityData.length-1):0)},${30-d.pips/maxPips*25}`).join(" ")} fill="none" stroke={totalPips>=0?"#22c55e":"#ef4444"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          {equityData.map((d,i)=><circle key={i} cx={i*(equityData.length>1?((equityData.length)*20-20)/(equityData.length-1):0)} cy={30-d.pips/maxPips*25} r="2" fill={d.status==="tp_hit"?"#22c55e":"#ef4444"}/>)}
-        </svg>
-      </div>
-      <div style={{display:"flex",justifyContent:"space-between",marginTop:4,fontSize:8,color:"var(--dm)"}}>
-        <span>{equityData[0]?.date}</span>
-        <span>{equityData[equityData.length-1]?.date}</span>
-      </div>
-    </div>}
     <div style={{marginTop:10}}>
       <div style={{height:6,borderRadius:3,background:"var(--brd)",overflow:"hidden",display:"flex"}}>
         <div style={{width:`${closed>0?(tpHit/closed)*100:0}%`,background:"var(--G)",height:"100%",transition:"width .5s"}}/>
@@ -1175,7 +1157,7 @@ function ReferralSection({userId,token,userProfile}){
   const remaining=Math.max(0,needed-referrals);
   return(<div className="cd" style={{marginBottom:6}}>
     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
-      <span style={{fontSize:18}}>{AE.gift}</span>
+      <span style={{transform:"scale(1.6)",display:"inline-flex"}}>{AE.gift}</span>
       <div>
         <div style={{fontSize:14,fontWeight:700}}>{t.referral||"Referral"}</div>
         <div style={{fontSize:11,color:"var(--tx2)",marginTop:2}}>{t.referralDesc||"Invite 10 friends for 1 month free premium!"}</div>
@@ -2372,7 +2354,6 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
     <MarketSessions/>
     <PositionCalc lang={lang}/>
     <MiniChart colorTheme={theme}/>
-    <MarketSentiment/>
     <SignalScoreboard signals={signals}/>
     <div style={{display:"flex",gap:8,marginBottom:24}}>
       <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:13,borderRadius:12,background:"color-mix(in srgb,#0088cc 8%,transparent)",border:"1px solid color-mix(in srgb,#0088cc 15%,transparent)",color:"#0088cc",fontSize:13,fontWeight:600}}>{IC.tg} Telegram</a>
@@ -3211,10 +3192,10 @@ function WhatWeCover({lang}){
       <div style={{fontWeight:600,marginBottom:4,color:"var(--tx)"}}>{lang==="fa"?"کالاها و شاخص‌ها:":"Commodities & Indices:"}</div>
       <div style={{fontSize:11}}>{l.fxComm}</div>
     </Section>
-    <Section k="crypto" icon="₿" title={l.cryptoTitle}>
+    <Section k="crypto" icon={AE.crypto} title={l.cryptoTitle}>
       <div style={{fontSize:11}}>{l.cryptoList}</div>
     </Section>
-    <Section k="stocks" icon={AE.chart} title={l.stocksTitle}>
+    <Section k="stocks" icon={AE.stocks} title={l.stocksTitle}>
       <div style={{fontSize:11,wordBreak:"break-word"}}>{l.stocksList}</div>
     </Section>
     <Section k="iran" icon="ir" title={l.iranTitle}>
@@ -3393,6 +3374,215 @@ function PostEditModal({post,onClose,onSave}){
   </div></div>);
 }
 
+/* ─── Admin Performance Report Generator ─── */
+function AdminReport({token,posts,signals}){
+  const{lang}=useLang();
+  const[fromDate,setFromDate]=useState(()=>{const d=new Date();d.setDate(d.getDate()-7);return d.toISOString().slice(0,10)});
+  const[toDate,setToDate]=useState(()=>new Date().toISOString().slice(0,10));
+  const[generating,setGenerating]=useState(false);
+  const canvasRef=useRef(null);
+
+  const filteredPosts=(posts||[]).filter(p=>{
+    const d=new Date(p.created_at);
+    return d>=new Date(fromDate)&&d<=new Date(toDate+"T23:59:59");
+  });
+  const filteredSigs=(signals||[]).filter(s=>{
+    const d=new Date(s.created_at);
+    return d>=new Date(fromDate)&&d<=new Date(toDate+"T23:59:59");
+  });
+  const tpHit=filteredSigs.filter(s=>s.status==="tp_hit").length;
+  const slHit=filteredSigs.filter(s=>s.status==="sl_hit").length;
+  const activeSigs=filteredSigs.filter(s=>s.status==="active").length;
+  const winRate=(tpHit+slHit)>0?Math.round((tpHit/(tpHit+slHit))*100):0;
+
+  const generate=async()=>{
+    setGenerating(true);
+    try{
+      const W=1080,PAD=60;
+      const c=document.createElement("canvas");
+      c.width=W;
+      const ctx=c.getContext("2d");
+      const rr=(x,y,w,h,r)=>{ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y)};
+
+      // Calculate height
+      const imgPosts=filteredPosts.filter(p=>p.image_url);
+      const cols=4;
+      const thumbSize=Math.floor((W-PAD*2-(cols-1)*12)/cols);
+      const rows=Math.ceil(imgPosts.length/cols);
+      const gridH=rows*(thumbSize+12);
+      const totalH=580+gridH+200;
+      c.height=Math.max(totalH,900);
+
+      // Background gradient
+      const bg=ctx.createLinearGradient(0,0,0,c.height);
+      bg.addColorStop(0,"#0a0a0c");bg.addColorStop(0.5,"#111114");bg.addColorStop(1,"#0a0a0c");
+      ctx.fillStyle=bg;ctx.fillRect(0,0,W,c.height);
+
+      // Decorative circles
+      ctx.globalAlpha=0.04;
+      ctx.fillStyle="#FF4136";ctx.beginPath();ctx.arc(W-100,-50,250,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle="#3b82f6";ctx.beginPath();ctx.arc(100,c.height+50,250,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha=1;
+
+      // Top line accent
+      const accent=ctx.createLinearGradient(PAD,0,W-PAD,0);
+      accent.addColorStop(0,"#FF4136");accent.addColorStop(1,"transparent");
+      ctx.fillStyle=accent;ctx.fillRect(PAD,40,W-PAD*2,3);
+
+      // Logo
+      let Y=80;
+      ctx.font="bold 38px 'DM Sans',system-ui,sans-serif";
+      ctx.fillStyle="#ffffff";ctx.fillText("Fxscalproom",PAD,Y);
+      const lw=ctx.measureText("Fxscalproom").width;
+      ctx.fillStyle="#FF4136";ctx.fillText(".",PAD+lw,Y);
+
+      // Period
+      Y+=40;
+      ctx.font="500 16px 'DM Sans',system-ui,sans-serif";
+      ctx.fillStyle="#71717a";
+      const fromStr=new Date(fromDate).toLocaleDateString("en",{month:"short",day:"numeric"});
+      const toStr=new Date(toDate).toLocaleDateString("en",{month:"short",day:"numeric",year:"numeric"});
+      ctx.fillText(`${fromStr} — ${toStr}`,PAD,Y);
+
+      // Title
+      Y+=60;
+      ctx.font="bold 48px 'DM Sans',system-ui,sans-serif";
+      ctx.fillStyle="#ffffff";ctx.fillText("Performance Report",PAD,Y);
+
+      // Stats row
+      Y+=50;
+      const stats=[
+        {label:"Analyses",value:String(filteredPosts.length),color:"#3b82f6"},
+        {label:"Signals",value:String(filteredSigs.length),color:"#22c55e"},
+        {label:"Win Rate",value:winRate+"%",color:winRate>=60?"#22c55e":"#eab308"},
+        {label:"TP Hit",value:String(tpHit),color:"#22c55e"},
+        {label:"SL Hit",value:String(slHit),color:"#ef4444"},
+      ];
+      const statW=Math.floor((W-PAD*2-(stats.length-1)*12)/stats.length);
+      stats.forEach((s,i)=>{
+        const sx=PAD+i*(statW+12);
+        rr(sx,Y,statW,90,16);ctx.fillStyle="rgba(255,255,255,0.04)";ctx.fill();
+        rr(sx,Y,statW,90,16);ctx.strokeStyle="rgba(255,255,255,0.08)";ctx.lineWidth=1;ctx.stroke();
+        ctx.font="bold 28px 'DM Mono',monospace";
+        ctx.fillStyle=s.color;ctx.textAlign="center";ctx.fillText(s.value,sx+statW/2,Y+40);
+        ctx.font="500 12px 'DM Sans',system-ui,sans-serif";
+        ctx.fillStyle="#71717a";ctx.fillText(s.label,sx+statW/2,Y+65);
+        ctx.textAlign="left";
+      });
+
+      // Image grid title
+      Y+=120;
+      ctx.font="bold 22px 'DM Sans',system-ui,sans-serif";
+      ctx.fillStyle="#a1a1aa";ctx.fillText(imgPosts.length+" Analyses Published",PAD,Y);
+      Y+=20;
+
+      // Load and draw images
+      for(let i=0;i<imgPosts.length;i++){
+        const p=imgPosts[i];
+        const col=i%cols;
+        const row=Math.floor(i/cols);
+        const x=PAD+col*(thumbSize+12);
+        const y=Y+row*(thumbSize+12);
+        try{
+          const img=new Image();img.crossOrigin="anonymous";
+          await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=(p.image_url||"").split(",")[0];setTimeout(rej,3000)});
+          ctx.save();rr(x,y,thumbSize,thumbSize,12);ctx.clip();
+          const scale=Math.max(thumbSize/img.width,thumbSize/img.height);
+          const sw=img.width*scale,sh=img.height*scale;
+          ctx.drawImage(img,x-(sw-thumbSize)/2,y-(sh-thumbSize)/2,sw,sh);
+          ctx.restore();
+          rr(x,y,thumbSize,thumbSize,12);ctx.strokeStyle="rgba(255,255,255,0.06)";ctx.lineWidth=1;ctx.stroke();
+        }catch(e){
+          rr(x,y,thumbSize,thumbSize,12);ctx.fillStyle="rgba(255,255,255,0.03)";ctx.fill();
+          ctx.font="bold 11px 'DM Sans',system-ui,sans-serif";
+          ctx.fillStyle="#52525b";ctx.textAlign="center";
+          ctx.fillText(p.title?.slice(0,12)||"",x+thumbSize/2,y+thumbSize/2+4);
+          ctx.textAlign="left";
+        }
+      }
+
+      // Footer
+      const footY=c.height-80;
+      ctx.strokeStyle="rgba(255,255,255,0.06)";ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(PAD,footY);ctx.lineTo(W-PAD,footY);ctx.stroke();
+
+      ctx.textAlign="center";
+      ctx.font="bold 22px 'DM Sans',system-ui,sans-serif";
+      ctx.fillStyle="rgba(255,255,255,0.2)";
+      ctx.fillText("Fxscalproom.",W/2,footY+35);
+      ctx.font="400 12px 'DM Sans',system-ui,sans-serif";
+      ctx.fillStyle="rgba(255,255,255,0.15)";
+      ctx.fillText("t.me/FxScalpRoom  ·  fxscalproom.com",W/2,footY+58);
+      ctx.textAlign="left";
+
+      // Export
+      c.toBlob(blob=>{
+        if(!blob){setGenerating(false);return}
+        const url=URL.createObjectURL(blob);
+        const fname=`fxscalproom_report_${fromDate}_${toDate}.png`;
+        if(navigator.share&&navigator.canShare){
+          try{
+            const file=new File([blob],fname,{type:"image/png"});
+            if(navigator.canShare({files:[file]})){
+              navigator.share({files:[file],title:"Fxscalproom Report"}).catch(()=>{});
+              setGenerating(false);return;
+            }
+          }catch(e){}
+        }
+        const a=document.createElement("a");a.href=url;a.download=fname;a.click();
+        setGenerating(false);
+      },"image/png");
+    }catch(e){console.error(e);setGenerating(false)}
+  };
+
+  return(<div>
+    <div style={{fontSize:14,fontWeight:700,marginBottom:14}}>{lang==="fa"?"📊 گزارش عملکرد":"📊 Performance Report"}</div>
+
+    <div style={{fontSize:11,fontWeight:600,color:"var(--tx2)",marginBottom:6}}>{lang==="fa"?"بازه زمانی:":"Date range:"}</div>
+    <div style={{display:"flex",gap:6,marginBottom:8}}>
+      <div style={{flex:1}}>
+        <div style={{fontSize:9,color:"var(--dm)",marginBottom:4}}>{lang==="fa"?"از:":"From:"}</div>
+        <input className="ip" type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)} style={{marginBottom:0}}/>
+      </div>
+      <div style={{flex:1}}>
+        <div style={{fontSize:9,color:"var(--dm)",marginBottom:4}}>{lang==="fa"?"تا:":"To:"}</div>
+        <input className="ip" type="date" value={toDate} onChange={e=>setToDate(e.target.value)} style={{marginBottom:0}}/>
+      </div>
+    </div>
+
+    <div style={{display:"flex",gap:4,marginBottom:12}}>
+      {[{l:lang==="fa"?"امروز":"Today",d:0},{l:lang==="fa"?"۷ روز":"7 Days",d:7},{l:lang==="fa"?"۳۰ روز":"30 Days",d:30},{l:lang==="fa"?"۹۰ روز":"90 Days",d:90}].map(p=><div key={p.d} onClick={()=>{const d=new Date();d.setDate(d.getDate()-p.d);setFromDate(d.toISOString().slice(0,10));setToDate(new Date().toISOString().slice(0,10))}} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",fontSize:10,fontWeight:700,background:"var(--bg2)",border:"1px solid var(--brd)",color:"var(--mu)"}}>{p.l}</div>)}
+    </div>
+
+    {/* Preview stats */}
+    <div className="cd" style={{padding:14,marginBottom:12}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+        <div style={{textAlign:"center"}}><div className="m" style={{fontSize:22,fontWeight:700,color:"var(--B)"}}>{filteredPosts.length}</div><div style={{fontSize:9,color:"var(--dm)",fontWeight:600}}>{lang==="fa"?"تحلیل":"Analyses"}</div></div>
+        <div style={{textAlign:"center"}}><div className="m" style={{fontSize:22,fontWeight:700,color:"var(--G)"}}>{filteredSigs.length}</div><div style={{fontSize:9,color:"var(--dm)",fontWeight:600}}>{lang==="fa"?"سیگنال":"Signals"}</div></div>
+        <div style={{textAlign:"center"}}><div className="m" style={{fontSize:22,fontWeight:700,color:winRate>=60?"var(--G)":"var(--Y)"}}>{winRate}%</div><div style={{fontSize:9,color:"var(--dm)",fontWeight:600}}>Win Rate</div></div>
+      </div>
+      <div style={{display:"flex",gap:8,marginTop:10}}>
+        <div style={{flex:1,textAlign:"center",padding:8,borderRadius:8,background:"color-mix(in srgb,var(--G) 6%,transparent)"}}><span className="m" style={{fontSize:14,fontWeight:700,color:"var(--G)"}}>{tpHit}</span><span style={{fontSize:9,color:"var(--dm)",marginLeft:4}}>TP</span></div>
+        <div style={{flex:1,textAlign:"center",padding:8,borderRadius:8,background:"color-mix(in srgb,var(--R) 6%,transparent)"}}><span className="m" style={{fontSize:14,fontWeight:700,color:"var(--R)"}}>{slHit}</span><span style={{fontSize:9,color:"var(--dm)",marginLeft:4}}>SL</span></div>
+        <div style={{flex:1,textAlign:"center",padding:8,borderRadius:8,background:"color-mix(in srgb,var(--B) 6%,transparent)"}}><span className="m" style={{fontSize:14,fontWeight:700,color:"var(--B)"}}>{activeSigs}</span><span style={{fontSize:9,color:"var(--dm)",marginLeft:4}}>Active</span></div>
+      </div>
+    </div>
+
+    {/* Image preview grid */}
+    {filteredPosts.filter(p=>p.image_url).length>0&&<div style={{marginBottom:12}}>
+      <div style={{fontSize:11,fontWeight:600,color:"var(--tx2)",marginBottom:8}}>{lang==="fa"?"پیش‌نمایش تحلیل‌ها:":"Analyses preview:"}</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4}}>
+        {filteredPosts.filter(p=>p.image_url).slice(0,20).map(p=><img key={p.id} src={(p.image_url||"").split(",")[0]} style={{width:"100%",aspectRatio:"1",objectFit:"cover",borderRadius:6,border:"1px solid var(--brd)"}} alt=""/>)}
+      </div>
+      {filteredPosts.filter(p=>p.image_url).length>20&&<div style={{fontSize:10,color:"var(--dm)",textAlign:"center",marginTop:4}}>+{filteredPosts.filter(p=>p.image_url).length-20} more</div>}
+    </div>}
+
+    <button className="bt" style={{background:"var(--R)",opacity:generating?.5:1}} onClick={generate} disabled={generating}>
+      {generating?"...":(lang==="fa"?"ساخت عکس گزارش":"Generate Report Image")}
+    </button>
+  </div>);
+}
+
 function Adm({token,posts,signals,onR}){
   const{t,lang}=useLang();
   const[tb,setTb]=useState("post");
@@ -3436,8 +3626,8 @@ function Adm({token,posts,signals,onR}){
         })}
       </div>
       <div style={{display:"flex",gap:4}}>
-        {["msg","story","support","sale","pay"].map(tab=>{
-          const labels={msg:lang==="fa"?"پیام":"Message",story:lang==="fa"?"استوری":"Story",support:lang==="fa"?"پشتیبانی":"Support",sale:lang==="fa"?"تخفیف":"Sale",pay:lang==="fa"?"پرداخت":"Payment"};
+        {["msg","story","support","sale","pay","report"].map(tab=>{
+          const labels={msg:lang==="fa"?"پیام":"Message",story:lang==="fa"?"استوری":"Story",support:lang==="fa"?"پشتیبانی":"Support",sale:lang==="fa"?"تخفیف":"Sale",pay:lang==="fa"?"پرداخت":"Payment",report:lang==="fa"?"گزارش":"Report"};
           return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{labels[tab]}</div>
         })}
       </div>
@@ -3572,6 +3762,7 @@ function Adm({token,posts,signals,onR}){
     {tb==="story"&&<AdminStoryManager token={token}/>}
     {tb==="sale"&&<AdminPromo token={token}/>}
     {tb==="pay"&&<AdminPayments token={token}/>}
+    {tb==="report"&&<AdminReport token={token} posts={posts} signals={signals}/>}
     {tb==="msg"&&<>
       <div style={{fontSize:13,fontWeight:700,marginBottom:10}}>{lang==="fa"?"📬 ارسال پیام":"📬 Send Message"}</div>
       <input className="ip" placeholder={lang==="fa"?"عنوان پیام":"Message title"} value={msgTitle} onChange={e=>setMsgTitle(e.target.value)}/>
