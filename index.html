@@ -186,6 +186,7 @@ const AE={
   label:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" style={{display:"inline-block",verticalAlign:"middle"}}><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><circle cx="7" cy="7" r="1.5" fill="#ef4444"><animate attributeName="r" values="1.5;2;1.5" dur="1.5s" repeatCount="indefinite"/></circle></svg>,
   card:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" style={{display:"inline-block",verticalAlign:"middle"}}><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><animate attributeName="opacity" values="1;.6;1" dur="2s" repeatCount="indefinite"/></svg>,
   users:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" style={{display:"inline-block",verticalAlign:"middle"}}><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/><animate attributeName="opacity" values="1;.7;1" dur="2s" repeatCount="indefinite"/></svg>,
+  eye:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" style={{display:"inline-block",verticalAlign:"middle"}}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/><animate attributeName="opacity" values="1;.5;1" dur="2s" repeatCount="indefinite"/></svg>,
   abacus:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" style={{display:"inline-block",verticalAlign:"middle"}}><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="14" x2="20" y2="14"/><circle cx="9" cy="5" r="1.5" fill="#6366f1"><animate attributeName="cx" values="9;14;9" dur="2s" repeatCount="indefinite"/></circle><circle cx="15" cy="11" r="1.5" fill="#6366f1"><animate attributeName="cx" values="15;8;15" dur="2.5s" repeatCount="indefinite"/></circle><circle cx="10" cy="17" r="1.5" fill="#6366f1"><animate attributeName="cx" values="10;16;10" dur="1.8s" repeatCount="indefinite"/></circle></svg>,
 };
 
@@ -593,9 +594,9 @@ function MarketSentiment(){
         <span style={{fontSize:12,color:"var(--dm)",marginLeft:6}}>/100</span>
       </div>
       <div style={{display:"flex",justifyContent:"space-between",marginTop:10,fontSize:9,color:"var(--dm)",fontWeight:600}}>
-        <span>😱 Extreme Fear</span>
-        <span>😐 Neutral</span>
-        <span>🤑 Extreme Greed</span>
+        <span style={{display:"flex",alignItems:"center",gap:3}}>{AE.fire} Fear</span>
+        <span>— Neutral</span>
+        <span style={{display:"flex",alignItems:"center",gap:3}}>{AE.money} Greed</span>
       </div>
       <div style={{marginTop:14,fontSize:11,color:"var(--tx2)",lineHeight:1.6,textAlign:"center"}}>
         {vix<=30?"Markets are fearful — potential buying opportunities for contrarian traders.":
@@ -819,7 +820,7 @@ function AdminStoryManager({token}){
   };
 
   return(<div>
-    <div style={{fontSize:14,fontWeight:700,marginBottom:14}}>{lang==="fa"?"📸 مدیریت استوری":"📸 Story Manager"}</div>
+    <div style={{fontSize:14,fontWeight:700,marginBottom:14}}>{lang==="fa"?"مدیریت استوری":"Story Manager"}</div>
 
     {/* Upload */}
     <div onClick={()=>document.getElementById("story-fu").click()} style={{border:"1.5px dashed var(--brd2)",borderRadius:14,padding:pv?0:32,textAlign:"center",marginBottom:10,background:"var(--bg2)",cursor:"pointer",overflow:"hidden"}}>
@@ -913,8 +914,8 @@ function StoryAdminCard({story,expired,token,lang,onDel,timeLeft}){
           <span>{expired?"❌ Expired":"⏳ "+timeLeft(story.expires_at)}</span>
         </div>
         <div style={{display:"flex",gap:10,marginTop:4,fontSize:10,fontWeight:600}}>
-          <span style={{color:"var(--B)"}}>👁 {stats.views}</span>
-          <span style={{color:"var(--R)"}}>❤️ {stats.likes}</span>
+          <span style={{color:"var(--B)",display:"flex",alignItems:"center",gap:3}}>{AE.eye} {stats.views}</span>
+          <span style={{color:"var(--R)",display:"flex",alignItems:"center",gap:3}}>{AE.fire} {stats.likes}</span>
         </div>
       </div>
       <div onClick={onDel} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
@@ -1011,9 +1012,9 @@ function SignalScoreboard({signals}){
         <div style={{width:`${closed>0?(slHit/closed)*100:0}%`,background:"var(--R)",height:"100%",transition:"width .5s"}}/>
       </div>
       <div style={{display:"flex",justifyContent:"space-between",marginTop:4,fontSize:9,color:"var(--dm)"}}>
-        <span>✅ {tpHit} wins</span>
+        <span style={{color:"var(--G)"}}>✓ {tpHit} wins</span>
         <span>{total} total signals</span>
-        <span>❌ {slHit} losses</span>
+        <span style={{color:"var(--R)"}}>✗ {slHit} losses</span>
       </div>
     </div>
   </div>);
@@ -2184,7 +2185,7 @@ function useOnlineCount(token){
 function OnlineCounter({token,isAdmin}){
   const count=useOnlineCount(token);
   if(!count||!isAdmin)return null;
-  return<span className="m" style={{fontSize:11,color:"var(--tx2)",fontWeight:500}}>{count} 👤</span>;
+  return<span className="m" style={{fontSize:11,color:"var(--tx2)",fontWeight:500}}>{count} {AE.users}</span>;
 }
 
 /* ─── Iran Market Widget (fallback when API fails) ─── */
@@ -2943,7 +2944,7 @@ function PremiumPopup({onClose,onGoPlans}){
     <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:430,background:"var(--bg)",borderRadius:"20px 20px 0 0",padding:"8px 16px calc(env(safe-area-inset-bottom,12px) + 16px)",animation:"fi .2s ease"}}>
       <div style={{width:36,height:4,borderRadius:2,background:"var(--brd2)",margin:"0 auto 16px"}}/>
       <div style={{textAlign:"center",marginBottom:20}}>
-        <div style={{fontSize:32,marginBottom:10}}>👑</div>
+        <div style={{fontSize:32,marginBottom:10}}>{AE.crown}</div>
         <div style={{fontSize:17,fontWeight:700,marginBottom:6}}>{{fa:"محتوای ویژه",ar:"محتوى مميز",tr:"Premium İçerik",ru:"Премиум контент",es:"Contenido Premium"}[lang]||"Premium Content"}</div>
         <div style={{fontSize:13,color:"var(--tx2)",lineHeight:1.6}}>{{fa:"برای دسترسی به این محتوا، اشتراک ویژه تهیه کنید",ar:"اشترك في البريميوم لفتح هذا المحتوى",tr:"Bu içeriği açmak için premium abone olun",ru:"Подпишитесь на премиум для доступа",es:"Suscríbete a premium para desbloquear"}[lang]||"Subscribe to premium to unlock this content"}</div>
       </div>
@@ -3204,7 +3205,7 @@ function WhatWeCover({lang}){
         <div style={{fontSize:11,color:"var(--dm)",marginTop:2}}>{l.subtitle}</div>
       </div>
     </div>
-    <Section k="fx" icon="💱" title={l.fxTitle}>
+    <Section k="fx" icon={AE.money} title={l.fxTitle}>
       <div style={{fontWeight:600,marginBottom:4,color:"var(--tx)"}}>{lang==="fa"?"جفت ارزها:":"Pairs:"}</div>
       <div style={{fontSize:11,marginBottom:8,wordBreak:"break-word"}}>{l.fxPairs}</div>
       <div style={{fontWeight:600,marginBottom:4,color:"var(--tx)"}}>{lang==="fa"?"کالاها و شاخص‌ها:":"Commodities & Indices:"}</div>
@@ -3213,7 +3214,7 @@ function WhatWeCover({lang}){
     <Section k="crypto" icon="₿" title={l.cryptoTitle}>
       <div style={{fontSize:11}}>{l.cryptoList}</div>
     </Section>
-    <Section k="stocks" icon="📈" title={l.stocksTitle}>
+    <Section k="stocks" icon={AE.chart} title={l.stocksTitle}>
       <div style={{fontSize:11,wordBreak:"break-word"}}>{l.stocksList}</div>
     </Section>
     <Section k="iran" icon="ir" title={l.iranTitle}>
@@ -3297,7 +3298,7 @@ function Plans({userProfile,goToSupport,token}){
         {daysLeft<=7&&<div style={{fontSize:12,fontWeight:600,color:"var(--R)",marginTop:10,background:"color-mix(in srgb,var(--R) 8%,transparent)",padding:"8px 14px",borderRadius:8,display:"inline-block"}}>{pt("expireSoon")||"⚠ Expiring soon! Renew now"}</div>}
       </div>}
       {!isAdmin&&canUpgrade&&upgrade&&<div className="cd" style={{padding:16,marginBottom:16,borderColor:"color-mix(in srgb,var(--Y) 25%,transparent)",background:"color-mix(in srgb,var(--Y) 3%,transparent)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}><span style={{fontSize:14}}>⬆️</span><span style={{fontSize:14,fontWeight:700}}>{pt("upgradeAnnual")||"Upgrade to Annual"}</span></div>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}><span style={{fontSize:14}}>{AE.chart}</span><span style={{fontSize:14,fontWeight:700}}>{pt("upgradeAnnual")||"Upgrade to Annual"}</span></div>
         <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.6,marginBottom:12}}>You're on <b>{upgrade.from}</b> plan. Upgrade to <b>{upgrade.to}</b> for just <b>{upgrade.price}</b> more (save {upgrade.save} total!)</div>
         <div onClick={()=>setShowContact(true)} className="bt" style={{background:"var(--Y)",color:"#000",fontSize:13,cursor:"pointer"}}>{pt("upgradeAnnual")||"Upgrade Now"} — {upgrade.price}</div>
       </div>}
@@ -3540,7 +3541,7 @@ function Adm({token,posts,signals,onR}){
             </div>
             <div style={{fontSize:10,color:"var(--dm)"}}>{u.email}</div>
             <div style={{fontSize:9,fontWeight:600,marginTop:2,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
-              <span style={{color:"var(--mu)"}}>🎁 {refCounts[u.id]||0}/10</span>
+              <span style={{color:"var(--mu)",display:"flex",alignItems:"center",gap:3}}>{AE.gift} {refCounts[u.id]||0}/10</span>
               {(refCounts[u.id]||0)>=10&&<span style={{color:"var(--G)"}}>✅ READY</span>}
               {u.invite_code&&<span style={{color:"var(--dm)",fontSize:8,background:"var(--bg)",padding:"1px 5px",borderRadius:4}}>{u.invite_code}</span>}
             </div>
@@ -3548,7 +3549,7 @@ function Adm({token,posts,signals,onR}){
           </div>
           {u.membership==="premium"?
             <div style={{display:"flex",gap:4}}>
-              <div onClick={()=>{setEditUserExp(editUserExp===u.id?null:u.id);setExpDate(u.premium_expires_at?u.premium_expires_at.slice(0,16):"")}} style={{cursor:"pointer",fontSize:9,fontWeight:600,color:"var(--B)",background:"color-mix(in srgb,var(--B) 10%,transparent)",padding:"4px 8px",borderRadius:6}}>📅</div>
+              <div onClick={()=>{setEditUserExp(editUserExp===u.id?null:u.id);setExpDate(u.premium_expires_at?u.premium_expires_at.slice(0,16):"")}} style={{cursor:"pointer",fontSize:9,fontWeight:600,color:"var(--B)",background:"color-mix(in srgb,var(--B) 10%,transparent)",padding:"4px 8px",borderRadius:6}}>{AE.clock}</div>
               <div onClick={()=>setFree(u.id)} style={{cursor:"pointer",fontSize:9,fontWeight:600,color:"var(--G)",background:"color-mix(in srgb,var(--G) 10%,transparent)",padding:"4px 8px",borderRadius:6,display:"flex",alignItems:"center",gap:3}}>{IC.ck} PRO</div>
             </div>:
             <div onClick={()=>{setEditUserExp(u.id);setExpDate("")}} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--mu)",background:"var(--bg)",padding:"4px 10px",borderRadius:6,border:"1px solid var(--brd)"}}>{t.setpro}</div>
