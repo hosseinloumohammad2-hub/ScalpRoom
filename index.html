@@ -509,7 +509,7 @@ function MarketSentiment(){
   useEffect(()=>{
     // Fetch real Fear & Greed Index
     fetch("https://api.alternative.me/fng/?limit=1").then(r=>r.json()).then(d=>{
-      if(d?.data?.[0]){
+      if(d&&d.data&&d.data[0]){
         const val=parseInt(d.data[0].value);
         setVix(val);
         setLabel(d.data[0].value_classification||"");
@@ -2567,97 +2567,6 @@ function AdminPayments({token}){
   </div>);
 }
 
-/* ─── Admin Payments ─── */
-function AdminPayments({token}){
-  const{lang}=useLang();
-  const[payments,setPayments]=useState([]);
-  const[users,setUsers]=useState({});
-  const[loading,setLoading]=useState(true);
-
-  const load=useCallback(async()=>{
-    try{
-      const r=await fetch(`${SB}/rest/v1/PaymentRequests?order=created_at.desc`,{headers:H(token)});
-      const d=await r.json();
-      if(Array.isArray(d))setPayments(d);
-      const us=await fetch(`${SB}/rest/v1/Users?select=id,full_name,email,membership`,{headers:H(token)});
-      const usData=await us.json();
-      if(Array.isArray(usData)){const m={};usData.forEach(u=>m[u.id]=u);setUsers(m)}
-    }catch(e){}
-    setLoading(false);
-  },[token]);
-
-  useEffect(()=>{load()},[load]);
-
-  const approve=async(pay)=>{
-    // Update payment status
-    await fetch(`${SB}/rest/v1/PaymentRequests?id=eq.${pay.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({status:"approved"})});
-    // Activate premium for user
-    const exp=new Date();exp.setDate(exp.getDate()+(pay.plan_days||30));
-    await fetch(`${SB}/rest/v1/Users?id=eq.${pay.user_id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({membership:"premium",premium_expires_at:exp.toISOString()})});
-    load();
-  };
-
-  const reject=async(id)=>{
-    if(!confirm(lang==="fa"?"رد شود؟":"Reject?"))return;
-    await fetch(`${SB}/rest/v1/PaymentRequests?id=eq.${id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({status:"rejected"})});
-    load();
-  };
-
-  const statusColor=(s)=>s==="approved"?"var(--G)":s==="rejected"?"var(--R)":"var(--Y)";
-  const statusLabel=(s)=>s==="approved"?(lang==="fa"?"تأیید شده":"Approved"):s==="rejected"?(lang==="fa"?"رد شده":"Rejected"):(lang==="fa"?"در انتظار":"Pending");
-  const pending=payments.filter(p=>p.status==="pending");
-  const history=payments.filter(p=>p.status!=="pending");
-
-  return(<div>
-    <div style={{fontSize:14,fontWeight:700,marginBottom:14}}>{lang==="fa"?"💳 درخواست‌های پرداخت":"💳 Payment Requests"}</div>
-
-    {loading&&<div style={{textAlign:"center",padding:30}}><div className="ptr-spinner"/></div>}
-
-    {!loading&&pending.length===0&&<div style={{textAlign:"center",color:"var(--dm)",fontSize:13,padding:20,marginBottom:16}}>{lang==="fa"?"درخواست جدیدی نیست":"No pending requests"}</div>}
-
-    {pending.length>0&&<>
-      <div style={{fontSize:12,fontWeight:600,color:"var(--Y)",marginBottom:8}}>{lang==="fa"?"⏳ در انتظار تأیید":"⏳ Pending"} ({pending.length})</div>
-      {pending.map(p=>{
-        const u=users[p.user_id];
-        return<div key={p.id} className="cd" style={{padding:14,marginBottom:6,borderColor:"color-mix(in srgb,var(--Y) 25%,transparent)",background:"color-mix(in srgb,var(--Y) 3%,transparent)"}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-            <div>
-              <div style={{fontSize:14,fontWeight:700}}>{u?.full_name||"Unknown"}</div>
-              <div style={{fontSize:10,color:"var(--dm)"}}>{u?.email}</div>
-            </div>
-            <div style={{textAlign:"right"}}>
-              <div className="m" style={{fontSize:22,fontWeight:700,color:"var(--G)"}}>${p.amount}</div>
-              <div style={{fontSize:10,color:"var(--dm)"}}>{p.plan_name}</div>
-            </div>
-          </div>
-          <div style={{fontSize:10,color:"var(--dm)",marginBottom:10}}>{new Date(p.created_at).toLocaleDateString()} {new Date(p.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>
-          <div style={{display:"flex",gap:6}}>
-            <button className="bt" style={{background:"var(--G)",flex:1,padding:10,fontSize:12}} onClick={()=>approve(p)}>✓ {lang==="fa"?"تأیید و فعال‌سازی":"Approve & Activate"}</button>
-            <button className="bt" style={{background:"var(--R)",flex:1,padding:10,fontSize:12}} onClick={()=>reject(p.id)}>✗ {lang==="fa"?"رد":"Reject"}</button>
-          </div>
-        </div>
-      })}
-    </>}
-
-    {history.length>0&&<>
-      <div style={{fontSize:12,fontWeight:600,color:"var(--dm)",marginTop:16,marginBottom:8}}>{lang==="fa"?"تاریخچه":"History"} ({history.length})</div>
-      {history.map(p=>{
-        const u=users[p.user_id];
-        return<div key={p.id} className="cd" style={{padding:10,marginBottom:4}}>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:12,fontWeight:600}}>{u?.full_name||"Unknown"}</div>
-              <div style={{fontSize:10,color:"var(--dm)"}}>{p.plan_name} — ${p.amount}</div>
-            </div>
-            <span style={{fontSize:9,fontWeight:700,color:statusColor(p.status),padding:"3px 8px",borderRadius:6,background:`color-mix(in srgb,${statusColor(p.status)} 10%,transparent)`}}>{statusLabel(p.status)}</span>
-            <span style={{fontSize:9,color:"var(--dm)"}}>{new Date(p.created_at).toLocaleDateString()}</span>
-          </div>
-        </div>
-      })}
-    </>}
-  </div>);
-}
-
 /* ─── What We Cover (Plans page) ─── */
 function WhatWeCover({lang}){
   const[open,setOpen]=useState(null);
@@ -2877,7 +2786,7 @@ function Plans({userProfile,goToSupport,token}){
     renew:{fa:"تمدید یا تمدید اشتراک",ar:"تجديد أو تمديد الاشتراك",tr:"Aboneliği yenileyin veya uzatın",ru:"Продлить подписку",es:"Renovar o extender suscripción"},
     adminAccount:{fa:"حساب ادمین",ar:"حساب المسؤول",tr:"Admin Hesabı",ru:"Аккаунт админа",es:"Cuenta admin"},
   };
-  const pt=(k)=>premText[k]?.[lang]||premText[k]?.en||"";
+  const pt=(k)=>(premText[k]&&premText[k][lang])||(premText[k]&&premText[k].en)||"";
   if(isPremium&&(expiresAt||isAdmin)){
     return(<div className="fi">
       <div style={{textAlign:"center",marginBottom:24}}>
