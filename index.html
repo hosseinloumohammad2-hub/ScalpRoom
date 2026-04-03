@@ -2336,24 +2336,64 @@ function AdminPromo({token}){
   </div>);
 }
 
-/* ─── Contact Popup (iOS 26 style) ─── */
-function ContactPopup({onClose,onSupport}){
+/* ─── Contact Popup (iOS 26 style with payment) ─── */
+function ContactPopup({onClose,onSupport,plan,userId,token}){
   const{t,lang}=useLang();
   const[showCrypto,setShowCrypto]=useState(false);
   const[copied,setCopied]=useState("");
+  const[payStep,setPayStep]=useState("");
   const copyAddr=(addr,label)=>{navigator.clipboard?.writeText(addr);setCopied(label);setTimeout(()=>setCopied(""),2000)};
-  const payNote={fa:"پس از واریز، فیش پرداخت را به ادمین ارسال کنید",ar:"بعد التحويل، أرسل إيصال الدفع للمسؤول",tr:"Transfer sonrası ödeme dekontunu admin'e gönderin",ru:"После перевода отправьте квитанцию админу",es:"Después de transferir, envía el comprobante al admin"}[lang]||"After payment, send the receipt to admin";
+
+  const confirmPayment=async()=>{
+    if(!plan||!userId||!token)return;
+    setPayStep("confirming");
+    try{
+      await fetch(`${SB}/rest/v1/PaymentRequests`,{method:"POST",headers:H(token),body:JSON.stringify({
+        user_id:userId,plan_name:plan.dur,amount:plan.price,plan_days:plan.days,status:"pending"
+      })});
+      setPayStep("done");
+    }catch(e){setPayStep("")}
+  };
+
+  const g=(k)=>{const tx={
+    title:{fa:"چطور میخواید ارتباط برقرار کنید؟",en:"How would you like to connect?",ar:"كيف تريد التواصل؟",tr:"Nasıl iletişim kurmak istersiniz?",ru:"Как вы хотите связаться?",es:"¿Cómo te gustaría conectarte?"},
+    tgChat:{fa:"چت در تلگرام",en:"Chat on Telegram",ar:"الدردشة في تلغرام",tr:"Telegram'da sohbet",ru:"Чат в Телеграм",es:"Chat en Telegram"},
+    appSupport:{fa:"پشتیبانی اپ",en:"In-App Support",ar:"دعم التطبيق",tr:"Uygulama Desteği",ru:"Поддержка в приложении",es:"Soporte en la app"},
+    directChat:{fa:"چت مستقیم با ادمین",en:"Direct chat with admin",ar:"دردشة مباشرة مع المسؤول",tr:"Admin ile doğrudan sohbet",ru:"Прямой чат с админом",es:"Chat directo con admin"},
+    payTether:{fa:"پرداخت با تتر",en:"Pay with Tether (USDT)",ar:"الدفع بالتيثر",tr:"Tether ile Öde",ru:"Оплата Tether",es:"Pagar con Tether"},
+    sendExact:{fa:"مبلغ دقیق زیر را واریز کنید:",en:"Send exact amount:",ar:"حوّل المبلغ أدناه بالضبط:",tr:"Aşağıdaki tutarı gönderin:",ru:"Отправьте точную сумму:",es:"Envía el monto exacto:"},
+    iPaid:{fa:"واریز کردم ✓",en:"I have paid ✓",ar:"لقد دفعت ✓",tr:"Ödedim ✓",ru:"Я оплатил ✓",es:"Ya pagué ✓"},
+    processing:{fa:"در حال ثبت...",en:"Processing...",ar:"جارٍ التسجيل...",tr:"Kaydediliyor...",ru:"Регистрация...",es:"Registrando..."},
+    doneTitle:{fa:"درخواست ثبت شد!",en:"Request submitted!",ar:"تم تسجيل الطلب!",tr:"Talep kaydedildi!",ru:"Запрос отправлен!",es:"¡Solicitud registrada!"},
+    doneDesc:{fa:"پس از تأیید ادمین، اشتراکتون فعال میشه.",en:"Your subscription will be activated after admin confirmation.",ar:"سيتم تفعيل اشتراكك بعد تأكيد المسؤول.",tr:"Admin onayından sonra aboneliğiniz aktif olacak.",ru:"Подписка активируется после подтверждения админа.",es:"Tu suscripción se activará tras la confirmación del admin."},
+    cancel:{fa:"بستن",en:"Cancel",ar:"إلغاء",tr:"İptal",ru:"Отмена",es:"Cancelar"},
+  };return tx[k]?.[lang]||tx[k]?.en||""};
+
+  if(payStep==="done"){
+    return(<div className="modal-overlay" onClick={onClose} style={{alignItems:"flex-end",padding:0}}>
+      <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:430,background:"var(--bg)",borderRadius:"20px 20px 0 0",padding:"24px 16px calc(env(safe-area-inset-bottom,12px) + 16px)",animation:"fi .2s ease",textAlign:"center"}}>
+        <div style={{width:60,height:60,borderRadius:"50%",background:"color-mix(in srgb,var(--G) 10%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}>
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--G)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div style={{fontSize:18,fontWeight:700,marginBottom:8}}>{g("doneTitle")}</div>
+        <div style={{fontSize:13,color:"var(--tx2)",lineHeight:1.6,marginBottom:6}}>{g("doneDesc")}</div>
+        {plan&&<div style={{fontSize:12,color:"var(--dm)",marginBottom:20}}>{plan.dur} — ${plan.price} USDT</div>}
+        <div onClick={onClose} className="bt" style={{background:"var(--G)"}}>OK</div>
+      </div>
+    </div>);
+  }
+
   return(<div className="modal-overlay" onClick={onClose} style={{alignItems:"flex-end",padding:0}}>
-    <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:430,background:"var(--bg)",borderRadius:"20px 20px 0 0",padding:"8px 16px calc(env(safe-area-inset-bottom,12px) + 16px)",animation:"fi .2s ease",maxHeight:"85vh",overflowY:"auto"}}>
+    <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:430,background:"var(--bg)",borderRadius:"20px 20px 0 0",padding:"8px 16px calc(env(safe-area-inset-bottom,12px) + 16px)",animation:"fi .2s ease",maxHeight:"90vh",overflowY:"auto"}}>
       <div style={{width:36,height:4,borderRadius:2,background:"var(--brd2)",margin:"0 auto 16px"}}/>
       <div style={{textAlign:"center",marginBottom:18}}>
-        <div style={{fontSize:15,fontWeight:700}}>{{fa:"چطور میخواید ارتباط برقرار کنید؟",ar:"كيف تريد التواصل؟",tr:"Nasıl iletişim kurmak istersiniz?",ru:"Как вы хотите связаться?",es:"¿Cómo te gustaría conectarte?"}[lang]||"How would you like to connect?"}</div>
+        <div style={{fontSize:15,fontWeight:700}}>{g("title")}</div>
       </div>
       <a href="https://t.me/hosenlou" target="_blank" rel="noopener" onClick={onClose} style={{display:"flex",alignItems:"center",gap:12,padding:14,borderRadius:14,background:"color-mix(in srgb,#0088cc 6%,transparent)",border:"1px solid color-mix(in srgb,#0088cc 15%,transparent)",marginBottom:8,cursor:"pointer",textDecoration:"none"}}>
         <div style={{width:44,height:44,borderRadius:12,background:"#0088cc",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{IC.tg}</div>
         <div style={{flex:1}}>
           <div style={{fontSize:14,fontWeight:600,color:"#0088cc"}}>Telegram</div>
-          <div style={{fontSize:11,color:"var(--dm)",marginTop:2}}>{{fa:"چت در تلگرام",ar:"الدردشة في تلغرام",tr:"Telegram'da sohbet",ru:"Чат в Телеграм",es:"Chat en Telegram"}[lang]||"Chat on Telegram"}</div>
+          <div style={{fontSize:11,color:"var(--dm)",marginTop:2}}>{g("tgChat")}</div>
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </a>
@@ -2362,52 +2402,46 @@ function ContactPopup({onClose,onSupport}){
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
         </div>
         <div style={{flex:1}}>
-          <div style={{fontSize:14,fontWeight:600,color:"var(--B)"}}>{{fa:"پشتیبانی اپ",ar:"دعم التطبيق",tr:"Uygulama Desteği",ru:"Поддержка в приложении",es:"Soporte en la app"}[lang]||"In-App Support"}</div>
-          <div style={{fontSize:11,color:"var(--dm)",marginTop:2}}>{{fa:"چت مستقیم با ادمین",ar:"دردشة مباشرة مع المسؤول",tr:"Admin ile doğrudan sohbet",ru:"Прямой чат с админом",es:"Chat directo con admin"}[lang]||"Direct chat with admin"}</div>
+          <div style={{fontSize:14,fontWeight:600,color:"var(--B)"}}>{g("appSupport")}</div>
+          <div style={{fontSize:11,color:"var(--dm)",marginTop:2}}>{g("directChat")}</div>
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
-
-      {/* Pay with Tether */}
       <div onClick={()=>setShowCrypto(!showCrypto)} style={{display:"flex",alignItems:"center",gap:12,padding:14,borderRadius:14,background:"color-mix(in srgb,var(--G) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 15%,transparent)",marginBottom:8,cursor:"pointer"}}>
         <div style={{width:44,height:44,borderRadius:12,background:"#26A17B",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
           <span style={{fontSize:20,fontWeight:800,color:"#fff"}}>₮</span>
         </div>
         <div style={{flex:1}}>
-          <div style={{fontSize:14,fontWeight:600,color:"var(--G)"}}>{{fa:"پرداخت با تتر",ar:"الدفع بالتيثر",tr:"Tether ile Öde",ru:"Оплата Tether",es:"Pagar con Tether"}[lang]||"Pay with Tether (USDT)"}</div>
+          <div style={{fontSize:14,fontWeight:600,color:"var(--G)"}}>{g("payTether")}</div>
           <div style={{fontSize:11,color:"var(--dm)",marginTop:2}}>USDT — TRC20 / BEP20</div>
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{transform:showCrypto?"rotate(180deg)":"rotate(0)",transition:".2s"}}><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-
       {showCrypto&&<div style={{padding:14,borderRadius:14,background:"var(--bg2)",border:"1px solid var(--brd)",marginBottom:8}}>
-        {/* TRC20 */}
+        {plan&&<div style={{textAlign:"center",marginBottom:14,padding:12,borderRadius:12,background:"color-mix(in srgb,var(--G) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 15%,transparent)"}}>
+          <div style={{fontSize:11,color:"var(--dm)",fontWeight:600,marginBottom:4}}>{g("sendExact")}</div>
+          <div className="m" style={{fontSize:28,fontWeight:700,color:"var(--G)"}}>{plan.price} USDT</div>
+          <div style={{fontSize:11,color:"var(--dm)",marginTop:4}}>{plan.dur}</div>
+        </div>}
         <div style={{marginBottom:12}}>
           <div style={{fontSize:11,fontWeight:700,color:"var(--G)",marginBottom:6}}>Tether TRC20</div>
           <div style={{display:"flex",gap:6,alignItems:"center"}}>
             <div className="m" style={{flex:1,fontSize:10,fontWeight:500,color:"var(--tx2)",background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:8,padding:"8px 10px",wordBreak:"break-all",lineHeight:1.5}}>TUHhRUzfp9P6WKxoRNBGEWCooNDTLWiEdn</div>
-            <div onClick={()=>copyAddr("TUHhRUzfp9P6WKxoRNBGEWCooNDTLWiEdn","trc20")} style={{padding:"8px 12px",borderRadius:8,background:"color-mix(in srgb,var(--G) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 20%,transparent)",cursor:"pointer",fontSize:10,fontWeight:700,color:"var(--G)",flexShrink:0}}>
-              {copied==="trc20"?"✓":"Copy"}
-            </div>
+            <div onClick={()=>copyAddr("TUHhRUzfp9P6WKxoRNBGEWCooNDTLWiEdn","trc20")} style={{padding:"8px 12px",borderRadius:8,background:"color-mix(in srgb,var(--G) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 20%,transparent)",cursor:"pointer",fontSize:10,fontWeight:700,color:"var(--G)",flexShrink:0}}>{copied==="trc20"?"✓":"Copy"}</div>
           </div>
         </div>
-        {/* BEP20 */}
-        <div style={{marginBottom:12}}>
+        <div style={{marginBottom:14}}>
           <div style={{fontSize:11,fontWeight:700,color:"var(--Y)",marginBottom:6}}>Tether BEP20</div>
           <div style={{display:"flex",gap:6,alignItems:"center"}}>
             <div className="m" style={{flex:1,fontSize:10,fontWeight:500,color:"var(--tx2)",background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:8,padding:"8px 10px",wordBreak:"break-all",lineHeight:1.5}}>0xC64e0017f48a3b4Ae0A98aeF04f86b1253A1E215</div>
-            <div onClick={()=>copyAddr("0xC64e0017f48a3b4Ae0A98aeF04f86b1253A1E215","bep20")} style={{padding:"8px 12px",borderRadius:8,background:"color-mix(in srgb,var(--Y) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 20%,transparent)",cursor:"pointer",fontSize:10,fontWeight:700,color:"var(--Y)",flexShrink:0}}>
-              {copied==="bep20"?"✓":"Copy"}
-            </div>
+            <div onClick={()=>copyAddr("0xC64e0017f48a3b4Ae0A98aeF04f86b1253A1E215","bep20")} style={{padding:"8px 12px",borderRadius:8,background:"color-mix(in srgb,var(--Y) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 20%,transparent)",cursor:"pointer",fontSize:10,fontWeight:700,color:"var(--Y)",flexShrink:0}}>{copied==="bep20"?"✓":"Copy"}</div>
           </div>
         </div>
-        {/* Note */}
-        <div style={{padding:10,borderRadius:10,background:"color-mix(in srgb,var(--R) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 12%,transparent)",fontSize:11,color:"var(--R)",fontWeight:600,textAlign:"center",lineHeight:1.5}}>
-          ⚠ {payNote}
-        </div>
+        {plan&&userId&&<div onClick={confirmPayment} className="bt" style={{background:"var(--G)",opacity:payStep==="confirming"?.5:1}}>
+          {payStep==="confirming"?g("processing"):g("iPaid")}
+        </div>}
       </div>}
-
-      <div onClick={onClose} style={{textAlign:"center",padding:12,fontSize:13,color:"var(--dm)",fontWeight:600,cursor:"pointer"}}>{{fa:"بستن",ar:"إلغاء",tr:"İptal",ru:"Отмена",es:"Cancelar"}[lang]||"Cancel"}</div>
+      <div onClick={onClose} style={{textAlign:"center",padding:12,fontSize:13,color:"var(--dm)",fontWeight:600,cursor:"pointer"}}>{g("cancel")}</div>
     </div>
   </div>);
 }
@@ -2429,6 +2463,198 @@ function PremiumPopup({onClose,onGoPlans}){
       </div>
       <div onClick={onClose} style={{textAlign:"center",padding:12,fontSize:13,color:"var(--dm)",fontWeight:600,cursor:"pointer"}}>{{fa:"بعداً",ar:"ليس الآن",tr:"Şimdi değil",ru:"Не сейчас",es:"Ahora no"}[lang]||"Not now"}</div>
     </div>
+  </div>);
+}
+
+/* ─── Admin Payments ─── */
+function AdminPayments({token}){
+  const{lang}=useLang();
+  const[payments,setPayments]=useState([]);
+  const[users,setUsers]=useState({});
+  const[loading,setLoading]=useState(true);
+  const[processing,setProcessing]=useState(null);
+
+  const load=useCallback(async()=>{
+    try{
+      const r=await fetch(`${SB}/rest/v1/PaymentRequests?order=created_at.desc`,{headers:H(token)});
+      const d=await r.json();
+      if(Array.isArray(d))setPayments(d);
+      const us=await fetch(`${SB}/rest/v1/Users?select=id,full_name,email,membership`,{headers:H(token)});
+      const usData=await us.json();
+      if(Array.isArray(usData)){const m={};usData.forEach(u=>m[u.id]=u);setUsers(m)}
+    }catch(e){}
+    setLoading(false);
+  },[token]);
+
+  useEffect(()=>{load()},[load]);
+
+  const approve=async(p)=>{
+    setProcessing(p.id);
+    try{
+      // Update payment status
+      await fetch(`${SB}/rest/v1/PaymentRequests?id=eq.${p.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({status:"approved"})});
+      // Activate premium for user
+      const exp=new Date();exp.setDate(exp.getDate()+(p.plan_days||30));
+      await fetch(`${SB}/rest/v1/Users?id=eq.${p.user_id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({membership:"premium",premium_expires_at:exp.toISOString()})});
+      load();
+    }catch(e){}
+    setProcessing(null);
+  };
+
+  const reject=async(id)=>{
+    if(!confirm(lang==="fa"?"رد شود؟":"Reject?"))return;
+    setProcessing(id);
+    try{
+      await fetch(`${SB}/rest/v1/PaymentRequests?id=eq.${id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({status:"rejected"})});
+      load();
+    }catch(e){}
+    setProcessing(null);
+  };
+
+  const statusColor=(s)=>s==="approved"?"var(--G)":s==="rejected"?"var(--R)":"var(--Y)";
+  const statusLabel=(s)=>({pending:lang==="fa"?"در انتظار":"Pending",approved:lang==="fa"?"تأیید شده":"Approved",rejected:lang==="fa"?"رد شده":"Rejected"}[s]||s);
+  const pending=payments.filter(p=>p.status==="pending");
+  const history=payments.filter(p=>p.status!=="pending");
+
+  return(<div>
+    <div style={{fontSize:14,fontWeight:700,marginBottom:14}}>{lang==="fa"?"💳 درخواست‌های پرداخت":"💳 Payment Requests"}</div>
+
+    {loading&&<div style={{textAlign:"center",padding:30}}><div className="ptr-spinner"/></div>}
+
+    {/* Pending */}
+    {pending.length>0&&<div style={{fontSize:12,fontWeight:600,color:"var(--Y)",marginBottom:8}}>{lang==="fa"?"در انتظار تأیید":"Pending"} ({pending.length})</div>}
+    {pending.map(p=>{
+      const u=users[p.user_id];
+      return<div key={p.id} className="cd" style={{padding:14,marginBottom:8,borderColor:"color-mix(in srgb,var(--Y) 25%,transparent)",background:"color-mix(in srgb,var(--Y) 3%,transparent)"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+          <div>
+            <div style={{fontSize:14,fontWeight:700}}>{u?.full_name||"Unknown"}</div>
+            <div style={{fontSize:10,color:"var(--dm)"}}>{u?.email}</div>
+          </div>
+          <div style={{textAlign:"right"}}>
+            <div className="m" style={{fontSize:22,fontWeight:700,color:"var(--G)"}}>${p.amount}</div>
+            <div style={{fontSize:10,color:"var(--dm)"}}>{p.plan_name}</div>
+          </div>
+        </div>
+        <div style={{fontSize:10,color:"var(--dm)",marginBottom:10}}>{new Date(p.created_at).toLocaleDateString()} {new Date(p.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>
+        <div style={{display:"flex",gap:6}}>
+          <button className="bt" style={{background:"var(--G)",flex:1,padding:12,fontSize:13,opacity:processing===p.id?.5:1}} onClick={()=>approve(p)} disabled={processing===p.id}>
+            {processing===p.id?"...":(lang==="fa"?"✓ تأیید و فعال‌سازی":"✓ Approve & Activate")}
+          </button>
+          <button className="bt" style={{background:"var(--R)",flex:"0 0 auto",padding:"12px 16px",fontSize:13,opacity:processing===p.id?.5:1}} onClick={()=>reject(p.id)} disabled={processing===p.id}>
+            ✗
+          </button>
+        </div>
+      </div>
+    })}
+
+    {!loading&&pending.length===0&&<div style={{textAlign:"center",color:"var(--dm)",fontSize:12,padding:20,marginBottom:12}}>{lang==="fa"?"درخواست پرداخت جدیدی نیست":"No pending payments"}</div>}
+
+    {/* History */}
+    {history.length>0&&<>
+      <div style={{fontSize:12,fontWeight:600,color:"var(--dm)",marginTop:12,marginBottom:8}}>{lang==="fa"?"تاریخچه":"History"} ({history.length})</div>
+      {history.map(p=>{
+        const u=users[p.user_id];
+        return<div key={p.id} className="cd" style={{padding:10,marginBottom:4,display:"flex",alignItems:"center",gap:10}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:12,fontWeight:600}}>{u?.full_name||"Unknown"}</div>
+            <div style={{fontSize:10,color:"var(--dm)"}}>{p.plan_name} · ${p.amount} · {new Date(p.created_at).toLocaleDateString()}</div>
+          </div>
+          <span style={{fontSize:9,fontWeight:700,color:statusColor(p.status),background:`color-mix(in srgb,${statusColor(p.status)} 10%,transparent)`,padding:"3px 8px",borderRadius:6}}>{statusLabel(p.status)}</span>
+        </div>
+      })}
+    </>}
+  </div>);
+}
+
+/* ─── Admin Payments ─── */
+function AdminPayments({token}){
+  const{lang}=useLang();
+  const[payments,setPayments]=useState([]);
+  const[users,setUsers]=useState({});
+  const[loading,setLoading]=useState(true);
+
+  const load=useCallback(async()=>{
+    try{
+      const r=await fetch(`${SB}/rest/v1/PaymentRequests?order=created_at.desc`,{headers:H(token)});
+      const d=await r.json();
+      if(Array.isArray(d))setPayments(d);
+      const us=await fetch(`${SB}/rest/v1/Users?select=id,full_name,email,membership`,{headers:H(token)});
+      const usData=await us.json();
+      if(Array.isArray(usData)){const m={};usData.forEach(u=>m[u.id]=u);setUsers(m)}
+    }catch(e){}
+    setLoading(false);
+  },[token]);
+
+  useEffect(()=>{load()},[load]);
+
+  const approve=async(pay)=>{
+    // Update payment status
+    await fetch(`${SB}/rest/v1/PaymentRequests?id=eq.${pay.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({status:"approved"})});
+    // Activate premium for user
+    const exp=new Date();exp.setDate(exp.getDate()+(pay.plan_days||30));
+    await fetch(`${SB}/rest/v1/Users?id=eq.${pay.user_id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({membership:"premium",premium_expires_at:exp.toISOString()})});
+    load();
+  };
+
+  const reject=async(id)=>{
+    if(!confirm(lang==="fa"?"رد شود؟":"Reject?"))return;
+    await fetch(`${SB}/rest/v1/PaymentRequests?id=eq.${id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({status:"rejected"})});
+    load();
+  };
+
+  const statusColor=(s)=>s==="approved"?"var(--G)":s==="rejected"?"var(--R)":"var(--Y)";
+  const statusLabel=(s)=>s==="approved"?(lang==="fa"?"تأیید شده":"Approved"):s==="rejected"?(lang==="fa"?"رد شده":"Rejected"):(lang==="fa"?"در انتظار":"Pending");
+  const pending=payments.filter(p=>p.status==="pending");
+  const history=payments.filter(p=>p.status!=="pending");
+
+  return(<div>
+    <div style={{fontSize:14,fontWeight:700,marginBottom:14}}>{lang==="fa"?"💳 درخواست‌های پرداخت":"💳 Payment Requests"}</div>
+
+    {loading&&<div style={{textAlign:"center",padding:30}}><div className="ptr-spinner"/></div>}
+
+    {!loading&&pending.length===0&&<div style={{textAlign:"center",color:"var(--dm)",fontSize:13,padding:20,marginBottom:16}}>{lang==="fa"?"درخواست جدیدی نیست":"No pending requests"}</div>}
+
+    {pending.length>0&&<>
+      <div style={{fontSize:12,fontWeight:600,color:"var(--Y)",marginBottom:8}}>{lang==="fa"?"⏳ در انتظار تأیید":"⏳ Pending"} ({pending.length})</div>
+      {pending.map(p=>{
+        const u=users[p.user_id];
+        return<div key={p.id} className="cd" style={{padding:14,marginBottom:6,borderColor:"color-mix(in srgb,var(--Y) 25%,transparent)",background:"color-mix(in srgb,var(--Y) 3%,transparent)"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+            <div>
+              <div style={{fontSize:14,fontWeight:700}}>{u?.full_name||"Unknown"}</div>
+              <div style={{fontSize:10,color:"var(--dm)"}}>{u?.email}</div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div className="m" style={{fontSize:22,fontWeight:700,color:"var(--G)"}}>${p.amount}</div>
+              <div style={{fontSize:10,color:"var(--dm)"}}>{p.plan_name}</div>
+            </div>
+          </div>
+          <div style={{fontSize:10,color:"var(--dm)",marginBottom:10}}>{new Date(p.created_at).toLocaleDateString()} {new Date(p.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>
+          <div style={{display:"flex",gap:6}}>
+            <button className="bt" style={{background:"var(--G)",flex:1,padding:10,fontSize:12}} onClick={()=>approve(p)}>✓ {lang==="fa"?"تأیید و فعال‌سازی":"Approve & Activate"}</button>
+            <button className="bt" style={{background:"var(--R)",flex:1,padding:10,fontSize:12}} onClick={()=>reject(p.id)}>✗ {lang==="fa"?"رد":"Reject"}</button>
+          </div>
+        </div>
+      })}
+    </>}
+
+    {history.length>0&&<>
+      <div style={{fontSize:12,fontWeight:600,color:"var(--dm)",marginTop:16,marginBottom:8}}>{lang==="fa"?"تاریخچه":"History"} ({history.length})</div>
+      {history.map(p=>{
+        const u=users[p.user_id];
+        return<div key={p.id} className="cd" style={{padding:10,marginBottom:4}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:12,fontWeight:600}}>{u?.full_name||"Unknown"}</div>
+              <div style={{fontSize:10,color:"var(--dm)"}}>{p.plan_name} — ${p.amount}</div>
+            </div>
+            <span style={{fontSize:9,fontWeight:700,color:statusColor(p.status),padding:"3px 8px",borderRadius:6,background:`color-mix(in srgb,${statusColor(p.status)} 10%,transparent)`}}>{statusLabel(p.status)}</span>
+            <span style={{fontSize:9,color:"var(--dm)"}}>{new Date(p.created_at).toLocaleDateString()}</span>
+          </div>
+        </div>
+      })}
+    </>}
   </div>);
 }
 
@@ -2614,9 +2840,10 @@ function WhatWeCover({lang}){
 }
 
 /* ─── Plans ─── */
-function Plans({userProfile,goToSupport}){
+function Plans({userProfile,goToSupport,token}){
   const{t,lang}=useLang();
   const[showContact,setShowContact]=useState(false);
+  const[selectedPlan,setSelectedPlan]=useState(null);
   const{promo}=usePromo();
   const isPremium=userProfile?.membership==="premium";
   const expiresAt=userProfile?.premium_expires_at?new Date(userProfile.premium_expires_at):null;
@@ -2680,7 +2907,7 @@ function Plans({userProfile,goToSupport}){
         <div style={{fontSize:13,color:"var(--mu)",marginBottom:10}}>{pt("renew")||"Renew or extend your subscription"}</div>
         <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.tg} {{fa:"تماس با پشتیبانی",ar:"اتصل بالدعم",tr:"Destek İletişim",ru:"Связаться с поддержкой",es:"Contactar soporte"}[lang]||"Contact Support"}</div>
       </div>}
-      {showContact&&<ContactPopup onClose={()=>setShowContact(false)} onSupport={goToSupport}/>}
+      {showContact&&<ContactPopup onClose={()=>{setShowContact(false);setSelectedPlan(null)}} onSupport={goToSupport} plan={selectedPlan} userId={userProfile?.id} token={token}/>}
     </div>);
   }
   return(<div className="fi">
@@ -2720,7 +2947,7 @@ function Plans({userProfile,goToSupport}){
             {disc>0&&<div className="m" style={{fontSize:13,color:"var(--dm)",textDecoration:"line-through",fontWeight:500}}>${p.p}</div>}
             <span className="m" style={{fontSize:disc>0?24:22,fontWeight:700,color:disc>0?"var(--G)":"var(--tx)"}}>${disc>0?discPrice:p.p}</span>
           </div>
-          <div onClick={()=>setShowContact(true)} className="bt" style={{background:"var(--R)",padding:"10px 20px",width:"auto",fontSize:13,cursor:"pointer"}}>{t.subscribe}</div>
+          <div onClick={()=>{setSelectedPlan({dur:p.dur,price:disc>0?discPrice:p.p,days:p.days});setShowContact(true)}} className="bt" style={{background:"var(--R)",padding:"10px 20px",width:"auto",fontSize:13,cursor:"pointer"}}>{t.subscribe}</div>
         </div>
       </div>
     </div>})}
@@ -2732,7 +2959,7 @@ function Plans({userProfile,goToSupport}){
       <div style={{fontSize:13,color:"var(--mu)",lineHeight:1.7}}>{t.unlock}</div>
       <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:12,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.tg} {t.contact}</div>
     </div>
-    {showContact&&<ContactPopup onClose={()=>setShowContact(false)} onSupport={goToSupport}/>}
+    {showContact&&<ContactPopup onClose={()=>{setShowContact(false);setSelectedPlan(null)}} onSupport={goToSupport} plan={selectedPlan} userId={userProfile?.id} token={token}/>}
   </div>);
 }
 
@@ -2797,8 +3024,8 @@ function Adm({token,posts,signals,onR}){
   const savePost=async(id,data)=>{await api.patch("Posts",id,data,token);onR();setMs("Post updated!")};
   return(<div className="fi">
     <div style={{display:"flex",gap:4,marginBottom:14}}>
-      {["post","signal","manage","users","rewards","msg","support","sale"].map(tab=>
-        <div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:10,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{tab==="post"?t.post:tab==="signal"?t.signal:tab==="manage"?t.manage:tab==="users"?t.users:tab==="rewards"?"💰":tab==="msg"?"📬":tab==="support"?"💬":tab==="sale"?"🏷":""}</div>
+      {["post","signal","manage","users","rewards","msg","support","sale","pay"].map(tab=>
+        <div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{tab==="post"?t.post:tab==="signal"?t.signal:tab==="manage"?t.manage:tab==="users"?t.users:tab==="rewards"?"💰":tab==="msg"?"📬":tab==="support"?"💬":tab==="sale"?"🏷":tab==="pay"?"💳":""}</div>
       )}
     </div>
     {ms&&<div style={{background:ms.includes("!")&&!ms.includes("failed")?"color-mix(in srgb,var(--G) 8%,transparent)":"color-mix(in srgb,var(--R) 8%,transparent)",border:`1px solid ${ms.includes("!")&&!ms.includes("failed")?"color-mix(in srgb,var(--G) 15%,transparent)":"color-mix(in srgb,var(--R) 15%,transparent)"}`,borderRadius:10,padding:10,marginBottom:10,fontSize:13,color:ms.includes("!")&&!ms.includes("failed")?"var(--G)":"var(--R)"}}>{ms}</div>}
@@ -2910,6 +3137,7 @@ function Adm({token,posts,signals,onR}){
     {tb==="rewards"&&<AdminRewards token={token}/>}
     {tb==="support"&&<AdminSupportChat token={token}/>}
     {tb==="sale"&&<AdminPromo token={token}/>}
+    {tb==="pay"&&<AdminPayments token={token}/>}
     {tb==="msg"&&<>
       <div style={{fontSize:13,fontWeight:700,marginBottom:10}}>{lang==="fa"?"📬 ارسال پیام":"📬 Send Message"}</div>
       <input className="ip" placeholder={lang==="fa"?"عنوان پیام":"Message title"} value={msgTitle} onChange={e=>setMsgTitle(e.target.value)}/>
@@ -3352,7 +3580,7 @@ function App(){
     case"home":return<Home posts={posts} signals={sigs} msgs={msgs} go={goTab} goToPlans={()=>goToTabByKey("plans")} P={P} ok={ok} lastUpdate={lastUpdate} dark={dark} toggle={toggle} userProfile={up} token={tk} onR={load}/>;
     case"analysis":return<Analysis posts={posts} userProfile={up} msgs={msgs} token={tk} onR={load} goToPlans={()=>goToTabByKey("plans")}/>;
     case"signals":return<Sigs signals={sigs} userProfile={up} goToPlans={()=>goToTabByKey("plans")}/>;
-    case"plans":return<Plans userProfile={up} goToSupport={()=>{goToTabByKey("profile");setOpenSupport(true)}}/>;
+    case"plans":return<Plans userProfile={up} goToSupport={()=>{goToTabByKey("profile");setOpenSupport(true)}} token={tk}/>;
     case"admin":return<Adm token={tk} posts={posts} signals={sigs} onR={load}/>;
     case"profile":return<Prof user={usr} up={up} onOut={handleLogout} dark={dark} toggle={toggle} lang={lang} setLang={setLang} token={tk} onNameChange={(name)=>{setUp(prev=>prev?{...prev,full_name:name}:prev)}} openSupport={openSupport} onSupportOpened={()=>setOpenSupport(false)}/>;
     default:return null;
