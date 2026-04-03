@@ -2480,7 +2480,15 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
             <span style={{fontSize:10,color:"var(--dm)"}}>{p.created_at?new Date(p.created_at).toLocaleDateString():""}</span>
             {p.is_premium&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 6px",borderRadius:4}}>PRO</span>}
           </div>
-          {isAdmin&&<div style={{display:"flex",gap:4,marginTop:6}}>
+          {isAdmin&&<div style={{marginTop:6}}>
+            <div style={{display:"flex",gap:3,marginBottom:4}}>
+              {[{k:"forex",l:"FX"},{k:"crypto",l:"Crypto"},{k:"indices",l:"IDX"},{k:"stocks",l:"Stock"}].map(c=><div key={c.k} onClick={(e)=>{e.stopPropagation();api.patch("Posts",p.id,{dt_category:c.k},token).then(()=>{if(onR)onR()})}} style={{flex:1,padding:4,borderRadius:5,textAlign:"center",cursor:"pointer",fontSize:8,fontWeight:700,
+                background:(p.dt_category||"")==c.k?"color-mix(in srgb,var(--Y) 15%,transparent)":"transparent",
+                border:`1px solid ${(p.dt_category||"")==c.k?"color-mix(in srgb,var(--Y) 30%,transparent)":"var(--brd)"}`,
+                color:(p.dt_category||"")==c.k?"var(--Y)":"var(--dm)"
+              }}>{c.l}</div>)}
+            </div>
+            <div style={{display:"flex",gap:4}}>
             <div onClick={(e)=>{e.stopPropagation();generateShareCard("analysis",p)}} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:6,borderRadius:6,background:"color-mix(in srgb,var(--B) 8%,transparent)",cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)"}}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
               Share
@@ -2488,7 +2496,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
             <div onClick={(e)=>{e.stopPropagation();removeDayTrade(p.id)}} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:6,borderRadius:6,background:"color-mix(in srgb,var(--R) 8%,transparent)",cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--R)"}}>
               {IC.del} {{fa:"حذف",ar:"حذف",tr:"Kaldır",ru:"Удалить",es:"Eliminar"}[lang]||"Remove"}
             </div>
-          </div>}
+          </div></div>}
           {!isAdmin&&!locked&&<div onClick={(e)=>{e.stopPropagation();generateShareCard("analysis",p)}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:6,borderRadius:6,background:"color-mix(in srgb,var(--B) 8%,transparent)",cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)",marginTop:6}}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
             Share
