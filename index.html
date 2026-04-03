@@ -2234,8 +2234,8 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
       <div style={{display:"flex",alignItems:"center",gap:12}}>
         {visibleStories.length>0&&<StoryRing stories={visibleStories} seen={isStorySeen} onClick={()=>setShowStoryViewer(true)}/>}
         <div>
-          <div style={{fontSize:20,fontWeight:700,lineHeight:1.3}}>{greeting}، {firstName} 👋</div>
-          <div style={{fontSize:12,color:"var(--tx2)",marginTop:4}}>{{fa:"بازارها رو رصد کن و بهترین فرصت‌ها رو پیدا کن",ar:"تابع الأسواق واعثر على أفضل الفرص",tr:"Piyasaları takip edin ve en iyi fırsatları bulun",ru:"Следите за рынками и находите лучшие возможности",es:"Sigue los mercados y encuentra las mejores oportunidades"}[lang]||"Track markets and find the best opportunities"}</div>
+          <div style={{fontSize:16,fontWeight:700,lineHeight:1.3}}>{greeting}، {firstName}</div>
+          <div style={{fontSize:11,color:"var(--tx2)",marginTop:3}}>{{fa:"بازارها رو رصد کن و بهترین فرصت‌ها رو پیدا کن",ar:"تابع الأسواق واعثر على أفضل الفرص",tr:"Piyasaları takip edin ve en iyi fırsatları bulun",ru:"Следите за рынками и находите лучшие возможности",es:"Sigue los mercados y encuentra las mejores oportunidades"}[lang]||"Track markets and find the best opportunities"}</div>
         </div>
       </div>
       <div onClick={openMsgs} style={{position:"relative",cursor:"pointer",padding:6}}>
