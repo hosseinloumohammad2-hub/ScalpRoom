@@ -60,7 +60,7 @@ select{background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padd
 @keyframes storyFadeIn{from{opacity:0;transform:scale(1.05)}to{opacity:1;transform:scale(1)}}
 @keyframes storySlideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .story-ring{position:relative;width:62px;height:62px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent}
-.story-ring .ring-spin{position:absolute;top:0;left:0;width:100%;height:100%;animation:storyRingSpin 2s linear infinite}
+.story-ring .ring-spin{position:absolute;top:0;left:0;width:100%;height:100%;animation:storyRingSpin 4s linear infinite}
 .story-ring.seen .ring-spin{animation:none}
 .story-ring .ring-img{position:absolute;top:7px;left:7px;right:7px;bottom:7px;border-radius:50%;border:2.5px solid var(--bg);z-index:1;display:flex;align-items:center;justify-content:center;background:var(--card);overflow:hidden}
 .story-viewer{position:fixed;top:0;left:0;right:0;bottom:0;z-index:300;background:#000;display:flex;flex-direction:column;animation:storyFadeIn .25s ease;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
@@ -606,7 +606,7 @@ function StoryRing({stories,onClick,seen}){
             <stop offset="100%" stopColor="var(--brd2)"/>
           </linearGradient>
         </defs>
-        <circle cx="32" cy="32" r="30" fill="none" stroke={hasUnseen?"url(#storyGrad)":"var(--brd2)"} strokeWidth="3" strokeDasharray={hasUnseen?"60 30":"0"} strokeLinecap="round"/>
+        <circle cx="32" cy="32" r="30" fill="none" stroke={hasUnseen?"url(#storyGrad)":"var(--brd2)"} strokeWidth="3" strokeDasharray={hasUnseen?"85 8":"0"} strokeLinecap="round"/>
       </svg>
       <div className="ring-img">
         <span style={{fontSize:14,fontWeight:800,color:"var(--tx)",lineHeight:1,letterSpacing:-.5}}>Fx<span style={{color:"var(--R)",fontSize:16}}>.</span></span>
