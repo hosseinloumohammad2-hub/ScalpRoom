@@ -231,6 +231,16 @@ function usePrices(){
         setOk(true);setLastUpdate(new Date());return;
       }
     }catch(e){}
+    // Try Bonbast API as third fallback
+    try{
+      const r=await fetch("https://bonbast.amirhn.com/latest");
+      const d=await r.json();
+      if(d&&(d.usd_sell||d.usd)){
+        const usdVal=d.usd_sell||d.usd||"0";
+        setP({usd_sell:mkT("usd",usdVal),eur_sell:mkT("eur",d.eur_sell||d.eur||"0"),sekkeh:mkT("coin",d.emami||d.coin||"0"),gold18:mkT("gold",d.gold18||d.gol18||"0"),tether:mkT("tether",usdVal),rub:mkT("rub",d.rub||"0")});
+        setOk(true);setLastUpdate(new Date());return;
+      }
+    }catch(e){}
   },[]);
 
   useEffect(()=>{f();const i=setInterval(f,60000);return()=>clearInterval(i)},[f]);
@@ -2173,6 +2183,7 @@ function OnlineCounter({token,isAdmin}){
 /* ─── Iran Market Widget (fallback when API fails) ─── */
 function IranMarketWidget(){
   const{lang}=useLang();
+  const[status,setStatus]=useState("loading");
   const ref=useRef(null);
   const loaded=useRef(false);
   useEffect(()=>{
@@ -2183,6 +2194,10 @@ function IranMarketWidget(){
     iframe.style.width="100%";iframe.style.height="380px";iframe.style.border="none";iframe.style.borderRadius="12px";
     iframe.setAttribute("loading","lazy");
     iframe.setAttribute("sandbox","allow-scripts allow-same-origin");
+    iframe.onload=()=>{setStatus("loaded")};
+    iframe.onerror=()=>{setStatus("error")};
+    // Timeout fallback - if iframe shows 404, hide it after 5s
+    setTimeout(()=>{if(status==="loading")setStatus("loaded")},5000);
     ref.current.appendChild(iframe);
   },[]);
   return(<div className="cd" style={{marginBottom:12,padding:0,overflow:"hidden"}}>
@@ -2190,7 +2205,10 @@ function IranMarketWidget(){
       <img src="https://flagofiran.com/files/flag-of-iran-emoji-ios.png" width="18" height="18" alt="" style={{borderRadius:2}}/>
       <span style={{fontSize:13,fontWeight:700}}>{{fa:"بازار ایران",ar:"السوق الإيرانية",tr:"İran Piyasası",ru:"Рынок Ирана",es:"Mercado Iraní"}[lang]||"Iran Market"}</span>
     </div>
-    <div ref={ref}/>
+    <div ref={ref} style={{minHeight:100}}/>
+    {status==="loading"&&<div style={{textAlign:"center",padding:20,fontSize:11,color:"var(--dm)"}}>{
+      {fa:"در حال بارگذاری...",ar:"جاري التحميل...",tr:"Yükleniyor...",ru:"Загрузка...",es:"Cargando..."}[lang]||"Loading..."
+    }</div>}
   </div>);
 }
 
