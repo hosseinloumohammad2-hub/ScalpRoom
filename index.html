@@ -1219,30 +1219,41 @@ function getDeviceFingerprint(){
 function useActivityTracker(userId,token){
   useEffect(()=>{
     if(!userId||!token)return;
+    // Update last_seen immediately and every 30 seconds
+    const updateLastSeen=()=>{
+      fetch(`${SB}/rest/v1/Users?id=eq.${userId}`,{method:"PATCH",headers:H(token),body:JSON.stringify({last_seen:new Date().toISOString()})}).catch(()=>{});
+    };
+    updateLastSeen();
+    const lsInterval=setInterval(updateLastSeen,30000);
+
     const today=new Date().toISOString().slice(0,10);
     const key="fx_last_activity";
-    try{if(localStorage.getItem(key)===today)return;localStorage.setItem(key,today)}catch(e){}
-    // Log daily activity
-    fetch(`${SB}/rest/v1/ActivityLog`,{method:"POST",headers:H(token),body:JSON.stringify({user_id:userId,login_date:today})}).catch(()=>{});
-    // Save fingerprint
-    const fp=getDeviceFingerprint();
-    fetch(`${SB}/rest/v1/DeviceFingerprints`,{method:"POST",headers:{...H(token),Prefer:"return=minimal"},body:JSON.stringify({user_id:userId,fingerprint:fp})}).catch(()=>{});
-    // Check if this user was reward-referred & update active_days
-    const updateMyRef=async()=>{
-      try{
-        const myRef=await fetch(`${SB}/rest/v1/RewardReferrals?referred_id=eq.${userId}&select=id,active_days,verified`,{headers:H(token)});
-        const d=await myRef.json();
-        if(Array.isArray(d)&&d[0]&&!d[0].verified){
-          const actR=await fetch(`${SB}/rest/v1/ActivityLog?user_id=eq.${userId}&select=login_date`,{headers:H(token)});
-          const actData=await actR.json();
-          const days=Array.isArray(actData)?actData.length:0;
-          const updates={active_days:days};
-          if(days>=3)updates.verified=true;
-          await fetch(`${SB}/rest/v1/RewardReferrals?id=eq.${d[0].id}`,{method:"PATCH",headers:H(token),body:JSON.stringify(updates)});
-        }
-      }catch(e){}
-    };
-    updateMyRef();
+    const alreadyLogged=(() => {try{return localStorage.getItem(key)===today}catch(e){return false}})();
+    if(!alreadyLogged){
+      try{localStorage.setItem(key,today)}catch(e){}
+      // Log daily activity
+      fetch(`${SB}/rest/v1/ActivityLog`,{method:"POST",headers:H(token),body:JSON.stringify({user_id:userId,login_date:today})}).catch(()=>{});
+      // Save fingerprint
+      const fp=getDeviceFingerprint();
+      fetch(`${SB}/rest/v1/DeviceFingerprints`,{method:"POST",headers:{...H(token),Prefer:"return=minimal"},body:JSON.stringify({user_id:userId,fingerprint:fp})}).catch(()=>{});
+      // Check if this user was reward-referred & update active_days
+      const updateMyRef=async()=>{
+        try{
+          const myRef=await fetch(`${SB}/rest/v1/RewardReferrals?referred_id=eq.${userId}&select=id,active_days,verified`,{headers:H(token)});
+          const d=await myRef.json();
+          if(Array.isArray(d)&&d[0]&&!d[0].verified){
+            const actR=await fetch(`${SB}/rest/v1/ActivityLog?user_id=eq.${userId}&select=login_date`,{headers:H(token)});
+            const actData=await actR.json();
+            const days=Array.isArray(actData)?actData.length:0;
+            const updates={active_days:days};
+            if(days>=3)updates.verified=true;
+            await fetch(`${SB}/rest/v1/RewardReferrals?id=eq.${d[0].id}`,{method:"PATCH",headers:H(token),body:JSON.stringify(updates)});
+          }
+        }catch(e){}
+      };
+      updateMyRef();
+    }
+    return()=>clearInterval(lsInterval);
   },[userId,token]);
 }
 
@@ -2138,11 +2149,10 @@ function useOnlineCount(token){
     if(!token)return;
     const fetchCount=async()=>{
       try{
-        const today=new Date().toISOString().slice(0,10);
-        const r=await fetch(`${SB}/rest/v1/ActivityLog?login_date=eq.${today}&select=user_id`,{headers:H(token)});
+        const fiveMinAgo=new Date(Date.now()-5*60*1000).toISOString();
+        const r=await fetch(`${SB}/rest/v1/Users?last_seen=gte.${fiveMinAgo}&select=id`,{headers:H(token)});
         const d=await r.json();
-        const realCount=Array.isArray(d)?new Set(d.map(x=>x.user_id)).size:0;
-        setCount(realCount);
+        setCount(Array.isArray(d)?d.length:0);
       }catch(e){setCount(0)}
     };
     fetchCount();
@@ -3406,11 +3416,30 @@ function Adm({token,posts,signals,onR}){
       {users.map(u=>{
         const exp=u.premium_expires_at?new Date(u.premium_expires_at):null;
         const dLeft=exp?Math.max(0,Math.ceil((exp-new Date())/(1000*60*60*24))):0;
+        const ls=u.last_seen?new Date(u.last_seen):null;
+        const isOnline=ls&&(Date.now()-ls.getTime())<5*60*1000;
+        const lastSeenText=(()=>{
+          if(!ls)return lang==="fa"?"هرگز":"Never";
+          if(isOnline)return lang==="fa"?"آنلاین":"Online";
+          const diff=Date.now()-ls.getTime();
+          const mins=Math.floor(diff/60000);
+          if(mins<60)return lang==="fa"?`${mins} دقیقه پیش`:`${mins}m ago`;
+          const hrs=Math.floor(mins/60);
+          if(hrs<24)return lang==="fa"?`${hrs} ساعت پیش`:`${hrs}h ago`;
+          const days=Math.floor(hrs/24);
+          return lang==="fa"?`${days} روز پیش`:`${days}d ago`;
+        })();
         return<div key={u.id} className="cd" style={{padding:12,marginBottom:4}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{width:32,height:32,borderRadius:"50%",background:"var(--bg)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,flexShrink:0}}>{(u.full_name||u.email||"?")[0].toUpperCase()}</div>
+          <div style={{position:"relative"}}>
+            <div style={{width:32,height:32,borderRadius:"50%",background:"var(--bg)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,flexShrink:0}}>{(u.full_name||u.email||"?")[0].toUpperCase()}</div>
+            <div style={{position:"absolute",bottom:-1,right:-1,width:10,height:10,borderRadius:"50%",background:isOnline?"var(--G)":"var(--dm)",border:"2px solid var(--card)"}}/>
+          </div>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:12,fontWeight:600}}>{u.full_name||"No name"}</div>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <span style={{fontSize:12,fontWeight:600}}>{u.full_name||"No name"}</span>
+              <span style={{fontSize:9,fontWeight:600,color:isOnline?"var(--G)":"var(--dm)"}}>{lastSeenText}</span>
+            </div>
             <div style={{fontSize:10,color:"var(--dm)"}}>{u.email}</div>
             <div style={{fontSize:9,fontWeight:600,marginTop:2,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
               <span style={{color:"var(--mu)"}}>🎁 {refCounts[u.id]||0}/10</span>
