@@ -3208,10 +3208,19 @@ function Adm({token,posts,signals,onR}){
   const saveSig=async(id,data)=>{await api.patch("Signals",id,data,token);onR();setMs("Signal updated!")};
   const savePost=async(id,data)=>{await api.patch("Posts",id,data,token);onR();setMs("Post updated!")};
   return(<div className="fi">
-    <div style={{display:"flex",gap:4,marginBottom:14}}>
-      {["post","signal","manage","users","rewards","msg","story","support","sale","pay"].map(tab=>
-        <div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{tab==="post"?t.post:tab==="signal"?t.signal:tab==="manage"?t.manage:tab==="users"?t.users:tab==="rewards"?"💰":tab==="msg"?"📬":tab==="story"?"📸":tab==="support"?"💬":tab==="sale"?"🏷":tab==="pay"?"💳":""}</div>
-      )}
+    <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:14}}>
+      <div style={{display:"flex",gap:4}}>
+        {["post","signal","manage","users","rewards"].map(tab=>{
+          const labels={post:lang==="fa"?"پست":"Post",signal:lang==="fa"?"سیگنال":"Signal",manage:lang==="fa"?"مدیریت":"Manage",users:lang==="fa"?"کاربران":"Users",rewards:lang==="fa"?"جوایز":"Rewards"};
+          return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{labels[tab]}</div>
+        })}
+      </div>
+      <div style={{display:"flex",gap:4}}>
+        {["msg","story","support","sale","pay"].map(tab=>{
+          const labels={msg:lang==="fa"?"پیام":"Message",story:lang==="fa"?"استوری":"Story",support:lang==="fa"?"پشتیبانی":"Support",sale:lang==="fa"?"تخفیف":"Sale",pay:lang==="fa"?"پرداخت":"Payment"};
+          return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{labels[tab]}</div>
+        })}
+      </div>
     </div>
     {ms&&<div style={{background:ms.includes("!")&&!ms.includes("failed")?"color-mix(in srgb,var(--G) 8%,transparent)":"color-mix(in srgb,var(--R) 8%,transparent)",border:`1px solid ${ms.includes("!")&&!ms.includes("failed")?"color-mix(in srgb,var(--G) 15%,transparent)":"color-mix(in srgb,var(--R) 15%,transparent)"}`,borderRadius:10,padding:10,marginBottom:10,fontSize:13,color:ms.includes("!")&&!ms.includes("failed")?"var(--G)":"var(--R)"}}>{ms}</div>}
     {tb==="post"&&<>
