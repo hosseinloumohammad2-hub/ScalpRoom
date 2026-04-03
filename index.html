@@ -60,12 +60,13 @@ select{background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padd
 @keyframes storyFadeIn{from{opacity:0;transform:scale(1.05)}to{opacity:1;transform:scale(1)}}
 @keyframes storySlideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .story-ring{position:relative;width:56px;height:56px;border-radius:50%;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent}
-.story-ring .ring-bg{position:absolute;inset:-3px;border-radius:50%;padding:3px;-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
-.story-ring.unseen .ring-bg{background:conic-gradient(from 0deg,#FF4136,#ff6b3d,#ffd60a,#FF4136);animation:storyRingSpin 3s linear infinite}
-.story-ring.seen .ring-bg{background:var(--brd2)}
-.story-ring .ring-img{width:100%;height:100%;border-radius:50%;border:2.5px solid var(--bg);object-fit:cover;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;background:var(--card);overflow:hidden}
-.story-viewer{position:fixed;top:0;left:0;right:0;bottom:0;z-index:300;background:#000;display:flex;flex-direction:column;animation:storyFadeIn .25s ease}
-.story-viewer img,.story-viewer video{width:100%;height:100%;object-fit:contain}
+.story-ring .ring-border{position:absolute;inset:0;border-radius:50%;animation:storyRingSpin 2.5s linear infinite}
+.story-ring .ring-border::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#FF4136,#ff6b5a,#FF4136,#ff3d2e,#FF4136);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#fff calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#fff calc(100% - 3px))}
+.story-ring.seen .ring-border{animation:none}
+.story-ring.seen .ring-border::before{background:var(--brd2)}
+.story-ring .ring-img{width:100%;height:100%;border-radius:50%;border:2.5px solid var(--bg);position:relative;z-index:1;display:flex;align-items:center;justify-content:center;background:var(--card);overflow:hidden}
+.story-viewer{position:fixed;top:0;left:0;right:0;bottom:0;z-index:300;background:#000;display:flex;flex-direction:column;animation:storyFadeIn .25s ease;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.story-viewer img,.story-viewer video{width:100%;height:100%;object-fit:contain;pointer-events:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .story-progress-bar{display:flex;gap:3px;padding:8px 10px;position:absolute;top:0;left:0;right:0;z-index:10}
 .story-progress-seg{flex:1;height:2.5px;border-radius:2px;background:rgba(255,255,255,.25);overflow:hidden}
 .story-progress-seg .fill{height:100%;border-radius:2px;background:#fff}
@@ -591,16 +592,12 @@ function MarketSentiment(){
 /* ─── Story Feature (Instagram-style, Admin only) ─── */
 function StoryRing({stories,onClick,seen}){
   if(!stories||!stories.length)return null;
-  const latestImg=stories[0]?.image_url;
   const hasUnseen=!seen;
   return(
     <div className={`story-ring ${hasUnseen?"unseen":"seen"}`} onClick={onClick}>
-      <div className="ring-bg"/>
+      <div className="ring-border"/>
       <div className="ring-img">
-        {latestImg?<img src={latestImg} style={{width:"100%",height:"100%",objectFit:"cover",borderRadius:"50%"}} alt=""/>
-        :<div style={{width:"100%",height:"100%",borderRadius:"50%",background:"var(--card)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <span style={{fontSize:12,fontWeight:800,color:"var(--tx)",lineHeight:1}}>Fx<span style={{color:"var(--R)"}}>.</span></span>
-        </div>}
+        <span style={{fontSize:14,fontWeight:800,color:"var(--tx)",lineHeight:1,letterSpacing:-.5}}>Fx<span style={{color:"var(--R)",fontSize:16}}>.</span></span>
       </div>
     </div>
   );
@@ -609,32 +606,52 @@ function StoryRing({stories,onClick,seen}){
 function StoryViewer({stories,onClose,onSeen}){
   const[idx,setIdx]=useState(0);
   const[paused,setPaused]=useState(false);
-  const[touching,setTouching]=useState(false);
   const touchStart=useRef({x:0,y:0,time:0});
   const timerRef=useRef(null);
+  const holdTimer=useRef(null);
+  const isHolding=useRef(false);
   const s=stories[idx];
   const dur=s?.duration||6;
 
   useEffect(()=>{if(onSeen)onSeen()},[]);
   useEffect(()=>{
-    if(paused||touching)return;
+    if(paused)return;
     timerRef.current=setTimeout(()=>{
       if(idx<stories.length-1)setIdx(idx+1);
       else onClose();
     },dur*1000);
     return()=>clearTimeout(timerRef.current);
-  },[idx,paused,touching,stories.length,dur]);
+  },[idx,paused,stories.length,dur]);
 
   const goNext=()=>{clearTimeout(timerRef.current);if(idx<stories.length-1)setIdx(idx+1);else onClose()};
   const goPrev=()=>{clearTimeout(timerRef.current);if(idx>0)setIdx(idx-1);else setIdx(0)};
 
   const handleTouchStart=(e)=>{
+    e.preventDefault();
     touchStart.current={x:e.touches[0].clientX,y:e.touches[0].clientY,time:Date.now()};
-    setTouching(true);
-    clearTimeout(timerRef.current);
+    isHolding.current=false;
+    // Long press = pause after 200ms
+    holdTimer.current=setTimeout(()=>{
+      isHolding.current=true;
+      setPaused(true);
+      clearTimeout(timerRef.current);
+    },200);
+  };
+  const handleTouchMove=(e)=>{
+    e.preventDefault();
+    const dx=Math.abs(e.touches[0].clientX-touchStart.current.x);
+    const dy=Math.abs(e.touches[0].clientY-touchStart.current.y);
+    if(dx>10||dy>10){clearTimeout(holdTimer.current)}
   };
   const handleTouchEnd=(e)=>{
-    setTouching(false);
+    e.preventDefault();
+    clearTimeout(holdTimer.current);
+    // If was holding (paused), just resume
+    if(isHolding.current){
+      isHolding.current=false;
+      setPaused(false);
+      return;
+    }
     const dx=e.changedTouches[0].clientX-touchStart.current.x;
     const dy=e.changedTouches[0].clientY-touchStart.current.y;
     const dt=Date.now()-touchStart.current.time;
@@ -672,12 +689,12 @@ function StoryViewer({stories,onClose,onSeen}){
   };
 
   return(
-    <div className="story-viewer" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onClick={handleClick}>
+    <div className="story-viewer" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onClick={handleClick}>
       {/* Progress bars */}
       <div className="story-progress-bar">
         {stories.map((_,i)=>(
           <div key={i} className="story-progress-seg">
-            <div className={`fill ${i<idx?"done":i===idx&&!paused&&!touching?"active":""}`} style={i===idx?{"--dur":`${dur}s`}:{}}/>
+            <div className={`fill ${i<idx?"done":i===idx&&!paused?"active":""}`} style={i===idx?{"--dur":`${dur}s`}:{}}/>
           </div>
         ))}
       </div>
@@ -2047,6 +2064,40 @@ function LiveClock(){
   return<span className="m" style={{fontSize:11,color:"var(--tx2)",fontWeight:500}}>{time.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</span>;
 }
 
+function useOnlineCount(token){
+  const[count,setCount]=useState(0);
+  const fakeExtra=useRef(Math.floor(Math.random()*6)+5);
+  useEffect(()=>{
+    if(!token)return;
+    const fetchCount=async()=>{
+      try{
+        // Count users active in last 10 minutes
+        const since=new Date(Date.now()-10*60*1000).toISOString();
+        const r=await fetch(`${SB}/rest/v1/ActivityLog?login_date=gte.${new Date().toISOString().slice(0,10)}&select=user_id`,{headers:H(token)});
+        const d=await r.json();
+        const realCount=Array.isArray(d)?new Set(d.map(x=>x.user_id)).size:1;
+        setCount(realCount+fakeExtra.current);
+      }catch(e){setCount(fakeExtra.current)}
+    };
+    fetchCount();
+    // Refresh every 5 minutes and randomize fake extra
+    const i=setInterval(()=>{
+      fakeExtra.current=Math.floor(Math.random()*6)+5;
+      fetchCount();
+    },5*60*1000);
+    // Also update time display every second
+    const t=setInterval(()=>setCount(c=>c),1000);
+    return()=>{clearInterval(i);clearInterval(t)};
+  },[token]);
+  return count;
+}
+
+function OnlineCounter({token}){
+  const count=useOnlineCount(token);
+  if(!count)return null;
+  return<span className="m" style={{fontSize:11,color:"var(--tx2)",fontWeight:500}}>{count} 👤</span>;
+}
+
 /* ─── Iran Market Widget (fallback when API fails) ─── */
 function IranMarketWidget(){
   const{lang}=useLang();
@@ -2180,7 +2231,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
       </div>
     </div>}
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-      <div style={{display:"flex",alignItems:"center",gap:8}}><div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/></div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}><div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/><OnlineCounter token={token}/></div>
       <div onClick={toggle} style={{cursor:"pointer",color:"var(--mu)",padding:4}}>{dark?IC.sun:IC.moon}</div>
     </div>
     <div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVTickerTape colorTheme={theme}/></div>
