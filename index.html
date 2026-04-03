@@ -59,12 +59,10 @@ select{background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padd
 @keyframes storyProgress{from{width:0}to{width:100%}}
 @keyframes storyFadeIn{from{opacity:0;transform:scale(1.05)}to{opacity:1;transform:scale(1)}}
 @keyframes storySlideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-.story-ring{position:relative;width:56px;height:56px;border-radius:50%;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent}
-.story-ring .ring-border{position:absolute;inset:0;border-radius:50%;animation:storyRingSpin 2.5s linear infinite}
-.story-ring .ring-border::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,#FF4136,#ff6b5a,#FF4136,#ff3d2e,#FF4136);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#fff calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#fff calc(100% - 3px))}
-.story-ring.seen .ring-border{animation:none}
-.story-ring.seen .ring-border::before{background:var(--brd2)}
-.story-ring .ring-img{width:100%;height:100%;border-radius:50%;border:2.5px solid var(--bg);position:relative;z-index:1;display:flex;align-items:center;justify-content:center;background:var(--card);overflow:hidden}
+.story-ring{position:relative;width:58px;height:58px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.story-ring .ring-spin{position:absolute;inset:-3px;animation:storyRingSpin 2s linear infinite}
+.story-ring.seen .ring-spin{animation:none}
+.story-ring .ring-img{position:absolute;inset:3px;border-radius:50%;border:2.5px solid var(--bg);z-index:1;display:flex;align-items:center;justify-content:center;background:var(--card);overflow:hidden}
 .story-viewer{position:fixed;top:0;left:0;right:0;bottom:0;z-index:300;background:#000;display:flex;flex-direction:column;animation:storyFadeIn .25s ease;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .story-viewer img,.story-viewer video{width:100%;height:100%;object-fit:contain;pointer-events:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .story-progress-bar{display:flex;gap:3px;padding:8px 10px;position:absolute;top:0;left:0;right:0;z-index:10}
@@ -596,7 +594,20 @@ function StoryRing({stories,onClick,seen}){
   const hasUnseen=!seen;
   return(
     <div className={`story-ring ${hasUnseen?"unseen":"seen"}`} onClick={onClick}>
-      <div className="ring-border"/>
+      <svg className="ring-spin" viewBox="0 0 64 64" width="100%" height="100%" style={{display:"block"}}>
+        <defs>
+          <linearGradient id="storyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FF4136"/>
+            <stop offset="50%" stopColor="#ff8c00"/>
+            <stop offset="100%" stopColor="#FF4136"/>
+          </linearGradient>
+          <linearGradient id="storyGradSeen" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="var(--brd2)"/>
+            <stop offset="100%" stopColor="var(--brd2)"/>
+          </linearGradient>
+        </defs>
+        <circle cx="32" cy="32" r="30" fill="none" stroke={hasUnseen?"url(#storyGrad)":"var(--brd2)"} strokeWidth="3" strokeDasharray={hasUnseen?"60 30":"0"} strokeLinecap="round"/>
+      </svg>
       <div className="ring-img">
         <span style={{fontSize:14,fontWeight:800,color:"var(--tx)",lineHeight:1,letterSpacing:-.5}}>Fx<span style={{color:"var(--R)",fontSize:16}}>.</span></span>
       </div>
@@ -700,7 +711,7 @@ function StoryViewer({stories,onClose,onSeen,userId,token}){
         {stories.map((_,i)=><div key={i} className="story-progress-seg"><div className={`fill ${i<idx?"done":i===idx&&!paused?"active":""}`} style={i===idx?{"--dur":`${dur}s`}:{}}/></div>)}
       </div>
 
-      <div style={{position:"absolute",top:22,left:0,right:0,zIndex:10,display:"flex",alignItems:"center",gap:10,padding:"8px 14px",animation:"storySlideUp .3s ease"}}>
+      <div onTouchStart={(e)=>e.stopPropagation()} onTouchEnd={(e)=>e.stopPropagation()} onClick={(e)=>e.stopPropagation()} style={{position:"absolute",top:22,left:0,right:0,zIndex:10,display:"flex",alignItems:"center",gap:10,padding:"8px 14px",animation:"storySlideUp .3s ease"}}>
         <div style={{width:34,height:34,borderRadius:"50%",background:"rgba(255,255,255,.12)",border:"2px solid rgba(255,255,255,.3)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
           <span style={{fontSize:9,fontWeight:800,color:"#fff",lineHeight:1}}>Fx<span style={{color:"#FF4136"}}>.</span></span>
         </div>
@@ -719,11 +730,11 @@ function StoryViewer({stories,onClose,onSeen,userId,token}){
         {likeAnim&&<div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%) scale(0)",fontSize:80,animation:"storyLikePop .6s ease forwards",pointerEvents:"none",zIndex:20}}>❤️</div>}
       </div>
 
-      <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"50px 16px calc(env(safe-area-inset-bottom,12px) + 16px)",background:"linear-gradient(transparent,rgba(0,0,0,.65))",zIndex:10,display:"flex",alignItems:"flex-end",gap:12}}>
+      <div onTouchStart={(e)=>e.stopPropagation()} onTouchEnd={(e)=>e.stopPropagation()} onTouchMove={(e)=>e.stopPropagation()} onClick={(e)=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:0,right:0,padding:"50px 16px calc(env(safe-area-inset-bottom,12px) + 16px)",background:"linear-gradient(transparent,rgba(0,0,0,.65))",zIndex:10,display:"flex",alignItems:"flex-end",gap:12,touchAction:"auto"}}>
         <div style={{flex:1}}>
           {s?.caption&&<div style={{fontSize:14,fontWeight:600,color:"#fff",lineHeight:1.6,textShadow:"0 1px 4px rgba(0,0,0,.5)"}}>{s.caption}</div>}
         </div>
-        <div onClick={toggleLike} style={{cursor:"pointer",padding:6,flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+        <div onClick={toggleLike} style={{cursor:"pointer",padding:10,flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2,borderRadius:50,background:"rgba(255,255,255,.12)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)"}}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill={isLiked?"#FF4136":"none"} stroke={isLiked?"#FF4136":"#fff"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{transition:"transform .15s",transform:isLiked?"scale(1.15)":"scale(1)"}}><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
         </div>
       </div>
