@@ -55,6 +55,22 @@ textarea:focus{border-color:var(--brd2)}
 select{background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padding:13px 15px;font-size:14px;margin-bottom:8px;width:100%;-webkit-appearance:none}
 .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:12px 20px;z-index:200;font-size:13px;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.3);animation:toastIn .3s ease}
 @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes storyRingSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@keyframes storyProgress{from{width:0}to{width:100%}}
+@keyframes storyFadeIn{from{opacity:0;transform:scale(1.05)}to{opacity:1;transform:scale(1)}}
+@keyframes storySlideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.story-ring{position:relative;width:56px;height:56px;border-radius:50%;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.story-ring .ring-bg{position:absolute;inset:-3px;border-radius:50%;padding:3px;-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.story-ring.unseen .ring-bg{background:conic-gradient(from 0deg,#FF4136,#ff6b3d,#ffd60a,#FF4136);animation:storyRingSpin 3s linear infinite}
+.story-ring.seen .ring-bg{background:var(--brd2)}
+.story-ring .ring-img{width:100%;height:100%;border-radius:50%;border:2.5px solid var(--bg);object-fit:cover;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;background:var(--card);overflow:hidden}
+.story-viewer{position:fixed;top:0;left:0;right:0;bottom:0;z-index:300;background:#000;display:flex;flex-direction:column;animation:storyFadeIn .25s ease}
+.story-viewer img,.story-viewer video{width:100%;height:100%;object-fit:contain}
+.story-progress-bar{display:flex;gap:3px;padding:8px 10px;position:absolute;top:0;left:0;right:0;z-index:10}
+.story-progress-seg{flex:1;height:2.5px;border-radius:2px;background:rgba(255,255,255,.25);overflow:hidden}
+.story-progress-seg .fill{height:100%;border-radius:2px;background:#fff}
+.story-progress-seg .fill.active{animation:storyProgress var(--dur,6s) linear forwards}
+.story-progress-seg .fill.done{width:100%}
 @keyframes splashPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.15);opacity:.7}}
 @keyframes splashFadeOut{from{opacity:1}to{opacity:0;pointer-events:none}}
 @keyframes splashSlideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
@@ -568,6 +584,249 @@ function MarketSentiment(){
          vix<=60?"Markets are balanced — no extreme sentiment detected.":
          "Markets are greedy — consider taking profits or reducing exposure."}
       </div>
+    </div>}
+  </div>);
+}
+
+/* ─── Story Feature (Instagram-style, Admin only) ─── */
+function StoryRing({stories,onClick,seen}){
+  if(!stories||!stories.length)return null;
+  const latestImg=stories[0]?.image_url;
+  const hasUnseen=!seen;
+  return(
+    <div className={`story-ring ${hasUnseen?"unseen":"seen"}`} onClick={onClick}>
+      <div className="ring-bg"/>
+      <div className="ring-img">
+        {latestImg?<img src={latestImg} style={{width:"100%",height:"100%",objectFit:"cover",borderRadius:"50%"}} alt=""/>
+        :<div style={{width:"100%",height:"100%",borderRadius:"50%",background:"var(--card)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <span style={{fontSize:12,fontWeight:800,color:"var(--tx)",lineHeight:1}}>Fx<span style={{color:"var(--R)"}}>.</span></span>
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+function StoryViewer({stories,onClose,onSeen}){
+  const[idx,setIdx]=useState(0);
+  const[paused,setPaused]=useState(false);
+  const[touching,setTouching]=useState(false);
+  const touchStart=useRef({x:0,y:0,time:0});
+  const timerRef=useRef(null);
+  const s=stories[idx];
+  const dur=s?.duration||6;
+
+  useEffect(()=>{if(onSeen)onSeen()},[]);
+  useEffect(()=>{
+    if(paused||touching)return;
+    timerRef.current=setTimeout(()=>{
+      if(idx<stories.length-1)setIdx(idx+1);
+      else onClose();
+    },dur*1000);
+    return()=>clearTimeout(timerRef.current);
+  },[idx,paused,touching,stories.length,dur]);
+
+  const goNext=()=>{clearTimeout(timerRef.current);if(idx<stories.length-1)setIdx(idx+1);else onClose()};
+  const goPrev=()=>{clearTimeout(timerRef.current);if(idx>0)setIdx(idx-1);else setIdx(0)};
+
+  const handleTouchStart=(e)=>{
+    touchStart.current={x:e.touches[0].clientX,y:e.touches[0].clientY,time:Date.now()};
+    setTouching(true);
+    clearTimeout(timerRef.current);
+  };
+  const handleTouchEnd=(e)=>{
+    setTouching(false);
+    const dx=e.changedTouches[0].clientX-touchStart.current.x;
+    const dy=e.changedTouches[0].clientY-touchStart.current.y;
+    const dt=Date.now()-touchStart.current.time;
+    // Swipe down to close
+    if(dy>100&&Math.abs(dx)<80){onClose();return}
+    // Quick tap
+    if(dt<300&&Math.abs(dx)<30&&Math.abs(dy)<30){
+      const w=window.innerWidth;
+      const x=e.changedTouches[0].clientX;
+      if(x<w*0.3)goPrev();
+      else goNext();
+      return;
+    }
+    // Swipe left/right
+    if(Math.abs(dx)>50){
+      if(dx<0)goNext();
+      else goPrev();
+    }
+  };
+  const handleClick=(e)=>{
+    const w=window.innerWidth;
+    const x=e.clientX;
+    if(x<w*0.3)goPrev();
+    else goNext();
+  };
+
+  const timeAgo=(d)=>{
+    const diff=Date.now()-new Date(d).getTime();
+    const mins=Math.floor(diff/60000);
+    if(mins<1)return"Just now";
+    if(mins<60)return`${mins}m`;
+    const hrs=Math.floor(mins/60);
+    if(hrs<24)return`${hrs}h`;
+    return`${Math.floor(hrs/24)}d`;
+  };
+
+  return(
+    <div className="story-viewer" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onClick={handleClick}>
+      {/* Progress bars */}
+      <div className="story-progress-bar">
+        {stories.map((_,i)=>(
+          <div key={i} className="story-progress-seg">
+            <div className={`fill ${i<idx?"done":i===idx&&!paused&&!touching?"active":""}`} style={i===idx?{"--dur":`${dur}s`}:{}}/>
+          </div>
+        ))}
+      </div>
+
+      {/* Header */}
+      <div style={{position:"absolute",top:22,left:0,right:0,zIndex:10,display:"flex",alignItems:"center",gap:10,padding:"8px 14px",animation:"storySlideUp .3s ease"}}>
+        <div style={{width:34,height:34,borderRadius:"50%",background:"rgba(255,255,255,.12)",border:"2px solid rgba(255,255,255,.3)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <span style={{fontSize:9,fontWeight:800,color:"#fff",lineHeight:1}}>Fx<span style={{color:"#FF4136"}}>.</span></span>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>Fxscalproom<span style={{color:"#FF4136"}}>.</span></div>
+          <div style={{fontSize:10,color:"rgba(255,255,255,.6)"}}>{s?.created_at?timeAgo(s.created_at):""}</div>
+        </div>
+        {s?.target==="premium"&&<span style={{fontSize:8,fontWeight:700,color:"#ffd60a",background:"rgba(255,215,0,.15)",padding:"3px 8px",borderRadius:6}}>VIP</span>}
+        <div onClick={(e)=>{e.stopPropagation();onClose()}} style={{cursor:"pointer",padding:4}}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",position:"relative"}}>
+        {s?.image_url&&<img key={s.id} src={s.image_url} style={{animation:"storyFadeIn .2s ease"}} alt=""/>}
+      </div>
+
+      {/* Caption */}
+      {s?.caption&&<div style={{position:"absolute",bottom:0,left:0,right:0,padding:"60px 16px 28px",background:"linear-gradient(transparent,rgba(0,0,0,.7))",zIndex:10,animation:"storySlideUp .3s ease"}}>
+        <div style={{fontSize:14,fontWeight:600,color:"#fff",lineHeight:1.6,textShadow:"0 1px 4px rgba(0,0,0,.5)"}}>{s.caption}</div>
+      </div>}
+    </div>
+  );
+}
+
+/* ─── Admin Story Manager ─── */
+function AdminStoryManager({token}){
+  const{lang}=useLang();
+  const[stories,setStories]=useState([]);
+  const[img,setImg]=useState(null);
+  const[pv,setPv]=useState(null);
+  const[caption,setCaption]=useState("");
+  const[target,setTarget]=useState("all");
+  const[durHrs,setDurHrs]=useState("24");
+  const[loading,setLoading]=useState(false);
+  const[msg,setMsg]=useState("");
+
+  const loadStories=useCallback(async()=>{
+    try{
+      const r=await fetch(`${SB}/rest/v1/Stories?order=created_at.desc`,{headers:H(token)});
+      const d=await r.json();
+      if(Array.isArray(d))setStories(d);
+    }catch(e){}
+  },[token]);
+
+  useEffect(()=>{loadStories()},[loadStories]);
+
+  const publish=async()=>{
+    if(!img){setMsg(lang==="fa"?"عکس انتخاب کنید":"Select an image");return}
+    setLoading(true);setMsg("");
+    try{
+      const imgUrl=await api.img(img,token);
+      if(!imgUrl){setMsg(lang==="fa"?"آپلود ناموفق":"Upload failed");setLoading(false);return}
+      const expiresAt=new Date();
+      expiresAt.setHours(expiresAt.getHours()+parseInt(durHrs||24));
+      await api.add("Stories",{
+        image_url:imgUrl,
+        caption:caption||null,
+        target:target,
+        expires_at:expiresAt.toISOString(),
+        duration:6
+      },token);
+      setMsg(lang==="fa"?"استوری منتشر شد!":"Story published!");
+      setImg(null);setPv(null);setCaption("");
+      loadStories();
+    }catch(e){setMsg(e.message)}
+    setLoading(false);
+  };
+
+  const delStory=async(id)=>{
+    if(!confirm(lang==="fa"?"حذف شود؟":"Delete?"))return;
+    await api.del("Stories",id,token);
+    loadStories();
+  };
+
+  const timeLeft=(expiresAt)=>{
+    const diff=new Date(expiresAt)-new Date();
+    if(diff<=0)return lang==="fa"?"منقضی شده":"Expired";
+    const h=Math.floor(diff/3600000);
+    const m=Math.floor((diff%3600000)/60000);
+    return h>0?`${h}h ${m}m`:`${m}m`;
+  };
+
+  return(<div>
+    <div style={{fontSize:14,fontWeight:700,marginBottom:14}}>{lang==="fa"?"📸 مدیریت استوری":"📸 Story Manager"}</div>
+
+    {/* Upload */}
+    <div onClick={()=>document.getElementById("story-fu").click()} style={{border:"1.5px dashed var(--brd2)",borderRadius:14,padding:pv?0:32,textAlign:"center",marginBottom:10,background:"var(--bg2)",cursor:"pointer",overflow:"hidden"}}>
+      {pv?<div style={{position:"relative"}}>
+        <img src={pv} style={{width:"100%",maxHeight:280,objectFit:"cover"}} alt=""/>
+        <div onClick={e=>{e.stopPropagation();setImg(null);setPv(null)}} style={{position:"absolute",top:8,right:8,width:28,height:28,borderRadius:14,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#fff",fontSize:16}}>✕</div>
+      </div>
+      :<div style={{fontSize:13,color:"var(--dm)"}}>{lang==="fa"?"📷 عکس استوری رو انتخاب کنید":"📷 Select story image"}</div>}
+    </div>
+    <input id="story-fu" type="file" accept="image/*" onChange={e=>{const f=e.target.files[0];if(f){setImg(f);setPv(URL.createObjectURL(f))}}} style={{display:"none"}}/>
+
+    <textarea placeholder={lang==="fa"?"کپشن (اختیاری)":"Caption (optional)"} value={caption} onChange={e=>setCaption(e.target.value)} rows={2}/>
+
+    {/* Target */}
+    <div style={{fontSize:11,fontWeight:600,color:"var(--tx2)",marginBottom:6}}>{lang==="fa"?"نمایش برای:":"Show to:"}</div>
+    <div style={{display:"flex",gap:6,marginBottom:12}}>
+      {["all","premium"].map(tgt=>
+        <div key={tgt} onClick={()=>setTarget(tgt)} style={{flex:1,padding:10,borderRadius:10,textAlign:"center",cursor:"pointer",
+          background:target===tgt?(tgt==="all"?"color-mix(in srgb,var(--B) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)"):"transparent",
+          border:`1px solid ${target===tgt?(tgt==="all"?"color-mix(in srgb,var(--B) 25%,transparent)":"color-mix(in srgb,var(--R) 25%,transparent)"):"var(--brd)"}`,
+          fontSize:12,fontWeight:600,color:target===tgt?(tgt==="all"?"var(--B)":"var(--R)"):"var(--mu)"
+        }}>{tgt==="all"?(lang==="fa"?"👥 همه کاربران":"👥 All Users"):(lang==="fa"?"⭐ فقط پرمیوم":"⭐ Premium Only")}</div>
+      )}
+    </div>
+
+    {/* Duration */}
+    <div style={{fontSize:11,fontWeight:600,color:"var(--tx2)",marginBottom:6}}>{lang==="fa"?"مدت نمایش:":"Duration:"}</div>
+    <div style={{display:"flex",gap:6,marginBottom:14}}>
+      {[{v:"24",l:"24h"},{v:"48",l:"48h"},{v:"72",l:"3 days"},{v:"168",l:"7 days"}].map(d=>
+        <div key={d.v} onClick={()=>setDurHrs(d.v)} style={{flex:1,padding:10,borderRadius:10,textAlign:"center",cursor:"pointer",fontSize:12,fontWeight:700,
+          background:durHrs===d.v?"color-mix(in srgb,var(--Y) 10%,transparent)":"transparent",
+          border:`1px solid ${durHrs===d.v?"color-mix(in srgb,var(--Y) 25%,transparent)":"var(--brd)"}`,
+          color:durHrs===d.v?"var(--Y)":"var(--mu)"
+        }}>{d.l}</div>
+      )}
+    </div>
+
+    <button className="bt" style={{background:"var(--R)",opacity:loading?.5:1}} onClick={publish} disabled={loading}>{loading?"...":(lang==="fa"?"انتشار استوری":"Publish Story")}</button>
+    {msg&&<div style={{marginTop:8,fontSize:12,fontWeight:600,textAlign:"center",color:msg.includes("!")?"var(--G)":"var(--R)"}}>{msg}</div>}
+
+    {/* Active Stories */}
+    {stories.length>0&&<div style={{marginTop:20}}>
+      <div style={{fontSize:13,fontWeight:600,marginBottom:10}}>{lang==="fa"?"استوری‌های فعال":"Active Stories"} ({stories.length})</div>
+      {stories.map(s=>{
+        const expired=new Date(s.expires_at)<new Date();
+        return<div key={s.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4,opacity:expired?.5:1}}>
+          <img src={s.image_url} style={{width:48,height:48,borderRadius:10,objectFit:"cover",flexShrink:0}} alt=""/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:11,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.caption||"(no caption)"}</div>
+            <div style={{display:"flex",gap:8,marginTop:3,fontSize:9,color:"var(--dm)"}}>
+              <span>{s.target==="premium"?"⭐ Premium":"👥 All"}</span>
+              <span>{expired?"❌ Expired":"⏳ "+timeLeft(s.expires_at)}</span>
+            </div>
+          </div>
+          <div onClick={()=>delStory(s.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
+        </div>
+      })}
     </div>}
   </div>);
 }
@@ -1813,15 +2072,26 @@ function IranMarketWidget(){
 }
 
 /* ─── Home ─── */
-function Home({posts,signals,msgs,go,goToPlans,P,ok,lastUpdate,dark,toggle,userProfile,token,onR}){
+function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,toggle,userProfile,token,onR}){
   const{t,lang}=useLang();
   const[sel,setSel]=useState(null);
   const[showMsgs,setShowMsgs]=useState(false);
   const[openMsgId,setOpenMsgId]=useState(null);
   const[showPremPop,setShowPremPop]=useState(false);
+  const[showStoryViewer,setShowStoryViewer]=useState(false);
+  const[storySeen,setStorySeen]=useState(()=>{try{return localStorage.getItem("fx_story_seen")||""}catch(e){return""}});
   const[lastMsgRead,setLastMsgRead]=useState(()=>{try{return parseInt(localStorage.getItem("fx_mc")||"0")}catch(e){return 0}});
   const theme=dark?"dark":"light";
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
+  const visibleStories=useMemo(()=>{
+    if(!stories||!stories.length)return[];
+    return stories.filter(s=>s.target==="all"||(s.target==="premium"&&isPremiumUser));
+  },[stories,isPremiumUser]);
+  const latestStoryId=visibleStories.length?visibleStories[0].id:"";
+  const isStorySeen=storySeen===String(latestStoryId);
+  const markStorySeen=()=>{
+    if(latestStoryId){setStorySeen(String(latestStoryId));try{localStorage.setItem("fx_story_seen",String(latestStoryId))}catch(e){}}
+  };
   const firstName=(userProfile?.full_name||"").split(" ")[0]||"";
   const hour=new Date().getHours();
   const greetings={
@@ -1838,16 +2108,22 @@ function Home({posts,signals,msgs,go,goToPlans,P,ok,lastUpdate,dark,toggle,userP
   const unreadCount=Math.max(0,visibleMsgs.length-lastMsgRead);
   const openMsgs=()=>{setShowMsgs(true);setLastMsgRead(visibleMsgs.length);try{localStorage.setItem("fx_mc",String(visibleMsgs.length))}catch(e){}};
   return(<div className="fi">
+    {/* Story Ring + Greeting Row */}
     {firstName&&<div style={{marginBottom:14,padding:"14px 0 4px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-      <div>
-        <div style={{fontSize:20,fontWeight:700,lineHeight:1.3}}>{greeting}، {firstName} 👋</div>
-        <div style={{fontSize:12,color:"var(--tx2)",marginTop:4}}>{{fa:"بازارها رو رصد کن و بهترین فرصت‌ها رو پیدا کن",ar:"تابع الأسواق واعثر على أفضل الفرص",tr:"Piyasaları takip edin ve en iyi fırsatları bulun",ru:"Следите за рынками и находите лучшие возможности",es:"Sigue los mercados y encuentra las mejores oportunidades"}[lang]||"Track markets and find the best opportunities"}</div>
+      <div style={{display:"flex",alignItems:"center",gap:12}}>
+        {visibleStories.length>0&&<StoryRing stories={visibleStories} seen={isStorySeen} onClick={()=>setShowStoryViewer(true)}/>}
+        <div>
+          <div style={{fontSize:20,fontWeight:700,lineHeight:1.3}}>{greeting}، {firstName} 👋</div>
+          <div style={{fontSize:12,color:"var(--tx2)",marginTop:4}}>{{fa:"بازارها رو رصد کن و بهترین فرصت‌ها رو پیدا کن",ar:"تابع الأسواق واعثر على أفضل الفرص",tr:"Piyasaları takip edin ve en iyi fırsatları bulun",ru:"Следите за рынками и находите лучшие возможности",es:"Sigue los mercados y encuentra las mejores oportunidades"}[lang]||"Track markets and find the best opportunities"}</div>
+        </div>
       </div>
       <div onClick={openMsgs} style={{position:"relative",cursor:"pointer",padding:6}}>
         {IC.bell}
         {unreadCount>0&&<div style={{position:"absolute",top:2,right:2,width:8,height:8,borderRadius:"50%",background:"var(--R)",border:"2px solid var(--bg)"}}/>}
       </div>
     </div>}
+    {/* Story Viewer Fullscreen */}
+    {showStoryViewer&&visibleStories.length>0&&<StoryViewer stories={visibleStories} onClose={()=>setShowStoryViewer(false)} onSeen={markStorySeen}/>}
     {/* Messages Panel — iOS 26 style */}
     {showMsgs&&<div className="cd" style={{marginBottom:12,padding:0,overflow:"hidden"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 14px 10px"}}>
@@ -2933,8 +3209,8 @@ function Adm({token,posts,signals,onR}){
   const savePost=async(id,data)=>{await api.patch("Posts",id,data,token);onR();setMs("Post updated!")};
   return(<div className="fi">
     <div style={{display:"flex",gap:4,marginBottom:14}}>
-      {["post","signal","manage","users","rewards","msg","support","sale","pay"].map(tab=>
-        <div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{tab==="post"?t.post:tab==="signal"?t.signal:tab==="manage"?t.manage:tab==="users"?t.users:tab==="rewards"?"💰":tab==="msg"?"📬":tab==="support"?"💬":tab==="sale"?"🏷":tab==="pay"?"💳":""}</div>
+      {["post","signal","manage","users","rewards","msg","story","support","sale","pay"].map(tab=>
+        <div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{tab==="post"?t.post:tab==="signal"?t.signal:tab==="manage"?t.manage:tab==="users"?t.users:tab==="rewards"?"💰":tab==="msg"?"📬":tab==="story"?"📸":tab==="support"?"💬":tab==="sale"?"🏷":tab==="pay"?"💳":""}</div>
       )}
     </div>
     {ms&&<div style={{background:ms.includes("!")&&!ms.includes("failed")?"color-mix(in srgb,var(--G) 8%,transparent)":"color-mix(in srgb,var(--R) 8%,transparent)",border:`1px solid ${ms.includes("!")&&!ms.includes("failed")?"color-mix(in srgb,var(--G) 15%,transparent)":"color-mix(in srgb,var(--R) 15%,transparent)"}`,borderRadius:10,padding:10,marginBottom:10,fontSize:13,color:ms.includes("!")&&!ms.includes("failed")?"var(--G)":"var(--R)"}}>{ms}</div>}
@@ -3045,6 +3321,7 @@ function Adm({token,posts,signals,onR}){
     </>}
     {tb==="rewards"&&<AdminRewards token={token}/>}
     {tb==="support"&&<AdminSupportChat token={token}/>}
+    {tb==="story"&&<AdminStoryManager token={token}/>}
     {tb==="sale"&&<AdminPromo token={token}/>}
     {tb==="pay"&&<AdminPayments token={token}/>}
     {tb==="msg"&&<>
@@ -3424,7 +3701,7 @@ function App(){
   const[tk,setTk]=useState(()=>{try{return localStorage.getItem("fx_tk")||null}catch(e){return null}});
   const[usr,setUsr]=useState(()=>{try{const u=localStorage.getItem("fx_usr");return u?JSON.parse(u):null}catch(e){return null}});
   const[up,setUp]=useState(null),[adm,setAdm]=useState(false);
-  const[tab,setTab]=useState(0),[posts,setP]=useState([]),[sigs,setS]=useState([]),[msgs,setMsgs]=useState([]);
+  const[tab,setTab]=useState(0),[posts,setP]=useState([]),[sigs,setS]=useState([]),[msgs,setMsgs]=useState([]),[stories,setStories]=useState([]);
   const[openSupport,setOpenSupport]=useState(false);
   const[lang,setLangState]=useState(()=>{try{return localStorage.getItem("fxlang")||"en"}catch(e){return"en"}});
   const[showSplash,setShowSplash]=useState(()=>{try{return!sessionStorage.getItem("fx_splash")}catch(e){return true}});
@@ -3452,7 +3729,7 @@ function App(){
   useEffect(()=>{refreshSession();const i=setInterval(refreshSession,30*60*1000);return()=>clearInterval(i)},[refreshSession]);
   const setLang=(l)=>{setLangState(l);try{localStorage.setItem("fxlang",l)}catch(e){};document.documentElement.setAttribute("lang",l)};
   useEffect(()=>{document.documentElement.setAttribute("lang",lang)},[]);
-  const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p)){setP(p);try{localStorage.setItem("fx_pc",String(p.length))}catch(e){}}const s=await api.get("Signals",tk);if(Array.isArray(s)){setS(s);try{localStorage.setItem("fx_sc",String(s.length))}catch(e){}}const m=await api.get("Messages",tk);if(Array.isArray(m))setMsgs(m)}catch(e){}},[tk]);
+  const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p)){setP(p);try{localStorage.setItem("fx_pc",String(p.length))}catch(e){}}const s=await api.get("Signals",tk);if(Array.isArray(s)){setS(s);try{localStorage.setItem("fx_sc",String(s.length))}catch(e){}}const m=await api.get("Messages",tk);if(Array.isArray(m))setMsgs(m);try{const st=await fetch(`${SB}/rest/v1/Stories?order=created_at.desc`,{headers:H(tk)});const stD=await st.json();if(Array.isArray(stD)){const now=new Date();setStories(stD.filter(x=>new Date(x.expires_at)>now))}}catch(e){}}catch(e){}},[tk]);
   const chk=useCallback(async(u,t)=>{try{const r=await fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{headers:H(t)});const d=await r.json();if(Array.isArray(d)&&d[0]){setUp(d[0]);if(d[0].role==="admin")setAdm(true)}}catch(e){}},[]);
   useEffect(()=>{if(tk)load()},[tk,load]);
   useEffect(()=>{if(tk&&usr)chk(usr,tk)},[tk,usr,chk]);
@@ -3486,7 +3763,7 @@ function App(){
   const goTab=i=>{setTab(i);clearBadge(VT[i]?.k)};
   const goToTabByKey=(k)=>{const idx=VT.findIndex(t=>t.k===k);if(idx>=0)goTab(idx)};
   const scr=()=>{switch(cur?.k){
-    case"home":return<Home posts={posts} signals={sigs} msgs={msgs} go={goTab} goToPlans={()=>goToTabByKey("plans")} P={P} ok={ok} lastUpdate={lastUpdate} dark={dark} toggle={toggle} userProfile={up} token={tk} onR={load}/>;
+    case"home":return<Home posts={posts} signals={sigs} msgs={msgs} stories={stories} go={goTab} goToPlans={()=>goToTabByKey("plans")} P={P} ok={ok} lastUpdate={lastUpdate} dark={dark} toggle={toggle} userProfile={up} token={tk} onR={load}/>;
     case"analysis":return<Analysis posts={posts} userProfile={up} msgs={msgs} token={tk} onR={load} goToPlans={()=>goToTabByKey("plans")}/>;
     case"signals":return<Sigs signals={sigs} userProfile={up} goToPlans={()=>goToTabByKey("plans")}/>;
     case"plans":return<Plans userProfile={up} goToSupport={()=>{goToTabByKey("profile");setOpenSupport(true)}} token={tk}/>;
