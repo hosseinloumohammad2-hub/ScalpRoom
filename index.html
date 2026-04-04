@@ -4134,12 +4134,12 @@ function GiveawayWheel({userId,token}){
   useEffect(()=>{
     (async()=>{
       try{
-        const r=await fetch(`${SB}/rest/v1/Giveaways?active=eq.true&select=*&limit=1`,{headers:H(token)});
+        const r=await fetch(`${SB}/rest/v1/giveaways?active=eq.true&select=*&limit=1`,{headers:H(token)});
         const d=await r.json();
         if(Array.isArray(d)&&d.length>0)setGw(d[0]);
       }catch(e){}
       try{
-        const r2=await fetch(`${SB}/rest/v1/GiveawayEntries?user_id=eq.${userId}&select=*&order=created_at.desc&limit=1`,{headers:H(token)});
+        const r2=await fetch(`${SB}/rest/v1/giveaway_entries?user_id=eq.${userId}&select=*&order=created_at.desc&limit=1`,{headers:H(token)});
         const d2=await r2.json();
         if(Array.isArray(d2)&&d2.length>0)setEntry(d2[0]);
       }catch(e){}
@@ -4174,7 +4174,7 @@ function GiveawayWheel({userId,token}){
     setTimeout(async()=>{
       setResult(prizes[idx]);
       try{
-        await fetch(`${SB}/rest/v1/GiveawayEntries`,{method:"POST",headers:H(token),body:JSON.stringify({user_id:userId,giveaway_id:gw.id,prize_won:prizes[idx].name,prize_index:idx})});
+        await fetch(`${SB}/rest/v1/giveaway_entries`,{method:"POST",headers:H(token),body:JSON.stringify({user_id:userId,giveaway_id:gw.id,prize_won:prizes[idx].name,prize_index:idx})});
         setEntry({prize_won:prizes[idx].name,prize_index:idx});
       }catch(e){}
       setSpinning(false);
@@ -4261,10 +4261,10 @@ function AdminGiveaway({token}){
 
   const load=async()=>{
     try{
-      const r=await fetch(`${SB}/rest/v1/Giveaways?select=*&order=created_at.desc&limit=1`,{headers:H(token)});
+      const r=await fetch(`${SB}/rest/v1/giveaways?select=*&order=created_at.desc&limit=1`,{headers:H(token)});
       const d=await r.json();
       if(Array.isArray(d)&&d.length>0)setGw(d[0]);
-      const r2=await fetch(`${SB}/rest/v1/GiveawayEntries?select=*,Users(full_name,email)&order=created_at.desc`,{headers:H(token)});
+      const r2=await fetch(`${SB}/rest/v1/giveaway_entries?select=*&order=created_at.desc`,{headers:H(token)});
       const d2=await r2.json();
       if(Array.isArray(d2))setEntries(d2);
     }catch(e){}
@@ -4274,14 +4274,14 @@ function AdminGiveaway({token}){
 
   const toggle=async()=>{
     if(!gw)return;
-    await fetch(`${SB}/rest/v1/Giveaways?id=eq.${gw.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({active:!gw.active})});
+    await fetch(`${SB}/rest/v1/giveaways?id=eq.${gw.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({active:!gw.active})});
     setMsg(gw.active?"Giveaway disabled":"Giveaway activated!");
     load();
   };
 
   const save=async(field,val)=>{
     if(!gw)return;
-    await fetch(`${SB}/rest/v1/Giveaways?id=eq.${gw.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({[field]:val})});
+    await fetch(`${SB}/rest/v1/giveaways?id=eq.${gw.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({[field]:val})});
     load();
   };
 
