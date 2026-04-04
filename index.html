@@ -4611,8 +4611,19 @@ ReactDOM.render(<App/>,document.getElementById("root"));
 </script>
 <script>
 if('serviceWorker' in navigator){
-  window.addEventListener('load',function(){
-    navigator.serviceWorker.register('/sw.js').catch(function(){});
+  window.addEventListener('load',async function(){
+    try{
+      var cleaned=localStorage.getItem('sw_v2_clean');
+      if(!cleaned){
+        // One-time cleanup: remove old SW and caches
+        var regs=await navigator.serviceWorker.getRegistrations();
+        for(var i=0;i<regs.length;i++){await regs[i].unregister()}
+        var keys=await caches.keys();
+        for(var j=0;j<keys.length;j++){await caches.delete(keys[j])}
+        localStorage.setItem('sw_v2_clean','1');
+      }
+      navigator.serviceWorker.register('/sw.js');
+    }catch(e){}
   });
 }
 </script>
