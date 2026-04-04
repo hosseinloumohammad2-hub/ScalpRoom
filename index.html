@@ -4169,7 +4169,7 @@ function GiveawayWheel({userId,token}){
     let rnd=Math.random()*total,idx=0;
     for(let i=0;i<prizes.length;i++){rnd-=(prizes[i].chance||1);if(rnd<=0){idx=i;break}}
     const segAngle=360/prizes.length;
-    const targetAngle=360*6+(360-idx*segAngle-segAngle/2);
+    const targetAngle=360*12+(360-idx*segAngle-segAngle/2);
     setAngle(targetAngle);
     setTimeout(async()=>{
       setResult(prizes[idx]);
@@ -4178,7 +4178,7 @@ function GiveawayWheel({userId,token}){
         setEntry({prize_won:prizes[idx].name,prize_index:idx});
       }catch(e){}
       setSpinning(false);
-    },4500);
+    },10000);
   };
 
   const segAngle=prizes.length?360/prizes.length:60;
@@ -4194,7 +4194,7 @@ function GiveawayWheel({userId,token}){
   return(<div className="cd" style={{marginBottom:6,overflow:"hidden",position:"relative"}}>
     <div style={{padding:"14px 16px"}}>
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-        <span style={{fontSize:24}}>🎰</span>
+        <span style={{fontSize:24,display:"inline-flex"}}><svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{display:"inline-block",verticalAlign:"middle"}}><rect x="3" y="2" width="18" height="20" rx="3" stroke="#ef4444" strokeWidth="1.5"/><rect x="5" y="6" width="4" height="6" rx="1" fill="#fde68a" stroke="#eab308" strokeWidth="0.5"><animate attributeName="y" values="6;8;5;7;6" dur="2s" repeatCount="indefinite"/></rect><rect x="10" y="6" width="4" height="6" rx="1" fill="#fde68a" stroke="#eab308" strokeWidth="0.5"><animate attributeName="y" values="6;5;8;6;7" dur="2.3s" repeatCount="indefinite"/></rect><rect x="15" y="6" width="4" height="6" rx="1" fill="#fde68a" stroke="#eab308" strokeWidth="0.5"><animate attributeName="y" values="6;7;5;8;6" dur="1.8s" repeatCount="indefinite"/></rect><text x="7" y="11" fontSize="5" fontWeight="800" fill="#ef4444" textAnchor="middle"><animate attributeName="textContent" values="7;★;$;7;♦;★;$" dur="1.5s" repeatCount="indefinite"/></text><text x="12" y="11" fontSize="5" fontWeight="800" fill="#22c55e" textAnchor="middle"><animate attributeName="textContent" values="★;$;7;♦;7;$;★" dur="1.8s" repeatCount="indefinite"/></text><text x="17" y="11" fontSize="5" fontWeight="800" fill="#3b82f6" textAnchor="middle"><animate attributeName="textContent" values="$;7;★;$;★;7;♦" dur="2.1s" repeatCount="indefinite"/></text><circle cx="19" cy="16" r="2" fill="#ef4444"><animate attributeName="r" values="2;2.3;2" dur="1s" repeatCount="indefinite"/></circle><line x1="19" y1="14" x2="19" y2="16" stroke="#ef4444" strokeWidth="1" strokeLinecap="round"><animateTransform attributeName="transform" type="rotate" values="0 19 16;-30 19 16;0 19 16" dur="1.5s" repeatCount="indefinite"/></line><rect x="6" y="17" width="12" height="2" rx="1" fill="#ef4444" fillOpacity="0.15"/><line x1="6" y1="14" x2="18" y2="14" stroke="#eab308" strokeWidth="0.5" strokeDasharray="1 1"><animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite"/></line></svg></span>
         <div style={{flex:1}}>
           <div style={{fontSize:14,fontWeight:700}}>{gw.title||"Spin & Win"}</div>
           {timeLeft&&<div style={{fontSize:10,color:"var(--R)",fontWeight:600,marginTop:2}}>⏳ {timeLeft} {{fa:"مانده",ar:"متبقي",tr:"kaldı",ru:"осталось",es:"restante"}[lang]||"left"}</div>}
@@ -4223,7 +4223,7 @@ function GiveawayWheel({userId,token}){
             {/* Pointer */}
             <div style={{position:"absolute",top:-8,left:"50%",transform:"translateX(-50%)",zIndex:5,fontSize:18}}>▼</div>
             {/* Spinning wheel */}
-            <svg width="220" height="220" viewBox="0 0 220 220" style={{transform:`rotate(${angle}deg)`,transition:spinning?"transform 4.5s cubic-bezier(0.17,0.67,0.12,0.99)":"none"}}>
+            <svg width="220" height="220" viewBox="0 0 220 220" style={{transform:`rotate(${angle}deg)`,transition:spinning?"transform 10s cubic-bezier(0.17,0.67,0.12,0.99)":"none"}}>
               {prizes.map((p,i)=>{
                 const a1=(i*segAngle-90)*Math.PI/180;
                 const a2=((i+1)*segAngle-90)*Math.PI/180;
