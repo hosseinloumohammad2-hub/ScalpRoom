@@ -4155,7 +4155,8 @@ function GiveawayWheel({userId,token}){
 
   const prizes=gw.prizes||[];
   const minRef=gw.min_referrals||3;
-  const canSpin=refs>=minRef&&!entry;
+  const noRefRequired=gw.no_referral_required||false;
+  const canSpin=(noRefRequired||refs>=minRef)&&!entry;
   const alreadySpun=!!entry;
   const endsAt=gw.ends_at?new Date(gw.ends_at):null;
   const expired=endsAt&&endsAt<new Date();
@@ -4199,7 +4200,7 @@ function GiveawayWheel({userId,token}){
           <div style={{fontSize:14,fontWeight:700}}>{gw.title||"Spin & Win"}</div>
           {timeLeft&&<div style={{fontSize:10,color:"var(--R)",fontWeight:600,marginTop:2}}>⏳ {timeLeft} {{fa:"مانده",ar:"متبقي",tr:"kaldı",ru:"осталось",es:"restante"}[lang]||"left"}</div>}
         </div>
-        {!alreadySpun&&<div style={{fontSize:9,fontWeight:600,color:canSpin?"var(--G)":"var(--dm)",background:canSpin?"color-mix(in srgb,var(--G) 10%,transparent)":"var(--bg)",padding:"4px 10px",borderRadius:20,border:"1px solid "+(canSpin?"color-mix(in srgb,var(--G) 20%,transparent)":"var(--brd)")}}>{refs}/{minRef} {{fa:"دعوت",ar:"دعوة",tr:"davet",ru:"приг.",es:"inv."}[lang]||"invites"}</div>}
+        {!alreadySpun&&!noRefRequired&&<div style={{fontSize:9,fontWeight:600,color:canSpin?"var(--G)":"var(--dm)",background:canSpin?"color-mix(in srgb,var(--G) 10%,transparent)":"var(--bg)",padding:"4px 10px",borderRadius:20,border:"1px solid "+(canSpin?"color-mix(in srgb,var(--G) 20%,transparent)":"var(--brd)")}}>{refs}/{minRef} {{fa:"دعوت",ar:"دعوة",tr:"davet",ru:"приг.",es:"inv."}[lang]||"invites"}</div>}
       </div>
 
       {alreadySpun&&!showWheel?<div style={{textAlign:"center",padding:"16px 0"}}>
@@ -4208,7 +4209,7 @@ function GiveawayWheel({userId,token}){
         <div style={{fontSize:11,color:"var(--dm)",marginTop:4}}>{{fa:"قبلاً شرکت کردید",ar:"شاركت مسبقاً",tr:"Zaten katıldınız",ru:"Вы уже участвовали",es:"Ya participaste"}[lang]||"Already participated"}</div>
       </div>
 
-      :!canSpin&&!alreadySpun?<div style={{textAlign:"center",padding:"12px 0"}}>
+      :!canSpin&&!alreadySpun&&!noRefRequired?<div style={{textAlign:"center",padding:"12px 0"}}>
         <div style={{fontSize:12,color:"var(--dm)",marginBottom:8}}>{{fa:`${minRef-refs} دعوت دیگه نیاز داری`,ar:`تحتاج ${minRef-refs} دعوة أخرى`,tr:`${minRef-refs} davet daha gerekli`,ru:`Нужно ещё ${minRef-refs} приглашений`,es:`Necesitas ${minRef-refs} invitaciones más`}[lang]||`Need ${minRef-refs} more invites`}</div>
         <div style={{fontSize:11,fontWeight:600,color:"var(--R)",cursor:"pointer"}}>{{fa:"→ برو به بخش دعوت",ar:"→ اذهب للإحالة",tr:"→ Davet bölümüne git",ru:"→ Перейти к приглашениям",es:"→ Ir a referidos"}[lang]||"→ Go to Referral section"}</div>
       </div>
@@ -4316,6 +4317,10 @@ function AdminGiveaway({token}){
           <div style={{fontSize:9,color:"var(--dm)",marginBottom:3}}>Ends At</div>
           <input className="ip" type="datetime-local" value={gw.ends_at?gw.ends_at.slice(0,16):""} onChange={e=>save("ends_at",e.target.value?new Date(e.target.value).toISOString():null)} style={{marginBottom:0}}/>
         </div>
+      </div>
+      <div onClick={()=>save("no_referral_required",!gw.no_referral_required)} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:10,cursor:"pointer",marginBottom:0}}>
+        <span style={{fontSize:11,fontWeight:600}}>🔓 {lang==="fa"?"بدون نیاز به دعوت":"No invite required"}</span>
+        <div style={{width:36,height:20,borderRadius:10,background:gw.no_referral_required?"var(--G)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:16,height:16,borderRadius:8,background:"#fff",position:"absolute",top:2,left:gw.no_referral_required?18:2,transition:".2s"}}/></div>
       </div>
     </div>
 
