@@ -4164,14 +4164,15 @@ function GiveawayWheel({userId,token}){
 
   const spin=async()=>{
     if(!canSpin||spinning)return;
-    setSpinning(true);setShowWheel(true);
+    setSpinning(true);setShowWheel(true);setAngle(0);setResult(null);
     // Weighted random
     const total=prizes.reduce((s,p)=>s+(p.chance||1),0);
     let rnd=Math.random()*total,idx=0;
     for(let i=0;i<prizes.length;i++){rnd-=(prizes[i].chance||1);if(rnd<=0){idx=i;break}}
-    const segAngle=360/prizes.length;
-    const targetAngle=360*12+(360-idx*segAngle-segAngle/2);
-    setAngle(targetAngle);
+    const segA=360/prizes.length;
+    const targetAngle=360*12+(360-idx*segA-segA/2);
+    // Wait for wheel to render at 0, then start spinning
+    requestAnimationFrame(()=>{requestAnimationFrame(()=>{setAngle(targetAngle)})});
     setTimeout(async()=>{
       setResult(prizes[idx]);
       try{
