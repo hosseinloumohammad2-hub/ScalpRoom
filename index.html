@@ -3663,8 +3663,8 @@ function Adm({token,posts,signals,onR}){
         })}
       </div>
       <div style={{display:"flex",gap:4}}>
-        {["msg","story","support","sale","pay","report"].map(tab=>{
-          const labels={msg:lang==="fa"?"پیام":"Message",story:lang==="fa"?"استوری":"Story",support:lang==="fa"?"پشتیبانی":"Support",sale:lang==="fa"?"تخفیف":"Sale",pay:lang==="fa"?"پرداخت":"Payment",report:lang==="fa"?"گزارش":"Report"};
+        {["msg","story","support","sale","pay","report","giveaway"].map(tab=>{
+          const labels={msg:lang==="fa"?"پیام":"Message",story:lang==="fa"?"استوری":"Story",support:lang==="fa"?"پشتیبانی":"Support",sale:lang==="fa"?"تخفیف":"Sale",pay:lang==="fa"?"پرداخت":"Payment",report:lang==="fa"?"گزارش":"Report",giveaway:"🎰"};
           return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{labels[tab]}</div>
         })}
       </div>
@@ -3800,6 +3800,7 @@ function Adm({token,posts,signals,onR}){
     {tb==="sale"&&<AdminPromo token={token}/>}
     {tb==="pay"&&<AdminPayments token={token}/>}
     {tb==="report"&&<AdminReport token={token} posts={posts} signals={signals}/>}
+    {tb==="giveaway"&&<AdminGiveaway token={token}/>}
     {tb==="msg"&&<>
       <div style={{fontSize:13,fontWeight:700,marginBottom:10}}>{lang==="fa"?"📬 ارسال پیام":"📬 Send Message"}</div>
       <input className="ip" placeholder={lang==="fa"?"عنوان پیام":"Message title"} value={msgTitle} onChange={e=>setMsgTitle(e.target.value)}/>
@@ -4119,6 +4120,238 @@ function RewardSectionWrapper({userId,token,userProfile}){
   return<RewardSection userId={userId} token={token} userProfile={userProfile}/>;
 }
 
+/* ─── Giveaway Spin Wheel (Profile) ─── */
+function GiveawayWheel({userId,token}){
+  const{t,lang}=useLang();
+  const[gw,setGw]=useState(null);
+  const[entry,setEntry]=useState(null);
+  const[spinning,setSpinning]=useState(false);
+  const[result,setResult]=useState(null);
+  const[angle,setAngle]=useState(0);
+  const[showWheel,setShowWheel]=useState(false);
+  const[refs,setRefs]=useState(0);
+
+  useEffect(()=>{
+    (async()=>{
+      try{
+        const r=await fetch(`${SB}/rest/v1/Giveaways?active=eq.true&select=*&limit=1`,{headers:H(token)});
+        const d=await r.json();
+        if(Array.isArray(d)&&d.length>0)setGw(d[0]);
+      }catch(e){}
+      try{
+        const r2=await fetch(`${SB}/rest/v1/GiveawayEntries?user_id=eq.${userId}&select=*&order=created_at.desc&limit=1`,{headers:H(token)});
+        const d2=await r2.json();
+        if(Array.isArray(d2)&&d2.length>0)setEntry(d2[0]);
+      }catch(e){}
+      try{
+        const r3=await fetch(`${SB}/rest/v1/Referrals?referrer_id=eq.${userId}&select=id`,{headers:H(token)});
+        const d3=await r3.json();
+        if(Array.isArray(d3))setRefs(d3.length);
+      }catch(e){}
+    })();
+  },[userId,token]);
+
+  if(!gw)return null;
+
+  const prizes=gw.prizes||[];
+  const minRef=gw.min_referrals||3;
+  const canSpin=refs>=minRef&&!entry;
+  const alreadySpun=!!entry;
+  const endsAt=gw.ends_at?new Date(gw.ends_at):null;
+  const expired=endsAt&&endsAt<new Date();
+  if(expired)return null;
+
+  const spin=async()=>{
+    if(!canSpin||spinning)return;
+    setSpinning(true);setShowWheel(true);
+    // Weighted random
+    const total=prizes.reduce((s,p)=>s+(p.chance||1),0);
+    let rnd=Math.random()*total,idx=0;
+    for(let i=0;i<prizes.length;i++){rnd-=(prizes[i].chance||1);if(rnd<=0){idx=i;break}}
+    const segAngle=360/prizes.length;
+    const targetAngle=360*6+(360-idx*segAngle-segAngle/2);
+    setAngle(targetAngle);
+    setTimeout(async()=>{
+      setResult(prizes[idx]);
+      try{
+        await fetch(`${SB}/rest/v1/GiveawayEntries`,{method:"POST",headers:H(token),body:JSON.stringify({user_id:userId,giveaway_id:gw.id,prize_won:prizes[idx].name,prize_index:idx})});
+        setEntry({prize_won:prizes[idx].name,prize_index:idx});
+      }catch(e){}
+      setSpinning(false);
+    },4500);
+  };
+
+  const segAngle=prizes.length?360/prizes.length:60;
+
+  const timeLeft=endsAt?(() => {
+    const diff=endsAt-new Date();
+    if(diff<=0)return null;
+    const h=Math.floor(diff/3600000);
+    const m=Math.floor((diff%3600000)/60000);
+    return `${h}h ${m}m`;
+  })():null;
+
+  return(<div className="cd" style={{marginBottom:6,overflow:"hidden",position:"relative"}}>
+    <div style={{padding:"14px 16px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+        <span style={{fontSize:24}}>🎰</span>
+        <div style={{flex:1}}>
+          <div style={{fontSize:14,fontWeight:700}}>{gw.title||"Spin & Win"}</div>
+          {timeLeft&&<div style={{fontSize:10,color:"var(--R)",fontWeight:600,marginTop:2}}>⏳ {timeLeft} {{fa:"مانده",ar:"متبقي",tr:"kaldı",ru:"осталось",es:"restante"}[lang]||"left"}</div>}
+        </div>
+        {!alreadySpun&&<div style={{fontSize:9,fontWeight:600,color:canSpin?"var(--G)":"var(--dm)",background:canSpin?"color-mix(in srgb,var(--G) 10%,transparent)":"var(--bg)",padding:"4px 10px",borderRadius:20,border:"1px solid "+(canSpin?"color-mix(in srgb,var(--G) 20%,transparent)":"var(--brd)")}}>{refs}/{minRef} {{fa:"دعوت",ar:"دعوة",tr:"davet",ru:"приг.",es:"inv."}[lang]||"invites"}</div>}
+      </div>
+
+      {alreadySpun&&!showWheel?<div style={{textAlign:"center",padding:"16px 0"}}>
+        <div style={{fontSize:36,marginBottom:8}}>{entry.prize_won==="Try Again"?"😅":"🎉"}</div>
+        <div style={{fontSize:14,fontWeight:700,color:entry.prize_won==="Try Again"?"var(--dm)":"var(--G)"}}>{prizes[entry.prize_index]?((lang==="fa"?prizes[entry.prize_index].name_fa:null)||prizes[entry.prize_index].name):entry.prize_won}</div>
+        <div style={{fontSize:11,color:"var(--dm)",marginTop:4}}>{{fa:"قبلاً شرکت کردید",ar:"شاركت مسبقاً",tr:"Zaten katıldınız",ru:"Вы уже участвовали",es:"Ya participaste"}[lang]||"Already participated"}</div>
+      </div>
+
+      :!canSpin&&!alreadySpun?<div style={{textAlign:"center",padding:"12px 0"}}>
+        <div style={{fontSize:12,color:"var(--dm)",marginBottom:8}}>{{fa:`${minRef-refs} دعوت دیگه نیاز داری`,ar:`تحتاج ${minRef-refs} دعوة أخرى`,tr:`${minRef-refs} davet daha gerekli`,ru:`Нужно ещё ${minRef-refs} приглашений`,es:`Necesitas ${minRef-refs} invitaciones más`}[lang]||`Need ${minRef-refs} more invites`}</div>
+        <div style={{fontSize:11,fontWeight:600,color:"var(--R)",cursor:"pointer"}}>{{fa:"→ برو به بخش دعوت",ar:"→ اذهب للإحالة",tr:"→ Davet bölümüne git",ru:"→ Перейти к приглашениям",es:"→ Ir a referidos"}[lang]||"→ Go to Referral section"}</div>
+      </div>
+
+      :<div style={{textAlign:"center"}}>{!showWheel?
+        <div onClick={spin} style={{display:"inline-flex",alignItems:"center",gap:8,padding:"12px 32px",borderRadius:50,background:"linear-gradient(135deg,#ef4444,#dc2626)",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 20px rgba(239,68,68,0.3)"}}>
+          🎡 {{fa:"بچرخون!",ar:"أدِر!",tr:"Çevir!",ru:"Крути!",es:"¡Gira!"}[lang]||"Spin!"}
+        </div>
+        :<div style={{padding:"10px 0"}}>
+          {/* Wheel */}
+          <div style={{position:"relative",width:220,height:220,margin:"0 auto"}}>
+            {/* Pointer */}
+            <div style={{position:"absolute",top:-8,left:"50%",transform:"translateX(-50%)",zIndex:5,fontSize:18}}>▼</div>
+            {/* Spinning wheel */}
+            <svg width="220" height="220" viewBox="0 0 220 220" style={{transform:`rotate(${angle}deg)`,transition:spinning?"transform 4.5s cubic-bezier(0.17,0.67,0.12,0.99)":"none"}}>
+              {prizes.map((p,i)=>{
+                const a1=(i*segAngle-90)*Math.PI/180;
+                const a2=((i+1)*segAngle-90)*Math.PI/180;
+                const x1=110+100*Math.cos(a1),y1=110+100*Math.sin(a1);
+                const x2=110+100*Math.cos(a2),y2=110+100*Math.sin(a2);
+                const large=segAngle>180?1:0;
+                const mid=((i+0.5)*segAngle-90)*Math.PI/180;
+                const tx=110+60*Math.cos(mid),ty=110+60*Math.sin(mid);
+                return<g key={i}>
+                  <path d={`M110,110 L${x1},${y1} A100,100 0 ${large},1 ${x2},${y2} Z`} fill={p.color||"#ccc"} stroke="#fff" strokeWidth="2"/>
+                  <text x={tx} y={ty} textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize="9" fontWeight="700" transform={`rotate(${(i+0.5)*segAngle},${tx},${ty})`}>{(lang==="fa"&&p.name_fa)?p.name_fa.slice(0,12):p.name?.slice(0,12)}</text>
+                </g>
+              })}
+              <circle cx="110" cy="110" r="22" fill="#fff" stroke="#eee" strokeWidth="2"/>
+              <text x="110" y="114" textAnchor="middle" fontSize="16">🎰</text>
+            </svg>
+          </div>
+          {result&&<div style={{marginTop:16}}>
+            <div style={{fontSize:28,marginBottom:6}}>{result.name==="Try Again"?"😅":"🎉"}</div>
+            <div style={{fontSize:16,fontWeight:800,color:result.name==="Try Again"?"var(--dm)":"var(--G)"}}>{(lang==="fa"&&result.name_fa)?result.name_fa:result.name}</div>
+          </div>}
+        </div>
+      }</div>}
+    </div>
+  </div>);
+}
+
+/* ─── Admin Giveaway Manager ─── */
+function AdminGiveaway({token}){
+  const{lang}=useLang();
+  const[gw,setGw]=useState(null);
+  const[loading,setLoading]=useState(true);
+  const[entries,setEntries]=useState([]);
+  const[msg,setMsg]=useState("");
+
+  const load=async()=>{
+    try{
+      const r=await fetch(`${SB}/rest/v1/Giveaways?select=*&order=created_at.desc&limit=1`,{headers:H(token)});
+      const d=await r.json();
+      if(Array.isArray(d)&&d.length>0)setGw(d[0]);
+      const r2=await fetch(`${SB}/rest/v1/GiveawayEntries?select=*,Users(full_name,email)&order=created_at.desc`,{headers:H(token)});
+      const d2=await r2.json();
+      if(Array.isArray(d2))setEntries(d2);
+    }catch(e){}
+    setLoading(false);
+  };
+  useEffect(()=>{load()},[token]);
+
+  const toggle=async()=>{
+    if(!gw)return;
+    await fetch(`${SB}/rest/v1/Giveaways?id=eq.${gw.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({active:!gw.active})});
+    setMsg(gw.active?"Giveaway disabled":"Giveaway activated!");
+    load();
+  };
+
+  const save=async(field,val)=>{
+    if(!gw)return;
+    await fetch(`${SB}/rest/v1/Giveaways?id=eq.${gw.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({[field]:val})});
+    load();
+  };
+
+  const updatePrize=(idx,key,val)=>{
+    const p=[...(gw.prizes||[])];
+    p[idx]={...p[idx],[key]:val};
+    save("prizes",p);
+  };
+
+  if(loading)return<div style={{textAlign:"center",padding:20,color:"var(--dm)"}}>Loading...</div>;
+  if(!gw)return<div style={{textAlign:"center",padding:20,color:"var(--dm)"}}>No giveaway found. Run SQL first.</div>;
+
+  return(<div className="fi">
+    <div style={{fontSize:13,fontWeight:700,marginBottom:10}}>🎰 {lang==="fa"?"قرعه‌کشی":"Giveaway"}</div>
+
+    {/* Toggle */}
+    <div className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:14,marginBottom:8}}>
+      <span style={{fontSize:12,fontWeight:600}}>{gw.active?"🟢 Active":"⚫ Inactive"}</span>
+      <div onClick={toggle} style={{padding:"6px 16px",borderRadius:8,cursor:"pointer",fontSize:11,fontWeight:700,color:"#fff",background:gw.active?"#ef4444":"#22c55e"}}>{gw.active?"Disable":"Activate"}</div>
+    </div>
+
+    {/* Settings */}
+    <div className="cd" style={{padding:14,marginBottom:8}}>
+      <div style={{fontSize:11,fontWeight:600,marginBottom:8,color:"var(--tx2)"}}>Settings</div>
+      <input className="ip" placeholder="Title" value={gw.title||""} onChange={e=>save("title",e.target.value)} style={{marginBottom:6}}/>
+      <div style={{display:"flex",gap:6,marginBottom:6}}>
+        <div style={{flex:1}}>
+          <div style={{fontSize:9,color:"var(--dm)",marginBottom:3}}>Min Referrals</div>
+          <input className="ip" type="number" value={gw.min_referrals||3} onChange={e=>save("min_referrals",parseInt(e.target.value)||0)} style={{marginBottom:0}}/>
+        </div>
+        <div style={{flex:2}}>
+          <div style={{fontSize:9,color:"var(--dm)",marginBottom:3}}>Ends At</div>
+          <input className="ip" type="datetime-local" value={gw.ends_at?gw.ends_at.slice(0,16):""} onChange={e=>save("ends_at",e.target.value?new Date(e.target.value).toISOString():null)} style={{marginBottom:0}}/>
+        </div>
+      </div>
+    </div>
+
+    {/* Story Settings */}
+    <div className="cd" style={{padding:14,marginBottom:8}}>
+      <div style={{fontSize:11,fontWeight:600,marginBottom:8,color:"var(--tx2)"}}>📸 Story Template</div>
+      <input className="ip" placeholder="Story Title (e.g. چرخ شانس)" value={gw.story_title||""} onChange={e=>save("story_title",e.target.value)} style={{marginBottom:6}}/>
+      <input className="ip" placeholder="Subtitle (e.g. ۱ هفته اشتراک رایگان بگیر)" value={gw.story_subtitle||""} onChange={e=>save("story_subtitle",e.target.value)} style={{marginBottom:6}}/>
+      <input className="ip" placeholder="Prizes text" value={gw.story_prizes_text||""} onChange={e=>save("story_prizes_text",e.target.value)}/>
+    </div>
+
+    {/* Prizes */}
+    <div className="cd" style={{padding:14,marginBottom:8}}>
+      <div style={{fontSize:11,fontWeight:600,marginBottom:8,color:"var(--tx2)"}}>🎁 Prizes ({(gw.prizes||[]).length})</div>
+      {(gw.prizes||[]).map((p,i)=><div key={i} style={{display:"flex",gap:6,alignItems:"center",marginBottom:6}}>
+        <div style={{width:8,height:8,borderRadius:4,background:p.color||"#ccc",flexShrink:0}}/>
+        <input className="ip" value={p.name||""} onChange={e=>updatePrize(i,"name",e.target.value)} style={{flex:2,marginBottom:0,fontSize:10}}/>
+        <input className="ip" value={p.name_fa||""} onChange={e=>updatePrize(i,"name_fa",e.target.value)} style={{flex:2,marginBottom:0,fontSize:10}} placeholder="فارسی"/>
+        <input className="ip" type="number" value={p.chance||0} onChange={e=>updatePrize(i,"chance",parseInt(e.target.value)||0)} style={{width:50,marginBottom:0,fontSize:10}} placeholder="%"/>
+      </div>)}
+    </div>
+
+    {/* Entries */}
+    <div className="cd" style={{padding:14}}>
+      <div style={{fontSize:11,fontWeight:600,marginBottom:8,color:"var(--tx2)"}}>👥 Entries ({entries.length})</div>
+      {entries.length===0?<div style={{fontSize:11,color:"var(--dm)",textAlign:"center",padding:10}}>No entries yet</div>
+      :entries.slice(0,20).map((e,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid var(--brd)"}}>
+        <div><div style={{fontSize:11,fontWeight:600}}>{e.Users?.full_name||e.Users?.email||"User"}</div><div style={{fontSize:9,color:"var(--dm)"}}>{new Date(e.created_at).toLocaleString()}</div></div>
+        <div style={{fontSize:10,fontWeight:600,color:e.prize_won==="Try Again"?"var(--dm)":"var(--G)"}}>{e.prize_won}</div>
+      </div>)}
+    </div>
+
+    {msg&&<div style={{marginTop:8,fontSize:11,fontWeight:600,color:"var(--G)",textAlign:"center"}}>{msg}</div>}
+  </div>);
+}
+
 /* ─── Profile ─── */
 function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSupport,onSupportOpened}){
   const{t}=useLang();
@@ -4157,6 +4390,7 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
       </div>
     </div>
     <ReferralSection userId={user?.id} token={token} userProfile={up}/>
+    <GiveawayWheel userId={user?.id} token={token}/>
     <RewardSectionWrapper userId={user?.id} token={token} userProfile={up}/>
     <div onClick={toggle} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:14,marginBottom:6,cursor:"pointer"}}>
       <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{color:"var(--mu)"}}>{dark?IC.moon:IC.sun}</span><span style={{fontSize:13,fontWeight:500}}>{dark?t.darkMode:t.lightMode}</span></div>
