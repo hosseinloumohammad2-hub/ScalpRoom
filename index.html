@@ -3283,6 +3283,7 @@ function Plans({userProfile,goToSupport,token}){
   const basePlans=[{dur:t.month1,p:54,days:30},{dur:t.month3,p:100,save:"38%",days:90},{dur:t.month6,p:170,save:"47%",days:180},{dur:t.year1,p:300,best:true,save:"54%",days:365}];
   const isAdmin=userProfile?.role==="admin";
   const disc=promo?.discount_pct||0;
+  const gwDisc=userProfile?.giveaway_discount||0;
   const premText={
     premActive:{fa:"اشتراک فعال",ar:"الاشتراك نشط",tr:"Premium Aktif",ru:"Премиум активен",es:"Premium activo"},
     yourSub:{fa:"اشتراک شما",ar:"اشتراكك",tr:"Aboneliğiniz",ru:"Ваша подписка",es:"Tu suscripción"},
@@ -3349,23 +3350,26 @@ function Plans({userProfile,goToSupport,token}){
     </div>}
 
     {basePlans.map((p,i)=>{
-      const discPrice=disc>0?Math.round(p.p*(1-disc/100)):0;
+      const totalDisc=Math.max(disc,gwDisc);
+      const discPrice=totalDisc>0?Math.round(p.p*(1-totalDisc/100)):0;
+      const hasDisc=totalDisc>0;
       return<div key={i} className="cd" style={{marginBottom:8,padding:16,borderColor:p.best?"color-mix(in srgb,var(--R) 30%,transparent)":"var(--brd)",background:p.best?"color-mix(in srgb,var(--R) 3%,transparent)":"var(--card)"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div>
           <div style={{fontSize:15,fontWeight:600}}>{p.dur}</div>
           <div style={{display:"flex",gap:6,marginTop:3,flexWrap:"wrap",alignItems:"center"}}>
             {p.best&&<span style={{fontSize:10,fontWeight:700,color:"var(--G)"}}>{t.bestValue}</span>}
-            {p.save&&!disc&&<span style={{fontSize:10,fontWeight:600,color:"var(--Y)"}}>Save {p.save}</span>}
+            {p.save&&!hasDisc&&<span style={{fontSize:10,fontWeight:600,color:"var(--Y)"}}>Save {p.save}</span>}
             {disc>0&&<span style={{fontSize:10,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 6px",borderRadius:4}}>{disc}% OFF</span>}
+            {gwDisc>0&&disc===0&&<span style={{fontSize:10,fontWeight:700,color:"var(--G)",background:"color-mix(in srgb,var(--G) 10%,transparent)",padding:"2px 6px",borderRadius:4}}>🎰 {gwDisc}% OFF</span>}
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <div style={{textAlign:"right"}}>
-            {disc>0&&<div className="m" style={{fontSize:13,color:"var(--dm)",textDecoration:"line-through",fontWeight:500}}>${p.p}</div>}
-            <span className="m" style={{fontSize:disc>0?24:22,fontWeight:700,color:disc>0?"var(--G)":"var(--tx)"}}>${disc>0?discPrice:p.p}</span>
+            {hasDisc&&<div className="m" style={{fontSize:13,color:"var(--dm)",textDecoration:"line-through",fontWeight:500}}>${p.p}</div>}
+            <span className="m" style={{fontSize:hasDisc?24:22,fontWeight:700,color:hasDisc?"var(--G)":"var(--tx)"}}>${hasDisc?discPrice:p.p}</span>
           </div>
-          <div onClick={()=>{setSelectedPlan({dur:p.dur,price:disc>0?discPrice:p.p,days:p.days});setShowContact(true)}} className="bt" style={{background:"var(--R)",padding:"10px 20px",width:"auto",fontSize:13,cursor:"pointer"}}>{t.subscribe}</div>
+          <div onClick={()=>{setSelectedPlan({dur:p.dur,price:hasDisc?discPrice:p.p,days:p.days});setShowContact(true)}} className="bt" style={{background:"var(--R)",padding:"10px 20px",width:"auto",fontSize:13,cursor:"pointer"}}>{t.subscribe}</div>
         </div>
       </div>
     </div>})}
@@ -4155,7 +4159,11 @@ function GiveawayWheel({userId,token}){
   },[userId,token]);
 
   if(!gw)return null;
-  const prizes=gw.prizes||[];
+  const prizes=[
+    {name:"1 Week Premium",name_fa:"۱ هفته اشتراک رایگان",chance:20,color:"#22c55e"},
+    {name:"50% Discount",name_fa:"تخفیف ۵۰٪",chance:30,color:"#f97316"},
+    {name:"Try Again",name_fa:"شانس بعدی",chance:50,color:"#94a3b8"}
+  ];
   const minRef=gw.min_referrals||3;
   const noRefRequired=gw.no_referral_required||false;
   const canSpin=(noRefRequired||refs>=minRef)&&!entry;
@@ -4378,13 +4386,16 @@ function AdminGiveaway({token}){
             <div style={{textAlign:"right"}}>
               <div style={{fontSize:11,fontWeight:700,color:isWinner?"var(--G)":"var(--dm)"}}>{e.prize_won}</div>
               {isWinner&&isPremiumPrize&&u.membership!=="premium"&&<div onClick={async()=>{
-                const days=e.prize_won.includes("Month")?30:7;
-                const exp=new Date();exp.setDate(exp.getDate()+days);
+                const exp=new Date();exp.setDate(exp.getDate()+7);
                 await fetch(`${SB}/rest/v1/Users?id=eq.${e.user_id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({membership:"premium",premium_expires_at:exp.toISOString()})});
-                setMsg(`${u.full_name||u.email} → Premium ${days} days!`);load();
-              }} style={{marginTop:4,padding:"4px 10px",borderRadius:6,background:"var(--G)",color:"#fff",fontSize:9,fontWeight:700,cursor:"pointer",display:"inline-block"}}>✓ Activate Premium</div>}
+                setMsg(`${u.full_name||u.email} → Premium 7 days!`);load();
+              }} style={{marginTop:4,padding:"4px 10px",borderRadius:6,background:"var(--G)",color:"#fff",fontSize:9,fontWeight:700,cursor:"pointer",display:"inline-block"}}>✓ Activate 1 Week Premium</div>}
               {isWinner&&isPremiumPrize&&u.membership==="premium"&&<div style={{marginTop:4,fontSize:9,fontWeight:600,color:"var(--G)"}}>✅ Already Premium</div>}
-              {isWinner&&!isPremiumPrize&&<div onClick={()=>{navigator.clipboard.writeText(u.email||"");setMsg("Email copied: "+(u.email||""))}} style={{marginTop:4,padding:"4px 10px",borderRadius:6,background:"color-mix(in srgb,var(--B) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--B) 20%,transparent)",color:"var(--B)",fontSize:9,fontWeight:700,cursor:"pointer",display:"inline-block"}}>📋 Copy Email</div>}
+              {isWinner&&e.prize_won?.includes("Discount")&&!(u.giveaway_discount>0)&&<div onClick={async()=>{
+                await fetch(`${SB}/rest/v1/Users?id=eq.${e.user_id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({giveaway_discount:50})});
+                setMsg(`${u.full_name||u.email} → 50% Discount activated!`);load();
+              }} style={{marginTop:4,padding:"4px 10px",borderRadius:6,background:"#f97316",color:"#fff",fontSize:9,fontWeight:700,cursor:"pointer",display:"inline-block"}}>🏷 Activate 50% Discount</div>}
+              {isWinner&&e.prize_won?.includes("Discount")&&u.giveaway_discount>0&&<div style={{marginTop:4,fontSize:9,fontWeight:600,color:"#f97316"}}>✅ 50% Discount Active</div>}
             </div>
           </div>
         </div>
