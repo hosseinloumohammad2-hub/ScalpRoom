@@ -4613,17 +4613,16 @@ ReactDOM.render(<App/>,document.getElementById("root"));
 if('serviceWorker' in navigator){
   window.addEventListener('load',async function(){
     try{
-      var cleaned=localStorage.getItem('sw_v2_clean');
-      if(!cleaned){
-        var regs=await navigator.serviceWorker.getRegistrations();
-        for(var i=0;i<regs.length;i++){await regs[i].unregister()}
-        var keys=await caches.keys();
-        for(var j=0;j<keys.length;j++){await caches.delete(keys[j])}
-        localStorage.setItem('sw_v2_clean','1');
+      // Unregister ALL service workers and clear ALL caches
+      var regs=await navigator.serviceWorker.getRegistrations();
+      for(var i=0;i<regs.length;i++){await regs[i].unregister()}
+      var keys=await caches.keys();
+      for(var j=0;j<keys.length;j++){await caches.delete(keys[j])}
+      // Only reload once to apply cleanup
+      if(!localStorage.getItem('sw_v4')){
+        localStorage.setItem('sw_v4','1');
         window.location.reload();
-        return;
       }
-      navigator.serviceWorker.register('/sw.js');
     }catch(e){}
   });
 }
