@@ -4136,12 +4136,15 @@ function GiveawayWheel({userId,token}){
       try{
         const r=await fetch(`${SB}/rest/v1/giveaways?active=eq.true&select=*&limit=1`,{headers:H(token)});
         const d=await r.json();
-        if(Array.isArray(d)&&d.length>0)setGw(d[0]);
-      }catch(e){}
-      try{
-        const r2=await fetch(`${SB}/rest/v1/giveaway_entries?user_id=eq.${userId}&select=*&order=created_at.desc&limit=1`,{headers:H(token)});
-        const d2=await r2.json();
-        if(Array.isArray(d2)&&d2.length>0)setEntry(d2[0]);
+        if(Array.isArray(d)&&d.length>0){
+          const activeGw=d[0];
+          setGw(activeGw);
+          try{
+            const r2=await fetch(`${SB}/rest/v1/giveawayentries?user_id=eq.${userId}&giveaway_id=eq.${activeGw.id}&select=*&limit=1`,{headers:H(token)});
+            const d2=await r2.json();
+            if(Array.isArray(d2)&&d2.length>0)setEntry(d2[0]);
+          }catch(e){}
+        }
       }catch(e){}
       try{
         const r3=await fetch(`${SB}/rest/v1/Referrals?referrer_id=eq.${userId}&select=id`,{headers:H(token)});
@@ -4152,7 +4155,6 @@ function GiveawayWheel({userId,token}){
   },[userId,token]);
 
   if(!gw)return null;
-
   const prizes=gw.prizes||[];
   const minRef=gw.min_referrals||3;
   const noRefRequired=gw.no_referral_required||false;
@@ -4165,33 +4167,24 @@ function GiveawayWheel({userId,token}){
   const spin=async()=>{
     if(!canSpin||spinning)return;
     setSpinning(true);setShowWheel(true);setAngle(0);setResult(null);
-    // Weighted random
     const total=prizes.reduce((s,p)=>s+(p.chance||1),0);
     let rnd=Math.random()*total,idx=0;
     for(let i=0;i<prizes.length;i++){rnd-=(prizes[i].chance||1);if(rnd<=0){idx=i;break}}
     const segA=360/prizes.length;
     const targetAngle=360*12+(360-idx*segA-segA/2);
-    // Wait for wheel to render at 0, then start spinning
     requestAnimationFrame(()=>{requestAnimationFrame(()=>{setAngle(targetAngle)})});
     setTimeout(async()=>{
       setResult(prizes[idx]);
-      try{
-        await fetch(`${SB}/rest/v1/giveaway_entries`,{method:"POST",headers:H(token),body:JSON.stringify({user_id:userId,giveaway_id:gw.id,prize_won:prizes[idx].name,prize_index:idx})});
-        setEntry({prize_won:prizes[idx].name,prize_index:idx});
-      }catch(e){}
+      const newEntry={user_id:userId,giveaway_id:gw.id,prize_won:prizes[idx].name,prize_index:idx};
+      try{await fetch(`${SB}/rest/v1/giveawayentries`,{method:"POST",headers:H(token),body:JSON.stringify(newEntry)})}catch(e){}
+      setEntry(newEntry);
       setSpinning(false);
     },10000);
   };
 
   const segAngle=prizes.length?360/prizes.length:60;
-
-  const timeLeft=endsAt?(() => {
-    const diff=endsAt-new Date();
-    if(diff<=0)return null;
-    const h=Math.floor(diff/3600000);
-    const m=Math.floor((diff%3600000)/60000);
-    return `${h}h ${m}m`;
-  })():null;
+  const isRealPrize=entry&&entry.prize_won!=="Try Again";
+  const timeLeft=endsAt?(()=>{const diff=endsAt-new Date();if(diff<=0)return null;const h=Math.floor(diff/3600000);const m=Math.floor((diff%3600000)/60000);return `${h}h ${m}m`})():null;
 
   return(<div className="cd" style={{marginBottom:6,overflow:"hidden",position:"relative"}}>
     <div style={{padding:"14px 16px"}}>
@@ -4205,9 +4198,12 @@ function GiveawayWheel({userId,token}){
       </div>
 
       {alreadySpun&&!showWheel?<div style={{textAlign:"center",padding:"16px 0"}}>
-        <div style={{fontSize:36,marginBottom:8}}>{entry.prize_won==="Try Again"?"😅":"🎉"}</div>
-        <div style={{fontSize:14,fontWeight:700,color:entry.prize_won==="Try Again"?"var(--dm)":"var(--G)"}}>{prizes[entry.prize_index]?((lang==="fa"?prizes[entry.prize_index].name_fa:null)||prizes[entry.prize_index].name):entry.prize_won}</div>
-        <div style={{fontSize:11,color:"var(--dm)",marginTop:4}}>{{fa:"قبلاً شرکت کردید",ar:"شاركت مسبقاً",tr:"Zaten katıldınız",ru:"Вы уже участвовали",es:"Ya participaste"}[lang]||"Already participated"}</div>
+        <div style={{fontSize:36,marginBottom:8}}>{isRealPrize?"🎉":"😅"}</div>
+        <div style={{fontSize:14,fontWeight:700,color:isRealPrize?"var(--G)":"var(--dm)"}}>{prizes[entry.prize_index]?((lang==="fa"?prizes[entry.prize_index].name_fa:null)||prizes[entry.prize_index].name):entry.prize_won}</div>
+        {isRealPrize&&<div style={{marginTop:8,padding:"8px 16px",borderRadius:10,background:"color-mix(in srgb,var(--Y) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 20%,transparent)"}}>
+          <div style={{fontSize:11,fontWeight:600,color:"var(--Y)"}}>{{fa:"⏳ تبریک! منتظر فعال‌سازی توسط ادمین باشید",ar:"⏳ تهانينا! في انتظار تفعيل المسؤول",tr:"⏳ Tebrikler! Admin aktivasyonu bekleniyor",ru:"⏳ Поздравляем! Ожидайте активации",es:"⏳ ¡Felicidades! Esperando activación"}[lang]||"⏳ Congrats! Waiting for admin activation"}</div>
+        </div>}
+        {!isRealPrize&&<div style={{fontSize:11,color:"var(--dm)",marginTop:4}}>{{fa:"دفعه بعد شانست رو امتحان کن!",ar:"حاول حظك المرة القادمة!",tr:"Bir dahaki sefere şansını dene!",ru:"Попробуй в следующий раз!",es:"¡Inténtalo la próxima vez!"}[lang]||"Try your luck next time!"}</div>}
       </div>
 
       :!canSpin&&!alreadySpun&&!noRefRequired?<div style={{textAlign:"center",padding:"12px 0"}}>
@@ -4220,11 +4216,8 @@ function GiveawayWheel({userId,token}){
           🎡 {{fa:"بچرخون!",ar:"أدِر!",tr:"Çevir!",ru:"Крути!",es:"¡Gira!"}[lang]||"Spin!"}
         </div>
         :<div style={{padding:"10px 0"}}>
-          {/* Wheel */}
           <div style={{position:"relative",width:220,height:220,margin:"0 auto"}}>
-            {/* Pointer */}
             <div style={{position:"absolute",top:-8,left:"50%",transform:"translateX(-50%)",zIndex:5,fontSize:18}}>▼</div>
-            {/* Spinning wheel */}
             <svg width="220" height="220" viewBox="0 0 220 220" style={{transform:`rotate(${angle}deg)`,transition:spinning?"transform 10s cubic-bezier(0.17,0.67,0.12,0.99)":"none"}}>
               {prizes.map((p,i)=>{
                 const a1=(i*segAngle-90)*Math.PI/180;
@@ -4246,13 +4239,15 @@ function GiveawayWheel({userId,token}){
           {result&&<div style={{marginTop:16}}>
             <div style={{fontSize:28,marginBottom:6}}>{result.name==="Try Again"?"😅":"🎉"}</div>
             <div style={{fontSize:16,fontWeight:800,color:result.name==="Try Again"?"var(--dm)":"var(--G)"}}>{(lang==="fa"&&result.name_fa)?result.name_fa:result.name}</div>
+            {result.name!=="Try Again"&&<div style={{marginTop:10,padding:"8px 16px",borderRadius:10,background:"color-mix(in srgb,var(--Y) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 20%,transparent)"}}>
+              <div style={{fontSize:11,fontWeight:600,color:"var(--Y)"}}>{{fa:"⏳ تبریک! منتظر فعال‌سازی توسط ادمین باشید",ar:"⏳ تهانينا! في انتظار تفعيل المسؤول",tr:"⏳ Tebrikler! Admin aktivasyonu bekleniyor",ru:"⏳ Поздравляем! Ожидайте активации",es:"⏳ ¡Felicidades! Esperando activación"}[lang]||"⏳ Congrats! Waiting for admin activation"}</div>
+            </div>}
           </div>}
         </div>
       }</div>}
     </div>
   </div>);
 }
-
 /* ─── Admin Giveaway Manager ─── */
 function AdminGiveaway({token}){
   const{lang}=useLang();
@@ -4266,7 +4261,7 @@ function AdminGiveaway({token}){
       const r=await fetch(`${SB}/rest/v1/giveaways?select=*&order=created_at.desc&limit=1`,{headers:H(token)});
       const d=await r.json();
       if(Array.isArray(d)&&d.length>0)setGw(d[0]);
-      const r2=await fetch(`${SB}/rest/v1/giveaway_entries?select=*&order=created_at.desc`,{headers:H(token)});
+      const r2=await fetch(`${SB}/rest/v1/giveawayentries?select=*&order=created_at.desc`,{headers:H(token)});
       const d2=await r2.json();
       if(Array.isArray(d2))setEntries(d2);
     }catch(e){}
@@ -4276,8 +4271,13 @@ function AdminGiveaway({token}){
 
   const toggle=async()=>{
     if(!gw)return;
-    await fetch(`${SB}/rest/v1/giveaways?id=eq.${gw.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({active:!gw.active})});
-    setMsg(gw.active?"Giveaway disabled":"Giveaway activated!");
+    const newState=!gw.active;
+    // When activating: delete all previous entries so everyone can spin again
+    if(newState){
+      await fetch(`${SB}/rest/v1/giveawayentries?giveaway_id=eq.${gw.id}`,{method:"DELETE",headers:H(token)});
+    }
+    await fetch(`${SB}/rest/v1/giveaways?id=eq.${gw.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({active:newState})});
+    setMsg(newState?"Giveaway activated! All entries reset.":"Giveaway disabled");
     load();
   };
 
