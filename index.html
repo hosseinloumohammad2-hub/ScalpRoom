@@ -217,55 +217,16 @@ function usePrices(){
   const saveCache=(prices)=>{try{localStorage.setItem("fx_prices",JSON.stringify({P:prices,ts:Date.now()}))}catch(e){}};
   const apply=(prices)=>{if(got.current)return;got.current=true;setP(prices);saveCache(prices);setOk(true);setLastUpdate(new Date())};
 
+  // Fast fetch with 3s abort
+  const ff=(url)=>{const ac=new AbortController();setTimeout(()=>ac.abort(),3000);return fetch(url,{signal:ac.signal})};
+
   const f=useCallback(async()=>{
     got.current=false;
-    const timeout=(ms)=>new Promise((_,rej)=>setTimeout(rej,ms));
-
-    // Fire ALL sources in parallel — first valid response wins
-    // Source 1: Navasan
-    const s1=async()=>{
-      const r=await Promise.race([fetch("https://api.navasan.tech/latest/?api_key=freeX42Ju2HlAIfOKINfOLWUZBNC1smi&item=usd_sell,18ayar,sekkeh,usdt,eur,rub"),timeout(5000)]);
-      const d=await r.json();
-      if(!d||d.message||!d.usd_sell)throw 0;
-      const uV=parseFloat(String(d.usd_sell?.value).replace(/,/g,""))||0;
-      const tV=parseFloat(String(d.usdt?.value||d.usdt_sell?.value||"0").replace(/,/g,""))||0;
-      const tF=(tV>uV*0.5)?tV:uV;
-      apply({usd_sell:mkT("usd",d.usd_sell?.value),eur_sell:mkT("eur",d.eur?.value||d.eur_sell?.value||"0"),sekkeh:mkT("coin",d.sekkeh?.value||"0"),gold18:mkT("gold",d["18ayar"]?.value||"0"),tether:mkT("tether",String(tF)),rub:mkT("rub",d.rub?.value||"0")});
-    };
-    // Source 2: TGJU
-    const s2=async()=>{
-      const r=await Promise.race([fetch("https://call4.tgju.org/ajax.json"),timeout(5000)]);
-      const d=await r.json();
-      if(!d||!d.current)throw 0;
-      const g=(k)=>{try{return d.current[k]?.p?.replace(/,/g,"")||"0"}catch(e){return"0"}};
-      const uR=parseFloat(g("price_dollar_rl"))||0;const tR=parseFloat(g("crypto-tether"))||0;
-      apply({usd_sell:mkR("usd",g("price_dollar_rl")),eur_sell:mkR("eur",g("price_eur")),sekkeh:mkR("coin",g("sekee")),gold18:mkR("gold",g("geram18")),tether:mkR("tether",(tR>uR*0.5)?String(tR):String(uR)),rub:mkR("rub",g("price_rub"))});
-    };
-    // Source 3: TGJU v2
-    const s3=async()=>{
-      const r=await Promise.race([fetch("https://call5.tgju.org/ajax.json"),timeout(5000)]);
-      const d=await r.json();
-      if(!d||!d.current)throw 0;
-      const g=(k)=>{try{return d.current[k]?.p?.replace(/,/g,"")||"0"}catch(e){return"0"}};
-      apply({usd_sell:mkR("usd",g("price_dollar_rl")),eur_sell:mkR("eur",g("price_eur")),sekkeh:mkR("coin",g("sekee")),gold18:mkR("gold",g("geram18")),tether:mkR("tether",g("crypto-tether")),rub:mkR("rub",g("price_rub"))});
-    };
-    // Source 4: Bonbast
-    const s4=async()=>{
-      const r=await Promise.race([fetch("https://bonbast.amirhn.com/latest"),timeout(5000)]);
-      const d=await r.json();
-      if(!d||(!d.usd_sell&&!d.usd))throw 0;
-      apply({usd_sell:mkT("usd",d.usd_sell||d.usd||"0"),eur_sell:mkT("eur",d.eur_sell||d.eur||"0"),sekkeh:mkT("coin",d.emami||d.coin||"0"),gold18:mkT("gold",d.gold18||d.gol18||"0"),tether:mkT("tether",d.usd_sell||d.usd||"0"),rub:mkT("rub",d.rub||"0")});
-    };
-    // Source 5: Accessban
-    const s5=async()=>{
-      const r=await Promise.race([fetch("https://api.accessban.com/v1/market/currency/usd"),timeout(5000)]);
-      const d=await r.json();
-      if(!d||!d.data)throw 0;
-      const uV=d.data?.value||d.data?.price||"0";
-      apply({usd_sell:mkT("usd",uV),eur_sell:init(),sekkeh:init(),gold18:init(),tether:mkT("tether",uV),rub:init()});
-    };
-
-    // Race all — whoever resolves first wins via got.current flag
+    const s1=async()=>{const r=await ff("https://api.navasan.tech/latest/?api_key=freeX42Ju2HlAIfOKINfOLWUZBNC1smi&item=usd_sell,18ayar,sekkeh,usdt,eur,rub");const d=await r.json();if(!d||d.message||!d.usd_sell)throw 0;const uV=parseFloat(String(d.usd_sell?.value).replace(/,/g,""))||0;const tV=parseFloat(String(d.usdt?.value||d.usdt_sell?.value||"0").replace(/,/g,""))||0;const tF=(tV>uV*0.5)?tV:uV;apply({usd_sell:mkT("usd",d.usd_sell?.value),eur_sell:mkT("eur",d.eur?.value||d.eur_sell?.value||"0"),sekkeh:mkT("coin",d.sekkeh?.value||"0"),gold18:mkT("gold",d["18ayar"]?.value||"0"),tether:mkT("tether",String(tF)),rub:mkT("rub",d.rub?.value||"0")})};
+    const s2=async()=>{const r=await ff("https://call4.tgju.org/ajax.json");const d=await r.json();if(!d||!d.current)throw 0;const g=(k)=>{try{return d.current[k]?.p?.replace(/,/g,"")||"0"}catch(e){return"0"}};const uR=parseFloat(g("price_dollar_rl"))||0;const tR=parseFloat(g("crypto-tether"))||0;apply({usd_sell:mkR("usd",g("price_dollar_rl")),eur_sell:mkR("eur",g("price_eur")),sekkeh:mkR("coin",g("sekee")),gold18:mkR("gold",g("geram18")),tether:mkR("tether",(tR>uR*0.5)?String(tR):String(uR)),rub:mkR("rub",g("price_rub"))})};
+    const s3=async()=>{const r=await ff("https://call5.tgju.org/ajax.json");const d=await r.json();if(!d||!d.current)throw 0;const g=(k)=>{try{return d.current[k]?.p?.replace(/,/g,"")||"0"}catch(e){return"0"}};apply({usd_sell:mkR("usd",g("price_dollar_rl")),eur_sell:mkR("eur",g("price_eur")),sekkeh:mkR("coin",g("sekee")),gold18:mkR("gold",g("geram18")),tether:mkR("tether",g("crypto-tether")),rub:mkR("rub",g("price_rub"))})};
+    const s4=async()=>{const r=await ff("https://bonbast.amirhn.com/latest");const d=await r.json();if(!d||(!d.usd_sell&&!d.usd))throw 0;apply({usd_sell:mkT("usd",d.usd_sell||d.usd||"0"),eur_sell:mkT("eur",d.eur_sell||d.eur||"0"),sekkeh:mkT("coin",d.emami||d.coin||"0"),gold18:mkT("gold",d.gold18||d.gol18||"0"),tether:mkT("tether",d.usd_sell||d.usd||"0"),rub:mkT("rub",d.rub||"0")})};
+    const s5=async()=>{const r=await ff("https://api.accessban.com/v1/market/currency/usd");const d=await r.json();if(!d||!d.data)throw 0;const uV=d.data?.value||d.data?.price||"0";apply({usd_sell:mkT("usd",uV),eur_sell:init(),sekkeh:init(),gold18:init(),tether:mkT("tether",uV),rub:init()})};
     await Promise.allSettled([s1(),s2(),s3(),s4(),s5()]);
   },[]);
 
