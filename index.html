@@ -4615,12 +4615,13 @@ if('serviceWorker' in navigator){
     try{
       var cleaned=localStorage.getItem('sw_v2_clean');
       if(!cleaned){
-        // One-time cleanup: remove old SW and caches
         var regs=await navigator.serviceWorker.getRegistrations();
         for(var i=0;i<regs.length;i++){await regs[i].unregister()}
         var keys=await caches.keys();
         for(var j=0;j<keys.length;j++){await caches.delete(keys[j])}
         localStorage.setItem('sw_v2_clean','1');
+        window.location.reload();
+        return;
       }
       navigator.serviceWorker.register('/sw.js');
     }catch(e){}
