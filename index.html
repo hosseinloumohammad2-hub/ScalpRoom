@@ -1086,6 +1086,10 @@ function useNotifications(){
   return{enabled,enable,notify};
 }
 
+/* ─── Theme Color Helper (status bar color for modals) ─── */
+function setThemeColor(color){document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{m.content=color})}
+function getThemeColor(){try{return localStorage.getItem("fxtheme")==="dark"?"#050507":"#f5f5f7"}catch(e){return"#f5f5f7"}}
+
 /* ─── Toast ─── */
 function Toast({msg,onDone}){
   useEffect(()=>{if(msg){const t=setTimeout(onDone,2500);return()=>clearTimeout(t)}},[msg]);
@@ -1982,6 +1986,7 @@ function PostModal({post,onClose}){
   const lastDist=useRef(0);
   const lastPos=useRef({x:0,y:0});
   const dragging=useRef(false);
+  useEffect(()=>{if(post){setThemeColor("#2a2a2a");return()=>setThemeColor(getThemeColor())}},[post]);
   if(!post)return null;
   const handleTouchStart=(e)=>{
     if(e.touches.length===2){lastDist.current=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY)}
@@ -2033,6 +2038,7 @@ function PostModal({post,onClose}){
 /* ─── Signal Edit Modal ─── */
 function SignalEditModal({sig,onClose,onSave}){
   const{t}=useLang();
+  useEffect(()=>{if(sig){setThemeColor("#2a2a2a");return()=>setThemeColor(getThemeColor())}},[sig]);
   const[status,setStatus]=useState(sig?.status||"active");
   const[pnl,setPnl]=useState(sig?.pnl||"");
   const[closedAt,setClosedAt]=useState(sig?.closed_at?sig.closed_at.slice(0,16):"");
@@ -2894,6 +2900,7 @@ function AdminPromo({token}){
 /* ─── Contact Popup (iOS 26 style with payment) ─── */
 function ContactPopup({onClose,onSupport,plan,userId,token}){
   const{t,lang}=useLang();
+  useEffect(()=>{setThemeColor("#2a2a2a");return()=>setThemeColor(getThemeColor())},[]);
   const[showCrypto,setShowCrypto]=useState(false);
   const[copied,setCopied]=useState("");
   const[payStep,setPayStep]=useState("");
@@ -3004,6 +3011,7 @@ function ContactPopup({onClose,onSupport,plan,userId,token}){
 /* ─── Premium Upgrade Popup (iOS 26 style) ─── */
 function PremiumPopup({onClose,onGoPlans}){
   const{lang}=useLang();
+  useEffect(()=>{setThemeColor("#2a2a2a");return()=>setThemeColor(getThemeColor())},[]);
   return(<div className="modal-overlay" onClick={onClose} style={{alignItems:"flex-end",padding:0}}>
     <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:430,background:"var(--bg)",borderRadius:"20px 20px 0 0",padding:"8px 16px calc(env(safe-area-inset-bottom,12px) + 16px)",animation:"fi .2s ease"}}>
       <div style={{width:36,height:4,borderRadius:2,background:"var(--brd2)",margin:"0 auto 16px"}}/>
@@ -3434,6 +3442,7 @@ function Plans({userProfile,goToSupport,token}){
 /* ─── Admin ─── */
 function PostEditModal({post,onClose,onSave}){
   const{t}=useLang();
+  useEffect(()=>{if(post){setThemeColor("#2a2a2a");return()=>setThemeColor(getThemeColor())}},[post]);
   const[ti,setTi]=useState(post?.title||"");
   const[de,setDe]=useState(post?.description||"");
   const[ca,setCa]=useState(post?.category||"gold");
