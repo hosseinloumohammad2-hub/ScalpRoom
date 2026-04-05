@@ -2414,7 +2414,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
       </div>
     </div>}
     {/* Ticker Tape */}
-    {online!==false&&<div style={{marginBottom:14,borderRadius:"var(--r2)",overflow:"hidden",background:"var(--glass2)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",border:"1px solid var(--gb)",padding:0}}><TVTickerTape colorTheme={theme}/></div>}
+    {online!==false&&<div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVTickerTape colorTheme={theme}/></div>}
     {online!==false&&<div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVMarketOverview colorTheme={theme}/></div>}
     {ok?<div className="cd" style={{marginBottom:12}}>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
