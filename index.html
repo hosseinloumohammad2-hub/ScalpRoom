@@ -2,12 +2,12 @@
 <html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#e8e4f0">
+<meta name="theme-color" content="#f5f5f7">
 <script>
-(function(){try{document.querySelector('meta[name="theme-color"]').content="#e8e4f0";document.documentElement.setAttribute("data-theme","liquid");localStorage.setItem("fxtheme","liquid")}catch(e){}})();
+(function(){try{var t=localStorage.getItem("fxtheme");if(!t||t==="light")t="liquid";var isLiquid=t==="liquid";document.querySelector('meta[name="theme-color"]').content=isLiquid?"#f5f5f7":"#050507";if(!isLiquid)document.documentElement.setAttribute("data-theme","dark");else document.documentElement.setAttribute("data-theme","liquid")}catch(e){}})();
 </script>
 <title>Fxscalproom.</title>
 <link rel="manifest" href="manifest.json">
@@ -18,11 +18,13 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style id="theme-style">
-:root{--bg:#f5f5f7;--bg2:#ffffff;--card:rgba(255,255,255,0.78);--brd:rgba(0,0,0,0.06);--brd2:rgba(0,0,0,0.10);--tx:#1d1d1f;--tx2:#86868b;--mu:#86868b;--dm:#aeaeb2;--R:#ff3b30;--G:#28cd41;--B:#0071e3;--Y:#eab308;--glass-bg:rgba(255,255,255,0.45);--glass-border:rgba(255,255,255,0.7);--glass-blur:blur(50px) saturate(2);--specular:linear-gradient(90deg,transparent,rgba(255,255,255,0.9),transparent);--radius-lg:26px;--radius-md:22px;--radius-sm:16px}
-*{box-sizing:border-box;margin:0;padding:0}
-html{background:#e8e4f0}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);-webkit-tap-highlight-color:transparent;overflow-x:hidden;letter-spacing:-0.2px}
-body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(0,113,227,0.10) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 30%,rgba(191,90,242,0.08) 0%,transparent 55%),radial-gradient(ellipse 70% 50% at 50% 90%,rgba(40,205,65,0.06) 0%,transparent 50%),radial-gradient(ellipse 90% 80% at 60% 50%,rgba(0,113,227,0.03) 0%,transparent 70%),var(--bg)}
+/* ─── iOS 26 Liquid Glass ─── */
+:root{--bg:#f5f5f7;--bg2:#ffffff;--glass:rgba(255,255,255,.55);--glass2:rgba(255,255,255,.35);--gb:rgba(255,255,255,.72);--card:rgba(255,255,255,.78);--brd:rgba(0,0,0,.06);--brd2:rgba(0,0,0,.10);--tx:#1d1d1f;--tx2:#424245;--mu:#86868b;--dm:#aeaeb2;--R:#ff3b30;--G:#28cd41;--B:#0071e3;--Y:#ff9f0a;--purple:#bf5af2;--r:22px;--r2:16px}
+[data-theme="dark"]{--bg:#050507;--bg2:#0a0a0c;--glass:rgba(30,30,32,.65);--glass2:rgba(30,30,32,.45);--gb:rgba(255,255,255,.08);--card:rgba(28,28,30,.82);--brd:rgba(255,255,255,.06);--brd2:rgba(255,255,255,.10);--tx:#e5e5e7;--tx2:#a1a1aa;--mu:#71717a;--dm:#52525b;--R:#ff453a;--G:#30d158;--B:#0a84ff;--Y:#ffd60a}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased;overflow-x:hidden;letter-spacing:-.2px}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 600px 400px at 15% 5%,rgba(0,113,227,.08),transparent),radial-gradient(ellipse 500px 500px at 85% 15%,rgba(191,90,242,.06),transparent),radial-gradient(ellipse 400px 600px at 50% 95%,rgba(40,205,65,.04),transparent),var(--bg)}
+[data-theme="dark"] body::before{background:radial-gradient(ellipse 600px 400px at 15% 5%,rgba(0,113,227,.04),transparent),radial-gradient(ellipse 500px 500px at 85% 15%,rgba(191,90,242,.03),transparent),var(--bg)}
 ::-webkit-scrollbar{width:0}
 input,button,textarea,select{font-family:inherit;border:none;outline:none;color:var(--tx)}
 input::placeholder,textarea::placeholder{color:var(--dm)}
@@ -30,46 +32,48 @@ img{display:block;max-width:100%}
 a{color:inherit;text-decoration:none}
 .m{font-family:'JetBrains Mono','DM Mono',monospace;font-variant-numeric:tabular-nums}
 .app{max-width:430px;margin:0 auto;min-height:100dvh;position:relative;z-index:1}
-/* ─── Glass Header ─── */
-.hd{padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-bottom:1px solid var(--glass-border);z-index:40}
-.hd::before{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;background:var(--specular)}
-.lg{font-size:20px;font-weight:800;color:var(--tx);letter-spacing:-.6px}
-.lg b{color:var(--R);font-weight:800}
-.ct{padding:18px 16px;padding-bottom:120px}
-/* ─── Glass Tab Bar ─── */
-.tb{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:398px;background:rgba(255,255,255,0.45);backdrop-filter:blur(60px) saturate(2.2);-webkit-backdrop-filter:blur(60px) saturate(2.2);border:1px solid rgba(255,255,255,0.75);border-radius:var(--radius-lg);display:flex;padding:10px 6px calc(env(safe-area-inset-bottom,6px) + 6px);z-index:50;box-shadow:0 8px 40px rgba(0,0,0,0.08),0 2px 10px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.8);transition:all .35s cubic-bezier(.4,0,.2,1)}
-.tb::before{content:'';position:absolute;top:0;left:12%;right:12%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.95),transparent)}
-.tb.tb-compact{padding:6px 4px calc(env(safe-area-inset-bottom,4px) + 4px);border-radius:20px;width:calc(100% - 48px);max-width:380px;bottom:10px}
-.ti{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:all .2s ease;padding:6px 0;border-radius:14px;position:relative}
-.ti-active{background:rgba(0,113,227,0.08)}
-.ti-active::before{content:'';position:absolute;top:2px;left:25%;right:25%;height:1px;background:linear-gradient(90deg,transparent,rgba(0,113,227,0.4),transparent)}
-.tl{font-size:9px;font-weight:700;letter-spacing:.1px}
-/* ─── Content Cards (Glass) ─── */
-.cd{background:var(--card);border:1px solid var(--brd);border-radius:var(--radius-md);padding:16px;transition:all .3s;position:relative;box-shadow:0 2px 12px rgba(0,0,0,0.03)}
-.cd::before{content:'';position:absolute;top:0;left:15%;right:15%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent);border-radius:1px;pointer-events:none}
-.ip{width:100%;background:rgba(0,0,0,0.02);border:1px solid var(--brd);border-radius:14px;padding:13px 15px;font-size:14px;margin-bottom:8px;transition:border-color .2s}
+/* ─── Header: gradient fade, NOT glass blur ─── */
+.hd{padding:env(safe-area-inset-top,14px) 20px 14px;padding-top:calc(env(safe-area-inset-top,14px) + 14px);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:linear-gradient(to bottom,var(--bg) 60%,transparent);z-index:40}
+.lg{font-size:22px;font-weight:800;color:var(--tx);letter-spacing:-.6px}
+.lg b{color:var(--R);font-weight:800;font-style:normal}
+.ct{padding:0 0 100px}
+/* ─── Glass Tab Bar (matching demo) ─── */
+.tb{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);width:calc(100% - 28px);max-width:402px;display:flex;padding:8px 4px calc(env(safe-area-inset-bottom,4px) + 4px);border-radius:24px;background:rgba(255,255,255,.5);backdrop-filter:blur(50px) saturate(2);-webkit-backdrop-filter:blur(50px) saturate(2);border:1px solid rgba(255,255,255,.7);box-shadow:0 4px 30px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.7);z-index:50;transition:all .35s cubic-bezier(.4,0,.2,1)}
+[data-theme="dark"] .tb{background:rgba(30,30,32,.55);border-color:rgba(255,255,255,.08);box-shadow:0 4px 30px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.04)}
+.tb.tb-shrink{bottom:0;width:100%;max-width:430px;border-radius:0;border-left:none;border-right:none;border-bottom:none}
+.ti{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;transition:all .2s ease;padding:6px 0;border-radius:16px;position:relative;color:var(--dm)}
+.ti-active{color:var(--B)!important}
+.ti-active::before{content:'';position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:20px;height:3px;border-radius:2px;background:var(--B)}
+.tl{font-size:10px;font-weight:600}
+/* ─── Content Cards ─── */
+.cd{background:var(--card);border:1px solid var(--brd);border-radius:var(--r);padding:16px;margin:0 16px 14px;transition:all .3s}
+/* ─── Glass Card (greeting, premium, special) ─── */
+.cd-glass{background:var(--glass);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);border:1px solid var(--gb);box-shadow:0 2px 20px rgba(0,0,0,.06),inset 0 1px 0 rgba(255,255,255,.6);position:relative;overflow:hidden}
+.cd-glass::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent)}
+[data-theme="dark"] .cd-glass{box-shadow:0 2px 20px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.04)}
+[data-theme="dark"] .cd-glass::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent)}
+.ip{width:100%;background:var(--bg);border:1px solid var(--brd);border-radius:14px;padding:13px 15px;font-size:14px;margin-bottom:8px;transition:border-color .2s}
 .ip:focus{border-color:var(--B)}
 .bt{width:100%;border-radius:14px;padding:14px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;text-align:center;border:none;transition:all .15s;letter-spacing:-.2px}
 .bt:active{transform:scale(.97);opacity:.85}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.fi{animation:fi .35s ease}
-@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fi{animation:fi .4s ease both}
+@keyframes fi{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pl{0%,100%{opacity:1}50%{opacity:.3}}
 .ld{width:6px;height:6px;border-radius:50%;background:var(--G);animation:pl 2s infinite}
-/* ─── Glass Modal ─── */
-.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
-.modal{background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:var(--radius-lg);max-width:400px;width:100%;max-height:90vh;overflow-y:auto;padding:22px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.12)}
-.modal::before{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;background:var(--specular)}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--glass);backdrop-filter:blur(50px) saturate(2);-webkit-backdrop-filter:blur(50px) saturate(2);border:1px solid var(--gb);border-radius:var(--r);max-width:400px;width:100%;max-height:90vh;overflow-y:auto;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.12)}
+[data-theme="dark"] .modal{background:var(--glass);border-color:var(--gb)}
 svg{display:block}
 .tradingview-widget-copyright{display:none!important}
 .tradingview-widget-container__widget a{pointer-events:none!important}
 .tv-embed-widget-wrapper__header{display:none!important}
 .tv-card{pointer-events:none!important}
 [class*="tradingview"] a[href*="tradingview"]{pointer-events:none!important;cursor:default!important}
-textarea{background:rgba(0,0,0,0.02);border:1px solid var(--brd);border-radius:14px;padding:13px 15px;font-size:14px;margin-bottom:8px;width:100%;resize:vertical;min-height:60px;transition:border-color .2s}
+textarea{background:var(--bg);border:1px solid var(--brd);border-radius:14px;padding:13px 15px;font-size:14px;margin-bottom:8px;width:100%;resize:vertical;min-height:60px;transition:border-color .2s}
 textarea:focus{border-color:var(--B)}
-select{background:rgba(0,0,0,0.02);border:1px solid var(--brd);border-radius:14px;padding:13px 15px;font-size:14px;margin-bottom:8px;width:100%;-webkit-appearance:none}
-.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:14px;padding:12px 20px;z-index:200;font-size:13px;font-weight:700;box-shadow:0 8px 30px rgba(0,0,0,.08);animation:toastIn .3s ease}
+select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;padding:13px 15px;font-size:14px;margin-bottom:8px;width:100%;-webkit-appearance:none}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--glass);backdrop-filter:blur(40px) saturate(2);-webkit-backdrop-filter:blur(40px) saturate(2);border:1px solid var(--gb);border-radius:14px;padding:12px 20px;z-index:200;font-size:13px;font-weight:700;box-shadow:0 8px 30px rgba(0,0,0,.08);animation:toastIn .3s ease}
 .offline-bar{position:fixed;top:0;left:0;right:0;z-index:999;background:var(--R);color:#fff;text-align:center;padding:6px 12px;font-size:12px;font-weight:700;transform:translateY(-100%);transition:transform .3s ease;display:flex;align-items:center;justify-content:center;gap:6px}
 .offline-bar.show{transform:translateY(0)}
 @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
@@ -94,29 +98,27 @@ select{background:rgba(0,0,0,0.02);border:1px solid var(--brd);border-radius:14p
 @keyframes splashSlideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
 @keyframes dotBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
 .splash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg)}
-.splash::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(0,113,227,0.10) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 30%,rgba(191,90,242,0.08) 0%,transparent 55%),radial-gradient(ellipse 70% 50% at 50% 90%,rgba(40,205,65,0.06) 0%,transparent 50%);pointer-events:none}
 .splash.out{animation:splashFadeOut .5s ease forwards}
-.splash-logo{font-size:42px;font-weight:800;letter-spacing:-.5px;animation:splashSlideUp .6s ease;position:relative;z-index:1}
+.splash-logo{font-size:42px;font-weight:800;letter-spacing:-.5px;animation:splashSlideUp .6s ease}
 .splash-logo b{color:var(--R);animation:splashPulse 2s ease-in-out infinite}
-.splash-sub{font-size:12px;color:var(--dm);margin-top:12px;animation:splashSlideUp .6s ease .15s both;position:relative;z-index:1}
-.splash-dots{display:flex;gap:6px;margin-top:32px;animation:splashSlideUp .6s ease .3s both;position:relative;z-index:1}
+.splash-sub{font-size:12px;color:var(--dm);margin-top:12px;animation:splashSlideUp .6s ease .15s both}
+.splash-dots{display:flex;gap:6px;margin-top:32px;animation:splashSlideUp .6s ease .3s both}
 .splash-dots span{width:6px;height:6px;border-radius:50%;background:var(--R)}
 .splash-dots span:nth-child(1){animation:dotBounce .6s ease infinite}
 .splash-dots span:nth-child(2){animation:dotBounce .6s ease .15s infinite}
 .splash-dots span:nth-child(3){animation:dotBounce .6s ease .3s infinite}
-.nb{position:absolute;top:2px;right:50%;transform:translateX(12px);width:7px;height:7px;border-radius:50%;background:var(--R);border:1.5px solid rgba(255,255,255,0.7);animation:dotBounce .6s ease infinite}
+.nb{position:absolute;top:0;right:50%;transform:translateX(14px);width:8px;height:8px;border-radius:50%;background:var(--R);border:2px solid rgba(255,255,255,.8)}
 .ptr{text-align:center;overflow:hidden;transition:max-height .3s,opacity .3s;max-height:0;opacity:0}
 .ptr.active{max-height:60px;opacity:1}
 .ptr-spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--brd);border-top-color:var(--R);border-radius:50%;animation:spin .6s linear infinite;margin:12px 0}
 @keyframes spin{to{transform:rotate(360deg)}}
 .onb-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:998;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}
-.onb-overlay::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(0,113,227,0.10) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 30%,rgba(191,90,242,0.08) 0%,transparent 55%);pointer-events:none}
 .onb-overlay.out{animation:splashFadeOut .4s ease forwards}
-.onb-card{text-align:center;max-width:320px;animation:splashSlideUp .5s ease;position:relative;z-index:1}
+.onb-card{text-align:center;max-width:320px;animation:splashSlideUp .5s ease}
 .onb-icon{font-size:48px;margin-bottom:20px}
 .onb-title{font-size:22px;font-weight:800;margin-bottom:10px;line-height:1.3;letter-spacing:-.3px}
 .onb-desc{font-size:14px;color:var(--tx2);line-height:1.7;margin-bottom:32px}
-.onb-dots{display:flex;gap:8px;justify-content:center;margin-bottom:24px;position:relative;z-index:1}
+.onb-dots{display:flex;gap:8px;justify-content:center;margin-bottom:24px}
 .onb-dots span{width:8px;height:8px;border-radius:50%;background:var(--brd);transition:.3s}
 .onb-dots span.act{background:var(--R);width:20px}
 .perf-chart{display:flex;align-items:flex-end;gap:3px;height:60px;margin-top:12px;padding:0 4px}
@@ -1056,8 +1058,8 @@ function SignalScoreboard({signals}){
 
 /* ─── Theme Hook ─── */
 function useTheme(){
-  const[dark,setDark]=useState(false);
-  useEffect(()=>{document.documentElement.setAttribute("data-theme","liquid");try{localStorage.setItem("fxtheme","liquid")}catch(e){};document.querySelector('meta[name="theme-color"]').content="#e8e4f0"},[dark]);
+  const[dark,setDark]=useState(()=>{try{return localStorage.getItem("fxtheme")==="dark"}catch(e){return false}});
+  useEffect(()=>{const t=dark?"dark":"liquid";document.documentElement.setAttribute("data-theme",t);try{localStorage.setItem("fxtheme",t)}catch(e){};document.querySelector('meta[name="theme-color"]').content=dark?"#050507":"#f5f5f7"},[dark]);
   return{dark,toggle:()=>setDark(d=>!d)};
 }
 
@@ -2170,7 +2172,7 @@ function Auth({onAuth,lang,setLang}){
       }
     }
   },[]);
-  return(<div style={{minHeight:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"transparent"}}>
+  return(<div style={{minHeight:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"var(--bg)"}}>
     <div style={{width:"100%",maxWidth:360}} className="fi">
       <InstallBanner/>
       <div style={{textAlign:"center",marginBottom:48}}>
@@ -2296,7 +2298,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
   const[showStoryViewer,setShowStoryViewer]=useState(false);
   const[storySeen,setStorySeen]=useState(()=>{try{return localStorage.getItem("fx_story_seen")||""}catch(e){return""}});
   const[lastMsgRead,setLastMsgRead]=useState(()=>{try{return parseInt(localStorage.getItem("fx_mc")||"0")}catch(e){return 0}});
-  const theme="light";
+  const theme=dark?"dark":"light";
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
   const visibleStories=useMemo(()=>{
     if(!stories||!stories.length)return[];
@@ -2323,18 +2325,23 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
   const unreadCount=Math.max(0,visibleMsgs.length-lastMsgRead);
   const openMsgs=()=>{setShowMsgs(true);setLastMsgRead(visibleMsgs.length);try{localStorage.setItem("fx_mc",String(visibleMsgs.length))}catch(e){}};
   return(<div className="fi">
-    {/* Story Ring + Greeting Row */}
-    {firstName&&<div style={{marginBottom:14,padding:"14px 0 4px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12}}>
-        {visibleStories.length>0&&<StoryRing stories={visibleStories} seen={isStorySeen} onClick={()=>setShowStoryViewer(true)}/>}
-        <div>
-          <div style={{fontSize:16,fontWeight:700,lineHeight:1.3}}>{greeting}، {firstName}</div>
-          <div style={{fontSize:11,color:"var(--tx2)",marginTop:3}}>{{fa:"بازارها رو رصد کن و بهترین فرصت‌ها رو پیدا کن",ar:"تابع الأسواق واعثر على أفضل الفرص",tr:"Piyasaları takip edin ve en iyi fırsatları bulun",ru:"Следите за рынками и находите лучшие возможности",es:"Sigue los mercados y encuentra las mejores oportunidades"}[lang]||"Track markets and find the best opportunities"}</div>
+    {/* Greeting Glass Card — iOS 26 style */}
+    {firstName&&<div className="cd cd-glass" style={{margin:"0 16px 14px",padding:18}}>
+      <div style={{display:"flex",alignItems:"center",gap:14}}>
+        {visibleStories.length>0?<StoryRing stories={visibleStories} seen={isStorySeen} onClick={()=>setShowStoryViewer(true)}/>
+        :<div style={{width:50,height:50,borderRadius:"50%",background:"linear-gradient(135deg,var(--B),#bf5af2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:"#fff",boxShadow:"0 4px 16px rgba(0,113,227,.25)",flexShrink:0}}>Fx</div>}
+        <div style={{flex:1}}>
+          <div style={{fontSize:17,fontWeight:700,letterSpacing:"-.2px",lineHeight:1.3}}>{greeting}، {firstName} 👋</div>
+          <div style={{fontSize:12,color:"var(--mu)",marginTop:2}}>{{fa:"بازارها رو رصد کن و بهترین فرصت‌ها رو پیدا کن",ar:"تابع الأسواق واعثر على أفضل الفرص",tr:"Piyasaları takip edin ve en iyi fırsatları bulun",ru:"Следите за рынками и находите лучшие возможности",es:"Sigue los mercados y encuentra las mejores oportunidades"}[lang]||"Track markets and find the best opportunities"}</div>
+        </div>
+        <div onClick={openMsgs} style={{width:36,height:36,borderRadius:"50%",background:"var(--glass)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:"1px solid var(--gb)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",position:"relative",flexShrink:0}}>
+          {IC.bell}
+          {unreadCount>0&&<div style={{position:"absolute",top:2,right:2,width:8,height:8,borderRadius:"50%",background:"var(--R)",border:"2px solid rgba(255,255,255,.8)"}}/>}
         </div>
       </div>
-      <div onClick={openMsgs} style={{position:"relative",cursor:"pointer",padding:6}}>
-        {IC.bell}
-        {unreadCount>0&&<div style={{position:"absolute",top:2,right:2,width:8,height:8,borderRadius:"50%",background:"var(--R)",border:"2px solid var(--bg)"}}/>}
+      <div style={{display:"flex",alignItems:"center",gap:6,marginTop:14,fontSize:12,fontWeight:600,color:"var(--G)"}}>
+        <div className="ld"/><span>Live</span><LiveClock/><OnlineCounter token={token} isAdmin={userProfile?.role==="admin"}/>
+        <div onClick={toggle} style={{marginLeft:"auto",cursor:"pointer",color:"var(--mu)",padding:4}}>{dark?IC.sun:IC.moon}</div>
       </div>
     </div>}
     {/* Story Viewer Fullscreen */}
@@ -2394,11 +2401,8 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
       })}
       </div>
     </div>}
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-      <div style={{display:"flex",alignItems:"center",gap:8}}><div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/><OnlineCounter token={token} isAdmin={userProfile?.role==="admin"}/></div>
-      <div onClick={toggle} style={{cursor:"pointer",color:"var(--mu)",padding:4}}>{dark?IC.sun:IC.moon}</div>
-    </div>
-    {online!==false&&<div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVTickerTape colorTheme={theme}/></div>}
+    {/* Ticker Tape */}
+    {online!==false&&<div style={{margin:"0 16px 14px",borderRadius:"var(--r2)",overflow:"hidden",background:"var(--glass2)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",border:"1px solid var(--gb)",padding:0}}><TVTickerTape colorTheme={theme}/></div>}
     {online!==false&&<div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVMarketOverview colorTheme={theme}/></div>}
     {ok?<div className="cd" style={{marginBottom:12}}>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
@@ -4556,15 +4560,15 @@ function App(){
   useEffect(()=>{if(tk){const i=setInterval(load,30000);return()=>clearInterval(i)}},[tk,load]);
   const{PTR}=usePullToRefresh(load);
   useActivityTracker(usr?.id,tk);
-  // Tab bar scroll shrink effect
+  // Tab bar scroll: dock to bottom when scrolling down, float when scrolling up
   useEffect(()=>{
     let lastY=0;
     const onScroll=()=>{
-      const tb=document.querySelector('.tb');
+      const tb=document.getElementById('fxtb');
       if(!tb)return;
       const y=window.scrollY;
-      if(y>60&&y>lastY){tb.classList.add('tb-compact')}
-      else if(y<lastY||y<30){tb.classList.remove('tb-compact')}
+      if(y>80&&y>lastY){tb.classList.add('tb-shrink')}
+      else if(y<lastY||y<40){tb.classList.remove('tb-shrink')}
       lastY=y;
     };
     window.addEventListener('scroll',onScroll,{passive:true});
@@ -4611,7 +4615,7 @@ function App(){
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.56 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
         {t.offline}
       </div>
-      <div className="app" style={{paddingTop:!online?28:0,transition:"padding-top .3s ease",background:"transparent"}}>
+      <div className="app" style={{paddingTop:!online?28:0,transition:"padding-top .3s ease"}}>
         <div className="hd">
           <div className="lg">Fxscalproom<b>.</b></div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -4623,13 +4627,13 @@ function App(){
           <PTR/>
           {scr()}
         </div>
-        <div className="tb">{VT.map((tab,i)=>
+        <div className="tb" id="fxtb">{VT.map((tab,i)=>
           <div key={i} className={`ti${st===i?" ti-active":""}`} onClick={()=>goTab(i)} style={{color:st===i?"var(--B)":"var(--dm)"}}>
             <div style={{position:"relative"}}>
               {tab.i}
               {tab.badge>0&&st!==i&&<div className="nb"/>}
             </div>
-            <span style={{fontSize:9,fontWeight:700,color:st===i?"var(--B)":"var(--dm)"}}>{tab.l}</span>
+            <span className="tl" style={{color:st===i?"var(--B)":"var(--dm)"}}>{tab.l}</span>
           </div>
         )}</div>
       </div>
