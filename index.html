@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#f5f5f7">
+<meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#050507" media="(prefers-color-scheme: dark)">
 <script>
-(function(){try{var t=localStorage.getItem("fxtheme");if(!t||t==="light")t="liquid";var isLiquid=t==="liquid";var c=isLiquid?"#f5f5f7":"#050507";var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=c;if(!isLiquid)document.documentElement.setAttribute("data-theme","dark");else document.documentElement.setAttribute("data-theme","liquid")}catch(e){}})();
+(function(){try{var t=localStorage.getItem("fxtheme");if(!t||t==="light")t="liquid";var isLiquid=t==="liquid";var c=isLiquid?"#f5f5f7":"#050507";document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.content=c});if(!isLiquid)document.documentElement.setAttribute("data-theme","dark");else document.documentElement.setAttribute("data-theme","liquid")}catch(e){}})();
 </script>
 <title>Fxscalproom.</title>
 <link rel="manifest" href="manifest.json">
@@ -1062,7 +1063,7 @@ function SignalScoreboard({signals}){
 /* ─── Theme Hook ─── */
 function useTheme(){
   const[dark,setDark]=useState(()=>{try{return localStorage.getItem("fxtheme")==="dark"}catch(e){return false}});
-  useEffect(()=>{const t=dark?"dark":"liquid";document.documentElement.setAttribute("data-theme",t);try{localStorage.setItem("fxtheme",t)}catch(e){};const c=dark?"#050507":"#f5f5f7";const m=document.querySelector('meta[name="theme-color"]');if(m){m.remove();const n=document.createElement("meta");n.name="theme-color";n.content=c;document.head.appendChild(n)}},[dark]);
+  useEffect(()=>{const t=dark?"dark":"liquid";document.documentElement.setAttribute("data-theme",t);try{localStorage.setItem("fxtheme",t)}catch(e){};const c=dark?"#050507":"#f5f5f7";document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{m.content=c})},[dark]);
   return{dark,toggle:()=>setDark(d=>!d)};
 }
 
@@ -2378,15 +2379,16 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
           {m.image_url&&(m.image_url.includes(",")?<div style={{filter:isLocked?"blur(14px)":"none"}}><ImageCarousel urls={m.image_url} style={{width:"100%",maxHeight:300,objectFit:"cover",marginBottom:10}} borderRadius={12}/></div>:<img src={m.image_url} style={{width:"100%",borderRadius:12,marginBottom:10,filter:isLocked?"blur(14px)":"none"}} alt=""/>)}
           <div style={{fontSize:13,color:"var(--tx2)",lineHeight:1.7,whiteSpace:"pre-wrap",filter:isLocked?"blur(5px)":"none"}}>{m.body}</div>
           {!isLocked&&<TranslateBtn text={[m.title,m.body].filter(Boolean).join("\n\n")}/>}
-          {isLocked&&<div style={{position:"absolute",top:0,left:0,right:0,bottom:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"color-mix(in srgb,var(--bg) 60%,transparent)",borderRadius:10}}>
-            <span style={{fontSize:12,fontWeight:700,color:"var(--R)",background:"var(--bg)",padding:"8px 18px",borderRadius:10,border:"1px solid color-mix(in srgb,var(--R) 20%,transparent)",boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}}>⭐ {{fa:"محتوای ویژه",ar:"محتوى مميز",tr:"Premium İçerik",ru:"Премиум контент",es:"Contenido Premium"}[lang]||"Premium Content"}</span>
+          {isLocked&&<div onClick={()=>goToPlans()} style={{position:"absolute",top:0,left:0,right:0,bottom:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"color-mix(in srgb,var(--bg) 60%,transparent)",borderRadius:10,cursor:"pointer"}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,fontSize:12,fontWeight:700,color:"var(--R)",background:"var(--bg)",padding:"8px 18px",borderRadius:10,border:"1px solid color-mix(in srgb,var(--R) 20%,transparent)",boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}}>{IC.crown} {{fa:"محتوای ویژه",ar:"محتوى مميز",tr:"Premium İçerik",ru:"Премиум контент",es:"Contenido Premium"}[lang]||"Premium Content"}</div>
+            <div style={{fontSize:11,color:"var(--mu)",marginTop:8,fontWeight:600}}>{{fa:"برای مشاهده اشتراک تهیه کنید",ar:"اشترك للمشاهدة",tr:"Görüntülemek için abone olun",ru:"Подпишитесь для просмотра",es:"Suscríbete para ver"}[lang]||"Subscribe to view"}</div>
           </div>}
         </div>
       })()
 
       :visibleMsgs.slice(0,20).map((m,i)=>{
         const isLocked=m.target==="premium"&&!isPremiumUser;
-        return<div key={m.id} onClick={()=>setOpenMsgId(m.id)} style={{display:"flex",alignItems:"center",gap:12,padding:"11px 14px",cursor:"pointer",borderTop:i>0?"1px solid var(--brd)":"none",transition:"background .15s"}} onMouseOver={e=>e.currentTarget.style.background="var(--bg2)"} onMouseOut={e=>e.currentTarget.style.background="transparent"}>
+        return<div key={m.id} onClick={()=>{if(isLocked){goToPlans()}else{setOpenMsgId(m.id)}}} style={{display:"flex",alignItems:"center",gap:12,padding:"11px 14px",cursor:"pointer",borderTop:i>0?"1px solid var(--brd)":"none",transition:"background .15s"}} onMouseOver={e=>e.currentTarget.style.background="var(--bg2)"} onMouseOut={e=>e.currentTarget.style.background="transparent"}>
           {m.image_url?<div style={{position:"relative",flexShrink:0}}><img src={(m.image_url||"").split(",")[0]} style={{width:44,height:44,borderRadius:10,objectFit:"cover",filter:isLocked?"blur(6px)":"none"}} alt=""/>{m.image_url.includes(",")&&<div style={{position:"absolute",top:2,right:2,width:16,height:16,borderRadius:8,background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#fff",fontWeight:700}}>2</div>}</div>
           :<div style={{width:44,height:44,borderRadius:10,background:"color-mix(in srgb,var(--R) 8%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{AE.mailbox}</div>}
           <div style={{flex:1,minWidth:0}}>
