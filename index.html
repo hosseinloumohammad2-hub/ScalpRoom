@@ -354,7 +354,7 @@ function TVTickerTape({colorTheme}){
     if(!ref.current||loaded.current)return;
     loaded.current=true;
     const s=document.createElement("script");
-    s.src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
+    s.src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js?v=2";
     s.async=true;
     s.innerHTML=JSON.stringify({
       symbols:[
@@ -377,7 +377,7 @@ function TVTickerTape({colorTheme}){
       showSymbolLogo:true,
       isTransparent:true,
       displayMode:"compact",
-      colorTheme:colorTheme||"dark",
+      colorTheme:colorTheme||"light",
       locale:"en",
     });
     ref.current.appendChild(s);
@@ -4662,12 +4662,12 @@ ReactDOM.render(<App/>,document.getElementById("root"));
 if('serviceWorker' in navigator){
   window.addEventListener('load',async function(){
     try{
-      if(!localStorage.getItem('sw_v6')){
+      if(!localStorage.getItem('sw_v7')){
         var regs=await navigator.serviceWorker.getRegistrations();
         for(var i=0;i<regs.length;i++){await regs[i].unregister()}
         var keys=await caches.keys();
         for(var j=0;j<keys.length;j++){await caches.delete(keys[j])}
-        localStorage.setItem('sw_v6','1');
+        localStorage.setItem('sw_v7','1');
       }
       navigator.serviceWorker.register('/sw.js');
     }catch(e){}
