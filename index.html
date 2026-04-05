@@ -22,7 +22,8 @@
 :root{--bg:#f5f5f7;--bg2:#ffffff;--glass:rgba(255,255,255,.55);--glass2:rgba(255,255,255,.35);--gb:rgba(255,255,255,.72);--card:rgba(255,255,255,.78);--brd:rgba(0,0,0,.06);--brd2:rgba(0,0,0,.10);--tx:#1d1d1f;--tx2:#424245;--mu:#86868b;--dm:#aeaeb2;--R:#ff3b30;--G:#28cd41;--B:#0071e3;--Y:#ff9f0a;--purple:#bf5af2;--r:22px;--r2:16px}
 [data-theme="dark"]{--bg:#050507;--bg2:#0a0a0c;--glass:rgba(30,30,32,.65);--glass2:rgba(30,30,32,.45);--gb:rgba(255,255,255,.08);--card:rgba(28,28,30,.82);--brd:rgba(255,255,255,.06);--brd2:rgba(255,255,255,.10);--tx:#e5e5e7;--tx2:#a1a1aa;--mu:#71717a;--dm:#52525b;--R:#ff453a;--G:#30d158;--B:#0a84ff;--Y:#ffd60a}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased;overflow-x:hidden;letter-spacing:-.2px}
+html{background:var(--bg);overscroll-behavior:none}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased;overflow-x:hidden;letter-spacing:-.2px;overscroll-behavior-y:none}
 body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 600px 400px at 15% 5%,rgba(0,113,227,.08),transparent),radial-gradient(ellipse 500px 500px at 85% 15%,rgba(191,90,242,.06),transparent),radial-gradient(ellipse 400px 600px at 50% 95%,rgba(40,205,65,.04),transparent),var(--bg)}
 [data-theme="dark"] body::before{background:radial-gradient(ellipse 600px 400px at 15% 5%,rgba(0,113,227,.04),transparent),radial-gradient(ellipse 500px 500px at 85% 15%,rgba(191,90,242,.03),transparent),var(--bg)}
 ::-webkit-scrollbar{width:0}
@@ -36,9 +37,9 @@ a{color:inherit;text-decoration:none}
 .hd{padding:env(safe-area-inset-top,14px) 20px 14px;padding-top:calc(env(safe-area-inset-top,14px) + 14px);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:linear-gradient(to bottom,var(--bg) 60%,transparent);z-index:40}
 .lg{font-size:22px;font-weight:800;color:var(--tx);letter-spacing:-.6px}
 .lg b{color:var(--R);font-weight:800;font-style:normal}
-.ct{padding:0 0 100px}
+.ct{padding:16px 16px 100px}
 /* ─── Glass Tab Bar (matching demo) ─── */
-.tb{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);width:calc(100% - 28px);max-width:402px;display:flex;padding:8px 4px calc(env(safe-area-inset-bottom,4px) + 4px);border-radius:24px;background:rgba(255,255,255,.5);backdrop-filter:blur(50px) saturate(2);-webkit-backdrop-filter:blur(50px) saturate(2);border:1px solid rgba(255,255,255,.7);box-shadow:0 4px 30px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.7);z-index:50;transition:all .35s cubic-bezier(.4,0,.2,1)}
+.tb{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);width:calc(100% - 28px);max-width:402px;display:flex;padding:6px 4px calc(env(safe-area-inset-bottom,4px) + 4px);border-radius:24px;background:rgba(255,255,255,.5);backdrop-filter:blur(50px) saturate(2);-webkit-backdrop-filter:blur(50px) saturate(2);border:1px solid rgba(255,255,255,.7);box-shadow:0 4px 30px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.7);z-index:50;transition:all .35s cubic-bezier(.4,0,.2,1)}
 [data-theme="dark"] .tb{background:rgba(30,30,32,.55);border-color:rgba(255,255,255,.08);box-shadow:0 4px 30px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.04)}
 .tb.tb-shrink{bottom:0;width:100%;max-width:430px;border-radius:0;border-left:none;border-right:none;border-bottom:none}
 .ti{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;transition:all .2s ease;padding:6px 0;border-radius:16px;position:relative;color:var(--dm)}
@@ -46,7 +47,7 @@ a{color:inherit;text-decoration:none}
 .ti-active::before{content:'';position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:20px;height:3px;border-radius:2px;background:var(--B)}
 .tl{font-size:10px;font-weight:600}
 /* ─── Content Cards ─── */
-.cd{background:var(--card);border:1px solid var(--brd);border-radius:var(--r);padding:16px;margin:0 16px 14px;transition:all .3s}
+.cd{background:var(--card);border:1px solid var(--brd);border-radius:var(--r);padding:16px;transition:all .3s}
 /* ─── Glass Card (greeting, premium, special) ─── */
 .cd-glass{background:var(--glass);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);border:1px solid var(--gb);box-shadow:0 2px 20px rgba(0,0,0,.06),inset 0 1px 0 rgba(255,255,255,.6);position:relative;overflow:hidden}
 .cd-glass::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent)}
@@ -2326,7 +2327,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
   const openMsgs=()=>{setShowMsgs(true);setLastMsgRead(visibleMsgs.length);try{localStorage.setItem("fx_mc",String(visibleMsgs.length))}catch(e){}};
   return(<div className="fi">
     {/* Greeting Glass Card — iOS 26 style */}
-    {firstName&&<div className="cd cd-glass" style={{margin:"0 16px 14px",padding:18}}>
+    {firstName&&<div className="cd cd-glass" style={{marginBottom:14,padding:18}}>
       <div style={{display:"flex",alignItems:"center",gap:14}}>
         {visibleStories.length>0?<StoryRing stories={visibleStories} seen={isStorySeen} onClick={()=>setShowStoryViewer(true)}/>
         :<div style={{width:50,height:50,borderRadius:"50%",background:"linear-gradient(135deg,var(--B),#bf5af2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:"#fff",boxShadow:"0 4px 16px rgba(0,113,227,.25)",flexShrink:0}}>Fx</div>}
@@ -2402,7 +2403,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
       </div>
     </div>}
     {/* Ticker Tape */}
-    {online!==false&&<div style={{margin:"0 16px 14px",borderRadius:"var(--r2)",overflow:"hidden",background:"var(--glass2)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",border:"1px solid var(--gb)",padding:0}}><TVTickerTape colorTheme={theme}/></div>}
+    {online!==false&&<div style={{marginBottom:14,borderRadius:"var(--r2)",overflow:"hidden",background:"var(--glass2)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",border:"1px solid var(--gb)",padding:0}}><TVTickerTape colorTheme={theme}/></div>}
     {online!==false&&<div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVMarketOverview colorTheme={theme}/></div>}
     {ok?<div className="cd" style={{marginBottom:12}}>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
