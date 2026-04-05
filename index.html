@@ -346,7 +346,7 @@ function TVMarketOverview({colorTheme}){
   return(<div ref={ref} style={{position:"relative",overflow:"hidden"}}><div className="tradingview-widget-container__widget" style={{marginLeft:-10,marginRight:-10,width:"calc(100% + 20px)"}}></div><div style={{position:"absolute",top:0,left:0,right:0,bottom:0,zIndex:2,cursor:"default"}}></div></div>);
 }
 
-// TradingView ticker tape (scrolling bar at top)
+// TradingView ticker tape (Web Component - compact)
 function TVTickerTape({colorTheme}){
   const ref=useRef(null);
   const loaded=useRef(false);
@@ -354,35 +354,18 @@ function TVTickerTape({colorTheme}){
     if(!ref.current||loaded.current)return;
     loaded.current=true;
     const s=document.createElement("script");
-    s.src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js?v=2";
-    s.async=true;
-    s.innerHTML=JSON.stringify({
-      symbols:[
-        {proName:"OANDA:XAUUSD",title:"Gold"},
-        {proName:"OANDA:XAGUSD",title:"Silver"},
-        {proName:"INDEX:DXY",title:"DXY"},
-        {proName:"TVC:USOIL",title:"Crude Oil"},
-        {proName:"FX:EURUSD",title:"EUR/USD"},
-        {proName:"FX:GBPUSD",title:"GBP/USD"},
-        {proName:"BITSTAMP:BTCUSD",title:"Bitcoin"},
-        {proName:"BITSTAMP:ETHUSD",title:"Ethereum"},
-        {proName:"FX:AUDUSD",title:"AUD/USD"},
-        {proName:"FX:USDJPY",title:"USD/JPY"},
-        {proName:"FOREXCOM:SPXUSD",title:"S&P 500"},
-        {proName:"FOREXCOM:NSXUSD",title:"Nasdaq 100"},
-        {proName:"BLACKBULL:US30",title:"Dow Jones"},
-        {proName:"PEPPERSTONE:GER40",title:"DAX 40"},
-        {proName:"SPREADEX:FTSE",title:"FTSE 100"},
-      ],
-      showSymbolLogo:true,
-      isTransparent:true,
-      displayMode:"compact",
-      colorTheme:colorTheme||"light",
-      locale:"en",
-    });
-    ref.current.appendChild(s);
+    s.type="module";
+    s.src="https://widgets.tradingview-widget.com/w/en/tv-ticker-tape.js";
+    document.head.appendChild(s);
+    const el=document.createElement("tv-ticker-tape");
+    el.setAttribute("symbols","OANDA:XAUUSD,OANDA:XAGUSD,INDEX:DXY,TVC:USOIL,FX:EURUSD,FX:GBPUSD,BITSTAMP:BTCUSD,BITSTAMP:ETHUSD,FX:AUDUSD,FX:USDJPY,FOREXCOM:SPXUSD,FOREXCOM:NSXUSD,BLACKBULL:US30,PEPPERSTONE:GER40,SPREADEX:FTSE");
+    el.setAttribute("item-size","compact");
+    el.setAttribute("hide-chart","");
+    el.setAttribute("transparent","");
+    if(colorTheme==="dark")el.setAttribute("color-theme","dark");
+    ref.current.appendChild(el);
   },[colorTheme]);
-  return(<div ref={ref} style={{position:"relative"}}><div className="tradingview-widget-container__widget"></div><div style={{position:"absolute",top:0,left:0,right:0,bottom:0,zIndex:2,cursor:"default"}}></div></div>);
+  return(<div ref={ref} style={{position:"relative"}}><div style={{position:"absolute",top:0,left:0,right:0,bottom:0,zIndex:2,cursor:"default"}}></div></div>);
 }
 
 // TradingView Economic Calendar
