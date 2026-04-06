@@ -1711,6 +1711,38 @@ async function generateShareCard(type,data){
   const PAD=72;
   const c=document.createElement("canvas");
   const ctx=c.getContext("2d");
+  const isDark=document.documentElement.getAttribute("data-theme")==="dark";
+
+  // ─── Theme colors matching app ───
+  const TH={
+    bg:isDark?"#0a0a0c":"#f5f5f7",
+    bg2:isDark?"#18181b":"#ffffff",
+    card:isDark?"#1c1c1e":"#ffffff",
+    cardBorder:isDark?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)",
+    tx:isDark?"#e5e5e7":"#1d1d1f",
+    tx2:isDark?"#a1a1aa":"#424245",
+    mu:isDark?"#71717a":"#86868b",
+    dm:isDark?"#52525b":"#aeaeb2",
+    brd:isDark?"rgba(255,255,255,.08)":"#e4e4e7",
+    brdLight:isDark?"rgba(255,255,255,.04)":"#f4f4f5",
+    R:isDark?"#ff453a":"#ff3b30",
+    G:isDark?"#30d158":"#28cd41",
+    B:isDark?"#0a84ff":"#0071e3",
+    boxBg:isDark?"#1c1c1e":"#f9fafb",
+    boxBrd:isDark?"rgba(255,255,255,.08)":"#e4e4e7",
+    buyBg:isDark?"#0a2615":"#f0fdf4",
+    buyC:isDark?"#30d158":"#16a34a",
+    sellBg:isDark?"#2a0a0a":"#fef2f2",
+    sellC:isDark?"#ff453a":"#dc2626",
+    activeBg:isDark?"#0a1628":"#eff6ff",
+    activeC:isDark?"#0a84ff":"#2563eb",
+    tpBg:isDark?"#0a2615":"#f0fdf4",
+    tpC:isDark?"#30d158":"#16a34a",
+    slBg:isDark?"#2a0a0a":"#fef2f2",
+    slC:isDark?"#ff453a":"#dc2626",
+    wmText:isDark?"#3a3a3c":"#d4d4d8",
+    wmDot:isDark?"#ff6961":"#fca5a5",
+  };
 
   const rr=(x,y,w,h,r)=>{ctx.beginPath();ctx.roundRect(x,y,w,h,r);};
 
@@ -1730,21 +1762,14 @@ async function generateShareCard(type,data){
   let calcH=160;
   if(type==="signal"){
     const s=data;
-    calcH+=70; // pair + badges row
-    calcH+=20; // gap
-    // Entry + SL row
-    calcH+=100;
-    calcH+=12; // gap
-    // TP row
+    calcH+=70;calcH+=20;calcH+=100;calcH+=12;
     const tpCount=[s.take_profit,s.tp2,s.tp3].filter(Boolean).length;
     if(tpCount>0)calcH+=100;
-    calcH+=20; // gap
-    // Date + PnL row
-    calcH+=40;
+    calcH+=20;calcH+=40;
     if(s.pnl)calcH+=20;
-    calcH+=140; // footer
+    calcH+=140;
   } else {
-    calcH+=20; // no category badge anymore
+    calcH+=20;
     ctx.font="bold 40px system-ui";
     const titleW=ctx.measureText(data.title||"").width;
     calcH+=Math.ceil(titleW/(W-PAD*2)||1)*50+20;
@@ -1756,22 +1781,34 @@ async function generateShareCard(type,data){
   const H=Math.max(800,calcH);
   c.width=W;c.height=H;
 
-  // ─── Background: clean white (NO orange/gradient line) ───
-  ctx.fillStyle="#ffffff";ctx.fillRect(0,0,W,H);
+  // ─── Background ───
+  ctx.fillStyle=TH.bg;ctx.fillRect(0,0,W,H);
+  // Subtle gradient mesh like the app
+  if(isDark){
+    const g1=ctx.createRadialGradient(W*0.15,H*0.05,0,W*0.15,H*0.05,400);
+    g1.addColorStop(0,"rgba(0,113,227,.06)");g1.addColorStop(1,"transparent");ctx.fillStyle=g1;ctx.fillRect(0,0,W,H);
+    const g2=ctx.createRadialGradient(W*0.85,H*0.15,0,W*0.85,H*0.15,350);
+    g2.addColorStop(0,"rgba(191,90,242,.04)");g2.addColorStop(1,"transparent");ctx.fillStyle=g2;ctx.fillRect(0,0,W,H);
+  } else {
+    const g1=ctx.createRadialGradient(W*0.15,H*0.05,0,W*0.15,H*0.05,400);
+    g1.addColorStop(0,"rgba(0,113,227,.06)");g1.addColorStop(1,"transparent");ctx.fillStyle=g1;ctx.fillRect(0,0,W,H);
+    const g2=ctx.createRadialGradient(W*0.85,H*0.15,0,W*0.85,H*0.15,350);
+    g2.addColorStop(0,"rgba(191,90,242,.04)");g2.addColorStop(1,"transparent");ctx.fillStyle=g2;ctx.fillRect(0,0,W,H);
+  }
 
   // ─── Header: Logo + Date ───
   ctx.font="bold 38px 'DM Sans',system-ui,sans-serif";
-  ctx.fillStyle="#18181b";ctx.fillText("Fxscalproom",PAD,68);
+  ctx.fillStyle=TH.tx;ctx.fillText("Fxscalproom",PAD,68);
   const logoW=ctx.measureText("Fxscalproom").width;
-  ctx.fillStyle="#ef4444";ctx.fillText(".",PAD+logoW+4,68);
+  ctx.fillStyle=TH.R;ctx.fillText(".",PAD+logoW+4,68);
 
   ctx.font="500 16px 'DM Sans',system-ui,sans-serif";
-  ctx.fillStyle="#a1a1aa";ctx.textAlign="right";
+  ctx.fillStyle=TH.mu;ctx.textAlign="right";
   ctx.fillText(new Date().toLocaleDateString("en",{year:"numeric",month:"long",day:"numeric"}),W-PAD,63);
   ctx.textAlign="left";
 
   // Separator
-  ctx.strokeStyle="#e4e4e7";ctx.lineWidth=1;
+  ctx.strokeStyle=TH.brd;ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(PAD,95);ctx.lineTo(W-PAD,95);ctx.stroke();
 
   let Y=130;
@@ -1781,17 +1818,15 @@ async function generateShareCard(type,data){
     const isBuy=s.type==="BUY";
     const innerW=W-PAD*2;
 
-    // ─── Main card background ───
-    const cardTop=Y-10;
+    // ─── Card background ───
+    rr(PAD-20,Y-20,innerW+40,0,20);// placeholder for measure
 
     // ─── Pair + BUY/SELL badge + Status ───
-    // Pair name
     ctx.font="bold 42px 'DM Mono',monospace";
-    ctx.fillStyle="#18181b";ctx.fillText(s.pair||"",PAD,Y+36);
+    ctx.fillStyle=TH.tx;ctx.fillText(s.pair||"",PAD,Y+36);
 
-    // BUY/SELL badge
-    const badgeColor=isBuy?"#16a34a":"#dc2626";
-    const badgeBg=isBuy?"#f0fdf4":"#fef2f2";
+    const badgeColor=isBuy?TH.buyC:TH.sellC;
+    const badgeBg=isBuy?TH.buyBg:TH.sellBg;
     const pairW=ctx.measureText(s.pair||"").width;
     const bx=PAD+pairW+16;
     rr(bx,Y+10,80,32,16);ctx.fillStyle=badgeBg;ctx.fill();
@@ -1801,10 +1836,9 @@ async function generateShareCard(type,data){
     const btW=ctx.measureText(s.type).width;
     ctx.fillText(s.type,bx+40-btW/2,Y+31);
 
-    // Status badge (right side)
     const statusLabel=s.status==="active"?"ACTIVE":s.status==="tp_hit"?"TP HIT":"SL HIT";
-    const statusColor=s.status==="active"?"#2563eb":s.status==="tp_hit"?"#16a34a":"#dc2626";
-    const statusBg=s.status==="active"?"#eff6ff":s.status==="tp_hit"?"#f0fdf4":"#fef2f2";
+    const statusColor=s.status==="active"?TH.activeC:s.status==="tp_hit"?TH.tpC:TH.slC;
+    const statusBg=s.status==="active"?TH.activeBg:s.status==="tp_hit"?TH.tpBg:TH.slBg;
     ctx.font="bold 14px 'DM Sans',system-ui,sans-serif";
     const slW=ctx.measureText(statusLabel).width;
     const sx=W-PAD-slW-24;
@@ -1813,60 +1847,52 @@ async function generateShareCard(type,data){
     ctx.fillStyle=statusColor;ctx.fillText(statusLabel,sx+12,Y+31);
     Y+=65;
 
-    // ─── Helper: draw a box with label + value ───
+    // ─── Helper: draw a box ───
     const drawBox=(x,y,w,h,label,value,valueColor)=>{
-      rr(x,y,w,h,14);ctx.fillStyle="#f9fafb";ctx.fill();
-      rr(x,y,w,h,14);ctx.strokeStyle="#e4e4e7";ctx.lineWidth=1;ctx.stroke();
+      rr(x,y,w,h,14);ctx.fillStyle=TH.boxBg;ctx.fill();
+      rr(x,y,w,h,14);ctx.strokeStyle=TH.boxBrd;ctx.lineWidth=1;ctx.stroke();
       ctx.textAlign="center";
       ctx.font="500 14px 'DM Sans',system-ui,sans-serif";
-      ctx.fillStyle="#a1a1aa";ctx.fillText(label,x+w/2,y+28);
+      ctx.fillStyle=TH.mu;ctx.fillText(label,x+w/2,y+28);
       ctx.font="bold 22px 'DM Mono',monospace";
-      ctx.fillStyle=valueColor||"#71717a";ctx.fillText(value||"",x+w/2,y+h-18);
+      ctx.fillStyle=valueColor||TH.mu;ctx.fillText(value||"",x+w/2,y+h-18);
       ctx.textAlign="left";
     };
 
-    // ─── Entry + SL row (2 columns) ───
     const colGap=12;
     const col2W=(innerW-colGap)/2;
-    drawBox(PAD,Y,col2W,90,"Entry",s.entry_price,"#71717a");
-    drawBox(PAD+col2W+colGap,Y,col2W,90,"SL",s.stop_loss,"#dc2626");
+    drawBox(PAD,Y,col2W,90,"Entry",s.entry_price,TH.mu);
+    drawBox(PAD+col2W+colGap,Y,col2W,90,"SL",s.stop_loss,TH.slC);
     Y+=102;
 
-    // ─── TP row (dynamic columns) ───
     const tps=[{l:"TP1",v:s.take_profit},{l:"TP2",v:s.tp2},{l:"TP3",v:s.tp3}].filter(t=>t.v);
     if(tps.length>0){
       const tpColW=(innerW-(tps.length-1)*colGap)/tps.length;
       tps.forEach((tp,i)=>{
-        drawBox(PAD+i*(tpColW+colGap),Y,tpColW,90,tp.l,tp.v,"#16a34a");
+        drawBox(PAD+i*(tpColW+colGap),Y,tpColW,90,tp.l,tp.v,TH.tpC);
       });
       Y+=102;
     }
 
-    // ─── Date + PnL row ───
     Y+=6;
     const dateStr=s.created_at?new Date(s.created_at).toLocaleDateString()+" "+new Date(s.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"";
     ctx.font="500 16px 'DM Sans',system-ui,sans-serif";
-    ctx.fillStyle="#a1a1aa";ctx.fillText(dateStr,PAD,Y+16);
+    ctx.fillStyle=TH.mu;ctx.fillText(dateStr,PAD,Y+16);
 
     if(s.pnl){
       const pnlNeg=s.pnl.startsWith("-");
       ctx.font="bold 20px 'DM Mono',monospace";
-      ctx.fillStyle=pnlNeg?"#dc2626":"#16a34a";
+      ctx.fillStyle=pnlNeg?TH.slC:TH.tpC;
       ctx.textAlign="right";
       ctx.fillText(s.pnl,W-PAD,Y+16);
-      // Checkmark
-      if(s.status==="tp_hit"){
-        ctx.font="bold 18px system-ui";ctx.fillText(" ✓",W-PAD,Y+16);
-      }
+      if(s.status==="tp_hit"){ctx.font="bold 18px system-ui";ctx.fillText(" ✓",W-PAD,Y+16)}
       ctx.textAlign="left";
       Y+=30;
-    } else {
-      Y+=24;
-    }
+    } else {Y+=24}
 
     if(s.closed_at){
       ctx.font="400 14px 'DM Sans',system-ui,sans-serif";
-      ctx.fillStyle="#a1a1aa";ctx.textAlign="right";
+      ctx.fillStyle=TH.mu;ctx.textAlign="right";
       ctx.fillText("Closed: "+new Date(s.closed_at).toLocaleDateString(),W-PAD,Y+14);
       ctx.textAlign="left";
       Y+=24;
@@ -1875,17 +1901,14 @@ async function generateShareCard(type,data){
   } else if(type==="analysis"){
     const p=data;
 
-    // Title directly (NO category badge)
-    Y=wrapText(p.title||"",PAD,Y,W-PAD*2,50,"bold 40px 'DM Sans',system-ui,sans-serif","#18181b");
+    Y=wrapText(p.title||"",PAD,Y,W-PAD*2,50,"bold 40px 'DM Sans',system-ui,sans-serif",TH.tx);
     Y+=30;
 
-    // Description
     if(p.description){
-      Y=wrapText(p.description.slice(0,400)+(p.description.length>400?"...":""),PAD,Y,W-PAD*2,28,"400 19px 'DM Sans',system-ui,sans-serif","#71717a");
+      Y=wrapText(p.description.slice(0,400)+(p.description.length>400?"...":""),PAD,Y,W-PAD*2,28,"400 19px 'DM Sans',system-ui,sans-serif",TH.tx2);
       Y+=30;
     }
 
-    // Image - FULL SIZE with rounded corners
     if(p.image_url){
       try{
         const img=new Image();img.crossOrigin="anonymous";
@@ -1896,16 +1919,16 @@ async function generateShareCard(type,data){
           const newH=Y+imgH+140;
           const tempData=ctx.getImageData(0,0,W,c.height);
           c.height=newH;
-          ctx.fillStyle="#ffffff";ctx.fillRect(0,0,W,newH);
+          ctx.fillStyle=TH.bg;ctx.fillRect(0,0,W,newH);
           ctx.putImageData(tempData,0,0);
         }
-        ctx.shadowColor="rgba(0,0,0,0.06)";ctx.shadowBlur=16;ctx.shadowOffsetY=3;
-        rr(PAD,Y,imgW,imgH,14);ctx.fillStyle="#f4f4f5";ctx.fill();
+        ctx.shadowColor=isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)";ctx.shadowBlur=16;ctx.shadowOffsetY=3;
+        rr(PAD,Y,imgW,imgH,14);ctx.fillStyle=TH.boxBg;ctx.fill();
         ctx.shadowColor="transparent";
         ctx.save();rr(PAD,Y,imgW,imgH,14);ctx.clip();
         ctx.drawImage(img,PAD,Y,imgW,imgH);
         ctx.restore();
-        rr(PAD,Y,imgW,imgH,14);ctx.strokeStyle="#e4e4e7";ctx.lineWidth=1;ctx.stroke();
+        rr(PAD,Y,imgW,imgH,14);ctx.strokeStyle=TH.brd;ctx.lineWidth=1;ctx.stroke();
         Y+=imgH+20;
       }catch(e){}
     }
@@ -1917,24 +1940,24 @@ async function generateShareCard(type,data){
     const newH=Y+footerH;
     const tempData=ctx.getImageData(0,0,W,c.height);
     c.height=newH;
-    ctx.fillStyle="#ffffff";ctx.fillRect(0,0,W,newH);
+    ctx.fillStyle=TH.bg;ctx.fillRect(0,0,W,newH);
     ctx.putImageData(tempData,0,0);
   }
 
   const wmY=c.height-55;
-  ctx.strokeStyle="#f4f4f5";ctx.lineWidth=1;
+  ctx.strokeStyle=TH.brdLight;ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(PAD,wmY-30);ctx.lineTo(W-PAD,wmY-30);ctx.stroke();
 
   ctx.textAlign="center";
   ctx.font="bold 26px 'DM Sans',system-ui,sans-serif";
-  ctx.fillStyle="#d4d4d8";
+  ctx.fillStyle=TH.wmText;
   const wmText="Fxscalproom";
   const wmTextW=ctx.measureText(wmText).width;
   ctx.fillText(wmText,W/2-6,wmY);
-  ctx.fillStyle="#fca5a5";ctx.fillText(".",W/2+wmTextW/2-2,wmY);
+  ctx.fillStyle=TH.wmDot;ctx.fillText(".",W/2+wmTextW/2-2,wmY);
 
   ctx.font="400 13px 'DM Sans',system-ui,sans-serif";
-  ctx.fillStyle="#d4d4d8";
+  ctx.fillStyle=TH.wmText;
   ctx.fillText("t.me/FxScalpRoom  ·  fxscalproom.com",W/2,wmY+24);
   ctx.textAlign="left";
 
@@ -4489,18 +4512,19 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
   const[showAvatarPicker,setShowAvatarPicker]=useState(false);
   const[avatarEmoji,setAvatarEmoji]=useState(up?.avatar_emoji||"");
   const[avatarColor,setAvatarColor]=useState(up?.avatar_color||"");
+  const[tempEmoji,setTempEmoji]=useState("");
+  const[tempColor,setTempColor]=useState("");
   const AVATAR_COLORS=["linear-gradient(135deg,var(--purple),var(--B))","linear-gradient(135deg,#ff3b30,#ff9f0a)","linear-gradient(135deg,#28cd41,#0071e3)","linear-gradient(135deg,#ff9f0a,#ff3b30)","linear-gradient(135deg,#0071e3,#5856d6)","linear-gradient(135deg,#30d158,#34c759)","linear-gradient(135deg,#ff2d55,#bf5af2)","linear-gradient(135deg,#5856d6,#af52de)"];
   const AVATAR_EMOJIS=["😎","🦁","🐺","🦊","💎","🔥","⚡","🚀","👑","🎯","💰","📈","🐻","🦅","🌟","🎲"];
-  const saveAvatar=async(emoji,color)=>{
+  const openAvatarPicker=()=>{setTempEmoji(avatarEmoji);setTempColor(avatarColor);setShowAvatarPicker(true)};
+  const confirmAvatar=async()=>{
     try{
-      const updates={};
-      if(emoji!==undefined)updates.avatar_emoji=emoji;
-      if(color!==undefined)updates.avatar_color=color;
-      await fetch(`${SB}/rest/v1/Users?id=eq.${user.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify(updates)});
-      if(emoji!==undefined)setAvatarEmoji(emoji);
-      if(color!==undefined)setAvatarColor(color);
+      await fetch(`${SB}/rest/v1/Users?id=eq.${user.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({avatar_emoji:tempEmoji,avatar_color:tempColor})});
+      setAvatarEmoji(tempEmoji);setAvatarColor(tempColor);
     }catch(e){}
+    setShowAvatarPicker(false);
   };
+  const cancelAvatar=()=>{setTempEmoji(avatarEmoji);setTempColor(avatarColor);setShowAvatarPicker(false)};
   useEffect(()=>{if(up){setAvatarEmoji(up.avatar_emoji||"");setAvatarColor(up.avatar_color||"")}},[up]);
   const saveName=async()=>{
     if(!newName.trim())return;
@@ -4515,8 +4539,8 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
   return(<div className="fi">
     {/* Profile Header — iOS 26 Glass Card (matching Home) */}
     <div className="cd cd-glass" style={{marginBottom:14,padding:24,display:"flex",flexDirection:"column",alignItems:"center"}}>
-      <div onClick={()=>setShowAvatarPicker(!showAvatarPicker)} style={{width:80,height:80,borderRadius:"50%",background:avatarColor||"linear-gradient(135deg,var(--purple),var(--B))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:avatarEmoji?36:32,fontWeight:700,color:"#fff",marginBottom:14,boxShadow:"0 4px 20px color-mix(in srgb,var(--purple) 25%,transparent)",cursor:"pointer",position:"relative"}}>
-        {avatarEmoji||((up?.full_name||user?.email||"U")[0].toUpperCase())}
+      <div onClick={openAvatarPicker} style={{width:80,height:80,borderRadius:"50%",background:showAvatarPicker?(tempColor||"linear-gradient(135deg,var(--purple),var(--B))"):(avatarColor||"linear-gradient(135deg,var(--purple),var(--B))"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:(showAvatarPicker?tempEmoji:avatarEmoji)?36:32,fontWeight:700,color:"#fff",marginBottom:14,boxShadow:"0 4px 20px color-mix(in srgb,var(--purple) 25%,transparent)",cursor:"pointer",position:"relative"}}>
+        {showAvatarPicker?(tempEmoji||((up?.full_name||user?.email||"U")[0].toUpperCase())):(avatarEmoji||((up?.full_name||user?.email||"U")[0].toUpperCase()))}
         <div style={{position:"absolute",bottom:0,right:0,width:24,height:24,borderRadius:"50%",background:"var(--card)",border:"2px solid var(--bg)",display:"flex",alignItems:"center",justifyContent:"center"}}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </div>
@@ -4524,12 +4548,16 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
       {showAvatarPicker&&<div style={{width:"100%",marginBottom:14,animation:"fi .2s ease"}}>
         <div style={{fontSize:11,fontWeight:600,color:"var(--tx2)",marginBottom:8}}>{{fa:"اموجی انتخاب کنید",ar:"اختر رمزًا",tr:"Emoji seçin",ru:"Выберите эмодзи",es:"Elige emoji"}[lang]||"Choose emoji"}</div>
         <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12,justifyContent:"center"}}>
-          <div onClick={()=>saveAvatar("",avatarColor)} style={{width:36,height:36,borderRadius:10,background:"var(--bg)",border:`2px solid ${!avatarEmoji?"var(--B)":"var(--brd)"}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:11,fontWeight:700,color:"var(--mu)"}}>{(up?.full_name||"U")[0]}</div>
-          {AVATAR_EMOJIS.map(e=><div key={e} onClick={()=>saveAvatar(e,avatarColor)} style={{width:36,height:36,borderRadius:10,background:"var(--bg)",border:`2px solid ${avatarEmoji===e?"var(--B)":"var(--brd)"}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:20}}>{e}</div>)}
+          <div onClick={()=>setTempEmoji("")} style={{width:36,height:36,borderRadius:10,background:"var(--bg)",border:`2px solid ${!tempEmoji?"var(--B)":"var(--brd)"}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:11,fontWeight:700,color:"var(--mu)"}}>{(up?.full_name||"U")[0]}</div>
+          {AVATAR_EMOJIS.map(e=><div key={e} onClick={()=>setTempEmoji(e)} style={{width:36,height:36,borderRadius:10,background:"var(--bg)",border:`2px solid ${tempEmoji===e?"var(--B)":"var(--brd)"}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:20}}>{e}</div>)}
         </div>
         <div style={{fontSize:11,fontWeight:600,color:"var(--tx2)",marginBottom:8}}>{{fa:"رنگ پس‌زمینه",ar:"لون الخلفية",tr:"Arka plan rengi",ru:"Цвет фона",es:"Color de fondo"}[lang]||"Background color"}</div>
-        <div style={{display:"flex",gap:8,justifyContent:"center"}}>
-          {AVATAR_COLORS.map((c,i)=><div key={i} onClick={()=>saveAvatar(avatarEmoji,c)} style={{width:32,height:32,borderRadius:"50%",background:c,cursor:"pointer",border:`2.5px solid ${avatarColor===c?"var(--tx)":"transparent"}`,boxShadow:avatarColor===c?"0 0 0 2px var(--bg)":"none"}}/>)}
+        <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:14}}>
+          {AVATAR_COLORS.map((c,i)=><div key={i} onClick={()=>setTempColor(c)} style={{width:32,height:32,borderRadius:"50%",background:c,cursor:"pointer",border:`2.5px solid ${tempColor===c?"var(--tx)":"transparent"}`,boxShadow:tempColor===c?"0 0 0 2px var(--bg)":"none"}}/>)}
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <div onClick={confirmAvatar} style={{flex:1,padding:10,borderRadius:12,background:"var(--B)",color:"#fff",textAlign:"center",fontSize:13,fontWeight:700,cursor:"pointer"}}>{{fa:"تایید",ar:"تأكيد",tr:"Onayla",ru:"Сохранить",es:"Confirmar"}[lang]||"Confirm"}</div>
+          <div onClick={cancelAvatar} style={{flex:1,padding:10,borderRadius:12,background:"color-mix(in srgb,var(--tx) 8%,transparent)",color:"var(--mu)",textAlign:"center",fontSize:13,fontWeight:600,cursor:"pointer"}}>{{fa:"لغو",ar:"إلغاء",tr:"İptal",ru:"Отмена",es:"Cancelar"}[lang]||"Cancel"}</div>
         </div>
       </div>}
       {editingName?<div style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
