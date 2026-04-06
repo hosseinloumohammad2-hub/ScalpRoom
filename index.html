@@ -69,11 +69,11 @@ a{color:inherit;text-decoration:none}
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.3);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
 .modal{background:rgba(255,255,255,.72);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);border:1px solid rgba(255,255,255,.7);border-radius:var(--r);max-width:400px;width:100%;max-height:90vh;overflow-y:auto;padding:20px;box-shadow:0 8px 40px rgba(0,0,0,.1)}
 [data-theme="dark"] .modal{background:var(--glass);border-color:var(--gb)}
-.modal-glass-ios{background:rgba(255,255,255,.72)!important;backdrop-filter:blur(40px) saturate(1.6)!important;-webkit-backdrop-filter:blur(40px) saturate(1.6)!important;border:1px solid rgba(255,255,255,.5)!important;box-shadow:0 8px 60px rgba(0,0,0,.07),inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 0 rgba(255,255,255,.12)!important;border-radius:28px!important}
-[data-theme="dark"] .modal-glass-ios{background:rgba(28,28,30,.78)!important;border-color:rgba(255,255,255,.08)!important;box-shadow:0 8px 60px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06),inset 0 -1px 0 rgba(255,255,255,.02)!important;backdrop-filter:blur(40px) saturate(1.6)!important;-webkit-backdrop-filter:blur(40px) saturate(1.6)!important}
+.modal-glass-ios{background:rgba(255,255,255,.82)!important;backdrop-filter:blur(40px) saturate(1.6)!important;-webkit-backdrop-filter:blur(40px) saturate(1.6)!important;border:none!important;box-shadow:none!important;border-radius:0!important}
+[data-theme="dark"] .modal-glass-ios{background:rgba(28,28,30,.85)!important;backdrop-filter:blur(40px) saturate(1.6)!important;-webkit-backdrop-filter:blur(40px) saturate(1.6)!important}
 .modal-overlay-glass{background:rgba(0,0,0,.12)!important;backdrop-filter:blur(3px)!important;-webkit-backdrop-filter:blur(3px)!important}
-.modal-text-solid{background:rgba(255,255,255,.72);backdrop-filter:blur(40px) saturate(1.6);-webkit-backdrop-filter:blur(40px) saturate(1.6);border-top:1px solid rgba(255,255,255,.4)}
-[data-theme="dark"] .modal-text-solid{background:rgba(28,28,30,.78);border-top-color:rgba(255,255,255,.06)}
+.modal-text-solid{background:rgba(255,255,255,.82);backdrop-filter:blur(40px) saturate(1.6);-webkit-backdrop-filter:blur(40px) saturate(1.6)}
+[data-theme="dark"] .modal-text-solid{background:rgba(28,28,30,.85)}
 [data-theme="dark"] .modal-overlay-glass{background:rgba(0,0,0,.35)!important}
 svg{display:block}
 .tradingview-widget-copyright{display:none!important}
@@ -2010,9 +2010,9 @@ function PostModal({post,onClose}){
   const handleTouchEnd=()=>{dragging.current=false;if(scale<=1){setScale(1);setPos({x:0,y:0})}};
   const downloadImg=()=>{const a=document.createElement("a");a.href=post.image_url;a.download=`${post.title||"analysis"}.jpg`;a.target="_blank";a.click()};
   const resetZoom=()=>{setScale(1);setPos({x:0,y:0});setZoomed(false)};
-  return(<div className="modal-overlay modal-overlay-glass" onClick={onClose}><div onClick={e=>e.stopPropagation()} style={{maxWidth:zoomed?"100%":"400px",width:"100%",borderRadius:zoomed?0:28,maxHeight:zoomed?"100vh":"90vh",overflow:"hidden",overflowY:"auto",boxShadow:"0 8px 60px rgba(0,0,0,.12)"}}>
+  return(<div className="modal-overlay modal-overlay-glass" onClick={onClose}><div onClick={e=>e.stopPropagation()} style={{maxWidth:zoomed?"100%":"400px",width:"100%",borderRadius:zoomed?0:28,maxHeight:zoomed?"100vh":"90vh",overflow:"hidden",overflowY:"auto",boxShadow:"0 8px 60px rgba(0,0,0,.1)",border:"1px solid rgba(255,255,255,.45)"}}>
     {/* Glass area — image + category + close */}
-    <div className="modal-glass-ios" style={{borderRadius:zoomed?0:"28px 28px 0 0",padding:zoomed?0:20,paddingBottom:zoomed?0:12}}>
+    <div className="modal-glass-ios" style={{padding:zoomed?0:20,paddingBottom:zoomed?0:12}}>
     {!zoomed&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
       <span style={{fontSize:11,color:"var(--mu)",fontWeight:600}}>{post.category?.toUpperCase()}</span>
       <div onClick={onClose} style={{cursor:"pointer",color:"var(--mu)"}}>{IC.x}</div>
@@ -2038,7 +2038,7 @@ function PostModal({post,onClose}){
     </div>}
     </div>
     {/* Solid area — text content, readable */}
-    {!zoomed&&<div className="modal-text-solid" style={{padding:"18px 20px 20px",borderRadius:"0 0 28px 28px",borderTop:"1px solid var(--brd)"}}>
+    {!zoomed&&<div className="modal-text-solid" style={{padding:"18px 20px 20px"}}>
       <h2 style={{fontSize:18,fontWeight:700,marginBottom:8,lineHeight:1.4,color:"var(--tx)"}}>{post.title}</h2>
       {post.description&&<p style={{fontSize:14,color:"var(--tx2)",lineHeight:1.7,marginBottom:6,whiteSpace:"pre-wrap"}}>{post.description}</p>}
       <TranslateBtn text={[post.title,post.description].filter(Boolean).join("\n\n")}/>
