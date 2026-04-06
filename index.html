@@ -1240,10 +1240,10 @@ function ReferralSection({userId,token,userProfile}){
   const[refOpen,setRefOpen]=useState(false);
   return(<div className="cd" style={{marginBottom:6,overflow:"hidden"}}>
     <div onClick={()=>setRefOpen(!refOpen)} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:0}}>
-      <span style={{transform:"scale(1.6)",display:"inline-flex",marginLeft:15}}>{AE.gift}</span>
+      <span style={{fontSize:18,display:"inline-flex"}}>{AE.gift}</span>
       <div style={{flex:1}}>
-        <div style={{fontSize:14,fontWeight:700}}>{t.referral||"Referral"}</div>
-        <div style={{fontSize:11,color:"var(--tx2)",marginTop:2}}>{t.referralDesc||"Invite 10 friends for 1 month free premium!"}</div>
+        <div style={{fontSize:13,fontWeight:600}}>{t.referral||"Referral"}</div>
+        <div style={{fontSize:10,color:"var(--tx2)",marginTop:1}}>{t.referralDesc||"Invite 10 friends for 1 month free premium!"}</div>
       </div>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{transition:"transform .3s ease",transform:refOpen?"rotate(180deg)":"rotate(0deg)",flexShrink:0}}><polyline points="6 9 12 15 18 9"/></svg>
     </div>
@@ -2393,7 +2393,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
         const isLocked=m.target==="premium"&&!isPremiumUser;
         return<div style={{padding:"0 14px 14px",position:"relative"}}>
           <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
-            {m.target==="premium"&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 6px",borderRadius:4}}>VIP</span>}
+            {m.target==="premium"&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 6px",borderRadius:4,display:"flex",alignItems:"center",gap:2}}><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M3 20h18"/></svg>PREMIUM</span>}
             <span style={{fontSize:9,color:"var(--dm)"}}>{new Date(m.created_at).toLocaleDateString()+" "+new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span>
           </div>
           <div style={{fontSize:15,fontWeight:700,marginBottom:10}}>{m.title}</div>
@@ -2415,7 +2415,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
           <div style={{flex:1,minWidth:0}}>
             <div style={{display:"flex",alignItems:"center",gap:6}}>
               <span style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{m.title}</span>
-              {m.target==="premium"&&<span style={{fontSize:7,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 5px",borderRadius:4,flexShrink:0}}>VIP</span>}
+              {m.target==="premium"&&<span style={{fontSize:7,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 5px",borderRadius:4,flexShrink:0,display:"flex",alignItems:"center",gap:2}}><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M3 20h18"/></svg>PREMIUM</span>}
             </div>
             <div style={{fontSize:11,color:"var(--dm)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:2,filter:isLocked?"blur(4px)":"none"}}>{m.body}</div>
           </div>
@@ -4486,6 +4486,22 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
   useEffect(()=>{if(openSupport){setShowChat(true);if(onSupportOpened)onSupportOpened()}},[openSupport]);
   const[newName,setNewName]=useState(up?.full_name||"");
   const[nameSaving,setNameSaving]=useState(false);
+  const[showAvatarPicker,setShowAvatarPicker]=useState(false);
+  const[avatarEmoji,setAvatarEmoji]=useState(up?.avatar_emoji||"");
+  const[avatarColor,setAvatarColor]=useState(up?.avatar_color||"");
+  const AVATAR_COLORS=["linear-gradient(135deg,var(--purple),var(--B))","linear-gradient(135deg,#ff3b30,#ff9f0a)","linear-gradient(135deg,#28cd41,#0071e3)","linear-gradient(135deg,#ff9f0a,#ff3b30)","linear-gradient(135deg,#0071e3,#5856d6)","linear-gradient(135deg,#30d158,#34c759)","linear-gradient(135deg,#ff2d55,#bf5af2)","linear-gradient(135deg,#5856d6,#af52de)"];
+  const AVATAR_EMOJIS=["😎","🦁","🐺","🦊","💎","🔥","⚡","🚀","👑","🎯","💰","📈","🐻","🦅","🌟","🎲"];
+  const saveAvatar=async(emoji,color)=>{
+    try{
+      const updates={};
+      if(emoji!==undefined)updates.avatar_emoji=emoji;
+      if(color!==undefined)updates.avatar_color=color;
+      await fetch(`${SB}/rest/v1/Users?id=eq.${user.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify(updates)});
+      if(emoji!==undefined)setAvatarEmoji(emoji);
+      if(color!==undefined)setAvatarColor(color);
+    }catch(e){}
+  };
+  useEffect(()=>{if(up){setAvatarEmoji(up.avatar_emoji||"");setAvatarColor(up.avatar_color||"")}},[up]);
   const saveName=async()=>{
     if(!newName.trim())return;
     setNameSaving(true);
@@ -4499,7 +4515,23 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
   return(<div className="fi">
     {/* Profile Header — iOS 26 Glass Card (matching Home) */}
     <div className="cd cd-glass" style={{marginBottom:14,padding:24,display:"flex",flexDirection:"column",alignItems:"center"}}>
-      <div style={{width:80,height:80,borderRadius:"50%",background:"linear-gradient(135deg,var(--purple),var(--B))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,fontWeight:700,color:"#fff",marginBottom:14,boxShadow:"0 4px 20px color-mix(in srgb,var(--purple) 25%,transparent)"}}>{(up?.full_name||user?.email||"U")[0].toUpperCase()}</div>
+      <div onClick={()=>setShowAvatarPicker(!showAvatarPicker)} style={{width:80,height:80,borderRadius:"50%",background:avatarColor||"linear-gradient(135deg,var(--purple),var(--B))",display:"flex",alignItems:"center",justifyContent:"center",fontSize:avatarEmoji?36:32,fontWeight:700,color:"#fff",marginBottom:14,boxShadow:"0 4px 20px color-mix(in srgb,var(--purple) 25%,transparent)",cursor:"pointer",position:"relative"}}>
+        {avatarEmoji||((up?.full_name||user?.email||"U")[0].toUpperCase())}
+        <div style={{position:"absolute",bottom:0,right:0,width:24,height:24,borderRadius:"50%",background:"var(--card)",border:"2px solid var(--bg)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+      </div>
+      {showAvatarPicker&&<div style={{width:"100%",marginBottom:14,animation:"fi .2s ease"}}>
+        <div style={{fontSize:11,fontWeight:600,color:"var(--tx2)",marginBottom:8}}>{{fa:"اموجی انتخاب کنید",ar:"اختر رمزًا",tr:"Emoji seçin",ru:"Выберите эмодзи",es:"Elige emoji"}[lang]||"Choose emoji"}</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12,justifyContent:"center"}}>
+          <div onClick={()=>saveAvatar("",avatarColor)} style={{width:36,height:36,borderRadius:10,background:"var(--bg)",border:`2px solid ${!avatarEmoji?"var(--B)":"var(--brd)"}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:11,fontWeight:700,color:"var(--mu)"}}>{(up?.full_name||"U")[0]}</div>
+          {AVATAR_EMOJIS.map(e=><div key={e} onClick={()=>saveAvatar(e,avatarColor)} style={{width:36,height:36,borderRadius:10,background:"var(--bg)",border:`2px solid ${avatarEmoji===e?"var(--B)":"var(--brd)"}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:20}}>{e}</div>)}
+        </div>
+        <div style={{fontSize:11,fontWeight:600,color:"var(--tx2)",marginBottom:8}}>{{fa:"رنگ پس‌زمینه",ar:"لون الخلفية",tr:"Arka plan rengi",ru:"Цвет фона",es:"Color de fondo"}[lang]||"Background color"}</div>
+        <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+          {AVATAR_COLORS.map((c,i)=><div key={i} onClick={()=>saveAvatar(avatarEmoji,c)} style={{width:32,height:32,borderRadius:"50%",background:c,cursor:"pointer",border:`2.5px solid ${avatarColor===c?"var(--tx)":"transparent"}`,boxShadow:avatarColor===c?"0 0 0 2px var(--bg)":"none"}}/>)}
+        </div>
+      </div>}
       {editingName?<div style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
         <input className="ip" value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveName()} style={{marginBottom:0,width:180,textAlign:"center",fontSize:15,fontWeight:600,background:"rgba(255,255,255,.3)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,.4)"}} autoFocus/>
         <div onClick={saveName} style={{cursor:"pointer",color:"var(--G)",padding:4,opacity:nameSaving?.5:1}}>{IC.ck}</div>
@@ -4509,8 +4541,9 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
         <div onClick={()=>{setNewName(up?.full_name||"");setEditingName(true)}} style={{cursor:"pointer",color:"var(--mu)",padding:2}}>{IC.edit}</div>
       </div>}
       <div style={{fontSize:12,color:"var(--dm)",marginTop:4}}>{user?.email}</div>
-      <div style={{marginTop:12,fontSize:12,fontWeight:700,color:up?.membership==="premium"?"var(--G)":"var(--mu)",background:up?.membership==="premium"?"color-mix(in srgb,var(--G) 12%,transparent)":"color-mix(in srgb,var(--mu) 10%,transparent)",padding:"5px 16px",borderRadius:20,border:`1px solid ${up?.membership==="premium"?"color-mix(in srgb,var(--G) 20%,transparent)":"color-mix(in srgb,var(--mu) 12%,transparent)"}`}}>
-        {up?.membership==="premium"?"PRO Member":(up?.membership||"free").toUpperCase()}{up?.role==="admin"?" · ADMIN":""}
+      <div style={{marginTop:12,fontSize:12,fontWeight:700,color:up?.membership==="premium"?"var(--G)":"var(--mu)",background:up?.membership==="premium"?"color-mix(in srgb,var(--G) 12%,transparent)":"color-mix(in srgb,var(--mu) 10%,transparent)",padding:"5px 16px",borderRadius:20,border:`1px solid ${up?.membership==="premium"?"color-mix(in srgb,var(--G) 20%,transparent)":"color-mix(in srgb,var(--mu) 12%,transparent)"}`,display:"flex",alignItems:"center",gap:5}}>
+        {up?.membership==="premium"&&IC.crown}
+        {up?.membership==="premium"?"Pro Premium Member":(up?.membership||"free").toUpperCase()}{up?.role==="admin"?" · ADMIN":""}
       </div>
     </div>
     <ReferralSection userId={user?.id} token={token} userProfile={up}/>
