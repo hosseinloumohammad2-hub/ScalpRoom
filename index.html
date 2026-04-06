@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#050507" media="(prefers-color-scheme: dark)">
 <script>
-(function(){try{var t=localStorage.getItem("fxtheme");if(!t||t==="light")t="liquid";var isLiquid=t==="liquid";var c=isLiquid?"#f5f5f7":"#050507";document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.content=c});if(!isLiquid)document.documentElement.setAttribute("data-theme","dark");else document.documentElement.setAttribute("data-theme","liquid")}catch(e){}})();
+(function(){try{var t=localStorage.getItem("fxtheme");if(!t||t==="light")t="liquid";var isLiquid=t==="liquid";var c=isLiquid?"#f5f5f7":"#050507";document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.removeAttribute("media");m.content=c});if(!isLiquid)document.documentElement.setAttribute("data-theme","dark");else document.documentElement.setAttribute("data-theme","liquid")}catch(e){}})();
 </script>
 <title>Fxscalproom.</title>
 <link rel="manifest" href="manifest.json">
@@ -1070,7 +1070,7 @@ function SignalScoreboard({signals}){
 /* ─── Theme Hook ─── */
 function useTheme(){
   const[dark,setDark]=useState(()=>{try{return localStorage.getItem("fxtheme")==="dark"}catch(e){return false}});
-  useEffect(()=>{const t=dark?"dark":"liquid";document.documentElement.setAttribute("data-theme",t);try{localStorage.setItem("fxtheme",t)}catch(e){};const c=dark?"#050507":"#f5f5f7";document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{m.content=c})},[dark]);
+  useEffect(()=>{const t=dark?"dark":"liquid";document.documentElement.setAttribute("data-theme",t);try{localStorage.setItem("fxtheme",t)}catch(e){};const c=dark?"#050507":"#f5f5f7";document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{m.removeAttribute("media");m.content=c})},[dark]);
   return{dark,toggle:()=>setDark(d=>!d)};
 }
 
@@ -1093,7 +1093,7 @@ function useNotifications(){
 }
 
 /* ─── Theme Color Helper (status bar color for modals) ─── */
-function setThemeColor(color){document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{m.content=color})}
+function setThemeColor(color){document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{m.removeAttribute("media");m.content=color})}
 function getThemeColor(){try{return localStorage.getItem("fxtheme")==="dark"?"#050507":"#f5f5f7"}catch(e){return"#f5f5f7"}}
 
 /* ─── Toast ─── */
