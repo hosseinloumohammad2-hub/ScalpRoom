@@ -69,6 +69,9 @@ a{color:inherit;text-decoration:none}
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.3);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
 .modal{background:rgba(255,255,255,.72);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);border:1px solid rgba(255,255,255,.7);border-radius:var(--r);max-width:400px;width:100%;max-height:90vh;overflow-y:auto;padding:20px;box-shadow:0 8px 40px rgba(0,0,0,.1)}
 [data-theme="dark"] .modal{background:var(--glass);border-color:var(--gb)}
+.modal-glass-ios{background:rgba(255,255,255,.32)!important;backdrop-filter:blur(60px) saturate(2.2) brightness(1.15)!important;-webkit-backdrop-filter:blur(60px) saturate(2.2) brightness(1.15)!important;border:1px solid rgba(255,255,255,.5)!important;box-shadow:0 8px 60px rgba(0,0,0,.07),inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 0 rgba(255,255,255,.12)!important;border-radius:28px!important}
+[data-theme="dark"] .modal-glass-ios{background:rgba(30,30,35,.42)!important;border-color:rgba(255,255,255,.1)!important;box-shadow:0 8px 60px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.06),inset 0 -1px 0 rgba(255,255,255,.02)!important}
+.modal-overlay-glass{background:rgba(0,0,0,.12)!important;backdrop-filter:blur(3px)!important;-webkit-backdrop-filter:blur(3px)!important}
 svg{display:block}
 .tradingview-widget-copyright{display:none!important}
 .tradingview-widget-container__widget a{pointer-events:none!important}
@@ -1231,14 +1234,18 @@ function ReferralSection({userId,token,userProfile}){
   };
   const pct=Math.min(100,(referrals/needed)*100);
   const remaining=Math.max(0,needed-referrals);
-  return(<div className="cd" style={{marginBottom:6}}>
-    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+  const[refOpen,setRefOpen]=useState(false);
+  return(<div className="cd" style={{marginBottom:6,overflow:"hidden"}}>
+    <div onClick={()=>setRefOpen(!refOpen)} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:0}}>
       <span style={{transform:"scale(1.6)",display:"inline-flex",marginLeft:15}}>{AE.gift}</span>
-      <div>
+      <div style={{flex:1}}>
         <div style={{fontSize:14,fontWeight:700}}>{t.referral||"Referral"}</div>
         <div style={{fontSize:11,color:"var(--tx2)",marginTop:2}}>{t.referralDesc||"Invite 10 friends for 1 month free premium!"}</div>
       </div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{transition:"transform .3s ease",transform:refOpen?"rotate(180deg)":"rotate(0deg)",flexShrink:0}}><polyline points="6 9 12 15 18 9"/></svg>
     </div>
+    <div style={{maxHeight:refOpen?600:0,overflow:"hidden",transition:"max-height .4s cubic-bezier(.4,0,.2,1), opacity .3s ease",opacity:refOpen?1:0}}>
+    <div style={{paddingTop:14}}>
     <div style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:12,padding:14,marginBottom:10}}>
       <div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginBottom:8}}>{t.yourCode||"Your Invite Code"}</div>
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
@@ -1270,6 +1277,7 @@ function ReferralSection({userId,token,userProfile}){
       <span style={{fontSize:12,fontWeight:600,color:"var(--G)"}}>✓ {t.refCodeUsed||"Referral code already used"}</span>
     </div>}
     {msg&&<div style={{marginTop:8,fontSize:12,fontWeight:600,color:msg.includes("!")?"var(--G)":"var(--R)",textAlign:"center"}}>{msg}</div>}
+    </div></div>
   </div>);
 }
 
@@ -1999,7 +2007,7 @@ function PostModal({post,onClose}){
   const handleTouchEnd=()=>{dragging.current=false;if(scale<=1){setScale(1);setPos({x:0,y:0})}};
   const downloadImg=()=>{const a=document.createElement("a");a.href=post.image_url;a.download=`${post.title||"analysis"}.jpg`;a.target="_blank";a.click()};
   const resetZoom=()=>{setScale(1);setPos({x:0,y:0});setZoomed(false)};
-  return(<div className="modal-overlay" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:zoomed?"100%":"400px",padding:zoomed?0:20,borderRadius:zoomed?0:20,maxHeight:zoomed?"100vh":"90vh"}}>
+  return(<div className="modal-overlay modal-overlay-glass" onClick={onClose}><div className="modal modal-glass-ios" onClick={e=>e.stopPropagation()} style={{maxWidth:zoomed?"100%":"400px",padding:zoomed?0:20,borderRadius:zoomed?0:28,maxHeight:zoomed?"100vh":"90vh"}}>
     {!zoomed&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
       <span style={{fontSize:11,color:"var(--mu)",fontWeight:600}}>{post.category?.toUpperCase()}</span>
       <div onClick={onClose} style={{cursor:"pointer",color:"var(--mu)"}}>{IC.x}</div>
@@ -4482,19 +4490,20 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
     setNameSaving(false);
   };
   return(<div className="fi">
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"28px 0 30px"}}>
-      <div style={{width:72,height:72,borderRadius:"50%",background:"var(--bg2)",border:"2px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,fontWeight:700,marginBottom:14}}>{(up?.full_name||user?.email||"U")[0].toUpperCase()}</div>
+    {/* Profile Header — iOS 26 Glass Card (matching Home) */}
+    <div className="cd cd-glass" style={{marginBottom:14,padding:24,display:"flex",flexDirection:"column",alignItems:"center"}}>
+      <div style={{width:80,height:80,borderRadius:"50%",background:"linear-gradient(135deg,#7c5cfc,#5b8def)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,fontWeight:700,color:"#fff",marginBottom:14,boxShadow:"0 4px 20px rgba(124,92,252,.25)"}}>{(up?.full_name||user?.email||"U")[0].toUpperCase()}</div>
       {editingName?<div style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
-        <input className="ip" value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveName()} style={{marginBottom:0,width:180,textAlign:"center",fontSize:15,fontWeight:600}} autoFocus/>
+        <input className="ip" value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveName()} style={{marginBottom:0,width:180,textAlign:"center",fontSize:15,fontWeight:600,background:"rgba(255,255,255,.3)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,.4)"}} autoFocus/>
         <div onClick={saveName} style={{cursor:"pointer",color:"var(--G)",padding:4,opacity:nameSaving?.5:1}}>{IC.ck}</div>
         <div onClick={()=>{setEditingName(false);setNewName(up?.full_name||"")}} style={{cursor:"pointer",color:"var(--mu)",padding:4}}>{IC.x}</div>
       </div>:<div style={{display:"flex",alignItems:"center",gap:6}}>
-        <div style={{fontSize:17,fontWeight:600}}>{up?.full_name||"User"}</div>
+        <div style={{fontSize:18,fontWeight:700,letterSpacing:"-.2px"}}>{up?.full_name||"User"}</div>
         <div onClick={()=>{setNewName(up?.full_name||"");setEditingName(true)}} style={{cursor:"pointer",color:"var(--mu)",padding:2}}>{IC.edit}</div>
       </div>}
       <div style={{fontSize:12,color:"var(--dm)",marginTop:4}}>{user?.email}</div>
-      <div style={{marginTop:10,fontSize:11,fontWeight:600,color:up?.membership==="premium"?"var(--G)":"var(--mu)",background:up?.membership==="premium"?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--mu) 10%,transparent)",padding:"4px 12px",borderRadius:20}}>
-        {(up?.membership||"free").toUpperCase()}{up?.role==="admin"?" · ADMIN":""}
+      <div style={{marginTop:12,fontSize:12,fontWeight:700,color:up?.membership==="premium"?"var(--G)":"var(--mu)",background:up?.membership==="premium"?"color-mix(in srgb,var(--G) 12%,transparent)":"color-mix(in srgb,var(--mu) 10%,transparent)",padding:"5px 16px",borderRadius:20,border:`1px solid ${up?.membership==="premium"?"color-mix(in srgb,var(--G) 20%,transparent)":"color-mix(in srgb,var(--mu) 12%,transparent)"}`}}>
+        {up?.membership==="premium"?"PRO Member":(up?.membership||"free").toUpperCase()}{up?.role==="admin"?" · ADMIN":""}
       </div>
     </div>
     <ReferralSection userId={user?.id} token={token} userProfile={up}/>
