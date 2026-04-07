@@ -1073,14 +1073,20 @@ function useTheme(){
     document.documentElement.setAttribute("data-theme",t);
     try{localStorage.setItem("fxtheme",t)}catch(e){}
     const c=dark?"#050507":"#f5f5f7";
-    // Remove ALL existing theme-color metas
     document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.remove());
-    // Create single new one without media
     const meta=document.createElement("meta");
     meta.name="theme-color";meta.content=c;
     document.head.appendChild(meta);
   },[dark]);
-  return{dark,toggle:()=>setDark(d=>!d)};
+  const toggle=()=>{
+    const next=!dark;
+    setDark(next);
+    try{localStorage.setItem("fxtheme",next?"dark":"liquid")}catch(e){}
+    // iOS PWA: status bar only reads theme-color on load, so reload
+    const isStandalone=window.navigator.standalone||window.matchMedia("(display-mode: standalone)").matches;
+    if(isStandalone){setTimeout(()=>window.location.reload(),300)}
+  };
+  return{dark,toggle};
 }
 
 /* ─── Push Notifications ─── */
