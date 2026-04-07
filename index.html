@@ -2193,11 +2193,49 @@ function Auth({onAuth,lang,setLang}){
   const t=T[lang];
   const[m,setM]=useState("login"),[e,setE]=useState(""),[p,setP]=useState(""),[n,setN]=useState(""),[er,setEr]=useState(""),[ld,setLd]=useState(false),[ok,setOk]=useState("");
   const[showLang,setShowLang]=useState(false);
+  // Forgot password OTP flow
+  const[resetStep,setResetStep]=useState(0); // 0=enter email, 1=enter code, 2=new password
+  const[otpCode,setOtpCode]=useState("");
+  const[newPass,setNewPass]=useState("");
+  const[newPass2,setNewPass2]=useState("");
+  const[resetToken,setResetToken]=useState("");
   const go=async()=>{
     if(m==="forgot"){
-      if(!e){setEr(t.fill);return}setLd(true);setEr("");setOk("");
-      try{const r=await fetch(`${SB}/auth/v1/recover`,{method:"POST",headers:{apikey:SK,"Content-Type":"application/json"},body:JSON.stringify({email:e})});const d=await r.json();if(d.error){setEr(d.error.message||"Error")}else{setOk(t.resetSent||"Reset link sent! Check your email.")}
-      }catch(x){setEr(x.message)}setLd(false);return;
+      if(resetStep===0){
+        // Step 1: Send OTP code to email
+        if(!e){setEr(t.fill);return}setLd(true);setEr("");setOk("");
+        try{
+          const r=await fetch(`${SB}/auth/v1/otp`,{method:"POST",headers:{apikey:SK,"Content-Type":"application/json"},body:JSON.stringify({email:e})});
+          const d=await r.json();
+          if(d.error){setEr(d.error.message||"Error")}
+          else{setOk({fa:"کد تایید به ایمیل شما ارسال شد",ar:"تم إرسال رمز التحقق إلى بريدك",tr:"Doğrulama kodu e-postanıza gönderildi",ru:"Код подтверждения отправлен на вашу почту",es:"Código de verificación enviado a tu correo"}[lang]||"Verification code sent to your email!");setResetStep(1)}
+        }catch(x){setEr(x.message)}setLd(false);return;
+      }
+      if(resetStep===1){
+        // Step 2: Verify OTP code
+        if(!otpCode||otpCode.length<6){setEr({fa:"کد ۶ رقمی را وارد کنید",ar:"أدخل الرمز المكون من 6 أرقام",tr:"6 haneli kodu girin",ru:"Введите 6-значный код",es:"Ingresa el código de 6 dígitos"}[lang]||"Enter the 6-digit code");return}
+        setLd(true);setEr("");setOk("");
+        try{
+          const r=await fetch(`${SB}/auth/v1/verify`,{method:"POST",headers:{apikey:SK,"Content-Type":"application/json"},body:JSON.stringify({type:"email",token:otpCode,email:e})});
+          const d=await r.json();
+          if(d.error){setEr(d.error.message||{fa:"کد نامعتبر",ar:"رمز غير صالح",tr:"Geçersiz kod",ru:"Неверный код",es:"Código inválido"}[lang]||"Invalid code")}
+          else if(d.access_token){setResetToken(d.access_token);setResetStep(2);setOk({fa:"کد تایید شد! رمز جدید وارد کنید",ar:"تم التحقق! أدخل كلمة مرور جديدة",tr:"Doğrulandı! Yeni şifre girin",ru:"Подтверждено! Введите новый пароль",es:"¡Verificado! Ingresa nueva contraseña"}[lang]||"Verified! Enter your new password")}
+          else{setEr({fa:"خطا در تایید کد",ar:"خطأ في التحقق",tr:"Doğrulama hatası",ru:"Ошибка проверки",es:"Error de verificación"}[lang]||"Verification error")}
+        }catch(x){setEr(x.message)}setLd(false);return;
+      }
+      if(resetStep===2){
+        // Step 3: Set new password
+        if(!newPass||newPass.length<6){setEr({fa:"رمز عبور حداقل ۶ کاراکتر باشد",ar:"كلمة المرور 6 أحرف على الأقل",tr:"Şifre en az 6 karakter",ru:"Пароль минимум 6 символов",es:"Contraseña mínimo 6 caracteres"}[lang]||"Password must be at least 6 characters");return}
+        if(newPass!==newPass2){setEr({fa:"رمزهای عبور مطابقت ندارند",ar:"كلمات المرور غير متطابقة",tr:"Şifreler eşleşmiyor",ru:"Пароли не совпадают",es:"Las contraseñas no coinciden"}[lang]||"Passwords don't match");return}
+        setLd(true);setEr("");setOk("");
+        try{
+          const r=await fetch(`${SB}/auth/v1/user`,{method:"PUT",headers:{apikey:SK,Authorization:`Bearer ${resetToken}`,"Content-Type":"application/json"},body:JSON.stringify({password:newPass})});
+          const d=await r.json();
+          if(d.error){setEr(d.error.message||"Error")}
+          else{setOk({fa:"رمز عبور با موفقیت تغییر کرد! وارد شوید",ar:"تم تغيير كلمة المرور بنجاح! سجل الدخول",tr:"Şifre başarıyla değiştirildi! Giriş yapın",ru:"Пароль успешно изменён! Войдите",es:"¡Contraseña cambiada! Inicia sesión"}[lang]||"Password changed successfully! Please sign in.");setM("login");setResetStep(0);setOtpCode("");setNewPass("");setNewPass2("");setResetToken("");setP("")}
+        }catch(x){setEr(x.message)}setLd(false);return;
+      }
+      return;
     }
     if(!e||!p){setEr(t.fill);return}setLd(true);setEr("");
     try{if(m==="login"){const r=await api.in(e,p);if(r.error){
@@ -2236,12 +2274,13 @@ function Auth({onAuth,lang,setLang}){
       }
     }
   },[]);
+  const forgotBtnLabel=resetStep===0?({fa:"ارسال کد تایید",ar:"إرسال رمز التحقق",tr:"Doğrulama kodu gönder",ru:"Отправить код",es:"Enviar código"}[lang]||"Send Verification Code"):resetStep===1?({fa:"تایید کد",ar:"تأكيد الرمز",tr:"Kodu doğrula",ru:"Подтвердить код",es:"Verificar código"}[lang]||"Verify Code"):({fa:"تغییر رمز عبور",ar:"تغيير كلمة المرور",tr:"Şifreyi değiştir",ru:"Изменить пароль",es:"Cambiar contraseña"}[lang]||"Change Password");
   return(<div style={{minHeight:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"var(--bg)",position:"relative",zIndex:1}}>
     <div style={{width:"100%",maxWidth:360}} className="fi">
       <InstallBanner/>
       <div style={{textAlign:"center",marginBottom:48}}>
         <div className="lg" style={{fontSize:34}}>Fxscalproom<b>.</b></div>
-        <p style={{fontSize:13,color:"var(--mu)",marginTop:10}}>{m==="login"?t.welcome:m==="forgot"?(t.forgotPassword||"Reset Password"):t.getStarted}</p>
+        <p style={{fontSize:13,color:"var(--mu)",marginTop:10}}>{m==="login"?t.welcome:m==="forgot"?({fa:"بازیابی رمز عبور",ar:"استعادة كلمة المرور",tr:"Şifre sıfırlama",ru:"Сброс пароля",es:"Recuperar contraseña"}[lang]||"Reset Password"):t.getStarted}</p>
       </div>
       <div style={{display:"flex",justifyContent:"center",marginBottom:20}}>
         <div onClick={()=>setShowLang(!showLang)} style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",padding:"6px 14px",borderRadius:10,border:"1px solid var(--brd)",fontSize:12,color:"var(--mu)",position:"relative"}}>
@@ -2259,12 +2298,35 @@ function Auth({onAuth,lang,setLang}){
       </button>}
       {m!=="forgot"&&<div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}><div style={{flex:1,height:1,background:"var(--brd)"}}></div><span style={{fontSize:11,color:"var(--dm)"}}>or</span><div style={{flex:1,height:1,background:"var(--brd)"}}></div></div>}
       {m==="register"&&<input className="ip" placeholder={t.fullName} value={n} onChange={x=>setN(x.target.value)}/>}
-      <input className="ip" placeholder={t.email} type="email" value={e} onChange={x=>setE(x.target.value)} autoCapitalize="none"/>
-      {m!=="forgot"&&<input className="ip" placeholder={t.password} type="password" value={p} onChange={x=>setP(x.target.value)} onKeyDown={x=>x.key==="Enter"&&go()}/>}
-      <button className="bt" style={{background:"var(--R)",opacity:ld?.5:1,marginTop:6}} onClick={go} disabled={ld}>{ld?"...":m==="forgot"?(t.sendResetLink||"Send Reset Link"):m==="login"?t.signIn:t.createAcc}</button>
-      {m==="login"&&<p style={{textAlign:"center",marginTop:14,fontSize:13}}><span onClick={()=>{setM("forgot");setEr("");setOk("")}} style={{color:"var(--mu)",cursor:"pointer"}}>{t.forgotPassword||"Forgot password?"}</span></p>}
+      {/* Forgot password: step-based inputs */}
+      {m==="forgot"?<>
+        {resetStep===0&&<input className="ip" placeholder={t.email} type="email" value={e} onChange={x=>setE(x.target.value)} autoCapitalize="none"/>}
+        {resetStep===1&&<>
+          <div style={{fontSize:12,color:"var(--tx2)",marginBottom:8,textAlign:"center"}}>{e}</div>
+          <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:12}}>
+            {[0,1,2,3,4,5].map(i=><input key={i} id={`otp-${i}`} type="tel" maxLength={1} value={otpCode[i]||""} onChange={ev=>{
+              const v=ev.target.value.replace(/\D/g,"");
+              const newCode=otpCode.split("");newCode[i]=v;const joined=newCode.join("").slice(0,6);setOtpCode(joined);
+              if(v&&i<5){const next=document.getElementById(`otp-${i+1}`);if(next)next.focus()}
+            }} onKeyDown={ev=>{if(ev.key==="Backspace"&&!otpCode[i]&&i>0){const prev=document.getElementById(`otp-${i-1}`);if(prev)prev.focus()}}}
+            style={{width:44,height:52,borderRadius:12,border:"1px solid var(--brd)",background:"var(--bg)",textAlign:"center",fontSize:22,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",color:"var(--tx)",outline:"none"}}/>)}
+          </div>
+          <div onClick={()=>{setResetStep(0);setOtpCode("");setEr("");setOk("")}} style={{textAlign:"center",fontSize:12,color:"var(--mu)",cursor:"pointer",marginBottom:8}}>
+            {({fa:"ارسال مجدد کد",ar:"إعادة إرسال الرمز",tr:"Kodu tekrar gönder",ru:"Отправить код повторно",es:"Reenviar código"}[lang])||"Resend code"}
+          </div>
+        </>}
+        {resetStep===2&&<>
+          <input className="ip" placeholder={{fa:"رمز عبور جدید",ar:"كلمة مرور جديدة",tr:"Yeni şifre",ru:"Новый пароль",es:"Nueva contraseña"}[lang]||"New password"} type="password" value={newPass} onChange={x=>setNewPass(x.target.value)}/>
+          <input className="ip" placeholder={{fa:"تکرار رمز عبور",ar:"تأكيد كلمة المرور",tr:"Şifreyi onayla",ru:"Подтвердите пароль",es:"Confirmar contraseña"}[lang]||"Confirm password"} type="password" value={newPass2} onChange={x=>setNewPass2(x.target.value)} onKeyDown={x=>x.key==="Enter"&&go()}/>
+        </>}
+      </>:<>
+        <input className="ip" placeholder={t.email} type="email" value={e} onChange={x=>setE(x.target.value)} autoCapitalize="none"/>
+        <input className="ip" placeholder={t.password} type="password" value={p} onChange={x=>setP(x.target.value)} onKeyDown={x=>x.key==="Enter"&&go()}/>
+      </>}
+      <button className="bt" style={{background:"var(--R)",opacity:ld?.5:1,marginTop:6}} onClick={go} disabled={ld}>{ld?"...":m==="forgot"?forgotBtnLabel:m==="login"?t.signIn:t.createAcc}</button>
+      {m==="login"&&<p style={{textAlign:"center",marginTop:14,fontSize:13}}><span onClick={()=>{setM("forgot");setResetStep(0);setOtpCode("");setNewPass("");setNewPass2("");setEr("");setOk("")}} style={{color:"var(--mu)",cursor:"pointer"}}>{t.forgotPassword||"Forgot password?"}</span></p>}
       <p style={{textAlign:"center",marginTop:m==="login"?8:20,fontSize:13,color:"var(--mu)"}}>
-        {m==="forgot"?<span onClick={()=>{setM("login");setEr("");setOk("")}} style={{color:"var(--R)",fontWeight:600,cursor:"pointer"}}>{t.signIn}</span>:
+        {m==="forgot"?<span onClick={()=>{setM("login");setResetStep(0);setOtpCode("");setNewPass("");setNewPass2("");setEr("");setOk("")}} style={{color:"var(--R)",fontWeight:600,cursor:"pointer"}}>{t.signIn}</span>:
         <span onClick={()=>{setM(m==="login"?"register":"login");setEr("");setOk("")}} style={{color:"var(--R)",fontWeight:600,cursor:"pointer"}}>{m==="login"?t.signUp:t.signIn}</span>}
       </p>
     </div></div>);
