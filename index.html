@@ -3643,122 +3643,123 @@ function AdminReport({token,posts,signals}){
   const winRate=(tpHit+slHit)>0?Math.round((tpHit/(tpHit+slHit))*100):0;
   const hasSigs=showSigs&&filteredSigs.length>0;
 
-  const generateHtml=()=>{
+  const generateHtml=(theme)=>{
+    const dk=theme==="dark";
     const imgPosts=filteredPosts.filter(p=>p.image_url);
     const imgs=imgPosts.map(p=>(p.image_url||"").split(",")[0]).filter(Boolean);
-    const cols=imgs.length<=4?2:imgs.length<=9?3:imgs.length<=16?4:5;
+    // Smart columns: fit ALL images in the grid area
+    const maxGridCells=100;
+    const totalImgs=Math.min(imgs.length,maxGridCells);
+    const cols=totalImgs<=4?2:totalImgs<=9?3:totalImgs<=16?4:totalImgs<=25?5:totalImgs<=36?6:totalImgs<=49?7:totalImgs<=64?8:totalImgs<=81?9:10;
     const fromStr=new Date(fromDate).toLocaleDateString("en",{month:"short",day:"numeric"});
     const toStr=new Date(toDate).toLocaleDateString("en",{month:"short",day:"numeric",year:"numeric"});
 
-    // Build stats array — hide signals section if 0
+    // Smart title based on date range
+    const dayDiff=Math.round((new Date(toDate)-new Date(fromDate))/(1000*60*60*24));
+    let periodTitle="Performance";
+    if(dayDiff===0)periodTitle=lang==="fa"?"گزارش امروز":"Today's Report";
+    else if(dayDiff<=1)periodTitle=lang==="fa"?"گزارش روزانه":"Daily Report";
+    else if(dayDiff<=7)periodTitle=lang==="fa"?"گزارش هفتگی":"Weekly Report";
+    else if(dayDiff<=14)periodTitle=lang==="fa"?"گزارش دو هفته":"Bi-Weekly Report";
+    else if(dayDiff<=31)periodTitle=lang==="fa"?"گزارش ماهانه":"Monthly Report";
+    else if(dayDiff<=93)periodTitle=lang==="fa"?"گزارش فصلی":"Quarterly Report";
+    else periodTitle=lang==="fa"?"گزارش عملکرد":"Performance Report";
+
+    // Theme colors
+    const C=dk?{
+      bg:"#0a0a0c",bg2:"#1c1c1e",tx:"#ffffff",tx2:"#a1a1aa",mu:"#71717a",dm:"#52525b",
+      brd:"rgba(255,255,255,.08)",R:"#ff453a",G:"#30d158",B:"#0a84ff",Y:"#ffd60a",
+      cardBg:"rgba(255,255,255,.04)",cardBrd:"rgba(255,255,255,.08)",
+      glow1:"rgba(255,65,54,.08)",glow2:"rgba(10,132,255,.06)",
+      footTx:"rgba(255,255,255,.2)",footDot:"rgba(255,69,58,.3)",footSub:"rgba(255,255,255,.12)"
+    }:{
+      bg:"#f5f5f7",bg2:"#ffffff",tx:"#1d1d1f",tx2:"#424245",mu:"#86868b",dm:"#aeaeb2",
+      brd:"rgba(0,0,0,.06)",R:"#ff3b30",G:"#28cd41",B:"#0071e3",Y:"#ff9f0a",
+      cardBg:"rgba(0,0,0,.03)",cardBrd:"rgba(0,0,0,.06)",
+      glow1:"rgba(255,59,48,.06)",glow2:"rgba(0,113,227,.05)",
+      footTx:"rgba(0,0,0,.15)",footDot:"rgba(255,59,48,.25)",footSub:"rgba(0,0,0,.1)"
+    };
+
     let statsHtml="";
-    const statItems=[
-      {v:filteredPosts.length,l:"Analyses",c:"#0a84ff"},
-    ];
+    const statItems=[{v:filteredPosts.length,l:lang==="fa"?"تحلیل":"Analyses",c:C.B}];
     if(hasSigs){
-      statItems.push({v:filteredSigs.length,l:"Signals",c:"#30d158"});
-      statItems.push({v:winRate+"%",l:"Win Rate",c:winRate>=60?"#30d158":"#ffd60a"});
-      statItems.push({v:tpHit,l:"TP Hit",c:"#30d158"});
-      statItems.push({v:slHit,l:"SL Hit",c:"#ff453a"});
+      statItems.push({v:filteredSigs.length,l:lang==="fa"?"سیگنال":"Signals",c:C.G});
+      statItems.push({v:winRate+"%",l:"Win Rate",c:winRate>=60?C.G:C.Y});
+      statItems.push({v:tpHit,l:"TP Hit",c:C.G});
+      statItems.push({v:slHit,l:"SL Hit",c:C.R});
     }
-    statsHtml=statItems.map((s,i)=>`<div style="text-align:center;animation:statPop .5s ease ${.3+i*.1}s both"><div style="font-family:'JetBrains Mono',monospace;font-size:${hasSigs?'28':'36'}px;font-weight:700;color:${s.c}">${s.v}</div><div style="font-size:11px;color:#71717a;margin-top:4px">${s.l}</div></div>`).join("");
+    statsHtml=statItems.map((s,i)=>`<div class="stat-box" style="animation-delay:${.8+i*.15}s"><div class="stat-val" style="color:${s.c}">${s.v}</div><div class="stat-lbl">${s.l}</div></div>`).join("");
 
-    // Image grid
-    const gridImgs=imgs.slice(0,cols*cols).map((url,i)=>`<div style="animation:imgReveal .4s ease ${.6+i*.05}s both;border-radius:12px;overflow:hidden;aspect-ratio:1;background:#1c1c1e"><img src="${url}" style="width:100%;height:100%;object-fit:cover;display:block" crossorigin="anonymous"/></div>`).join("");
+    const gridImgs=imgs.slice(0,cols*Math.ceil(totalImgs/cols)).map((url,i)=>`<div class="img-cell" style="animation-delay:${1.5+i*.03}s"><img src="${url}" crossorigin="anonymous"/></div>`).join("");
 
-    const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=1080,height=1920"><style>
+    return`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{width:1080px;height:1920px;background:#0a0a0c;font-family:-apple-system,'SF Pro Display','DM Sans',system-ui,sans-serif;overflow:hidden;position:relative}
-body::before{content:'';position:absolute;top:-100px;right:-100px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(255,65,54,.08),transparent);pointer-events:none}
-body::after{content:'';position:absolute;bottom:-100px;left:-50px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(10,132,255,.06),transparent);pointer-events:none}
-@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
-@keyframes statPop{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
-@keyframes imgReveal{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
-@keyframes lineGrow{from{width:0}to{width:100%}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-.accent{height:4px;border-radius:2px;background:linear-gradient(90deg,#ff453a,#ff9f0a,transparent);animation:lineGrow .8s ease both;margin-bottom:20px}
+body{width:1080px;height:1920px;background:${C.bg};font-family:-apple-system,'SF Pro Display',system-ui,sans-serif;overflow:hidden;position:relative}
+body::before{content:'';position:absolute;top:-120px;right:-80px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,${C.glow1},transparent);pointer-events:none;animation:orbFloat 8s ease-in-out infinite}
+body::after{content:'';position:absolute;bottom:-80px;left:-60px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,${C.glow2},transparent);pointer-events:none;animation:orbFloat 10s ease-in-out 2s infinite reverse}
+@keyframes orbFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-40px)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes lineGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes statPop{0%{opacity:0;transform:scale(0) rotate(-10deg)}60%{transform:scale(1.15) rotate(2deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes imgReveal{from{opacity:0;transform:scale(.7) rotate(-2deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes countUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{background-position:-300% 0}100%{background-position:300% 0}}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes borderGlow{0%,100%{border-color:${C.cardBrd}}50%{border-color:${dk?"rgba(255,255,255,.15)":"rgba(0,0,0,.12)"}}}
+.accent{height:4px;border-radius:2px;background:linear-gradient(90deg,${C.R},${C.Y},transparent);transform-origin:left;animation:lineGrow .8s ease both}
+.logo-wrap{animation:fadeUp .6s ease .2s both}
+.period{font-size:16px;color:${C.dm};margin:20px 0 8px;animation:fadeUp .5s ease .3s both}
+.title{font-size:${dayDiff===0?56:50}px;font-weight:800;color:${C.tx};letter-spacing:-1.5px;line-height:1.05;margin-bottom:32px;animation:fadeUp .6s ease .4s both}
+.stats-row{display:grid;grid-template-columns:repeat(${statItems.length},1fr);gap:12px;margin-bottom:32px}
+.stat-box{text-align:center;padding:16px 8px;border-radius:16px;background:${C.cardBg};border:1px solid ${C.cardBrd};animation:statPop .5s ease both;animation-fill-mode:both}
+.stat-val{font-family:'SF Mono',monospace;font-size:${hasSigs?28:40}px;font-weight:700}
+.stat-lbl{font-size:11px;color:${C.mu};margin-top:6px;font-weight:600}
+.grid{flex:1;display:grid;grid-template-columns:repeat(${cols},1fr);gap:8px;align-content:start;margin-bottom:20px}
+.img-cell{border-radius:10px;overflow:hidden;aspect-ratio:1;background:${C.bg2};border:1px solid ${C.brd};animation:imgReveal .35s ease both;animation-fill-mode:both}
+.img-cell img{width:100%;height:100%;object-fit:cover;display:block}
+.footer{text-align:center;padding-top:20px;border-top:1px solid ${C.brd};animation:fadeUp .5s ease 2s both}
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:${C.G};animation:pulse 2s infinite;margin-right:6px;vertical-align:middle}
 </style></head><body>
-<div style="padding:72px 72px 60px;height:100%;display:flex;flex-direction:column">
-  <!-- Accent line -->
+<div style="padding:72px 72px 50px;height:100%;display:flex;flex-direction:column">
   <div class="accent"></div>
-  <!-- Logo -->
-  <div style="animation:fadeUp .6s ease both">
-    <div style="display:flex;align-items:center;gap:12;margin-bottom:6">
-      <div style="width:52px;height:52px;border-radius:14px;background:#000;border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center">
+  <div class="logo-wrap">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+      <div style="width:52px;height:52px;border-radius:14px;background:#000;border:1px solid ${dk?"rgba(255,255,255,.1)":"rgba(0,0,0,.1)"};display:flex;align-items:center;justify-content:center">
         <span style="color:#fff;font-size:18px;font-weight:700">Fx</span><span style="color:#ff453a;font-size:18px;font-weight:700">.</span>
       </div>
       <div>
-        <div style="font-size:32px;font-weight:700;color:#fff;letter-spacing:-.5px">Fxscalproom<span style="color:#ff453a">.</span></div>
-        <div style="font-size:12px;color:#52525b;letter-spacing:1px;margin-top:2px">PROFESSIONAL TRADING SIGNALS</div>
+        <div style="font-size:30px;font-weight:700;color:${C.tx};letter-spacing:-.5px">Fxscalproom<span style="color:${C.R}">.</span></div>
+        <div style="font-size:11px;color:${C.dm};letter-spacing:1.5px;margin-top:2px">PROFESSIONAL TRADING SIGNALS</div>
       </div>
     </div>
   </div>
-  <!-- Period -->
-  <div style="font-size:16px;color:#52525b;margin:20px 0 8px;animation:fadeUp .6s ease .1s both">${fromStr} — ${toStr}</div>
-  <!-- Title -->
-  <div style="font-size:52px;font-weight:800;color:#fff;letter-spacing:-1px;line-height:1.1;margin-bottom:36px;animation:fadeUp .6s ease .15s both">Weekly<br/>Performance</div>
-  <!-- Stats -->
-  <div style="display:grid;grid-template-columns:repeat(${statItems.length},1fr);gap:12px;margin-bottom:36px">
-    ${statsHtml}
-  </div>
-  <!-- Image grid -->
-  ${imgs.length>0?`<div style="flex:1;display:grid;grid-template-columns:repeat(${cols},1fr);gap:10px;align-content:start;margin-bottom:24px">${gridImgs}</div>`:'<div style="flex:1;display:flex;align-items:center;justify-content:center"><div style="text-align:center;animation:fadeUp .6s ease .5s both"><div style="font-size:64px;margin-bottom:16px">📊</div><div style="font-size:20px;color:#52525b">No analyses in this period</div></div></div>'}
-  <!-- Footer -->
-  <div style="text-align:center;padding-top:20px;border-top:1px solid rgba(255,255,255,.06);animation:fadeUp .6s ease .8s both">
-    <div style="font-size:18px;font-weight:700;color:rgba(255,255,255,.2)">Fxscalproom<span style="color:rgba(255,69,58,.3)">.</span></div>
-    <div style="font-size:11px;color:rgba(255,255,255,.12);margin-top:4px">t.me/FxScalpRoom · fxscalproom.com</div>
+  <div class="period"><span class="live-dot"></span>${fromStr} — ${toStr}</div>
+  <div class="title">${periodTitle}</div>
+  <div class="stats-row">${statsHtml}</div>
+  ${imgs.length>0?`<div class="grid">${gridImgs}</div>`:`<div style="flex:1;display:flex;align-items:center;justify-content:center"><div style="text-align:center;animation:fadeUp .6s ease .8s both"><div style="font-size:64px;margin-bottom:16px">📊</div><div style="font-size:20px;color:${C.dm}">No analyses</div></div></div>`}
+  <div class="footer">
+    <div style="font-size:18px;font-weight:700;color:${C.footTx}">Fxscalproom<span style="color:${C.footDot}">.</span></div>
+    <div style="font-size:11px;color:${C.footSub};margin-top:4px">t.me/FxScalpRoom · fxscalproom.com</div>
   </div>
 </div>
 </body></html>`;
-    return html;
   };
+
+  const[reportTheme,setReportTheme]=useState("dark");
 
   const generate=async()=>{
     setGenerating(true);
-    const html=generateHtml();
-    // Create iframe to render, then screenshot with canvas
-    const iframe=document.createElement("iframe");
-    iframe.style.cssText="position:fixed;top:-9999px;left:-9999px;width:1080px;height:1920px;border:none;";
-    document.body.appendChild(iframe);
-    iframe.srcdoc=html;
-    iframe.onload=async()=>{
-      await new Promise(r=>setTimeout(r,1500)); // Wait for animations
-      try{
-        // Use html2canvas approach: draw to canvas from iframe
-        const W=1080,H=1920;
-        const c=document.createElement("canvas");c.width=W;c.height=H;
-        const ctx=c.getContext("2d");
-        // Render via SVG foreignObject
-        const svgData=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">${html.replace(/<!DOCTYPE html>|<html>|<\/html>/g,"")}</div></foreignObject></svg>`;
-        const svgBlob=new Blob([svgData],{type:"image/svg+xml;charset=utf-8"});
-        const svgUrl=URL.createObjectURL(svgBlob);
-        const img=new Image();
-        img.onload=()=>{
-          ctx.drawImage(img,0,0);URL.revokeObjectURL(svgUrl);
-          c.toBlob(blob=>{
-            document.body.removeChild(iframe);
-            if(!blob){setGenerating(false);return}
-            const fname=`fxscalproom_report_${fromDate}_${toDate}.png`;
-            if(navigator.share&&navigator.canShare){
-              try{const file=new File([blob],fname,{type:"image/png"});if(navigator.canShare({files:[file]})){navigator.share({files:[file],title:"Fxscalproom Report"}).catch(()=>{});setGenerating(false);return}}catch(e){}
-            }
-            const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=fname;a.click();setGenerating(false);
-          },"image/png");
-        };
-        img.onerror=()=>{
-          // Fallback: share as HTML file
-          const blob=new Blob([html],{type:"text/html"});
-          const fname=`fxscalproom_report_${fromDate}_${toDate}.html`;
-          const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=fname;a.click();
-          document.body.removeChild(iframe);setGenerating(false);
-        };
-        img.src=svgUrl;
-      }catch(e){document.body.removeChild(iframe);setGenerating(false)}
-    };
+    const html=generateHtml(reportTheme);
+    const blob=new Blob([html],{type:"text/html"});
+    const fname=`fxscalproom_report_${fromDate}_${toDate}.html`;
+    if(navigator.share&&navigator.canShare){
+      try{const file=new File([blob],fname,{type:"text/html"});if(navigator.canShare({files:[file]})){navigator.share({files:[file],title:"Fxscalproom Report"}).catch(()=>{});setGenerating(false);return}}catch(e){}
+    }
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=fname;a.click();setGenerating(false);
   };
 
-  const preview=()=>{setPreviewHtml(generateHtml())};
+  const preview=()=>{setPreviewHtml(generateHtml(reportTheme))};
 
   return(<div>
     <div style={{fontSize:14,fontWeight:700,marginBottom:14}}>{lang==="fa"?"📊 گزارش عملکرد":"📊 Performance Report"}</div>
@@ -3780,9 +3781,18 @@ body::after{content:'';position:absolute;bottom:-100px;left:-50px;width:400px;he
     </div>
 
     {/* Show signals toggle */}
-    <div onClick={()=>setShowSigs(!showSigs)} className="cd" style={{padding:10,marginBottom:10,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+    <div onClick={()=>setShowSigs(!showSigs)} className="cd" style={{padding:10,marginBottom:6,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <span style={{fontSize:12,fontWeight:600}}>{lang==="fa"?"نمایش سیگنال‌ها":"Show Signals"}</span>
       <div style={{width:36,height:20,borderRadius:10,background:showSigs?"var(--G)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:16,height:16,borderRadius:8,background:"#fff",position:"absolute",top:2,left:showSigs?18:2,transition:".2s"}}/></div>
+    </div>
+
+    {/* Report theme toggle */}
+    <div className="cd" style={{padding:10,marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <span style={{fontSize:12,fontWeight:600}}>{lang==="fa"?"تم گزارش":"Report Theme"}</span>
+      <div style={{display:"flex",gap:4}}>
+        <div onClick={()=>setReportTheme("dark")} style={{padding:"5px 14px",borderRadius:8,cursor:"pointer",fontSize:11,fontWeight:600,background:reportTheme==="dark"?"var(--tx)":"transparent",color:reportTheme==="dark"?"var(--bg)":"var(--mu)",border:"1px solid var(--brd)"}}>{lang==="fa"?"تاریک":"Dark"}</div>
+        <div onClick={()=>setReportTheme("light")} style={{padding:"5px 14px",borderRadius:8,cursor:"pointer",fontSize:11,fontWeight:600,background:reportTheme==="light"?"var(--tx)":"transparent",color:reportTheme==="light"?"var(--bg)":"var(--mu)",border:"1px solid var(--brd)"}}>{lang==="fa"?"روشن":"Light"}</div>
+      </div>
     </div>
 
     {/* Preview stats */}
@@ -3799,13 +3809,17 @@ body::after{content:'';position:absolute;bottom:-100px;left:-50px;width:400px;he
       </div>}
     </div>
 
-    <div style={{display:"flex",gap:6,marginBottom:12}}>
+    <div style={{display:"flex",gap:6,marginBottom:8}}>
       <button className="bt" style={{background:"var(--R)",opacity:generating?.5:1,flex:1}} onClick={generate} disabled={generating}>
-        {generating?"...":(lang==="fa"?"ساخت و اشتراک‌گذاری":"Generate & Share")}
+        {generating?"...":(lang==="fa"?"دانلود HTML":"Download HTML")}
       </button>
       <button className="bt" style={{background:"var(--B)",flex:1}} onClick={preview}>
         {lang==="fa"?"پیش‌نمایش":"Preview"}
       </button>
+    </div>
+    <div style={{padding:10,borderRadius:10,background:"color-mix(in srgb,var(--Y) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 12%,transparent)",marginBottom:12}}>
+      <div style={{fontSize:11,color:"var(--Y)",fontWeight:600,marginBottom:4}}>💡 {lang==="fa"?"نکته برای استوری ویدیویی:":"Tip for video stories:"}</div>
+      <div style={{fontSize:10,color:"var(--tx2)",lineHeight:1.6}}>{lang==="fa"?"پیش‌نمایش رو باز کن → Screen Recording گوشیت رو روشن کن → انیمیشن‌ها ضبط میشه → ویدیو رو بذار استوری!":"Open Preview → Start Screen Recording → Animations will play → Post the video as a story!"}</div>
     </div>
 
     {/* HTML Preview */}
