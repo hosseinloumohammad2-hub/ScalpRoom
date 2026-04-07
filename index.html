@@ -1789,7 +1789,7 @@ async function generateShareCard(type,data){
     const titleW=ctx.measureText(data.title||"").width;
     calcH+=Math.ceil(titleW/(W-PAD*2)||1)*50+20;
     if(data.description){ctx.font="400 20px system-ui";const dW=ctx.measureText(data.description.slice(0,400)).width;calcH+=Math.min(Math.ceil(dW/(W-PAD*2)||1),8)*30+30}
-    if(data.image_url)calcH+=620;
+    if(data.image_url){const imgCount=(data.image_url||"").split(",").filter(Boolean).length;calcH+=620*imgCount}
     calcH+=140;
   }
 
@@ -1925,9 +1925,11 @@ async function generateShareCard(type,data){
     }
 
     if(p.image_url){
+      const imgUrls=(p.image_url||"").split(",").map(u=>u.trim()).filter(Boolean);
+      for(let ii=0;ii<imgUrls.length;ii++){
       try{
         const img=new Image();img.crossOrigin="anonymous";
-        await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=p.image_url});
+        await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=imgUrls[ii]});
         const imgW=W-PAD*2;
         const imgH=Math.round((img.height/img.width)*imgW);
         if(Y+imgH+140>c.height){
@@ -1944,8 +1946,17 @@ async function generateShareCard(type,data){
         ctx.drawImage(img,PAD,Y,imgW,imgH);
         ctx.restore();
         rr(PAD,Y,imgW,imgH,14);ctx.strokeStyle=TH.brd;ctx.lineWidth=1;ctx.stroke();
-        Y+=imgH+20;
-      }catch(e){}
+        // Image counter badge
+        if(imgUrls.length>1){
+          ctx.fillStyle=isDark?"rgba(255,255,255,.85)":"rgba(0,0,0,.55)";
+          rr(PAD+imgW-50,Y+10,40,26,13);ctx.fill();
+          ctx.font="bold 12px 'DM Sans',system-ui,sans-serif";
+          ctx.fillStyle=isDark?"#000":"#fff";ctx.textAlign="center";
+          ctx.fillText(`${ii+1}/${imgUrls.length}`,PAD+imgW-30,Y+27);ctx.textAlign="left";
+        }
+        Y+=imgH+12;
+      }catch(e){}}
+      Y+=8;
     }
   }
 
