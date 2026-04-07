@@ -1789,7 +1789,7 @@ async function generateShareCard(type,data){
     const titleW=ctx.measureText(data.title||"").width;
     calcH+=Math.ceil(titleW/(W-PAD*2)||1)*50+20;
     if(data.description){ctx.font="400 20px system-ui";const dW=ctx.measureText(data.description.slice(0,400)).width;calcH+=Math.min(Math.ceil(dW/(W-PAD*2)||1),8)*30+30}
-    if(data.image_url){const imgCount=(data.image_url||"").split(",").filter(Boolean).length;calcH+=620*imgCount}
+    if(data.image_url){const imgCount=(data.image_url||"").split(",").filter(Boolean).length;calcH+=imgCount===1?620:Math.ceil(imgCount/2)*500}
     calcH+=140;
   }
 
@@ -1926,37 +1926,62 @@ async function generateShareCard(type,data){
 
     if(p.image_url){
       const imgUrls=(p.image_url||"").split(",").map(u=>u.trim()).filter(Boolean);
-      for(let ii=0;ii<imgUrls.length;ii++){
-      try{
-        const img=new Image();img.crossOrigin="anonymous";
-        await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=imgUrls[ii]});
-        const imgW=W-PAD*2;
-        const imgH=Math.round((img.height/img.width)*imgW);
-        if(Y+imgH+140>c.height){
-          const newH=Y+imgH+140;
-          const tempData=ctx.getImageData(0,0,W,c.height);
-          c.height=newH;
-          ctx.fillStyle=TH.bg;ctx.fillRect(0,0,W,newH);
-          ctx.putImageData(tempData,0,0);
+      const gap=12;
+      if(imgUrls.length===1){
+        // Single image — full width
+        try{
+          const img=new Image();img.crossOrigin="anonymous";
+          await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=imgUrls[0]});
+          const imgW=W-PAD*2;
+          const imgH=Math.round((img.height/img.width)*imgW);
+          if(Y+imgH+140>c.height){const newH=Y+imgH+140;const tempData=ctx.getImageData(0,0,W,c.height);c.height=newH;ctx.fillStyle=TH.bg;ctx.fillRect(0,0,W,newH);ctx.putImageData(tempData,0,0)}
+          ctx.shadowColor=isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)";ctx.shadowBlur=16;ctx.shadowOffsetY=3;
+          rr(PAD,Y,imgW,imgH,14);ctx.fillStyle=TH.boxBg;ctx.fill();ctx.shadowColor="transparent";
+          ctx.save();rr(PAD,Y,imgW,imgH,14);ctx.clip();ctx.drawImage(img,PAD,Y,imgW,imgH);ctx.restore();
+          rr(PAD,Y,imgW,imgH,14);ctx.strokeStyle=TH.brd;ctx.lineWidth=1;ctx.stroke();
+          Y+=imgH+20;
+        }catch(e){}
+      } else {
+        // 2 images side by side
+        const colW=(W-PAD*2-gap)/2;
+        const loadedImgs=[];
+        for(let ii=0;ii<imgUrls.length;ii++){
+          try{const img=new Image();img.crossOrigin="anonymous";await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=imgUrls[ii]});loadedImgs.push(img)}catch(e){}
         }
-        ctx.shadowColor=isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)";ctx.shadowBlur=16;ctx.shadowOffsetY=3;
-        rr(PAD,Y,imgW,imgH,14);ctx.fillStyle=TH.boxBg;ctx.fill();
-        ctx.shadowColor="transparent";
-        ctx.save();rr(PAD,Y,imgW,imgH,14);ctx.clip();
-        ctx.drawImage(img,PAD,Y,imgW,imgH);
-        ctx.restore();
-        rr(PAD,Y,imgW,imgH,14);ctx.strokeStyle=TH.brd;ctx.lineWidth=1;ctx.stroke();
-        // Image counter badge
-        if(imgUrls.length>1){
-          ctx.fillStyle=isDark?"rgba(255,255,255,.85)":"rgba(0,0,0,.55)";
-          rr(PAD+imgW-50,Y+10,40,26,13);ctx.fill();
-          ctx.font="bold 12px 'DM Sans',system-ui,sans-serif";
-          ctx.fillStyle=isDark?"#000":"#fff";ctx.textAlign="center";
-          ctx.fillText(`${ii+1}/${imgUrls.length}`,PAD+imgW-30,Y+27);ctx.textAlign="left";
+        // Draw in rows of 2
+        for(let row=0;row<loadedImgs.length;row+=2){
+          const img1=loadedImgs[row];
+          const img2=loadedImgs[row+1];
+          const h1=img1?Math.round((img1.height/img1.width)*colW):0;
+          const h2=img2?Math.round((img2.height/img2.width)*colW):0;
+          const rowH=Math.max(h1,h2);
+          if(Y+rowH+140>c.height){const newH=Y+rowH+140;const tempData=ctx.getImageData(0,0,W,c.height);c.height=newH;ctx.fillStyle=TH.bg;ctx.fillRect(0,0,W,newH);ctx.putImageData(tempData,0,0)}
+          // Left image
+          if(img1){
+            const x1=PAD,y1=Y,iw=colW,ih=h1;
+            ctx.shadowColor=isDark?"rgba(0,0,0,.2)":"rgba(0,0,0,.04)";ctx.shadowBlur=10;ctx.shadowOffsetY=2;
+            rr(x1,y1,iw,ih,12);ctx.fillStyle=TH.boxBg;ctx.fill();ctx.shadowColor="transparent";
+            ctx.save();rr(x1,y1,iw,ih,12);ctx.clip();ctx.drawImage(img1,x1,y1,iw,ih);ctx.restore();
+            rr(x1,y1,iw,ih,12);ctx.strokeStyle=TH.brd;ctx.lineWidth=1;ctx.stroke();
+            // Badge
+            ctx.fillStyle=isDark?"rgba(255,255,255,.8)":"rgba(0,0,0,.5)";rr(x1+iw-40,y1+8,32,22,11);ctx.fill();
+            ctx.font="bold 11px 'DM Sans',system-ui";ctx.fillStyle=isDark?"#000":"#fff";ctx.textAlign="center";ctx.fillText(`${row+1}/${loadedImgs.length}`,x1+iw-24,y1+23);ctx.textAlign="left";
+          }
+          // Right image
+          if(img2){
+            const x2=PAD+colW+gap,y2=Y,iw=colW,ih=h2;
+            ctx.shadowColor=isDark?"rgba(0,0,0,.2)":"rgba(0,0,0,.04)";ctx.shadowBlur=10;ctx.shadowOffsetY=2;
+            rr(x2,y2,iw,ih,12);ctx.fillStyle=TH.boxBg;ctx.fill();ctx.shadowColor="transparent";
+            ctx.save();rr(x2,y2,iw,ih,12);ctx.clip();ctx.drawImage(img2,x2,y2,iw,ih);ctx.restore();
+            rr(x2,y2,iw,ih,12);ctx.strokeStyle=TH.brd;ctx.lineWidth=1;ctx.stroke();
+            // Badge
+            ctx.fillStyle=isDark?"rgba(255,255,255,.8)":"rgba(0,0,0,.5)";rr(x2+iw-40,y2+8,32,22,11);ctx.fill();
+            ctx.font="bold 11px 'DM Sans',system-ui";ctx.fillStyle=isDark?"#000":"#fff";ctx.textAlign="center";ctx.fillText(`${row+2}/${loadedImgs.length}`,x2+iw-24,y2+23);ctx.textAlign="left";
+          }
+          Y+=rowH+gap;
         }
-        Y+=imgH+12;
-      }catch(e){}}
-      Y+=8;
+        Y+=8;
+      }
     }
   }
 
