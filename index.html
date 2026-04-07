@@ -2213,7 +2213,7 @@ function Auth({onAuth,lang,setLang}){
       }
       if(resetStep===1){
         // Step 2: Verify OTP code
-        if(!otpCode||otpCode.length<6){setEr({fa:"کد ۶ رقمی را وارد کنید",ar:"أدخل الرمز المكون من 6 أرقام",tr:"6 haneli kodu girin",ru:"Введите 6-значный код",es:"Ingresa el código de 6 dígitos"}[lang]||"Enter the 6-digit code");return}
+        if(!otpCode||otpCode.length<8){setEr({fa:"کد ۸ رقمی را وارد کنید",ar:"أدخل الرمز المكون من 8 أرقام",tr:"8 haneli kodu girin",ru:"Введите 8-значный код",es:"Ingresa el código de 8 dígitos"}[lang]||"Enter the 8-digit code");return}
         setLd(true);setEr("");setOk("");
         try{
           const r=await fetch(`${SB}/auth/v1/verify`,{method:"POST",headers:{apikey:SK,"Content-Type":"application/json"},body:JSON.stringify({type:"email",token:otpCode,email:e})});
@@ -2303,13 +2303,13 @@ function Auth({onAuth,lang,setLang}){
         {resetStep===0&&<input className="ip" placeholder={t.email} type="email" value={e} onChange={x=>setE(x.target.value)} autoCapitalize="none"/>}
         {resetStep===1&&<>
           <div style={{fontSize:12,color:"var(--tx2)",marginBottom:8,textAlign:"center"}}>{e}</div>
-          <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:12}}>
-            {[0,1,2,3,4,5].map(i=><input key={i} id={`otp-${i}`} type="tel" maxLength={1} value={otpCode[i]||""} onChange={ev=>{
+          <div style={{display:"flex",gap:4,justifyContent:"center",marginBottom:12}}>
+            {[0,1,2,3,4,5,6,7].map(i=><input key={i} id={`otp-${i}`} type="tel" maxLength={1} value={otpCode[i]||""} onChange={ev=>{
               const v=ev.target.value.replace(/\D/g,"");
-              const newCode=otpCode.split("");newCode[i]=v;const joined=newCode.join("").slice(0,6);setOtpCode(joined);
-              if(v&&i<5){const next=document.getElementById(`otp-${i+1}`);if(next)next.focus()}
+              const newCode=otpCode.split("");newCode[i]=v;const joined=newCode.join("").slice(0,8);setOtpCode(joined);
+              if(v&&i<7){const next=document.getElementById(`otp-${i+1}`);if(next)next.focus()}
             }} onKeyDown={ev=>{if(ev.key==="Backspace"&&!otpCode[i]&&i>0){const prev=document.getElementById(`otp-${i-1}`);if(prev)prev.focus()}}}
-            style={{width:44,height:52,borderRadius:12,border:"1px solid var(--brd)",background:"var(--bg)",textAlign:"center",fontSize:22,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",color:"var(--tx)",outline:"none"}}/>)}
+            style={{width:38,height:48,borderRadius:10,border:"1px solid var(--brd)",background:"var(--bg)",textAlign:"center",fontSize:20,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",color:"var(--tx)",outline:"none"}}/>)}
           </div>
           <div onClick={()=>{setResetStep(0);setOtpCode("");setEr("");setOk("")}} style={{textAlign:"center",fontSize:12,color:"var(--mu)",cursor:"pointer",marginBottom:8}}>
             {({fa:"ارسال مجدد کد",ar:"إعادة إرسال الرمز",tr:"Kodu tekrar gönder",ru:"Отправить код повторно",es:"Reenviar código"}[lang])||"Resend code"}
