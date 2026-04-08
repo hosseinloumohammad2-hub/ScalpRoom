@@ -16,127 +16,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style id="theme-style">
-/* ══════════════════════════════════════════════════════
-   iOS 26 LIQUID GLASS — Premium 2026 Design System
-   ══════════════════════════════════════════════════════ */
-
-/* ─── Light / Liquid Theme ─── */
-:root{
-  --bg:#f0f0f5;
-  --bg2:#ffffff;
-  --bg-noise:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");
-  --glass:rgba(255,255,255,.62);
-  --glass2:rgba(255,255,255,.42);
-  --glass3:rgba(255,255,255,.25);
-  --gb:rgba(255,255,255,.85);
-  --gb2:rgba(255,255,255,.5);
-  --card:rgba(255,255,255,.88);
-  --card-hover:rgba(255,255,255,.96);
-  --brd:rgba(0,0,0,.055);
-  --brd2:rgba(0,0,0,.095);
-  --brd-hi:rgba(255,255,255,.9);
-  --tx:#1d1d1f;
-  --tx2:#424245;
-  --mu:#86868b;
-  --dm:#aeaeb2;
-  /* Brand accent */
-  --R:#ff3b30;--Rg:rgba(255,59,48,.12);--Rg2:rgba(255,59,48,.06);
-  --G:#28cd41;--Gg:rgba(40,205,65,.12);
-  --B:#0071e3;--Bg:rgba(0,113,227,.12);
-  --Y:#ff9f0a;--Yg:rgba(255,159,10,.12);
-  --purple:#bf5af2;
-  /* Glass recipe vars */
-  --blur:blur(40px) saturate(1.9);
-  --blur-sm:blur(20px) saturate(1.6);
-  --blur-lg:blur(60px) saturate(2.1);
-  --shadow-card:0 2px 12px rgba(0,0,0,.07),0 8px 32px rgba(0,0,0,.04),inset 0 1px 0 rgba(255,255,255,.9);
-  --shadow-glass:0 4px 24px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04),inset 0 1px 0 rgba(255,255,255,.85);
-  --shadow-btn:0 2px 8px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.18);
-  --shadow-tab:0 8px 40px rgba(0,0,0,.10),0 2px 8px rgba(0,0,0,.06),inset 0 1px 0 rgba(255,255,255,.8);
-  --r:20px;--r2:14px;--r3:10px;
-  /* Ambient orb colors */
-  --orb1:rgba(0,113,227,.10);
-  --orb2:rgba(191,90,242,.07);
-  --orb3:rgba(40,205,65,.05);
-}
-
-/* ─── Dark Theme ─── */
-[data-theme="dark"]{
-  --bg:#07070a;
-  --bg2:#111114;
-  --glass:rgba(26,26,30,.72);
-  --glass2:rgba(26,26,30,.55);
-  --glass3:rgba(255,255,255,.04);
-  --gb:rgba(255,255,255,.09);
-  --gb2:rgba(255,255,255,.05);
-  --card:rgba(24,24,28,.90);
-  --card-hover:rgba(30,30,34,.96);
-  --brd:rgba(255,255,255,.065);
-  --brd2:rgba(255,255,255,.11);
-  --brd-hi:rgba(255,255,255,.12);
-  --tx:#e8e8ea;--tx2:#a1a1aa;--mu:#71717a;--dm:#52525b;
-  --R:#ff453a;--Rg:rgba(255,69,58,.14);--Rg2:rgba(255,69,58,.07);
-  --G:#30d158;--Gg:rgba(48,209,88,.14);
-  --B:#0a84ff;--Bg:rgba(10,132,255,.14);
-  --Y:#ffd60a;--Yg:rgba(255,214,10,.14);
-  --shadow-card:0 2px 12px rgba(0,0,0,.3),0 8px 32px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.06);
-  --shadow-glass:0 4px 24px rgba(0,0,0,.25),0 1px 2px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.07);
-  --shadow-btn:0 2px 8px rgba(0,0,0,.35),0 1px 2px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.10);
-  --shadow-tab:0 8px 40px rgba(0,0,0,.45),0 2px 8px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.06);
-  --orb1:rgba(10,132,255,.06);
-  --orb2:rgba(191,90,242,.04);
-  --orb3:rgba(48,209,88,.03);
-}
-
-/* ─── Reset & Base ─── */
+/* ─── iOS 26 Liquid Glass ─── */
+:root{--bg:#f5f5f7;--bg2:#ffffff;--glass:rgba(255,255,255,.55);--glass2:rgba(255,255,255,.35);--gb:rgba(255,255,255,.72);--card:rgba(255,255,255,.78);--brd:rgba(0,0,0,.06);--brd2:rgba(0,0,0,.10);--tx:#1d1d1f;--tx2:#424245;--mu:#86868b;--dm:#aeaeb2;--R:#ff3b30;--G:#28cd41;--B:#0071e3;--Y:#ff9f0a;--purple:#bf5af2;--r:22px;--r2:16px}
+[data-theme="dark"]{--bg:#050507;--bg2:#0a0a0c;--glass:rgba(30,30,32,.65);--glass2:rgba(30,30,32,.45);--gb:rgba(255,255,255,.08);--card:rgba(28,28,30,.82);--brd:rgba(255,255,255,.06);--brd2:rgba(255,255,255,.10);--tx:#e5e5e7;--tx2:#a1a1aa;--mu:#71717a;--dm:#52525b;--R:#ff453a;--G:#30d158;--B:#0a84ff;--Y:#ffd60a}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{background:var(--bg);overscroll-behavior:none}
-body{
-  font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display',system-ui,sans-serif;
-  background:var(--bg);color:var(--tx);
-  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
-  overflow-x:hidden;letter-spacing:-.2px;
-  overscroll-behavior-y:none;
-}
-
-/* ─── AMBIENT BACKGROUND — Animated Orbs ─── */
-body::before{
-  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;
-  transition:opacity .8s ease .4s;
-  background:
-    radial-gradient(ellipse 700px 500px at 10% 0%,var(--orb1),transparent),
-    radial-gradient(ellipse 600px 600px at 90% 10%,var(--orb2),transparent),
-    radial-gradient(ellipse 500px 700px at 50% 100%,var(--orb3),transparent),
-    radial-gradient(ellipse 400px 400px at 70% 50%,var(--orb1),transparent);
-  animation:orbDrift 20s ease-in-out infinite alternate;
-}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased;overflow-x:hidden;letter-spacing:-.2px;overscroll-behavior-y:none}
+/* Gradient mesh - hidden initially, shown after app loads */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .5s ease .3s;background:radial-gradient(ellipse 600px 400px at 15% 5%,rgba(0,113,227,.08),transparent),radial-gradient(ellipse 500px 500px at 85% 15%,rgba(191,90,242,.06),transparent),radial-gradient(ellipse 400px 600px at 50% 95%,rgba(40,205,65,.04),transparent),var(--bg)}
 body.app-ready::before{opacity:1}
-
-/* Second ambient layer */
-body::after{
-  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;
-  transition:opacity .8s ease .6s;
-  background:
-    radial-gradient(ellipse 400px 300px at 85% 80%,var(--orb2),transparent),
-    radial-gradient(ellipse 350px 400px at 20% 60%,var(--orb3),transparent);
-  animation:orbDrift2 25s ease-in-out infinite alternate;
-}
-body.app-ready::after{opacity:1}
-
-@keyframes orbDrift{
-  0%{transform:translate(0,0) scale(1)}
-  33%{transform:translate(20px,-15px) scale(1.05)}
-  66%{transform:translate(-15px,10px) scale(.97)}
-  100%{transform:translate(10px,-25px) scale(1.03)}
-}
-@keyframes orbDrift2{
-  0%{transform:translate(0,0)}
-  50%{transform:translate(-20px,20px)}
-  100%{transform:translate(15px,-10px)}
-}
-
+[data-theme="dark"] body::before{background:radial-gradient(ellipse 600px 400px at 15% 5%,rgba(0,113,227,.04),transparent),radial-gradient(ellipse 500px 500px at 85% 15%,rgba(191,90,242,.03),transparent),var(--bg)}
 ::-webkit-scrollbar{width:0}
 input,button,textarea,select{font-family:inherit;border:none;outline:none;color:var(--tx)}
 input::placeholder,textarea::placeholder{color:var(--dm)}
@@ -144,335 +35,62 @@ img{display:block;max-width:100%}
 a{color:inherit;text-decoration:none}
 .m{font-family:'JetBrains Mono','DM Mono',monospace;font-variant-numeric:tabular-nums}
 .app{max-width:430px;margin:0 auto;min-height:100dvh;position:relative;z-index:1}
-
-/* ─── HEADER — Premium glass fade ─── */
-.hd{
-  padding:14px 20px 12px;
-  display:flex;justify-content:space-between;align-items:center;
-  position:sticky;top:0;z-index:40;
-  background:linear-gradient(to bottom,var(--bg) 55%,transparent);
-}
-.lg{
-  font-family:'Syne','Inter',sans-serif;
-  font-size:20px;font-weight:800;color:var(--tx);letter-spacing:-.5px;
-}
-.lg b{color:var(--R);font-weight:900;}
-
-.ct{padding:16px 16px 110px}
-
-/* ════════════════════════════════════════
-   TAB BAR — iOS 26 Liquid Glass Premium
-   ════════════════════════════════════════ */
-.tb{
-  position:fixed;bottom:14px;left:50%;
-  transform:translateX(-50%);
-  width:calc(100% - 28px);max-width:402px;
-  display:flex;
-  padding:8px 6px calc(env(safe-area-inset-bottom,6px) + 6px);
-  border-radius:26px;
-  background:var(--glass);
-  backdrop-filter:var(--blur-lg);
-  -webkit-backdrop-filter:var(--blur-lg);
-  border:1px solid var(--gb);
-  box-shadow:var(--shadow-tab);
-  z-index:50;
-  transition:all .4s cubic-bezier(.34,1.56,.64,1);
-  /* Refraction shimmer */
-  background-image:linear-gradient(135deg,rgba(255,255,255,.18) 0%,transparent 40%,rgba(255,255,255,.06) 100%);
-}
-/* Top shine line */
-.tb::before{
-  content:'';position:absolute;top:0;left:12px;right:12px;height:1px;border-radius:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.9) 30%,rgba(255,255,255,.9) 70%,transparent);
-  pointer-events:none;
-}
-/* Bottom diffuse glow */
-.tb::after{
-  content:'';position:absolute;bottom:-8px;left:20%;right:20%;height:16px;
-  background:radial-gradient(ellipse,rgba(0,0,0,.08),transparent);
-  pointer-events:none;border-radius:50%;
-}
-
-[data-theme="dark"] .tb{
-  background:rgba(22,22,26,.75);
-  background-image:linear-gradient(135deg,rgba(255,255,255,.05) 0%,transparent 50%);
-  border-color:rgba(255,255,255,.09);
-  box-shadow:var(--shadow-tab);
-}
-[data-theme="dark"] .tb::before{
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.12) 30%,rgba(255,255,255,.12) 70%,transparent);
-}
-
-.tb.tb-shrink{
-  bottom:0;width:100%;max-width:430px;
-  border-radius:0;border-left:none;border-right:none;border-bottom:none;
-  transition:all .3s cubic-bezier(.4,0,.2,1);
-}
-
-/* Tab Item */
-.ti{
-  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
-  cursor:pointer;
-  padding:7px 4px 5px;
-  border-radius:18px;
-  position:relative;
-  color:var(--dm);
-  transition:color .2s ease, transform .15s cubic-bezier(.34,1.56,.64,1);
-  -webkit-tap-highlight-color:transparent;
-  will-change:transform;
-}
-.ti:active{transform:scale(.88)!important}
-
-/* Active pill indicator */
+/* ─── Header: gradient fade, NOT glass blur ─── */
+.hd{padding:12px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:linear-gradient(to bottom,var(--bg) 60%,transparent);z-index:40}
+.lg{font-size:19px;font-weight:700;color:var(--tx);letter-spacing:-.4px}
+.lg b{color:var(--R);font-weight:700;font-style:normal}
+.ct{padding:16px 16px 100px}
+/* ─── Glass Tab Bar (matching demo) ─── */
+.tb{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:398px;display:flex;padding:10px 4px calc(env(safe-area-inset-bottom,6px) + 4px);border-radius:22px;background:rgba(255,255,255,.5);backdrop-filter:blur(50px) saturate(2);-webkit-backdrop-filter:blur(50px) saturate(2);border:1px solid rgba(255,255,255,.7);box-shadow:0 4px 30px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.7);z-index:50;transition:all .35s cubic-bezier(.4,0,.2,1)}
+[data-theme="dark"] .tb{background:rgba(30,30,32,.55);border-color:rgba(255,255,255,.08);box-shadow:0 4px 30px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.04)}
+.tb.tb-shrink{bottom:0;width:100%;max-width:430px;border-radius:0;border-left:none;border-right:none;border-bottom:none}
+.ti{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:all .2s ease;padding:6px 0;border-radius:16px;position:relative;color:var(--dm)}
 .ti-active{color:var(--B)!important}
-.ti-active::before{
-  content:'';position:absolute;
-  top:0;left:50%;
-  transform:translateX(-50%);
-  width:28px;height:3px;border-radius:0 0 3px 3px;
-  background:linear-gradient(90deg,var(--B),color-mix(in srgb,var(--B) 70%,var(--purple)));
-  box-shadow:0 0 8px var(--B);
-  animation:tabPillIn .3s cubic-bezier(.34,1.56,.64,1);
-}
-/* Active background pill */
-.ti-active::after{
-  content:'';position:absolute;inset:2px 0;
-  background:var(--Bg);
-  border-radius:14px;
-  animation:tabBgIn .25s ease;
-}
-@keyframes tabPillIn{
-  from{width:0;opacity:0}to{width:28px;opacity:1}
-}
-@keyframes tabBgIn{
-  from{opacity:0;transform:scaleX(.7)}to{opacity:1;transform:scaleX(1)}
-}
-
-.tl{font-size:9.5px;font-weight:600;letter-spacing:.15px;position:relative;z-index:1}
-.ti svg{position:relative;z-index:1;transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
-.ti-active svg{transform:scale(1.12)}
-
-/* ════════════════════════════════════════
-   CARDS — Liquid Glass Elevation System
-   ════════════════════════════════════════ */
-.cd{
-  background:var(--card);
-  border:1px solid var(--brd);
-  border-radius:var(--r);
-  padding:16px;
-  box-shadow:var(--shadow-card);
-  transition:box-shadow .25s ease, transform .2s cubic-bezier(.34,1.56,.64,1), background .2s ease;
-  position:relative;
-  overflow:hidden;
-}
-/* Top highlight line on every card */
-.cd::before{
-  content:'';position:absolute;top:0;left:10px;right:10px;height:1px;
-  background:linear-gradient(90deg,transparent,var(--brd-hi) 30%,var(--brd-hi) 70%,transparent);
-  pointer-events:none;
-}
-/* Tap feedback */
-.cd:active{transform:scale(.985);box-shadow:0 1px 6px rgba(0,0,0,.06)}
-
-/* ─── Glass Card Variant ─── */
-.cd-glass{
-  background:var(--glass);
-  backdrop-filter:var(--blur);
-  -webkit-backdrop-filter:var(--blur);
-  border:1px solid var(--gb2);
-  box-shadow:var(--shadow-glass);
-  background-image:linear-gradient(135deg,rgba(255,255,255,.22) 0%,transparent 60%);
-}
-.cd-glass::after{
-  content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);
-  pointer-events:none;
-}
-/* Refraction spot */
-.cd-glass::before{
-  content:'';position:absolute;top:-30%;right:-20%;width:60%;height:60%;
-  background:radial-gradient(ellipse,rgba(255,255,255,.12),transparent 70%);
-  pointer-events:none;border-radius:50%;
-}
-
-[data-theme="dark"] .cd-glass{
-  background:var(--glass);
-  background-image:linear-gradient(135deg,rgba(255,255,255,.04) 0%,transparent 60%);
-  box-shadow:var(--shadow-glass);
-}
-[data-theme="dark"] .cd-glass::after{
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.09),transparent);
-}
-[data-theme="dark"] .cd-glass::before{
-  background:radial-gradient(ellipse,rgba(255,255,255,.04),transparent 70%);
-}
-
-/* ════════════════════════════════════════
-   INPUTS — Refined glass inputs
-   ════════════════════════════════════════ */
-.ip{
-  width:100%;
-  background:color-mix(in srgb,var(--bg) 90%,var(--bg2));
-  border:1px solid var(--brd2);
-  border-radius:var(--r2);
-  padding:14px 16px;
-  font-size:14px;
-  margin-bottom:10px;
-  transition:border-color .2s ease, box-shadow .2s ease, background .2s ease;
-  box-shadow:inset 0 1px 3px rgba(0,0,0,.04);
-}
-.ip:focus{
-  border-color:var(--B);
-  box-shadow:0 0 0 3px var(--Bg),inset 0 1px 3px rgba(0,0,0,.04);
-  background:var(--bg2);
-}
-
-textarea{
-  background:color-mix(in srgb,var(--bg) 90%,var(--bg2));
-  border:1px solid var(--brd2);
-  border-radius:var(--r2);
-  padding:14px 16px;
-  font-size:14px;
-  margin-bottom:10px;
-  width:100%;resize:vertical;min-height:60px;
-  transition:border-color .2s ease, box-shadow .2s ease;
-  box-shadow:inset 0 1px 3px rgba(0,0,0,.04);
-}
-textarea:focus{
-  border-color:var(--B);
-  box-shadow:0 0 0 3px var(--Bg);
-}
-
-select{
-  background:color-mix(in srgb,var(--bg) 90%,var(--bg2));
-  border:1px solid var(--brd2);border-radius:var(--r2);
-  padding:14px 16px;font-size:14px;margin-bottom:10px;width:100%;
-  -webkit-appearance:none;
-  box-shadow:inset 0 1px 3px rgba(0,0,0,.04);
-}
-
-/* ════════════════════════════════════════
-   BUTTONS — Tactile Liquid Glass
-   ════════════════════════════════════════ */
-.bt{
-  width:100%;
-  border-radius:var(--r2);
-  padding:15px;
-  color:#fff;
-  font-size:14px;
-  font-weight:700;
-  cursor:pointer;
-  text-align:center;
-  border:none;
-  letter-spacing:-.15px;
-  position:relative;
-  overflow:hidden;
-  /* Layered shadow for depth */
-  box-shadow:var(--shadow-btn);
-  transition:transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s ease, opacity .15s ease;
-  will-change:transform;
-  /* Inner top highlight */
-  background-image:linear-gradient(180deg,rgba(255,255,255,.18) 0%,transparent 55%,rgba(0,0,0,.06) 100%);
-}
-/* Shine sweep overlay */
-.bt::before{
-  content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
-  transform:skewX(-20deg);transition:left .4s ease;
-  pointer-events:none;
-}
-.bt:hover::before{left:160%}
-.bt:active{
-  transform:scale(.955)!important;
-  box-shadow:0 1px 4px rgba(0,0,0,.15),inset 0 2px 4px rgba(0,0,0,.12)!important;
-}
-.bt:disabled{opacity:.45;pointer-events:none}
-
-/* ─── Grid helper ─── */
+.ti-active::before{content:'';position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:20px;height:3px;border-radius:2px;background:var(--B)}
+.tl{font-size:10px;font-weight:600;letter-spacing:.2px}
+/* ─── Content Cards ─── */
+.cd{background:var(--card);border:1px solid var(--brd);border-radius:var(--r);padding:16px;transition:all .3s}
+/* ─── Glass Card (greeting, premium, special) ─── */
+.cd-glass{background:var(--glass);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);border:1px solid var(--gb);box-shadow:0 2px 20px rgba(0,0,0,.06),inset 0 1px 0 rgba(255,255,255,.6);position:relative;overflow:hidden}
+.cd-glass::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent)}
+[data-theme="dark"] .cd-glass{box-shadow:0 2px 20px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.04)}
+[data-theme="dark"] .cd-glass::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent)}
+.ip{width:100%;background:var(--bg);border:1px solid var(--brd);border-radius:14px;padding:13px 15px;font-size:14px;margin-bottom:8px;transition:border-color .2s}
+.ip:focus{border-color:var(--B)}
+.bt{width:100%;border-radius:14px;padding:14px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;text-align:center;border:none;transition:all .15s;letter-spacing:-.2px}
+.bt:active{transform:scale(.97);opacity:.85}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-
-/* ─── Fade-in animation ─── */
-.fi{animation:fi .28s cubic-bezier(.4,0,.2,1)}
-@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pl{0%,100%{opacity:1}50%{opacity:.3}}
-.ld{width:7px;height:7px;border-radius:50%;background:var(--G);animation:pl 1.8s ease-in-out infinite;box-shadow:0 0 6px var(--G)}
-
-/* ════════════════════════════════════════
-   MODALS — Elevated Liquid Glass
-   ════════════════════════════════════════ */
-.modal-overlay{
-  position:fixed;top:0;left:0;right:0;bottom:0;
-  background:rgba(0,0,0,.28);
-  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
-  z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;
-  animation:modalOverlayIn .25s ease;
-}
-@keyframes modalOverlayIn{from{opacity:0}to{opacity:1}}
-
-.modal{
-  background:rgba(255,255,255,.78);
-  backdrop-filter:var(--blur);
-  -webkit-backdrop-filter:var(--blur);
-  border:1px solid rgba(255,255,255,.75);
-  border-radius:var(--r);
-  max-width:400px;width:100%;max-height:90vh;overflow-y:auto;
-  padding:22px;
-  box-shadow:0 16px 64px rgba(0,0,0,.14),0 4px 16px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.9);
-  animation:modalIn .3s cubic-bezier(.34,1.56,.64,1);
-  background-image:linear-gradient(135deg,rgba(255,255,255,.2) 0%,transparent 50%);
-  position:relative;
-}
-.modal::before{
-  content:'';position:absolute;top:0;left:12px;right:12px;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);
-}
-@keyframes modalIn{
-  from{opacity:0;transform:scale(.92) translateY(20px)}
-  to{opacity:1;transform:scale(1) translateY(0)}
-}
-
-[data-theme="dark"] .modal{
-  background:rgba(22,22,26,.88);
-  border-color:rgba(255,255,255,.10);
-  box-shadow:0 16px 64px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.06);
-  background-image:linear-gradient(135deg,rgba(255,255,255,.03) 0%,transparent 50%);
-}
-
-.modal-glass-ios{background:rgba(255,255,255,.88)!important;backdrop-filter:var(--blur)!important;-webkit-backdrop-filter:var(--blur)!important;border:none!important;box-shadow:none!important;border-radius:0!important}
-[data-theme="dark"] .modal-glass-ios{background:rgba(24,24,28,.92)!important;backdrop-filter:var(--blur)!important;-webkit-backdrop-filter:var(--blur)!important}
-.modal-overlay-glass{background:rgba(0,0,0,.15)!important;backdrop-filter:blur(6px)!important;-webkit-backdrop-filter:blur(6px)!important}
-.modal-text-solid{background:rgba(255,255,255,.88);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
-[data-theme="dark"] .modal-text-solid{background:rgba(24,24,28,.92)}
-[data-theme="dark"] .modal-overlay-glass{background:rgba(0,0,0,.4)!important}
-
+.ld{width:6px;height:6px;border-radius:50%;background:var(--G);animation:pl 2s infinite}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.3);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:rgba(255,255,255,.72);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);border:1px solid rgba(255,255,255,.7);border-radius:var(--r);max-width:400px;width:100%;max-height:90vh;overflow-y:auto;padding:20px;box-shadow:0 8px 40px rgba(0,0,0,.1)}
+[data-theme="dark"] .modal{background:var(--glass);border-color:var(--gb)}
+.modal-glass-ios{background:rgba(255,255,255,.82)!important;backdrop-filter:blur(40px) saturate(1.6)!important;-webkit-backdrop-filter:blur(40px) saturate(1.6)!important;border:none!important;box-shadow:none!important;border-radius:0!important}
+[data-theme="dark"] .modal-glass-ios{background:rgba(28,28,30,.85)!important;backdrop-filter:blur(40px) saturate(1.6)!important;-webkit-backdrop-filter:blur(40px) saturate(1.6)!important}
+.modal-overlay-glass{background:rgba(0,0,0,.12)!important;backdrop-filter:blur(3px)!important;-webkit-backdrop-filter:blur(3px)!important}
+.modal-text-solid{background:rgba(255,255,255,.82);backdrop-filter:blur(40px) saturate(1.6);-webkit-backdrop-filter:blur(40px) saturate(1.6)}
+[data-theme="dark"] .modal-text-solid{background:rgba(28,28,30,.85)}
+[data-theme="dark"] .modal-overlay-glass{background:rgba(0,0,0,.35)!important}
 svg{display:block}
 .tradingview-widget-copyright{display:none!important}
 .tradingview-widget-container__widget a{pointer-events:none!important}
 .tv-embed-widget-wrapper__header{display:none!important}
 .tv-card{pointer-events:none!important}
 [class*="tradingview"] a[href*="tradingview"]{pointer-events:none!important;cursor:default!important}
-
-/* ─── Toast ─── */
-.toast{
-  position:fixed;top:24px;left:50%;transform:translateX(-50%);
-  background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
-  border:1px solid var(--gb);border-radius:16px;
-  padding:13px 22px;z-index:200;
-  font-size:13px;font-weight:700;letter-spacing:-.1px;
-  box-shadow:0 12px 40px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.8);
-  animation:toastIn .35s cubic-bezier(.34,1.56,.64,1);
-}
-.offline-bar{position:fixed;top:0;left:0;right:0;z-index:999;background:var(--R);color:#fff;text-align:center;padding:7px 12px;font-size:12px;font-weight:700;transform:translateY(-100%);transition:transform .3s ease;display:flex;align-items:center;justify-content:center;gap:6px}
+textarea{background:var(--bg);border:1px solid var(--brd);border-radius:14px;padding:13px 15px;font-size:14px;margin-bottom:8px;width:100%;resize:vertical;min-height:60px;transition:border-color .2s}
+textarea:focus{border-color:var(--B)}
+select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;padding:13px 15px;font-size:14px;margin-bottom:8px;width:100%;-webkit-appearance:none}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--glass);backdrop-filter:blur(40px) saturate(2);-webkit-backdrop-filter:blur(40px) saturate(2);border:1px solid var(--gb);border-radius:14px;padding:12px 20px;z-index:200;font-size:13px;font-weight:700;box-shadow:0 8px 30px rgba(0,0,0,.08);animation:toastIn .3s ease}
+.offline-bar{position:fixed;top:0;left:0;right:0;z-index:999;background:var(--R);color:#fff;text-align:center;padding:6px 12px;font-size:12px;font-weight:700;transform:translateY(-100%);transition:transform .3s ease;display:flex;align-items:center;justify-content:center;gap:6px}
 .offline-bar.show{transform:translateY(0)}
-@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-14px) scale(.9)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
-
-/* ─── Story rings & viewer ─── */
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 @keyframes storyRingSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 @keyframes storyProgress{from{width:0}to{width:100%}}
-@keyframes storyFadeIn{from{opacity:0;transform:scale(1.04)}to{opacity:1;transform:scale(1)}}
-@keyframes storySlideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-.story-ring{position:relative;width:62px;height:62px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:transform .18s cubic-bezier(.34,1.56,.64,1)}
-.story-ring:active{transform:scale(.88)}
+@keyframes storyFadeIn{from{opacity:0;transform:scale(1.05)}to{opacity:1;transform:scale(1)}}
+@keyframes storySlideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.story-ring{position:relative;width:62px;height:62px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent}
 .story-ring .ring-spin{position:absolute;top:0;left:0;width:100%;height:100%;animation:storyRingSpin 3.2s linear infinite}
 .story-ring.seen .ring-spin{animation:none}
 .story-ring .ring-img{position:absolute;top:5px;left:5px;right:5px;bottom:5px;border-radius:50%;border:2.5px solid var(--bg);z-index:1;display:flex;align-items:center;justify-content:center;background:var(--card);overflow:hidden}
@@ -484,77 +102,40 @@ svg{display:block}
 .story-progress-seg .fill.active{animation:storyProgress var(--dur,6s) linear forwards}
 .story-progress-seg .fill.done{width:100%}
 @keyframes storyLikePop{0%{transform:translate(-50%,-50%) scale(0);opacity:1}50%{transform:translate(-50%,-50%) scale(1.3);opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
-
-/* ─── Splash Screen ─── */
-@keyframes splashPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.18);opacity:.75}}
+@keyframes splashPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.15);opacity:.7}}
 @keyframes splashFadeOut{from{opacity:1}to{opacity:0;pointer-events:none}}
-@keyframes splashSlideUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
-@keyframes dotBounce{0%,80%,100%{transform:scale(1) translateY(0)}40%{transform:scale(1.4) translateY(-4px)}}
+@keyframes splashSlideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes dotBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
 .splash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg)}
 .splash.out{animation:splashFadeOut .5s ease forwards}
-.splash-logo{font-family:'Syne','Inter',sans-serif;font-size:44px;font-weight:800;letter-spacing:-.8px;animation:splashSlideUp .6s ease}
+.splash-logo{font-size:42px;font-weight:700;letter-spacing:-.5px;animation:splashSlideUp .6s ease}
 .splash-logo b{color:var(--R);animation:splashPulse 2s ease-in-out infinite}
-.splash-sub{font-size:12px;color:var(--dm);margin-top:14px;animation:splashSlideUp .6s ease .15s both;letter-spacing:.4px}
-.splash-dots{display:flex;gap:7px;margin-top:36px;animation:splashSlideUp .6s ease .3s both}
-.splash-dots span{width:7px;height:7px;border-radius:50%;background:var(--R)}
-.splash-dots span:nth-child(1){animation:dotBounce .8s ease infinite}
-.splash-dots span:nth-child(2){animation:dotBounce .8s ease .15s infinite}
-.splash-dots span:nth-child(3){animation:dotBounce .8s ease .3s infinite}
-
-/* ─── Notification Badge ─── */
-.nb{
-  position:absolute;top:-1px;right:50%;transform:translateX(13px);
-  width:9px;height:9px;border-radius:50%;
-  background:var(--R);
-  border:2px solid var(--bg);
-  box-shadow:0 0 6px rgba(255,59,48,.6);
-  animation:nbPulse 2s ease-in-out infinite;
-}
-@keyframes nbPulse{
-  0%,100%{box-shadow:0 0 4px rgba(255,59,48,.5)}
-  50%{box-shadow:0 0 10px rgba(255,59,48,.8)}
-}
-
-/* ─── Pull to Refresh ─── */
+.splash-sub{font-size:12px;color:var(--dm);margin-top:12px;animation:splashSlideUp .6s ease .15s both}
+.splash-dots{display:flex;gap:6px;margin-top:32px;animation:splashSlideUp .6s ease .3s both}
+.splash-dots span{width:6px;height:6px;border-radius:50%;background:var(--R)}
+.splash-dots span:nth-child(1){animation:dotBounce .6s ease infinite}
+.splash-dots span:nth-child(2){animation:dotBounce .6s ease .15s infinite}
+.splash-dots span:nth-child(3){animation:dotBounce .6s ease .3s infinite}
+.nb{position:absolute;top:0;right:50%;transform:translateX(14px);width:8px;height:8px;border-radius:50%;background:var(--R);border:2px solid rgba(255,255,255,.8)}
 .ptr{text-align:center;overflow:hidden;transition:max-height .3s,opacity .3s;max-height:0;opacity:0}
-.ptr.active{max-height:64px;opacity:1}
-.ptr-spinner{display:inline-block;width:22px;height:22px;border:2px solid var(--brd2);border-top-color:var(--R);border-radius:50%;animation:spin .65s linear infinite;margin:14px 0}
+.ptr.active{max-height:60px;opacity:1}
+.ptr-spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--brd);border-top-color:var(--R);border-radius:50%;animation:spin .6s linear infinite;margin:12px 0}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* ─── Onboarding ─── */
 .onb-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:998;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}
 .onb-overlay.out{animation:splashFadeOut .4s ease forwards}
 .onb-card{text-align:center;max-width:320px;animation:splashSlideUp .5s ease}
-.onb-icon{font-size:52px;margin-bottom:20px}
-.onb-title{font-family:'Syne','Inter',sans-serif;font-size:24px;font-weight:800;margin-bottom:10px;line-height:1.25;letter-spacing:-.4px}
-.onb-desc{font-size:14px;color:var(--tx2);line-height:1.75;margin-bottom:32px}
+.onb-icon{font-size:48px;margin-bottom:20px}
+.onb-title{font-size:22px;font-weight:800;margin-bottom:10px;line-height:1.3;letter-spacing:-.3px}
+.onb-desc{font-size:14px;color:var(--tx2);line-height:1.7;margin-bottom:32px}
 .onb-dots{display:flex;gap:8px;justify-content:center;margin-bottom:24px}
-.onb-dots span{width:8px;height:8px;border-radius:50%;background:var(--brd2);transition:.3s}
-.onb-dots span.act{background:var(--R);width:22px;box-shadow:0 0 8px var(--R)}
-
-/* ─── Performance chart ─── */
+.onb-dots span{width:8px;height:8px;border-radius:50%;background:var(--brd);transition:.3s}
+.onb-dots span.act{background:var(--R);width:20px}
 .perf-chart{display:flex;align-items:flex-end;gap:3px;height:60px;margin-top:12px;padding:0 4px}
-.perf-bar{flex:1;border-radius:4px 4px 0 0;transition:height .6s cubic-bezier(.34,1.56,.64,1);min-width:0;position:relative}
-.perf-bar:hover::after{content:attr(data-label);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font-size:8px;white-space:nowrap;color:var(--tx2);padding:2px 4px;background:var(--card);border:1px solid var(--brd);border-radius:4px;margin-bottom:2px;box-shadow:var(--shadow-card)}
-
-/* ─── Chat bubbles ─── */
-.chat-bubble{max-width:82%;padding:11px 15px;border-radius:20px;font-size:13px;line-height:1.55;word-wrap:break-word;animation:fi .2s ease}
-.chat-user{background:var(--B);color:#fff;border-bottom-right-radius:5px;margin-left:auto;box-shadow:0 2px 8px rgba(0,113,227,.3)}
-.chat-admin{background:var(--card);border:1px solid var(--brd);color:var(--tx);border-bottom-left-radius:5px;box-shadow:var(--shadow-card)}
-
-/* ─── Smooth scan animation for card price updates ─── */
-@keyframes priceTick{
-  0%{background:transparent}
-  30%{background:var(--Gg)}
-  100%{background:transparent}
-}
-.price-up{animation:priceTick .6s ease}
-
-/* ─── Signal card glow effect ─── */
-@keyframes signalGlow{
-  0%,100%{box-shadow:var(--shadow-card)}
-  50%{box-shadow:var(--shadow-card),0 0 20px var(--Bg)}
-}
+.chat-bubble{max-width:82%;padding:10px 14px;border-radius:18px;font-size:13px;line-height:1.5;word-wrap:break-word;animation:fi .2s ease}
+.chat-user{background:var(--B);color:#fff;border-bottom-right-radius:4px;margin-left:auto}
+.chat-admin{background:var(--card);border:1px solid var(--brd);color:var(--tx);border-bottom-left-radius:4px}
+.perf-bar{flex:1;border-radius:3px 3px 0 0;transition:height .5s ease;min-width:0;position:relative}
+.perf-bar:hover::after{content:attr(data-label);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font-size:8px;white-space:nowrap;color:var(--tx2);padding:2px 4px;background:var(--card);border:1px solid var(--brd);border-radius:4px;margin-bottom:2px}
 </style>
 </head>
 <body>
@@ -2733,29 +2314,25 @@ function Auth({onAuth,lang,setLang}){
   return(<div style={{minHeight:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"var(--bg)",position:"relative",zIndex:1}}>
     <div style={{width:"100%",maxWidth:360}} className="fi">
       <InstallBanner/>
-      <div style={{textAlign:"center",marginBottom:44}}>
-        <div style={{fontFamily:"'Syne','Inter',sans-serif",fontSize:36,fontWeight:900,letterSpacing:"-1px",color:"var(--tx)"}}>
-          Fxscalp<span style={{color:"var(--R)"}}>room</span><span style={{color:"var(--R)"}}>.</span>
-        </div>
-        <p style={{fontSize:13,color:"var(--mu)",marginTop:10,fontWeight:500}}>{m==="login"?t.welcome:m==="forgot"?({fa:"بازیابی رمز عبور",ar:"استعادة كلمة المرور",tr:"Şifre sıfırlama",ru:"Сброс пароля",es:"Recuperar contraseña"}[lang]||"Reset Password"):t.getStarted}</p>
+      <div style={{textAlign:"center",marginBottom:48}}>
+        <div className="lg" style={{fontSize:34}}>Fxscalproom<b>.</b></div>
+        <p style={{fontSize:13,color:"var(--mu)",marginTop:10}}>{m==="login"?t.welcome:m==="forgot"?({fa:"بازیابی رمز عبور",ar:"استعادة كلمة المرور",tr:"Şifre sıfırlama",ru:"Сброс пароля",es:"Recuperar contraseña"}[lang]||"Reset Password"):t.getStarted}</p>
       </div>
       <div style={{display:"flex",justifyContent:"center",marginBottom:20}}>
-        <div onClick={()=>setShowLang(!showLang)} style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",padding:"7px 16px",borderRadius:12,border:"1px solid var(--brd2)",fontSize:12,color:"var(--mu)",background:"var(--card)",boxShadow:"var(--shadow-card)",transition:"all .2s",fontWeight:500}}>
+        <div onClick={()=>setShowLang(!showLang)} style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",padding:"6px 14px",borderRadius:10,border:"1px solid var(--brd)",fontSize:12,color:"var(--mu)",position:"relative"}}>
           {IC.globe}<span>{LANGS[lang]}</span>{IC.chevDown}
         </div>
       </div>
       {showLang&&<div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:16,justifyContent:"center"}}>{Object.entries(LANGS).map(([k,v])=>
-        <div key={k} onClick={()=>{setLang(k);setShowLang(false)}} style={{padding:"6px 14px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,background:lang===k?"var(--R)":"var(--card)",border:`1px solid ${lang===k?"transparent":"var(--brd)"}`,color:lang===k?"#fff":"var(--mu)",boxShadow:lang===k?"0 2px 8px rgba(255,59,48,.3)":"var(--shadow-card)",transition:"all .2s"}}>{v}</div>
+        <div key={k} onClick={()=>{setLang(k);setShowLang(false)}} style={{padding:"6px 14px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,background:lang===k?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${lang===k?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,color:lang===k?"var(--R)":"var(--mu)"}}>{v}</div>
       )}</div>}
-      {er&&<div style={{background:"var(--Rg)",border:"1px solid color-mix(in srgb,var(--R) 20%,transparent)",borderRadius:12,padding:13,marginBottom:12,fontSize:13,color:"var(--R)",fontWeight:500}}>{er}</div>}
-      {ok&&<div style={{background:"var(--Gg)",border:"1px solid color-mix(in srgb,var(--G) 20%,transparent)",borderRadius:12,padding:13,marginBottom:12,fontSize:13,color:"var(--G)",fontWeight:500}}>{ok}</div>}
-      {m!=="forgot"&&<button onClick={googleLogin} style={{width:"100%",padding:15,borderRadius:14,border:"1px solid var(--brd2)",background:"var(--card)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:16,fontSize:14,fontWeight:600,color:"var(--tx)",boxShadow:"var(--shadow-card)",transition:"transform .15s cubic-bezier(.34,1.56,.64,1)",backgroundImage:"linear-gradient(180deg,rgba(255,255,255,.15) 0%,transparent 100%)"}}
-        onTouchStart={e=>e.currentTarget.style.transform="scale(.97)"}
-        onTouchEnd={e=>e.currentTarget.style.transform="scale(1)"}>
+      {er&&<div style={{background:"color-mix(in srgb,var(--R) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 15%,transparent)",borderRadius:10,padding:12,marginBottom:10,fontSize:13,color:"var(--R)"}}>{er}</div>}
+      {ok&&<div style={{background:"color-mix(in srgb,var(--G) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 15%,transparent)",borderRadius:10,padding:12,marginBottom:10,fontSize:13,color:"var(--G)"}}>{ok}</div>}
+      {m!=="forgot"&&<button onClick={googleLogin} style={{width:"100%",padding:14,borderRadius:12,border:"1px solid var(--brd)",background:"var(--bg2)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:16,fontSize:14,fontWeight:600,color:"var(--tx)"}}>
         <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
         Sign in with Google
       </button>}
-      {m!=="forgot"&&<div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}><div style={{flex:1,height:1,background:"var(--brd)"}}></div><span style={{fontSize:11,color:"var(--dm)",fontWeight:500}}>or</span><div style={{flex:1,height:1,background:"var(--brd)"}}></div></div>}
+      {m!=="forgot"&&<div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}><div style={{flex:1,height:1,background:"var(--brd)"}}></div><span style={{fontSize:11,color:"var(--dm)"}}>or</span><div style={{flex:1,height:1,background:"var(--brd)"}}></div></div>}
       {m==="register"&&<input className="ip" placeholder={t.fullName} value={n} onChange={x=>setN(x.target.value)}/>}
       {/* Forgot password: step-based inputs */}
       {m==="forgot"?<>
@@ -2915,22 +2492,17 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
       <div style={{display:"flex",alignItems:"center",gap:14}}>
         {visibleStories.length>0&&<StoryRing stories={visibleStories} seen={isStorySeen} onClick={()=>setShowStoryViewer(true)}/>}
         <div style={{flex:1}}>
-          <div style={{fontSize:16,fontWeight:800,letterSpacing:"-.3px",lineHeight:1.3,fontFamily:"'Syne','Inter',sans-serif"}}>{greeting}، {firstName}</div>
-          <div style={{fontSize:11,color:"var(--tx2)",marginTop:3,lineHeight:1.5}}>{{fa:"بازارها رو رصد کن و بهترین فرصت‌ها رو پیدا کن",ar:"تابع الأسواق واعثر على أفضل الفرص",tr:"Piyasaları takip edin ve en iyi fırsatları bulun",ru:"Следите за рынками и находите лучшие возможности",es:"Sigue los mercados y encuentra las mejores oportunidades"}[lang]||"Track markets and find the best opportunities"}</div>
+          <div style={{fontSize:16,fontWeight:700,letterSpacing:"-.2px",lineHeight:1.3}}>{greeting}، {firstName}</div>
+          <div style={{fontSize:11,color:"var(--tx2)",marginTop:3}}>{{fa:"بازارها رو رصد کن و بهترین فرصت‌ها رو پیدا کن",ar:"تابع الأسواق واعثر على أفضل الفرص",tr:"Piyasaları takip edin ve en iyi fırsatları bulun",ru:"Следите за рынками и находите лучшие возможности",es:"Sigue los mercados y encuentra las mejores oportunidades"}[lang]||"Track markets and find the best opportunities"}</div>
         </div>
-        <div onClick={openMsgs} style={{position:"relative",cursor:"pointer",padding:8,borderRadius:12,background:"var(--glass3)",border:"1px solid var(--brd)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)"}}>
+        <div onClick={openMsgs} style={{position:"relative",cursor:"pointer",padding:6}}>
           {IC.bell}
-          {unreadCount>0&&<div style={{position:"absolute",top:4,right:4,width:8,height:8,borderRadius:"50%",background:"var(--R)",border:"2px solid var(--bg)",boxShadow:"0 0 6px rgba(255,59,48,.6)"}}/>}
+          {unreadCount>0&&<div style={{position:"absolute",top:2,right:2,width:8,height:8,borderRadius:"50%",background:"var(--R)",border:"2px solid var(--bg)"}}/>}
         </div>
       </div>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginTop:14,paddingTop:12,borderTop:"1px solid var(--brd)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:5}}>
-          <div className="ld"/>
-          <span style={{fontSize:11,color:"var(--G)",fontWeight:700}}>{t.live}</span>
-        </div>
-        <LiveClock/>
-        <OnlineCounter token={token} isAdmin={userProfile?.role==="admin"}/>
-        <div onClick={toggle} style={{marginLeft:"auto",cursor:"pointer",color:"var(--mu)",padding:6,borderRadius:10,background:"var(--glass3)",border:"1px solid var(--brd)"}}>{dark?IC.sun:IC.moon}</div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginTop:14}}>
+        <div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/><OnlineCounter token={token} isAdmin={userProfile?.role==="admin"}/>
+        <div onClick={toggle} style={{marginLeft:"auto",cursor:"pointer",color:"var(--mu)",padding:4}}>{dark?IC.sun:IC.moon}</div>
       </div>
     </div>}
     {/* Story Viewer Fullscreen */}
@@ -3009,11 +2581,10 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
           {label:{fa:"طلا ۱۸ عیار",ar:"ذهب ١٨ عيار",tr:"18 Ayar Altın",ru:"Золото 18К",es:"Oro 18K"}[lang]||"Gold 18K",val:P.gold18,unit:{fa:"تومان",ar:"تومان",tr:"Toman",ru:"Томан",es:"Toman"}[lang]||"Toman"},
           {label:{fa:"تتر",ar:"تيثر",tr:"Tether",ru:"Тезер",es:"Tether"}[lang]||"USDT",val:P.tether,unit:{fa:"تومان",ar:"تومان",tr:"Toman",ru:"Томан",es:"Toman"}[lang]||"Toman"},
           {label:{fa:"روبل روسیه",ar:"روبل روسي",tr:"Rus Rublesi",ru:"Рубль",es:"Rublo ruso"}[lang]||"RUB",val:P.rub,unit:{fa:"تومان",ar:"تومان",tr:"Toman",ru:"Томан",es:"Toman"}[lang]||"Toman"},
-        ].map((item,i)=><div key={i} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:13,position:"relative",overflow:"hidden",boxShadow:"var(--shadow-card)"}}>
-          <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,var(--brd-hi),transparent)"}}/>
-          <div style={{fontSize:9,color:"var(--mu)",fontWeight:700,marginBottom:7,letterSpacing:.5,textTransform:"uppercase"}}>{item.label}</div>
-          <div className="m" style={{fontSize:15,fontWeight:700,color:"var(--tx)",letterSpacing:"-.3px"}}>{item.val?.p||"—"}</div>
-          <div style={{fontSize:8,color:"var(--dm)",marginTop:3,fontWeight:500}}>{item.unit}</div>
+        ].map((item,i)=><div key={i} style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:10,padding:12}}>
+          <div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginBottom:6}}>{item.label}</div>
+          <div className="m" style={{fontSize:14,fontWeight:600,color:"var(--tx)"}}>{item.val?.p||"---"}</div>
+          <div style={{fontSize:9,color:"var(--dm)",marginTop:3}}>{item.unit}</div>
         </div>)}
       </div>
     </div>
@@ -3024,32 +2595,23 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
     {online!==false&&<MiniChart colorTheme={theme}/>}
     <SignalScoreboard signals={signals}/>
     <div style={{display:"flex",gap:8,marginBottom:24}}>
-      <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:14,borderRadius:14,background:"var(--card)",border:"1px solid color-mix(in srgb,#0088cc 18%,transparent)",color:"#0088cc",fontSize:13,fontWeight:700,boxShadow:"0 2px 12px rgba(0,136,204,.12)",backgroundImage:"linear-gradient(135deg,rgba(0,136,204,.06) 0%,transparent 100%)"}}>{IC.tg} Telegram</a>
-      <a href="https://www.instagram.com/forexscalproom" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:14,borderRadius:14,background:"var(--card)",border:"1px solid color-mix(in srgb,#E1306C 18%,transparent)",color:"#E1306C",fontSize:13,fontWeight:700,boxShadow:"0 2px 12px rgba(225,48,108,.12)",backgroundImage:"linear-gradient(135deg,rgba(225,48,108,.06) 0%,transparent 100%)"}}>{IC.ig} Instagram</a>
+      <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:13,borderRadius:12,background:"color-mix(in srgb,#0088cc 8%,transparent)",border:"1px solid color-mix(in srgb,#0088cc 15%,transparent)",color:"#0088cc",fontSize:13,fontWeight:600}}>{IC.tg} Telegram</a>
+      <a href="https://www.instagram.com/forexscalproom" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:13,borderRadius:12,background:"color-mix(in srgb,#E1306C 8%,transparent)",border:"1px solid color-mix(in srgb,#E1306C 15%,transparent)",color:"#E1306C",fontSize:13,fontWeight:600}}>{IC.ig} Instagram</a>
     </div>
-    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-      <div style={{width:3,height:16,borderRadius:2,background:"linear-gradient(180deg,var(--R),var(--Y))",flexShrink:0}}/>
-      <span style={{fontSize:15,fontWeight:700,letterSpacing:"-.2px"}}>{t.latest}</span>
-      <span onClick={()=>go(1)} style={{marginLeft:"auto",fontSize:12,color:"var(--R)",cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",gap:3}}>
-        {t.viewAll}
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </span>
+    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+      <div style={{width:3,height:14,borderRadius:2,background:"var(--R)"}}/>
+      <span style={{fontSize:15,fontWeight:600}}>{t.latest}</span>
+      <span onClick={()=>go(1)} style={{marginLeft:"auto",fontSize:12,color:"var(--R)",cursor:"pointer",fontWeight:500}}>{t.viewAll}</span>
     </div>
     {(posts||[]).filter(p=>p.category!=="daytrade").slice(0,6).map(p=>{
       const locked=p.is_premium&&!isPremiumUser;
-      return<div key={p.id} onClick={()=>{if(locked){setShowPremPop(true)}else setSel(p)}} className="cd" style={{display:"flex",gap:12,marginBottom:8,alignItems:"center",padding:12,cursor:"pointer",position:"relative",transition:"transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease"}}
-        onTouchStart={e=>e.currentTarget.style.transform="scale(.97)"}
-        onTouchEnd={e=>e.currentTarget.style.transform="scale(1)"}
-      >
-      {p.image_url
-        ?<img src={(p.image_url||"").split(",")[0]} style={{width:52,height:52,borderRadius:11,objectFit:"cover",flexShrink:0,filter:locked?"blur(6px)":"none",boxShadow:"0 2px 8px rgba(0,0,0,.1)"}} alt=""/>
-        :<div style={{width:52,height:52,borderRadius:11,background:"var(--Rg)",border:"1px solid color-mix(in srgb,var(--R) 15%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"var(--R)",flexShrink:0,fontWeight:700,filter:locked?"blur(6px)":"none",letterSpacing:.5}}>{p.category?.toUpperCase()?.slice(0,4)}</div>}
+      return<div key={p.id} onClick={()=>{if(locked){setShowPremPop(true)}else setSel(p)}} className="cd" style={{display:"flex",gap:12,marginBottom:6,alignItems:"center",padding:12,cursor:"pointer",position:"relative"}}>
+      {p.image_url?<img src={(p.image_url||"").split(",")[0]} style={{width:50,height:50,borderRadius:10,objectFit:"cover",flexShrink:0,filter:locked?"blur(6px)":"none"}} alt=""/>:<div style={{width:50,height:50,borderRadius:10,background:"var(--bg2)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"var(--dm)",flexShrink:0,fontWeight:600,filter:locked?"blur(6px)":"none"}}>{p.category?.toUpperCase()?.slice(0,4)}</div>}
       <div style={{flex:1,minWidth:0}}>
-        <div style={{fontSize:13,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",letterSpacing:"-.1px"}}>{p.title}</div>
-        <div style={{fontSize:11,color:"var(--mu)",marginTop:3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",filter:locked?"blur(5px)":"none"}}>{p.description||""}</div>
-        <div style={{fontSize:9,color:"var(--dm)",marginTop:3,fontWeight:500}}>{p.created_at?new Date(p.created_at).toLocaleDateString():""}</div>
+        <div style={{fontSize:14,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
+        <div style={{fontSize:12,color:"var(--dm)",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",filter:locked?"blur(5px)":"none"}}>{p.description||""}</div>
       </div>
-      {p.is_premium&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",background:"var(--Rg)",padding:"3px 8px",borderRadius:6,flexShrink:0,display:"flex",alignItems:"center",gap:3,border:"1px solid color-mix(in srgb,var(--R) 18%,transparent)"}}>{IC.crown} PRO</span>}
+      {p.is_premium&&<span style={{fontSize:9,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"3px 8px",borderRadius:6,flexShrink:0,display:"flex",alignItems:"center",gap:3}}>{IC.crown} PRO</span>}
     </div>})}
     {(!posts||!posts.length)&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:13}}>{t.noAnalyses}</div>}
     {showPremPop&&<PremiumPopup onClose={()=>setShowPremPop(false)} onGoPlans={goToPlans}/>}
@@ -3281,67 +2843,57 @@ function Sigs({signals,userProfile,goToPlans}){
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
   const filtered=useMemo(()=>{if(filter==="all")return signals||[];return(signals||[]).filter(s=>s.status===filter)},[signals,filter]);
   return(<div className="fi">
-    <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:2}}>
-      {["all","active","tp_hit","sl_hit"].map(f=><div key={f} onClick={()=>setFilter(f)} style={{padding:"8px 14px",borderRadius:12,cursor:"pointer",fontSize:11,fontWeight:700,whiteSpace:"nowrap",flexShrink:0,background:filter===f?"var(--R)":"var(--card)",border:`1px solid ${filter===f?"transparent":"var(--brd)"}`,color:filter===f?"#fff":"var(--mu)",boxShadow:filter===f?"0 2px 8px rgba(255,59,48,.35)":"none",transition:"all .2s cubic-bezier(.34,1.56,.64,1)",transform:filter===f?"scale(1.02)":"scale(1)"}}>{f==="all"?t.all:f==="active"?t.active:f==="tp_hit"?t.tpHit:t.slHit}</div>)}
+    <div style={{display:"flex",gap:6,marginBottom:14}}>
+      {["all","active","tp_hit","sl_hit"].map(f=><div key={f} onClick={()=>setFilter(f)} style={{padding:"7px 12px",borderRadius:10,cursor:"pointer",fontSize:11,fontWeight:600,whiteSpace:"nowrap",background:filter===f?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${filter===f?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,color:filter===f?"var(--R)":"var(--mu)"}}>{f==="all"?t.all:f==="active"?t.active:f==="tp_hit"?t.tpHit:t.slHit}</div>)}
     </div>
     {filtered.map(s=>{
       const locked=s.is_premium&&!isPremiumUser;
-      const isActive=s.status==="active";
-      const isTp=s.status==="tp_hit";
-      const statusColor=isActive?"var(--B)":isTp?"var(--G)":"var(--R)";
-      const statusBg=isActive?"var(--Bg)":isTp?"var(--Gg)":"var(--Rg)";
-      return<div key={s.id} className="cd" style={{
-        marginBottom:10,padding:0,position:"relative",overflow:"hidden",
-        cursor:locked?"pointer":"default",
-        borderColor:isActive?"color-mix(in srgb,var(--B) 18%,transparent)":isTp?"color-mix(in srgb,var(--G) 18%,transparent)":"var(--brd)",
-      }} onClick={()=>{if(locked)setShowPremPop(true)}}>
-      {/* Status accent bar */}
-      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${statusColor},transparent)`,opacity:.6}}/>
-      {locked&&<div style={{position:"absolute",top:0,left:0,right:0,bottom:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.38)",backdropFilter:"blur(3px)",WebkitBackdropFilter:"blur(3px)",zIndex:3,borderRadius:"inherit"}}>
+      return<div key={s.id} className="cd" style={{marginBottom:8,padding:0,position:"relative",overflow:"hidden",cursor:locked?"pointer":"default"}} onClick={()=>{if(locked)setShowPremPop(true)}}>
+      {locked&&<div style={{position:"absolute",top:0,left:0,right:0,bottom:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.35)",zIndex:3,borderRadius:14}}>
         <span style={{color:"#fff",display:"flex",alignItems:"center",gap:4}}>{IC.crown}</span>
         <span style={{fontSize:13,fontWeight:700,color:"#fff",marginTop:6}}>PREMIUM</span>
         <span style={{fontSize:11,color:"rgba(255,255,255,0.7)",marginTop:4}}>Upgrade to see details</span>
       </div>}
-      <div style={{padding:"16px 16px 14px",filter:locked?"blur(8px)":"none"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+      <div style={{padding:16,filter:locked?"blur(8px)":"none"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <span className="m" style={{fontSize:15,fontWeight:600,letterSpacing:"-.2px"}}>{s.pair}</span>
-          <span style={{fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:7,background:s.type==="BUY"?"var(--Gg)":"var(--Rg)",color:s.type==="BUY"?"var(--G)":"var(--R)",border:`1px solid ${s.type==="BUY"?"color-mix(in srgb,var(--G) 25%,transparent)":"color-mix(in srgb,var(--R) 25%,transparent)"}`}}>{s.type}</span>
+          <span className="m" style={{fontSize:15,fontWeight:500}}>{s.pair}</span>
+          <span style={{fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:6,background:s.type==="BUY"?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)",color:s.type==="BUY"?"var(--G)":"var(--R)"}}>{s.type}</span>
         </div>
-        <span style={{fontSize:9,fontWeight:700,padding:"4px 10px",borderRadius:7,background:statusBg,color:statusColor,border:`1px solid ${statusColor}22`}}>{s.status==="active"?t.active:s.status==="tp_hit"?t.tpHit:t.slHit}</span>
+        <span style={{fontSize:9,fontWeight:700,padding:"3px 10px",borderRadius:6,background:s.status==="active"?"color-mix(in srgb,var(--B) 10%,transparent)":s.status==="tp_hit"?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)",color:s.status==="active"?"var(--B)":s.status==="tp_hit"?"var(--G)":"var(--R)"}}>{s.status==="active"?t.active:s.status==="tp_hit"?t.tpHit:t.slHit}</span>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-        <div style={{background:"color-mix(in srgb,var(--bg) 80%,transparent)",border:"1px solid var(--brd)",borderRadius:10,padding:10,textAlign:"center"}}>
-          <div style={{fontSize:9,color:"var(--mu)",marginBottom:3,fontWeight:600,letterSpacing:.3}}>ENTRY</div>
-          <div className="m" style={{fontSize:13,fontWeight:600,color:"var(--tx2)"}}>{s.entry_price}</div>
+        <div style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:8,padding:10,textAlign:"center"}}>
+          <div style={{fontSize:9,color:"var(--dm)",marginBottom:3,fontWeight:500}}>Entry</div>
+          <div className="m" style={{fontSize:13,fontWeight:500,color:"var(--mu)"}}>{s.entry_price}</div>
         </div>
-        <div style={{background:"color-mix(in srgb,var(--R) 5%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 15%,transparent)",borderRadius:10,padding:10,textAlign:"center"}}>
-          <div style={{fontSize:9,color:"var(--R)",marginBottom:3,fontWeight:600,letterSpacing:.3}}>S/L</div>
-          <div className="m" style={{fontSize:13,fontWeight:600,color:"var(--R)"}}>{s.stop_loss}</div>
+        <div style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:8,padding:10,textAlign:"center"}}>
+          <div style={{fontSize:9,color:"var(--dm)",marginBottom:3,fontWeight:500}}>SL</div>
+          <div className="m" style={{fontSize:13,fontWeight:500,color:"var(--R)"}}>{s.stop_loss}</div>
         </div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:s.tp3?"1fr 1fr 1fr":s.tp2?"1fr 1fr":"1fr",gap:6,marginTop:6}}>
-        <div style={{background:"color-mix(in srgb,var(--G) 5%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 18%,transparent)",borderRadius:10,padding:10,textAlign:"center"}}>
-          <div style={{fontSize:9,color:"var(--G)",marginBottom:3,fontWeight:600,letterSpacing:.3}}>TP1</div>
-          <div className="m" style={{fontSize:13,fontWeight:600,color:"var(--G)"}}>{s.take_profit}</div>
+        <div style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:8,padding:10,textAlign:"center"}}>
+          <div style={{fontSize:9,color:"var(--dm)",marginBottom:3,fontWeight:500}}>TP1</div>
+          <div className="m" style={{fontSize:13,fontWeight:500,color:"var(--G)"}}>{s.take_profit}</div>
         </div>
-        {s.tp2&&<div style={{background:"color-mix(in srgb,var(--G) 4%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 14%,transparent)",borderRadius:10,padding:10,textAlign:"center"}}>
-          <div style={{fontSize:9,color:"var(--G)",marginBottom:3,fontWeight:600,letterSpacing:.3}}>TP2</div>
-          <div className="m" style={{fontSize:13,fontWeight:600,color:"var(--G)"}}>{s.tp2}</div>
+        {s.tp2&&<div style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:8,padding:10,textAlign:"center"}}>
+          <div style={{fontSize:9,color:"var(--dm)",marginBottom:3,fontWeight:500}}>TP2</div>
+          <div className="m" style={{fontSize:13,fontWeight:500,color:"var(--G)"}}>{s.tp2}</div>
         </div>}
-        {s.tp3&&<div style={{background:"color-mix(in srgb,var(--G) 3%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 12%,transparent)",borderRadius:10,padding:10,textAlign:"center"}}>
-          <div style={{fontSize:9,color:"var(--G)",marginBottom:3,fontWeight:600,letterSpacing:.3}}>TP3</div>
-          <div className="m" style={{fontSize:13,fontWeight:600,color:"var(--G)"}}>{s.tp3}</div>
+        {s.tp3&&<div style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:8,padding:10,textAlign:"center"}}>
+          <div style={{fontSize:9,color:"var(--dm)",marginBottom:3,fontWeight:500}}>TP3</div>
+          <div className="m" style={{fontSize:13,fontWeight:500,color:"var(--G)"}}>{s.tp3}</div>
         </div>}
       </div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:12,fontSize:11,color:"var(--dm)"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:10,fontSize:11,color:"var(--dm)"}}>
         <span>{s.created_at?new Date(s.created_at).toLocaleDateString()+" "+new Date(s.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):""}</span>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          {s.pnl&&<span className="m" style={{fontWeight:700,fontSize:12,color:s.pnl.startsWith("-")?"var(--R)":"var(--G)",background:s.pnl.startsWith("-")?"var(--Rg)":"var(--Gg)",padding:"3px 8px",borderRadius:6}}>{s.pnl}</span>}
+          {s.pnl&&<span className="m" style={{fontWeight:600,color:s.pnl.startsWith("-")?"var(--R)":"var(--G)"}}>{s.pnl}</span>}
           {s.closed_at&&<span style={{fontSize:10}}>Closed: {new Date(s.closed_at).toLocaleDateString()}</span>}
         </div>
       </div>
-      {userProfile?.role==="admin"&&<div onClick={(e)=>{e.stopPropagation();generateShareCard("signal",s)}} style={{marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:9,borderRadius:10,background:"var(--Bg)",border:"1px solid color-mix(in srgb,var(--B) 18%,transparent)",cursor:"pointer",fontSize:11,fontWeight:600,color:"var(--B)"}}>
+      {userProfile?.role==="admin"&&<div onClick={(e)=>{e.stopPropagation();generateShareCard("signal",s)}} style={{marginTop:8,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:8,borderRadius:8,background:"color-mix(in srgb,var(--B) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--B) 15%,transparent)",cursor:"pointer",fontSize:11,fontWeight:600,color:"var(--B)"}}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
         Share PNG
       </div>}
@@ -3610,29 +3162,19 @@ function ContactPopup({onClose,onSupport,plan,userId,token}){
 function PremiumPopup({onClose,onGoPlans}){
   const{lang}=useLang();
   useEffect(()=>{setThemeColor("#2a2a2a");return()=>setThemeColor(getThemeColor())},[]);
-  return(<div className="modal-overlay" onClick={onClose} style={{alignItems:"flex-end",padding:0,background:"rgba(0,0,0,.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)"}}>
-    <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:430,background:"var(--glass)",backdropFilter:"var(--blur)",WebkitBackdropFilter:"var(--blur)",borderRadius:"24px 24px 0 0",padding:"8px 20px calc(env(safe-area-inset-bottom,16px) + 16px)",animation:"modalIn .35s cubic-bezier(.34,1.56,.64,1)",border:"1px solid var(--gb)",borderBottom:"none",boxShadow:"0 -8px 40px rgba(0,0,0,.12)",backgroundImage:"linear-gradient(to bottom,rgba(255,255,255,.15),transparent)"}}>
-      {/* Top drag handle */}
-      <div style={{width:40,height:5,borderRadius:3,background:"var(--brd2)",margin:"4px auto 20px"}}/>
-      {/* Crown icon */}
+  return(<div className="modal-overlay" onClick={onClose} style={{alignItems:"flex-end",padding:0}}>
+    <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:430,background:"var(--bg)",borderRadius:"20px 20px 0 0",padding:"8px 16px calc(env(safe-area-inset-bottom,12px) + 16px)",animation:"fi .2s ease"}}>
+      <div style={{width:36,height:4,borderRadius:2,background:"var(--brd2)",margin:"0 auto 16px"}}/>
       <div style={{textAlign:"center",marginBottom:20}}>
-        <div style={{width:64,height:64,borderRadius:22,background:"linear-gradient(135deg,var(--Y),var(--R))",display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:12,boxShadow:"0 6px 24px rgba(255,159,10,.35)",fontSize:28}}>{AE.crown}</div>
-        <div style={{fontSize:18,fontWeight:800,marginBottom:8,letterSpacing:"-.3px",fontFamily:"'Syne','Inter',sans-serif"}}>{{fa:"محتوای ویژه",ar:"محتوى مميز",tr:"Premium İçerik",ru:"Премиум контент",es:"Contenido Premium"}[lang]||"Premium Content"}</div>
-        <div style={{fontSize:13,color:"var(--tx2)",lineHeight:1.7}}>{{fa:"برای دسترسی به این محتوا، اشتراک ویژه تهیه کنید",ar:"اشترك في البريميوم لفتح هذا المحتوى",tr:"Bu içeriği açmak için premium abone olun",ru:"Подпишитесь на премиум для доступа",es:"Suscríbete a premium para desbloquear"}[lang]||"Subscribe to premium to unlock this content"}</div>
+        <div style={{fontSize:32,marginBottom:10}}>{AE.crown}</div>
+        <div style={{fontSize:17,fontWeight:700,marginBottom:6}}>{{fa:"محتوای ویژه",ar:"محتوى مميز",tr:"Premium İçerik",ru:"Премиум контент",es:"Contenido Premium"}[lang]||"Premium Content"}</div>
+        <div style={{fontSize:13,color:"var(--tx2)",lineHeight:1.6}}>{{fa:"برای دسترسی به این محتوا، اشتراک ویژه تهیه کنید",ar:"اشترك في البريميوم لفتح هذا المحتوى",tr:"Bu içeriği açmak için premium abone olun",ru:"Подпишитесь на премиум для доступа",es:"Suscríbete a premium para desbloquear"}[lang]||"Subscribe to premium to unlock this content"}</div>
       </div>
-      {/* Features */}
-      <div style={{display:"flex",gap:6,marginBottom:20}}>
-        {[{e:"📊",t:{fa:"سیگنال VIP",en:"VIP Signals"}},{e:"📈",t:{fa:"تحلیل‌های ویژه",en:"Premium Analysis"}},{e:"🎯",t:{fa:"دسترسی کامل",en:"Full Access"}}].map((f,i)=>
-          <div key={i} style={{flex:1,background:"color-mix(in srgb,var(--Y) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 18%,transparent)",borderRadius:12,padding:"10px 6px",textAlign:"center"}}>
-            <div style={{fontSize:18,marginBottom:4}}>{f.e}</div>
-            <div style={{fontSize:9,fontWeight:700,color:"var(--Y)"}}>{f.t[lang]||f.t.en}</div>
-          </div>
-        )}
+      <div onClick={()=>{onClose();if(onGoPlans)onGoPlans()}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:16,borderRadius:14,background:"var(--R)",cursor:"pointer",marginBottom:8}}>
+        <span style={{fontSize:14,fontWeight:700,color:"#fff"}}>{{fa:"مشاهده پلن‌ها",ar:"عرض الخطط",tr:"Planları Gör",ru:"Смотреть планы",es:"Ver planes"}[lang]||"View Plans"}</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
-      <div onClick={()=>{onClose();if(onGoPlans)onGoPlans()}} className="bt" style={{background:"linear-gradient(135deg,var(--R),#ff6b35)",cursor:"pointer",marginBottom:10,boxShadow:"0 4px 20px rgba(255,59,48,.4)",fontSize:15}}>
-        <span>{{fa:"مشاهده پلن‌ها",ar:"عرض الخطط",tr:"Planları Gör",ru:"Смотреть планы",es:"Ver planes"}[lang]||"View Plans"} →</span>
-      </div>
-      <div onClick={onClose} style={{textAlign:"center",padding:12,fontSize:13,color:"var(--mu)",fontWeight:600,cursor:"pointer"}}>{{fa:"بعداً",ar:"ليس الآن",tr:"Şimdi değil",ru:"Не сейчас",es:"Ahora no"}[lang]||"Not now"}</div>
+      <div onClick={onClose} style={{textAlign:"center",padding:12,fontSize:13,color:"var(--dm)",fontWeight:600,cursor:"pointer"}}>{{fa:"بعداً",ar:"ليس الآن",tr:"Şimdi değil",ru:"Не сейчас",es:"Ahora no"}[lang]||"Not now"}</div>
     </div>
   </div>);
 }
@@ -4015,24 +3557,23 @@ function Plans({userProfile,goToSupport,token}){
       const totalDisc=Math.max(disc,gwDisc);
       const discPrice=totalDisc>0?Math.round(p.p*(1-totalDisc/100)):0;
       const hasDisc=totalDisc>0;
-      return<div key={i} className="cd" style={{marginBottom:10,padding:16,borderColor:p.best?"color-mix(in srgb,var(--R) 30%,transparent)":"var(--brd)",background:p.best?"color-mix(in srgb,var(--R) 3%,transparent)":"var(--card)",boxShadow:p.best?"0 4px 24px rgba(255,59,48,.12),var(--shadow-card)":"var(--shadow-card)",position:"relative",overflow:"hidden"}}>
-      {p.best&&<div style={{position:"absolute",top:0,right:0,background:"linear-gradient(135deg,var(--R),#ff6b35)",color:"#fff",fontSize:9,fontWeight:700,padding:"5px 14px 5px 18px",borderRadius:"0 20px 0 16px",letterSpacing:.5}}>BEST DEAL</div>}
+      return<div key={i} className="cd" style={{marginBottom:8,padding:16,borderColor:p.best?"color-mix(in srgb,var(--R) 30%,transparent)":"var(--brd)",background:p.best?"color-mix(in srgb,var(--R) 3%,transparent)":"var(--card)"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div>
-          <div style={{fontSize:15,fontWeight:700,letterSpacing:"-.2px"}}>{p.dur}</div>
-          <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap",alignItems:"center"}}>
+          <div style={{fontSize:15,fontWeight:600}}>{p.dur}</div>
+          <div style={{display:"flex",gap:6,marginTop:3,flexWrap:"wrap",alignItems:"center"}}>
             {p.best&&<span style={{fontSize:10,fontWeight:700,color:"var(--G)"}}>{t.bestValue}</span>}
             {p.save&&!hasDisc&&<span style={{fontSize:10,fontWeight:600,color:"var(--Y)"}}>Save {p.save}</span>}
-            {disc>0&&<span style={{fontSize:10,fontWeight:700,color:"var(--R)",background:"var(--Rg)",padding:"2px 7px",borderRadius:5}}>{disc}% OFF</span>}
-            {gwDisc>0&&disc===0&&<span style={{fontSize:10,fontWeight:700,color:"var(--G)",background:"var(--Gg)",padding:"2px 7px",borderRadius:5}}>🎰 {gwDisc}% OFF</span>}
+            {disc>0&&<span style={{fontSize:10,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 6px",borderRadius:4}}>{disc}% OFF</span>}
+            {gwDisc>0&&disc===0&&<span style={{fontSize:10,fontWeight:700,color:"var(--G)",background:"color-mix(in srgb,var(--G) 10%,transparent)",padding:"2px 6px",borderRadius:4}}>🎰 {gwDisc}% OFF</span>}
           </div>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
           <div style={{textAlign:"right"}}>
-            {hasDisc&&<div className="m" style={{fontSize:12,color:"var(--dm)",textDecoration:"line-through",fontWeight:500}}>${p.p}</div>}
-            <span className="m" style={{fontSize:hasDisc?26:22,fontWeight:800,color:hasDisc?"var(--G)":"var(--tx)",letterSpacing:"-.5px"}}>${hasDisc?discPrice:p.p}</span>
+            {hasDisc&&<div className="m" style={{fontSize:13,color:"var(--dm)",textDecoration:"line-through",fontWeight:500}}>${p.p}</div>}
+            <span className="m" style={{fontSize:hasDisc?24:22,fontWeight:700,color:hasDisc?"var(--G)":"var(--tx)"}}>${hasDisc?discPrice:p.p}</span>
           </div>
-          <div onClick={()=>{setSelectedPlan({dur:p.dur,price:hasDisc?discPrice:p.p,days:p.days});setShowContact(true)}} className="bt" style={{background:p.best?"linear-gradient(135deg,var(--R),#ff6b35)":"var(--R)",padding:"11px 20px",width:"auto",fontSize:13,cursor:"pointer",boxShadow:p.best?"0 4px 16px rgba(255,59,48,.4)":"var(--shadow-btn)"}}>{t.subscribe}</div>
+          <div onClick={()=>{setSelectedPlan({dur:p.dur,price:hasDisc?discPrice:p.p,days:p.days});setShowContact(true)}} className="bt" style={{background:"var(--R)",padding:"10px 20px",width:"auto",fontSize:13,cursor:"pointer"}}>{t.subscribe}</div>
         </div>
       </div>
     </div>})}
@@ -5114,9 +4655,9 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
   return(<div className="fi">
     {/* Profile Header — iOS 26 Glass Card (matching Home) */}
     <div className="cd cd-glass" style={{marginBottom:14,padding:24,display:"flex",flexDirection:"column",alignItems:"center"}}>
-      <div onClick={openAvatarPicker} style={{width:82,height:82,borderRadius:"50%",background:showAvatarPicker?(tempColor||"linear-gradient(135deg,var(--purple),var(--B))"):(avatarColor||"linear-gradient(135deg,var(--purple),var(--B))"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:(showAvatarPicker?tempEmoji:avatarEmoji)?36:30,fontWeight:800,color:"#fff",marginBottom:14,boxShadow:"0 6px 24px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.12)",cursor:"pointer",position:"relative",border:"3px solid var(--brd-hi)"}}>
+      <div onClick={openAvatarPicker} style={{width:80,height:80,borderRadius:"50%",background:showAvatarPicker?(tempColor||"linear-gradient(135deg,var(--purple),var(--B))"):(avatarColor||"linear-gradient(135deg,var(--purple),var(--B))"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:(showAvatarPicker?tempEmoji:avatarEmoji)?36:32,fontWeight:700,color:"#fff",marginBottom:14,boxShadow:"0 4px 20px color-mix(in srgb,var(--purple) 25%,transparent)",cursor:"pointer",position:"relative"}}>
         {showAvatarPicker?(tempEmoji||((up?.full_name||user?.email||"U")[0].toUpperCase())):(avatarEmoji||((up?.full_name||user?.email||"U")[0].toUpperCase()))}
-        <div style={{position:"absolute",bottom:0,right:0,width:26,height:26,borderRadius:"50%",background:"var(--card)",border:"2.5px solid var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 6px rgba(0,0,0,.1)"}}>
+        <div style={{position:"absolute",bottom:0,right:0,width:24,height:24,borderRadius:"50%",background:"var(--card)",border:"2px solid var(--bg)",display:"flex",alignItems:"center",justifyContent:"center"}}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </div>
       </div>
@@ -5131,7 +4672,7 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
           {AVATAR_COLORS.map((c,i)=><div key={i} onClick={()=>setTempColor(c)} style={{width:32,height:32,borderRadius:"50%",background:c,cursor:"pointer",border:`2.5px solid ${tempColor===c?"var(--tx)":"transparent"}`,boxShadow:tempColor===c?"0 0 0 2px var(--bg)":"none"}}/>)}
         </div>
         <div style={{display:"flex",gap:8}}>
-          <div onClick={confirmAvatar} style={{flex:1,padding:10,borderRadius:12,background:"var(--B)",color:"#fff",textAlign:"center",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,113,227,.3)"}}>{{fa:"تایید",ar:"تأكيد",tr:"Onayla",ru:"Сохранить",es:"Confirmar"}[lang]||"Confirm"}</div>
+          <div onClick={confirmAvatar} style={{flex:1,padding:10,borderRadius:12,background:"var(--B)",color:"#fff",textAlign:"center",fontSize:13,fontWeight:700,cursor:"pointer"}}>{{fa:"تایید",ar:"تأكيد",tr:"Onayla",ru:"Сохранить",es:"Confirmar"}[lang]||"Confirm"}</div>
           <div onClick={cancelAvatar} style={{flex:1,padding:10,borderRadius:12,background:"color-mix(in srgb,var(--tx) 8%,transparent)",color:"var(--mu)",textAlign:"center",fontSize:13,fontWeight:600,cursor:"pointer"}}>{{fa:"لغو",ar:"إلغاء",tr:"İptal",ru:"Отмена",es:"Cancelar"}[lang]||"Cancel"}</div>
         </div>
       </div>}
@@ -5139,19 +4680,12 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
         <input className="ip" value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveName()} style={{marginBottom:0,width:180,textAlign:"center",fontSize:15,fontWeight:600,background:"rgba(255,255,255,.3)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,.4)"}} autoFocus/>
         <div onClick={saveName} style={{cursor:"pointer",color:"var(--G)",padding:4,opacity:nameSaving?.5:1}}>{IC.ck}</div>
         <div onClick={()=>{setEditingName(false);setNewName(up?.full_name||"")}} style={{cursor:"pointer",color:"var(--mu)",padding:4}}>{IC.x}</div>
-      </div>:<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-        <div style={{fontSize:18,fontWeight:800,letterSpacing:"-.3px"}}>{up?.full_name||"User"}</div>
-        <div onClick={()=>{setNewName(up?.full_name||"");setEditingName(true)}} style={{cursor:"pointer",color:"var(--mu)",padding:3,display:"flex",alignItems:"center"}}>{IC.edit}</div>
+      </div>:<div style={{display:"flex",alignItems:"center",gap:6}}>
+        <div style={{fontSize:18,fontWeight:700,letterSpacing:"-.2px"}}>{up?.full_name||"User"}</div>
+        <div onClick={()=>{setNewName(up?.full_name||"");setEditingName(true)}} style={{cursor:"pointer",color:"var(--mu)",padding:2}}>{IC.edit}</div>
       </div>}
-      <div style={{fontSize:12,color:"var(--dm)",marginBottom:12}}>{user?.email}</div>
-      <div style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:11,fontWeight:700,
-        color:up?.membership==="premium"?"var(--G)":"var(--mu)",
-        background:up?.membership==="premium"?"var(--Gg)":"color-mix(in srgb,var(--mu) 8%,transparent)",
-        padding:"6px 18px",borderRadius:20,
-        border:`1px solid ${up?.membership==="premium"?"color-mix(in srgb,var(--G) 22%,transparent)":"color-mix(in srgb,var(--mu) 12%,transparent)"}`,
-        boxShadow:up?.membership==="premium"?"0 2px 12px rgba(40,205,65,.2)":"none",
-        letterSpacing:.3
-      }}>
+      <div style={{fontSize:12,color:"var(--dm)",marginTop:4}}>{user?.email}</div>
+      <div style={{marginTop:12,fontSize:12,fontWeight:700,color:up?.membership==="premium"?"var(--G)":"var(--mu)",background:up?.membership==="premium"?"color-mix(in srgb,var(--G) 12%,transparent)":"color-mix(in srgb,var(--mu) 10%,transparent)",padding:"5px 16px",borderRadius:20,border:`1px solid ${up?.membership==="premium"?"color-mix(in srgb,var(--G) 20%,transparent)":"color-mix(in srgb,var(--mu) 12%,transparent)"}`,display:"flex",alignItems:"center",gap:5}}>
         {up?.membership==="premium"&&IC.crown}
         {up?.membership==="premium"?"Pro Premium Member":(up?.membership||"free").toUpperCase()}{up?.role==="admin"?" · ADMIN":""}
       </div>
@@ -5159,50 +4693,36 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
     <ReferralSection userId={user?.id} token={token} userProfile={up}/>
     <GiveawayWheel userId={user?.id} token={token}/>
     <RewardSectionWrapper userId={user?.id} token={token} userProfile={up}/>
-    <div onClick={toggle} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:15,marginBottom:8,cursor:"pointer"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12}}><span style={{color:"var(--mu)"}}>{dark?IC.moon:IC.sun}</span><span style={{fontSize:13,fontWeight:600}}>{dark?t.darkMode:t.lightMode}</span></div>
-      <div style={{width:44,height:26,borderRadius:13,background:dark?"var(--R)":"var(--brd2)",position:"relative",transition:".25s cubic-bezier(.34,1.56,.64,1)",boxShadow:dark?"0 0 12px rgba(255,59,48,.3)":"inset 0 1px 3px rgba(0,0,0,.1)"}}><div style={{width:20,height:20,borderRadius:10,background:"#fff",position:"absolute",top:3,left:dark?21:3,transition:".25s cubic-bezier(.34,1.56,.64,1)",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/></div>
+    <div onClick={toggle} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:14,marginBottom:6,cursor:"pointer"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{color:"var(--mu)"}}>{dark?IC.moon:IC.sun}</span><span style={{fontSize:13,fontWeight:500}}>{dark?t.darkMode:t.lightMode}</span></div>
+      <div style={{width:40,height:22,borderRadius:11,background:dark?"var(--R)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:dark?20:2,transition:".2s"}}/></div>
     </div>
-    <div onClick={()=>setShowLang(!showLang)} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:15,marginBottom:8,cursor:"pointer"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12}}><span style={{color:"var(--mu)"}}>{IC.globe}</span><span style={{fontSize:13,fontWeight:600}}>{t.language}</span></div>
-      <div style={{display:"flex",alignItems:"center",gap:6}}>
-        <span style={{fontSize:12,color:"var(--mu)",fontWeight:500}}>{LANGS[lang]}</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
+    <div onClick={()=>setShowLang(!showLang)} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:14,marginBottom:6,cursor:"pointer"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{color:"var(--mu)"}}>{IC.globe}</span><span style={{fontSize:13,fontWeight:500}}>{t.language}</span></div>
+      <span style={{fontSize:12,color:"var(--mu)"}}>{LANGS[lang]}</span>
     </div>
-    {showLang&&<div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10,padding:"2px 0"}}>
+    {showLang&&<div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}>
       {Object.entries(LANGS).map(([k,v])=>
-        <div key={k} onClick={()=>{setLang(k);setShowLang(false)}} style={{padding:"8px 14px",borderRadius:10,cursor:"pointer",fontSize:12,fontWeight:600,background:lang===k?"var(--R)":"var(--card)",border:`1px solid ${lang===k?"transparent":"var(--brd)"}`,color:lang===k?"#fff":"var(--mu)",boxShadow:lang===k?"0 2px 8px rgba(255,59,48,.3)":"var(--shadow-card)",transition:"all .2s"}}>{v}</div>
+        <div key={k} onClick={()=>{setLang(k);setShowLang(false)}} style={{padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,background:lang===k?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${lang===k?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,color:lang===k?"var(--R)":"var(--mu)"}}>{v}</div>
       )}
     </div>}
-    <div onClick={async()=>{if(!noti.enabled)await noti.enable()}} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:15,marginBottom:8,cursor:"pointer"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12}}><span style={{color:"var(--mu)"}}>{IC.bell}</span><span style={{fontSize:13,fontWeight:600}}>{noti.enabled?t.pushEnabled:t.pushEnable}</span></div>
-      <div style={{width:44,height:26,borderRadius:13,background:noti.enabled?"var(--G)":"var(--brd2)",position:"relative",transition:".25s cubic-bezier(.34,1.56,.64,1)",boxShadow:noti.enabled?"0 0 12px rgba(40,205,65,.3)":"inset 0 1px 3px rgba(0,0,0,.1)"}}><div style={{width:20,height:20,borderRadius:10,background:"#fff",position:"absolute",top:3,left:noti.enabled?21:3,transition:".25s cubic-bezier(.34,1.56,.64,1)",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/></div>
+    <div onClick={async()=>{if(!noti.enabled)await noti.enable()}} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:14,marginBottom:6,cursor:"pointer"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{color:"var(--mu)"}}>{IC.bell}</span><span style={{fontSize:13,fontWeight:500}}>{noti.enabled?t.pushEnabled:t.pushEnable}</span></div>
+      <div style={{width:40,height:22,borderRadius:11,background:noti.enabled?"var(--G)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:noti.enabled?20:2,transition:".2s"}}/></div>
     </div>
-    <div onClick={()=>setShowChat(true)} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:15,marginBottom:8,cursor:"pointer",background:"color-mix(in srgb,var(--B) 5%,var(--card))",borderColor:"color-mix(in srgb,var(--B) 18%,transparent)"}}>
-      <div style={{display:"flex",alignItems:"center",gap:12}}>
+    <div onClick={()=>setShowChat(true)} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:14,marginBottom:6,cursor:"pointer",background:"color-mix(in srgb,var(--B) 4%,transparent)",borderColor:"color-mix(in srgb,var(--B) 15%,transparent)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
         <span style={{color:"var(--B)"}}>{IC.chat}</span>
         <div>
-          <span style={{fontSize:13,fontWeight:700,color:"var(--B)"}}>{t.support||"Support"}</span>
+          <span style={{fontSize:13,fontWeight:600,color:"var(--B)"}}>{t.support||"Support"}</span>
           <div style={{fontSize:10,color:"var(--dm)",marginTop:1}}>{t.supportDesc||"Chat with our support team"}</div>
         </div>
       </div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
-    <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:15,marginBottom:8,cursor:"pointer"}}>
-      <span style={{color:"#0088cc"}}>{IC.tg}</span>
-      <span style={{flex:1,fontSize:13,fontWeight:600}}>Telegram</span>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-    </a>
-    <a href="https://www.instagram.com/forexscalproom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:15,marginBottom:8,cursor:"pointer"}}>
-      <span style={{color:"#E1306C"}}>{IC.ig}</span>
-      <span style={{flex:1,fontSize:13,fontWeight:600}}>Instagram</span>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-    </a>
-    <div onClick={onOut} className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:15,marginTop:12,cursor:"pointer",background:"color-mix(in srgb,var(--R) 5%,var(--card))",borderColor:"color-mix(in srgb,var(--R) 18%,transparent)"}}>
-      <span style={{fontSize:13,color:"var(--R)",fontWeight:700,flex:1}}>{t.signOut}</span>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--R)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-    </div>
+    <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginBottom:6,cursor:"pointer"}}><span style={{color:"#0088cc"}}>{IC.tg}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Telegram</span></a>
+    <a href="https://www.instagram.com/forexscalproom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginBottom:6,cursor:"pointer"}}><span style={{color:"#E1306C"}}>{IC.ig}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Instagram</span></a>
+    <div onClick={onOut} className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginTop:12,cursor:"pointer",background:"color-mix(in srgb,var(--R) 5%,transparent)",borderColor:"color-mix(in srgb,var(--R) 12%,transparent)"}}><span style={{fontSize:13,color:"var(--R)",fontWeight:600}}>{t.signOut}</span></div>
     {showChat&&<SupportChat userId={user?.id} token={token} onClose={()=>setShowChat(false)}/>}
   </div>);
 }
@@ -5305,10 +4825,10 @@ function App(){
       </div>
       <div className="app" style={{paddingTop:!online?28:0,transition:"padding-top .3s ease"}}>
         <div className="hd">
-          <div className="lg">Fxscalp<span style={{fontWeight:900}}>room</span><b>.</b></div>
+          <div className="lg">Fxscalproom<b>.</b></div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
-            {adm&&<span style={{fontSize:9,fontWeight:700,color:"#fff",background:"var(--R)",padding:"3px 9px",borderRadius:7,letterSpacing:.5,boxShadow:"0 2px 8px rgba(255,59,48,.35)"}}>ADMIN</span>}
-            <span style={{fontSize:12,color:"var(--mu)",fontWeight:600,letterSpacing:".1px"}}>{cur?.l}</span>
+            {adm&&<span style={{fontSize:9,fontWeight:600,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"3px 8px",borderRadius:6}}>ADMIN</span>}
+            <span style={{fontSize:12,color:"var(--mu)",fontWeight:500}}>{cur?.l}</span>
           </div>
         </div>
         <div className="ct">
@@ -5316,16 +4836,12 @@ function App(){
           {scr()}
         </div>
         <div className="tb" id="fxtb">{VT.map((tab,i)=>
-          <div key={i} className={`ti${st===i?" ti-active":""}`} onClick={()=>goTab(i)}
-            style={{
-              color:st===i?"var(--B)":"var(--dm)",
-              transform:st===i?"scale(1)":"scale(1)",
-            }}>
-            <div style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",width:24,height:24}}>
+          <div key={i} className={`ti${st===i?" ti-active":""}`} onClick={()=>goTab(i)} style={{color:st===i?"var(--B)":"var(--dm)"}}>
+            <div style={{position:"relative"}}>
               {tab.i}
               {tab.badge>0&&st!==i&&<div className="nb"/>}
             </div>
-            <span className="tl" style={{color:st===i?"var(--B)":"var(--dm)"}}>{tab.l}</span>
+            <span style={{fontSize:9,fontWeight:600,color:st===i?"var(--B)":"var(--dm)"}}>{tab.l}</span>
           </div>
         )}</div>
       </div>
