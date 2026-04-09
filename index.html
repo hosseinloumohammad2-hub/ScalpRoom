@@ -22,20 +22,20 @@
 :root{--bg:#f5f5f7;--bg2:#ffffff;--glass:rgba(255,255,255,.55);--glass2:rgba(255,255,255,.35);--gb:rgba(255,255,255,.72);--card:rgba(255,255,255,.78);--brd:rgba(0,0,0,.06);--brd2:rgba(0,0,0,.10);--tx:#1d1d1f;--tx2:#424245;--mu:#86868b;--dm:#aeaeb2;--R:#ff3b30;--G:#28cd41;--B:#0071e3;--Y:#ff9f0a;--purple:#bf5af2;--r:22px;--r2:16px}
 [data-theme="dark"]{--bg:#050507;--bg2:#0a0a0c;--glass:rgba(30,30,32,.65);--glass2:rgba(30,30,32,.45);--gb:rgba(255,255,255,.08);--card:rgba(28,28,30,.82);--brd:rgba(255,255,255,.06);--brd2:rgba(255,255,255,.10);--tx:#e5e5e7;--tx2:#a1a1aa;--mu:#71717a;--dm:#52525b;--R:#ff453a;--G:#30d158;--B:#0a84ff;--Y:#ffd60a}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{background:var(--bg);overscroll-behavior:none}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased;overflow-x:hidden;letter-spacing:-.2px;overscroll-behavior-y:none}
+html{background:transparent;overscroll-behavior:none}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','DM Sans',system-ui,sans-serif;background:transparent;color:var(--tx);-webkit-font-smoothing:antialiased;overflow-x:hidden;letter-spacing:-.2px;overscroll-behavior-y:none}
 /* Animated bg canvas */
-#fxbg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity 1s ease .5s}
-body.app-ready #fxbg{opacity:1}
+#fxbg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:1}
 ::-webkit-scrollbar{width:0}
 input,button,textarea,select{font-family:inherit;border:none;outline:none;color:var(--tx)}
 input::placeholder,textarea::placeholder{color:var(--dm)}
 img{display:block;max-width:100%}
 a{color:inherit;text-decoration:none}
 .m{font-family:'JetBrains Mono','DM Mono',monospace;font-variant-numeric:tabular-nums}
-.app{max-width:430px;margin:0 auto;min-height:100dvh;position:relative;z-index:1}
-/* ─── Header: gradient fade, NOT glass blur ─── */
-.hd{padding:12px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:linear-gradient(to bottom,var(--bg) 60%,transparent);z-index:40}
+.app{max-width:430px;margin:0 auto;min-height:100dvh;position:relative;z-index:1;background:transparent}
+/* ─── Header: transparent so animation shows ─── */
+.hd{padding:12px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:linear-gradient(to bottom,rgba(245,245,247,.85) 60%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:40}
+[data-theme="dark"] .hd{background:linear-gradient(to bottom,rgba(5,5,7,.85) 60%,transparent)}
 .lg{font-size:19px;font-weight:700;color:var(--tx);letter-spacing:-.4px}
 .lg b{color:var(--R);font-weight:700;font-style:normal}
 .ct{padding:16px 16px 100px}
@@ -105,7 +105,7 @@ select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;paddi
 @keyframes splashFadeOut{from{opacity:1}to{opacity:0;pointer-events:none}}
 @keyframes splashSlideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
 @keyframes dotBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
-.splash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg)}
+.splash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:transparent;backdrop-filter:blur(0px)}
 .splash.out{animation:splashFadeOut .5s ease forwards}
 .splash-logo{font-size:42px;font-weight:700;letter-spacing:-.5px;animation:splashSlideUp .6s ease}
 .splash-logo b{color:var(--R);animation:splashPulse 2s ease-in-out infinite}
@@ -154,91 +154,88 @@ select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;paddi
   resize();
   window.addEventListener('resize',resize);
 
-  // Watch theme changes
   var observer=new MutationObserver(function(){
     dark=document.documentElement.getAttribute('data-theme')==='dark';
   });
   observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 
-  // Orbs definition
+  // Light: vivid pastel orbs on white. Dark: glowing orbs on near-black.
   var orbs=[
-    {x:.15,y:.08,r:.55,vx:.00018,vy:.00022,
-     lc:[[0,113,227,.55],[191,90,242,.25]],
-     dc:[[10,132,255,.45],[191,90,242,.20]]},
-    {x:.82,y:.18,r:.50,vx:-.00022,vy:.00016,
-     lc:[[191,90,242,.50],[255,159,10,.20]],
-     dc:[[191,90,242,.38],[255,159,10,.15]]},
-    {x:.50,y:.72,r:.52,vx:.00014,vy:-.00019,
-     lc:[[40,205,65,.45],[0,113,227,.20]],
-     dc:[[48,209,88,.35],[10,132,255,.15]]},
-    {x:.25,y:.55,r:.38,vx:-.00016,vy:.00025,
-     lc:[[255,159,10,.40],[191,90,242,.18]],
-     dc:[[255,214,10,.30],[191,90,242,.14]]},
-    {x:.75,y:.65,r:.42,vx:.00020,vy:-.00014,
-     lc:[[0,113,227,.35],[40,205,65,.18]],
-     dc:[[10,132,255,.28],[48,209,88,.14]]}
+    // blue orb - top left
+    {ox:.10, oy:.05, r:.65,
+     lc:'rgba(0,113,227,ALPHA)',   la:.42,
+     dc:'rgba(10,132,255,ALPHA)',  da:.50,
+     spd:0.00014, phase:0},
+    // purple orb - top right
+    {ox:.85, oy:.15, r:.58,
+     lc:'rgba(175,82,222,ALPHA)',  la:.38,
+     dc:'rgba(191,90,242,ALPHA)',  da:.45,
+     spd:0.00019, phase:2.1},
+    // green orb - bottom left
+    {ox:.15, oy:.80, r:.55,
+     lc:'rgba(30,195,55,ALPHA)',   la:.32,
+     dc:'rgba(48,209,88,ALPHA)',   da:.40,
+     spd:0.00016, phase:4.2},
+    // amber orb - bottom right
+    {ox:.80, oy:.78, r:.50,
+     lc:'rgba(255,149,0,ALPHA)',   la:.30,
+     dc:'rgba(255,214,10,ALPHA)',  da:.35,
+     spd:0.00021, phase:1.0},
+    // cyan orb - center
+    {ox:.50, oy:.50, r:.45,
+     lc:'rgba(50,173,230,ALPHA)',  la:.28,
+     dc:'rgba(100,210,255,ALPHA)', da:.32,
+     spd:0.00012, phase:3.3}
   ];
-
-  // Normalize positions to actual coords
-  var state=orbs.map(function(o){
-    return{
-      x:o.x*window.innerWidth,
-      y:o.y*window.innerHeight,
-      vx:o.vx,vy:o.vy,r:o.r,
-      lc:o.lc,dc:o.dc,
-      ax:0,ay:0,
-      ox:o.x,oy:o.y
-    };
-  });
 
   var t=0;
   function draw(){
     t+=1;
-    W=canvas.width;H=canvas.height;
+    W=canvas.width; H=canvas.height;
 
-    // Clear with bg color
-    ctx.clearRect(0,0,W,H);
-    var bgColor=dark?'#050507':'#f5f5f7';
-    ctx.fillStyle=bgColor;
+    // Base background
+    ctx.globalCompositeOperation='source-over';
+    ctx.fillStyle=dark?'#050507':'#f5f5f7';
     ctx.fillRect(0,0,W,H);
 
-    // Draw each orb
-    state.forEach(function(s,i){
-      var o=orbs[i];
-      // Organic movement using sin waves
-      var px=(o.ox + Math.sin(t*o.vx*1000 + i*1.3)*0.22 + Math.sin(t*o.vy*800 + i)*0.12)*W;
-      var py=(o.oy + Math.cos(t*o.vy*1000 + i*0.9)*0.22 + Math.cos(t*o.vx*700 + i*2)*0.10)*H;
-      var radius=o.r * Math.min(W,H) * 0.72;
+    // Draw orbs with source-over at high alpha so they're clearly visible
+    orbs.forEach(function(o){
+      var amp=0.20;
+      var px=(o.ox + Math.sin(t*o.spd*Math.PI*2 + o.phase)*amp + Math.cos(t*o.spd*1.3*Math.PI*2 + o.phase+1)*amp*0.5)*W;
+      var py=(o.oy + Math.cos(t*o.spd*1.1*Math.PI*2 + o.phase+0.5)*amp + Math.sin(t*o.spd*0.9*Math.PI*2 + o.phase+2)*amp*0.4)*H;
+      var radius=o.r * Math.min(W,H) * 0.75;
 
-      var colors=dark?o.dc:o.lc;
+      var alpha=dark?o.da:o.la;
+      var baseColor=dark?o.dc:o.lc;
+      var c0=baseColor.replace('ALPHA', String(alpha));
+      var c1=baseColor.replace('ALPHA', String(alpha*0.3));
+      var c2=baseColor.replace('ALPHA','0');
+
       var grad=ctx.createRadialGradient(px,py,0,px,py,radius);
-      grad.addColorStop(0,'rgba('+colors[0][0]+','+colors[0][1]+','+colors[0][2]+','+colors[0][3]+')');
-      grad.addColorStop(0.5,'rgba('+colors[1][0]+','+colors[1][1]+','+colors[1][2]+','+colors[1][3]+')');
-      grad.addColorStop(1,'rgba(0,0,0,0)');
+      grad.addColorStop(0, c0);
+      grad.addColorStop(0.45, c1);
+      grad.addColorStop(1,   c2);
 
-      ctx.globalCompositeOperation='screen';
-      if(dark) ctx.globalCompositeOperation='lighter';
+      ctx.globalCompositeOperation='source-over';
       ctx.fillStyle=grad;
       ctx.beginPath();
-      ctx.ellipse(px,py,radius,radius*1.15,Math.sin(t*0.0003+i)*0.4,0,Math.PI*2);
+      ctx.arc(px,py,radius,0,Math.PI*2);
       ctx.fill();
     });
 
-    // Light mode: add subtle noise grain via overlay
+    // Light mode: white veil on top to keep it pastel/airy (iOS style)
     if(!dark){
       ctx.globalCompositeOperation='source-over';
-      // Top shimmer
-      var sh=ctx.createLinearGradient(0,0,0,H*0.35);
-      sh.addColorStop(0,'rgba(255,255,255,0.18)');
-      sh.addColorStop(1,'rgba(255,255,255,0)');
-      ctx.fillStyle=sh;
+      ctx.fillStyle='rgba(255,255,255,0.52)';
+      ctx.fillRect(0,0,W,H);
+    } else {
+      // Dark mode: deep overlay to keep it rich not muddy
+      ctx.fillStyle='rgba(5,5,7,0.30)';
       ctx.fillRect(0,0,W,H);
     }
 
-    ctx.globalCompositeOperation='source-over';
     requestAnimationFrame(draw);
   }
-
   draw();
 })();
 </script>
