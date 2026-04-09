@@ -2450,6 +2450,46 @@ function ImageCarousel({urls,style,borderRadius}){
   </div>;
 }
 
+/* ─── Breaking News Widget ─── */
+function BreakingNews({lang}){
+  const[news,setNews]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[expanded,setExpanded]=useState(false);
+  useEffect(()=>{
+    const fetchNews=async()=>{
+      try{
+        const r=await fetch("https://min-api.cryptocompare.com/data/v2/news/?lang=EN&categories=Trading,Forex,Market,Regulation&excludeCategories=Sponsored");
+        const d=await r.json();
+        if(d.Data)setNews(d.Data.slice(0,8));
+      }catch(e){console.error("News fetch error:",e)}
+      setLoading(false);
+    };
+    fetchNews();
+    const i=setInterval(fetchNews,5*60*1000);
+    return()=>clearInterval(i);
+  },[]);
+  if(loading)return<div className="cd" style={{marginBottom:12,padding:16,textAlign:"center"}}><div className="ld" style={{margin:"0 auto"}}/></div>;
+  if(!news.length)return null;
+  const titles={fa:"اخبار مهم",ar:"أخبار عاجلة",tr:"Son Dakika",ru:"Важные новости",es:"Noticias importantes"};
+  const shown=expanded?news:news.slice(0,3);
+  return(<div className="cd" style={{marginBottom:12,padding:0,overflow:"hidden"}}>
+    <div style={{display:"flex",alignItems:"center",gap:8,padding:"14px 14px 10px"}}>
+      <div style={{width:8,height:8,borderRadius:"50%",background:"var(--R)",animation:"pl 1.5s infinite"}}/>
+      <span style={{fontSize:14,fontWeight:700}}>{titles[lang]||"Breaking News"}</span>
+    </div>
+    {shown.map((n,i)=>
+      <a key={n.id||i} href={n.url} target="_blank" rel="noopener" style={{display:"flex",gap:12,padding:"10px 14px",borderTop:"1px solid var(--brd)",alignItems:"center",textDecoration:"none",color:"inherit"}}>
+        {n.imageurl&&<img src={n.imageurl} style={{width:48,height:48,borderRadius:8,objectFit:"cover",flexShrink:0}} alt="" onError={e=>{e.target.style.display="none"}}/>}
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:600,lineHeight:1.4,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{n.title}</div>
+          <div style={{fontSize:9,color:"var(--dm)",marginTop:4}}>{n.source_info?.name||n.source} · {new Date(n.published_on*1000).toLocaleDateString()}</div>
+        </div>
+      </a>
+    )}
+    {news.length>3&&<div onClick={()=>setExpanded(!expanded)} style={{textAlign:"center",padding:"10px",cursor:"pointer",fontSize:11,fontWeight:600,color:"var(--B)",borderTop:"1px solid var(--brd)"}}>{expanded?{fa:"بستن",ar:"إغلاق",tr:"Kapat",ru:"Свернуть",es:"Cerrar"}[lang]||"Show less":{fa:"بیشتر",ar:"المزيد",tr:"Daha fazla",ru:"Ещё",es:"Ver más"}[lang]||"Show more"}</div>}
+  </div>);
+}
+
 /* ─── Home ─── */
 function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,toggle,userProfile,token,onR,online}){
   const{t,lang}=useLang();
@@ -2616,6 +2656,19 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
     {(!posts||!posts.length)&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:13}}>{t.noAnalyses}</div>}
     {showPremPop&&<PremiumPopup onClose={()=>setShowPremPop(false)} onGoPlans={goToPlans}/>}
     <PostModal post={sel} onClose={()=>setSel(null)}/>
+    {/* ─── Breaking News ─── */}
+    <BreakingNews lang={lang}/>
+    {/* ─── Copyright & Policy ─── */}
+    <div style={{textAlign:"center",padding:"32px 16px 8px",borderTop:"1px solid var(--brd)",marginTop:24}}>
+      <div style={{fontSize:11,color:"var(--dm)",fontWeight:500,lineHeight:1.8}}>
+        <span style={{fontWeight:700,color:"var(--tx2)"}}>Fxscalproom<span style={{color:"var(--R)"}}>.</span></span>
+        <br/>
+        {{fa:"تمامی محتوا، تحلیل‌ها و سیگنال‌ها صرفاً جنبه آموزشی دارند و توصیه مالی نیستند.",ar:"جميع المحتويات والتحليلات والإشارات هي لأغراض تعليمية فقط وليست نصائح مالية.",tr:"Tüm içerikler, analizler ve sinyaller yalnızca eğitim amaçlıdır.",ru:"Весь контент, анализ и сигналы носят исключительно образовательный характер.",es:"Todo el contenido es solo con fines educativos."}[lang]||"All content, analyses and signals are for educational purposes only and do not constitute financial advice."}
+        <br/>
+        {{fa:"مسئولیت هرگونه معامله بر عهده خود شخص است.",ar:"أنت المسؤول الوحيد عن قرارات التداول الخاصة بك.",tr:"İşlem kararlarınızdan yalnızca siz sorumlusunuz.",ru:"Вы несёте полную ответственность за свои сделки.",es:"Usted es el único responsable de sus decisiones."}[lang]||"You are solely responsible for your own trading decisions."}
+      </div>
+      <div style={{fontSize:10,color:"var(--dm)",marginTop:12,letterSpacing:".3px"}}>© 2023–{new Date().getFullYear()} Fxscalproom. All rights reserved.</div>
+    </div>
   </div>);
 }
 
