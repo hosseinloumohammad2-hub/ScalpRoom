@@ -2089,6 +2089,7 @@ function TranslateBtn({text}){
 
 /* ─── Post Detail Modal ─── */
 function PostModal({post,onClose}){
+  const{lang}=useLang();
   const[zoomed,setZoomed]=useState(false);
   const[scale,setScale]=useState(1);
   const[pos,setPos]=useState({x:0,y:0});
