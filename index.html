@@ -24,34 +24,9 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{background:var(--bg);overscroll-behavior:none}
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased;overflow-x:hidden;letter-spacing:-.2px;overscroll-behavior-y:none}
-/* ─── iOS 26 Animated Liquid Glass Background ─── */
-@keyframes orb1{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(40px,-30px) scale(1.08)}50%{transform:translate(20px,50px) scale(.94)}75%{transform:translate(-30px,20px) scale(1.05)}}
-@keyframes orb2{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(-50px,30px) scale(1.1)}50%{transform:translate(30px,-40px) scale(.92)}75%{transform:translate(50px,10px) scale(1.06)}}
-@keyframes orb3{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(30px,40px) scale(.96)}50%{transform:translate(-20px,-30px) scale(1.07)}75%{transform:translate(-40px,50px) scale(.97)}}
-@keyframes orb4{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-35px,-25px) scale(1.04)}66%{transform:translate(45px,35px) scale(.95)}}
-@keyframes shimmer{0%,100%{opacity:.5}50%{opacity:1}}
-/* Canvas layer for animated orbs */
-#fx-bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;width:100%;height:100%;opacity:0;transition:opacity .8s ease .4s}
-body.app-ready #fx-bg-canvas{opacity:1}
-/* Light mode orbs */
-.fx-orb{position:absolute;border-radius:50%;filter:blur(80px);will-change:transform}
-.fx-orb-1{width:480px;height:380px;background:radial-gradient(circle,rgba(0,113,227,.18) 0%,rgba(0,113,227,.06) 50%,transparent 70%);top:-60px;left:-80px;animation:orb1 14s ease-in-out infinite}
-.fx-orb-2{width:420px;height:420px;background:radial-gradient(circle,rgba(191,90,242,.15) 0%,rgba(191,90,242,.05) 50%,transparent 70%);top:10%;right:-100px;animation:orb2 18s ease-in-out infinite}
-.fx-orb-3{width:360px;height:460px;background:radial-gradient(circle,rgba(40,205,65,.10) 0%,rgba(40,205,65,.03) 50%,transparent 70%);bottom:15%;left:10%;animation:orb3 22s ease-in-out infinite}
-.fx-orb-4{width:300px;height:300px;background:radial-gradient(circle,rgba(255,159,10,.12) 0%,rgba(255,159,10,.04) 50%,transparent 70%);bottom:-40px;right:-40px;animation:orb4 16s ease-in-out infinite}
-.fx-orb-5{width:250px;height:250px;background:radial-gradient(circle,rgba(0,113,227,.08) 0%,transparent 70%);top:45%;left:50%;transform:translateX(-50%);animation:orb2 20s ease-in-out infinite reverse}
-/* Noise grain overlay for glass texture */
-.fx-grain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .8s ease .4s}
-body.app-ready .fx-grain{opacity:1}
-[data-theme="dark"] .fx-orb-1{background:radial-gradient(circle,rgba(10,132,255,.12) 0%,rgba(10,132,255,.04) 50%,transparent 70%)}
-[data-theme="dark"] .fx-orb-2{background:radial-gradient(circle,rgba(191,90,242,.10) 0%,rgba(191,90,242,.03) 50%,transparent 70%)}
-[data-theme="dark"] .fx-orb-3{background:radial-gradient(circle,rgba(48,209,88,.07) 0%,rgba(48,209,88,.02) 50%,transparent 70%)}
-[data-theme="dark"] .fx-orb-4{background:radial-gradient(circle,rgba(255,214,10,.08) 0%,rgba(255,214,10,.02) 50%,transparent 70%)}
-[data-theme="dark"] .fx-orb-5{background:radial-gradient(circle,rgba(10,132,255,.05) 0%,transparent 70%)}
-/* Shimmer highlight line - light mode only */
-.fx-shimmer{position:fixed;top:0;left:0;right:0;height:1px;z-index:1;pointer-events:none;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.9) 30%,rgba(255,255,255,1) 50%,rgba(255,255,255,.9) 70%,transparent 100%);animation:shimmer 4s ease-in-out infinite;opacity:0;transition:opacity .8s ease .5s}
-body.app-ready .fx-shimmer{opacity:.6}
-[data-theme="dark"] .fx-shimmer{opacity:0!important}
+/* Animated bg canvas */
+#fxbg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity 1s ease .5s}
+body.app-ready #fxbg{opacity:1}
 ::-webkit-scrollbar{width:0}
 input,button,textarea,select{font-family:inherit;border:none;outline:none;color:var(--tx)}
 input::placeholder,textarea::placeholder{color:var(--dm)}
@@ -163,16 +138,110 @@ select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;paddi
 </style>
 </head>
 <body>
-<!-- iOS 26 Animated Liquid Glass Background -->
-<div id="fx-bg-canvas" aria-hidden="true">
-  <div class="fx-orb fx-orb-1"></div>
-  <div class="fx-orb fx-orb-2"></div>
-  <div class="fx-orb fx-orb-3"></div>
-  <div class="fx-orb fx-orb-4"></div>
-  <div class="fx-orb fx-orb-5"></div>
-</div>
-<div class="fx-shimmer" aria-hidden="true"></div>
+<canvas id="fxbg"></canvas>
 <div id="root"></div>
+<script>
+(function(){
+  var canvas=document.getElementById('fxbg');
+  var ctx=canvas.getContext('2d');
+  var dark=document.documentElement.getAttribute('data-theme')==='dark';
+  var W,H;
+
+  function resize(){
+    W=canvas.width=window.innerWidth;
+    H=canvas.height=window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize',resize);
+
+  // Watch theme changes
+  var observer=new MutationObserver(function(){
+    dark=document.documentElement.getAttribute('data-theme')==='dark';
+  });
+  observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+  // Orbs definition
+  var orbs=[
+    {x:.15,y:.08,r:.55,vx:.00018,vy:.00022,
+     lc:[[0,113,227,.55],[191,90,242,.25]],
+     dc:[[10,132,255,.45],[191,90,242,.20]]},
+    {x:.82,y:.18,r:.50,vx:-.00022,vy:.00016,
+     lc:[[191,90,242,.50],[255,159,10,.20]],
+     dc:[[191,90,242,.38],[255,159,10,.15]]},
+    {x:.50,y:.72,r:.52,vx:.00014,vy:-.00019,
+     lc:[[40,205,65,.45],[0,113,227,.20]],
+     dc:[[48,209,88,.35],[10,132,255,.15]]},
+    {x:.25,y:.55,r:.38,vx:-.00016,vy:.00025,
+     lc:[[255,159,10,.40],[191,90,242,.18]],
+     dc:[[255,214,10,.30],[191,90,242,.14]]},
+    {x:.75,y:.65,r:.42,vx:.00020,vy:-.00014,
+     lc:[[0,113,227,.35],[40,205,65,.18]],
+     dc:[[10,132,255,.28],[48,209,88,.14]]}
+  ];
+
+  // Normalize positions to actual coords
+  var state=orbs.map(function(o){
+    return{
+      x:o.x*window.innerWidth,
+      y:o.y*window.innerHeight,
+      vx:o.vx,vy:o.vy,r:o.r,
+      lc:o.lc,dc:o.dc,
+      ax:0,ay:0,
+      ox:o.x,oy:o.y
+    };
+  });
+
+  var t=0;
+  function draw(){
+    t+=1;
+    W=canvas.width;H=canvas.height;
+
+    // Clear with bg color
+    ctx.clearRect(0,0,W,H);
+    var bgColor=dark?'#050507':'#f5f5f7';
+    ctx.fillStyle=bgColor;
+    ctx.fillRect(0,0,W,H);
+
+    // Draw each orb
+    state.forEach(function(s,i){
+      var o=orbs[i];
+      // Organic movement using sin waves
+      var px=(o.ox + Math.sin(t*o.vx*1000 + i*1.3)*0.22 + Math.sin(t*o.vy*800 + i)*0.12)*W;
+      var py=(o.oy + Math.cos(t*o.vy*1000 + i*0.9)*0.22 + Math.cos(t*o.vx*700 + i*2)*0.10)*H;
+      var radius=o.r * Math.min(W,H) * 0.72;
+
+      var colors=dark?o.dc:o.lc;
+      var grad=ctx.createRadialGradient(px,py,0,px,py,radius);
+      grad.addColorStop(0,'rgba('+colors[0][0]+','+colors[0][1]+','+colors[0][2]+','+colors[0][3]+')');
+      grad.addColorStop(0.5,'rgba('+colors[1][0]+','+colors[1][1]+','+colors[1][2]+','+colors[1][3]+')');
+      grad.addColorStop(1,'rgba(0,0,0,0)');
+
+      ctx.globalCompositeOperation='screen';
+      if(dark) ctx.globalCompositeOperation='lighter';
+      ctx.fillStyle=grad;
+      ctx.beginPath();
+      ctx.ellipse(px,py,radius,radius*1.15,Math.sin(t*0.0003+i)*0.4,0,Math.PI*2);
+      ctx.fill();
+    });
+
+    // Light mode: add subtle noise grain via overlay
+    if(!dark){
+      ctx.globalCompositeOperation='source-over';
+      // Top shimmer
+      var sh=ctx.createLinearGradient(0,0,0,H*0.35);
+      sh.addColorStop(0,'rgba(255,255,255,0.18)');
+      sh.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle=sh;
+      ctx.fillRect(0,0,W,H);
+    }
+
+    ctx.globalCompositeOperation='source-over';
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+})();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin></script>
