@@ -2450,74 +2450,30 @@ function ImageCarousel({urls,style,borderRadius}){
   </div>;
 }
 
-/* ─── Breaking News (TradingView RSS via proxy) ─── */
-function BreakingNews({lang}){
-  const[news,setNews]=useState([]);
-  const[loading,setLoading]=useState(true);
-  const[expanded,setExpanded]=useState(false);
+/* ─── TradingView Timeline (World News) ─── */
+function TVTimeline({colorTheme}){
+  const ref=useRef(null);
+  const loaded=useRef(false);
   useEffect(()=>{
-    const fetchNews=async()=>{
-      try{
-        // Multiple sources for reliability
-        const sources=[
-          {url:"https://nfs.faireconomy.media/ff_calendar_thisweek.json",type:"forex"},
-          {url:`https://newsdata.io/api/1/latest?apikey=pub_0&category=business&language=en&size=5`,type:"newsdata"}
-        ];
-        // Use Forex Factory economic events as news
-        const r=await fetch("https://nfs.faireconomy.media/ff_calendar_thisweek.json");
-        if(r.ok){
-          const d=await r.json();
-          const highImpact=d.filter(e=>e.impact==="High"||e.impact==="Medium").slice(0,12).map((e,i)=>({
-            id:i,
-            title:e.title,
-            source:e.country,
-            time:e.date,
-            impact:e.impact,
-            forecast:e.forecast,
-            previous:e.previous,
-            actual:e.actual
-          }));
-          if(highImpact.length)setNews(highImpact);
-        }
-      }catch(e){}
-      setLoading(false);
-    };
-    fetchNews();
-    const i=setInterval(fetchNews,10*60*1000);
-    return()=>clearInterval(i);
-  },[]);
-  if(loading)return<div className="cd" style={{marginBottom:12,padding:20,textAlign:"center"}}><div className="ld" style={{margin:"0 auto"}}/></div>;
-  if(!news.length)return null;
-  const titles={fa:"اخبار و رویدادهای مهم",ar:"أخبار وأحداث مهمة",tr:"Önemli Haberler",ru:"Важные события",es:"Noticias importantes"};
-  const shown=expanded?news:news.slice(0,4);
-  const impactColor=i=>i==="High"?"var(--R)":i==="Medium"?"var(--Y)":"var(--dm)";
-  const countryFlag=c=>{const flags={USD:"🇺🇸",EUR:"🇪🇺",GBP:"🇬🇧",JPY:"🇯🇵",CHF:"🇨🇭",AUD:"🇦🇺",CAD:"🇨🇦",NZD:"🇳🇿",CNY:"🇨🇳"};return flags[c]||"📊"};
-  return(<div className="cd" style={{marginBottom:12,padding:0,overflow:"hidden"}}>
-    <div style={{display:"flex",alignItems:"center",gap:8,padding:"14px 14px 10px"}}>
-      <div style={{width:8,height:8,borderRadius:"50%",background:"var(--R)",animation:"pl 1.5s infinite"}}/>
-      <span style={{fontSize:14,fontWeight:700}}>{titles[lang]||"Breaking News & Events"}</span>
-    </div>
-    {shown.map((n,i)=>
-      <div key={n.id} style={{display:"flex",gap:10,padding:"10px 14px",borderTop:"1px solid var(--brd)",alignItems:"flex-start"}}>
-        <div style={{fontSize:18,flexShrink:0,marginTop:2}}>{countryFlag(n.source)}</div>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
-            <div style={{width:6,height:6,borderRadius:"50%",background:impactColor(n.impact),flexShrink:0}}/>
-            <span style={{fontSize:12,fontWeight:600,lineHeight:1.4}}>{n.title}</span>
-          </div>
-          <div style={{display:"flex",gap:8,fontSize:10,color:"var(--dm)"}}>
-            <span>{n.source}</span>
-            {n.time&&<span>{new Date(n.time).toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"})}</span>}
-          </div>
-          {(n.forecast||n.previous||n.actual)&&<div style={{display:"flex",gap:10,marginTop:5,fontSize:10}}>
-            {n.previous&&<span style={{color:"var(--dm)"}}>Prev: <span className="m" style={{fontWeight:600}}>{n.previous}</span></span>}
-            {n.forecast&&<span style={{color:"var(--B)"}}>Fcst: <span className="m" style={{fontWeight:600}}>{n.forecast}</span></span>}
-            {n.actual&&<span style={{color:"var(--G)",fontWeight:600}}>Act: <span className="m">{n.actual}</span></span>}
-          </div>}
-        </div>
-      </div>
-    )}
-    {news.length>4&&<div onClick={()=>setExpanded(!expanded)} style={{textAlign:"center",padding:"10px",cursor:"pointer",fontSize:11,fontWeight:600,color:"var(--B)",borderTop:"1px solid var(--brd)"}}>{expanded?{fa:"بستن",ar:"إغلاق",tr:"Kapat",ru:"Свернуть",es:"Cerrar"}[lang]||"Show less":{fa:"مشاهده بیشتر",ar:"المزيد",tr:"Daha fazla",ru:"Ещё",es:"Ver más"}[lang]||"Show more"}</div>}
+    if(!ref.current||loaded.current)return;
+    loaded.current=true;
+    const s=document.createElement("script");
+    s.src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js";
+    s.async=true;
+    s.innerHTML=JSON.stringify({
+      feedMode:"all_symbols",
+      isTransparent:true,
+      displayMode:"regular",
+      width:"100%",
+      height:550,
+      colorTheme:colorTheme||"light",
+      locale:"en"
+    });
+    ref.current.appendChild(s);
+  },[colorTheme]);
+  return(<div ref={ref} style={{position:"relative",overflow:"hidden"}}>
+    <div className="tradingview-widget-container__widget"></div>
+    <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,zIndex:2,cursor:"default"}}></div>
   </div>);
 }
 
@@ -2687,20 +2643,20 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
     {(!posts||!posts.length)&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:13}}>{t.noAnalyses}</div>}
     {showPremPop&&<PremiumPopup onClose={()=>setShowPremPop(false)} onGoPlans={goToPlans}/>}
     <PostModal post={sel} onClose={()=>setSel(null)}/>
-    {/* ─── Breaking News & Events ─── */}
-    <BreakingNews lang={lang}/>
+    {/* ─── World News (TradingView Timeline) ─── */}
+    {online!==false&&<div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVTimeline colorTheme={theme}/></div>}
     {/* ─── Disclaimer & Copyright ─── */}
     <div style={{textAlign:"center",padding:"28px 12px 8px",borderTop:"1px solid var(--brd)",marginTop:20}}>
       <div style={{fontSize:18,fontWeight:800,letterSpacing:"-.3px",marginBottom:10}}>Fxscalproom<span style={{color:"var(--R)"}}>.</span></div>
       <div style={{fontSize:10,color:"var(--dm)",lineHeight:1.8,maxWidth:340,margin:"0 auto"}}>
         Information contained herein is believed to be reliable, but the publisher cannot be held liable for errors or omissions. No specific advice can be construed from the following. The reader is solely responsible for all action taken.
       </div>
-      <div style={{fontSize:10,color:"var(--dm)",lineHeight:1.8,marginTop:10,maxWidth:340,margin:"8px auto 0"}}>
-        {{fa:"تمامی محتوا، تحلیل‌ها و سیگنال‌های ارائه‌شده صرفاً جنبه آموزشی دارند و به هیچ عنوان توصیه مالی یا سرمایه‌گذاری محسوب نمی‌شوند. مسئولیت هرگونه تصمیم‌گیری و معامله بر عهده خود شخص است. قبل از هرگونه اقدام مالی، با مشاور مالی مجاز مشورت کنید.",
-          ar:"جميع المحتويات والتحليلات والإشارات المقدمة هي لأغراض تعليمية فقط ولا تعتبر نصائح مالية أو استثمارية. المستخدم هو المسؤول الوحيد عن قراراته المالية.",
-          tr:"Sunulan tüm içerikler, analizler ve sinyaller yalnızca eğitim amaçlıdır ve kesinlikle finansal veya yatırım tavsiyesi niteliği taşımaz. Tüm mali kararlardan kullanıcı sorumludur.",
-          ru:"Вся предоставленная информация, анализы и сигналы носят исключительно образовательный характер и не являются финансовой рекомендацией. Пользователь несёт полную ответственность за свои решения.",
-          es:"Todo el contenido, análisis y señales son solo con fines educativos y no constituyen asesoramiento financiero. El usuario es el único responsable de sus decisiones."}[lang]||""}
+      <div style={{fontSize:10,color:"var(--dm)",lineHeight:1.8,marginTop:8,maxWidth:340,margin:"8px auto 0"}}>
+        {{fa:"اطلاعات ارائه‌شده قابل اعتماد تلقی می‌شود، اما ناشر مسئولیتی در قبال خطاها یا سهل‌انگاری‌ها ندارد. هیچ توصیه خاصی از محتوای فوق قابل استنباط نیست. خواننده به‌تنهایی مسئول تمام اقداماتی است که انجام می‌دهد.",
+          ar:"المعلومات المقدمة تُعتبر موثوقة، لكن الناشر لا يتحمل أي مسؤولية عن الأخطاء أو السهو. لا يمكن استنتاج أي نصيحة محددة مما يلي. القارئ وحده المسؤول عن جميع الإجراءات المتخذة.",
+          tr:"Burada yer alan bilgilerin güvenilir olduğuna inanılmaktadır, ancak yayıncı hatalar veya eksikliklerden sorumlu tutulamaz. Aşağıdakilerden herhangi bir özel tavsiye çıkarılamaz. Okuyucu, yapılan tüm eylemlerden yalnızca kendisi sorumludur.",
+          ru:"Информация, содержащаяся здесь, считается надёжной, но издатель не несёт ответственности за ошибки или упущения. Из нижеследующего нельзя извлечь конкретных рекомендаций. Читатель несёт единоличную ответственность за все предпринятые действия.",
+          es:"La información aquí contenida se considera fiable, pero el editor no se hace responsable de errores u omisiones. No se puede inferir ningún consejo específico de lo siguiente. El lector es el único responsable de todas las acciones realizadas."}[lang]||""}
       </div>
       <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:14}}>
         <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" style={{color:"var(--dm)",display:"flex"}}>{IC.tg}</a>
