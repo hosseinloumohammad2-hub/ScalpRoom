@@ -2141,7 +2141,7 @@ function PostModal({post,onClose}){
       {post.description&&<p style={{fontSize:14,color:"var(--tx2)",lineHeight:1.7,marginBottom:6,whiteSpace:"pre-wrap"}}>{post.description}</p>}
       <TranslateBtn text={[post.title,post.description].filter(Boolean).join("\n\n")}/>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"var(--dm)",marginTop:8}}>
-        <span>{post.created_at?relativeTime(post.created_at,lang):""}</span>
+        <span>{post.created_at?new Date(post.created_at).toLocaleDateString()+"  ·  "+relativeTime(post.created_at,lang):""}</span>
       </div>
       {post.is_premium&&<div style={{marginTop:12,fontSize:11,fontWeight:600,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"4px 10px",borderRadius:8,display:"inline-block"}}>PREMIUM</div>}
     </div>}
@@ -2793,7 +2793,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
       <div style={{padding:"10px 12px"}}><div style={{fontSize:13,fontWeight:600,lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
       <div style={{fontSize:11,color:"var(--dm)",marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",filter:locked?"blur(4px)":"none"}}>{p.description||""}</div>
       <div style={{display:"flex",justifyContent:"space-between",marginTop:8,alignItems:"center"}}>
-        <span style={{fontSize:10,color:"var(--dm)"}}>{p.created_at?relativeTime(p.created_at,lang):""}</span>
+        <span style={{fontSize:10,color:"var(--dm)"}}>{p.created_at?new Date(p.created_at).toLocaleDateString()+"  ·  "+relativeTime(p.created_at,lang):""}</span>
         {p.is_premium&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 6px",borderRadius:4}}>PRO</span>}
       </div>
       {!locked&&<div onClick={(e)=>{e.stopPropagation();generateShareCard("analysis",p)}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:6,borderRadius:6,background:"color-mix(in srgb,var(--B) 8%,transparent)",cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)",marginTop:6}}>
@@ -2834,7 +2834,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
           <div style={{fontSize:13,fontWeight:600,lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
           <div style={{fontSize:11,color:"var(--dm)",marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",filter:locked?"blur(4px)":"none"}}>{p.description||""}</div>
           <div style={{display:"flex",justifyContent:"space-between",marginTop:8,alignItems:"center"}}>
-            <span style={{fontSize:10,color:"var(--dm)"}}>{p.created_at?relativeTime(p.created_at,lang):""}</span>
+            <span style={{fontSize:10,color:"var(--dm)"}}>{p.created_at?new Date(p.created_at).toLocaleDateString()+"  ·  "+relativeTime(p.created_at,lang):""}</span>
             {p.is_premium&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 6px",borderRadius:4}}>PRO</span>}
           </div>
           {isAdmin&&<div style={{marginTop:6}}>
@@ -4000,7 +4000,7 @@ function Adm({token,posts,signals,onR}){
         {p.image_url?<img src={p.image_url} style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/>:<div style={{width:36,height:36,borderRadius:6,background:"var(--bg)"}}/>}
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
-          <div style={{fontSize:10,color:"var(--dm)"}}>{p.category} · {p.created_at?relativeTime(p.created_at,lang):""}</div>
+          <div style={{fontSize:10,color:"var(--dm)"}}>{p.category} · {p.created_at?new Date(p.created_at).toLocaleDateString()+"  ·  "+relativeTime(p.created_at,lang):""}</div>
         </div>
         {p.is_premium&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",padding:"2px 5px",borderRadius:4,background:"color-mix(in srgb,var(--R) 10%,transparent)"}}>PRO</span>}
         <div onClick={()=>setEditPost(p)} style={{cursor:"pointer",color:"var(--B)",padding:4}}>{IC.edit}</div>
