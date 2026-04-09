@@ -2560,10 +2560,21 @@ function FinnhubNews({lang}){
   const[expandedId,setExpandedId]=useState(null);
   useEffect(()=>{
     const f=async()=>{
-      try{
-        const r=await fetch("https://finnhub.io/api/v1/news?category=general&token=ctv8hrpr01qjb0bk0q70ctv8hrpr01qjb0bk0q7g");
-        if(r.ok){const d=await r.json();if(Array.isArray(d))setNews(d.filter(n=>n.headline&&n.summary).slice(0,12))}
-      }catch(e){}
+      // Try multiple APIs — first one that works wins
+      const apis=[
+        {url:"https://www.alphavantage.co/query?function=NEWS_SENTIMENT&topics=financial_markets,economy_monetary&limit=12&apikey=demo",parse:d=>d?.feed?.map((n,i)=>({id:i,headline:n.title,summary:n.summary,source:n.source,image:n.banner_image,datetime:new Date(n.time_published?.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/,"$1-$2-$3T$4:$5:$6")).getTime()/1000}))||[]},
+        {url:"https://newsdata.io/api/1/latest?apikey=pub_626aborr6uo5lnm4tgo3jt9hm8e4l5cqp2&category=business&language=en&size=10",parse:d=>d?.results?.map((n,i)=>({id:i,headline:n.title,summary:n.description,source:n.source_name,image:n.image_url,datetime:new Date(n.pubDate).getTime()/1000}))||[]},
+        {url:"https://finnhub.io/api/v1/news?category=general&token=ctv8hrpr01qjb0bk0q70ctv8hrpr01qjb0bk0q7g",parse:d=>Array.isArray(d)?d.filter(n=>n.headline&&n.summary).slice(0,12):[]},
+      ];
+      for(const api of apis){
+        try{
+          const r=await fetch(api.url);
+          if(!r.ok)continue;
+          const d=await r.json();
+          const parsed=api.parse(d);
+          if(parsed.length>0){setNews(parsed);return}
+        }catch(e){continue}
+      }
     };
     f();
     const i=setInterval(f,8*60*1000);
