@@ -1158,6 +1158,7 @@ function useNotifications(userId,token){
 
   // Send push to all subscribers (admin only)
   const sendPushToAll=async(title,body,adminTk,target)=>{
+    if(target==='none')return;
     try{
       let url=`${SB}/rest/v1/push_subscriptions?select=sub_json,user_id`;
       if(target==='premium'){
@@ -1170,7 +1171,9 @@ function useNotifications(userId,token){
       if(!Array.isArray(subs)||!subs.length){console.log('No push subs found');return}
       const payload=subs.map(s=>{try{return JSON.parse(s.sub_json)}catch(e){return null}}).filter(Boolean);
       console.log('Sending push to',payload.length,'subscribers');
-      const res=await fetch(`${SB}/functions/v1/send-push`,{method:'POST',headers:{Authorization:`Bearer ${adminTk}`,'Content-Type':'application/json',apikey:SK},body:JSON.stringify({title,body,subscriptions:payload})});
+      // Only send title + teaser, not full content
+      const teaser=title.length>40?title.slice(0,40)+"...":title;
+      const res=await fetch(`${SB}/functions/v1/send-push`,{method:'POST',headers:{Authorization:`Bearer ${adminTk}`,'Content-Type':'application/json',apikey:SK},body:JSON.stringify({title:"Fxscalproom",body:"📢 "+teaser+" — Open app to view",subscriptions:payload})});
       const result=await res.json();
       console.log('Push result:',result);
     }catch(e){console.error('sendPushToAll error:',e)}
@@ -3964,6 +3967,8 @@ function Adm({token,posts,signals,onR}){
   const[editPost,setEditPost]=useState(null);
   const[customDate,setCustomDate]=useState(false),[postDate,setPostDate]=useState("");
   const[sigCustomDate,setSigCustomDate]=useState(false),[sigDate,setSigDate]=useState("");
+  const[postPushTarget,setPostPushTarget]=useState("all");
+  const[sigPushTarget,setSigPushTarget]=useState("all");
   const[editUserExp,setEditUserExp]=useState(null);
   const[expDate,setExpDate]=useState("");
   const[refCounts,setRefCounts]=useState({});
@@ -3978,8 +3983,8 @@ function Adm({token,posts,signals,onR}){
   const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrls=[];for(const img of msgImgs){const u=await api.img(img,token);if(u)imgUrls.push(u);else{setMs(t.uploadFailed);setLd(false);return}}const imgUrl=imgUrls.join(",");await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null},token);if(msgDtCats.length>0){await api.add("Posts",{title:msgTitle,description:msgBody,category:"daytrade",dt_category:msgDtCats.join(","),image_url:imgUrl||"",is_premium:msgTarget==="premium",likes:0},token)}setMs("Message sent!");noti.sendPushToAll(msgTitle,msgBody,token,msgTarget);setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImgs([]);setMsgPvs([]);setMsgDayTrade(false);setMsgDtCats([]);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
   const delMsg=async(id)=>{if(!confirm("Delete?"))return;await api.del("Messages",id,token);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const saveMsg=async(id)=>{if(!editMsgTitle||!editMsgBody)return;await api.patch("Messages",id,{title:editMsgTitle,body:editMsgBody,target:editMsgTarget},token);setEditMsgId(null);setMs("Message updated!");onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
-  const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}const data={title:ti,description:de,category:ca,image_url:u,is_premium:pr,likes:0};if(customDate&&postDate)data.created_at=new Date(postDate).toISOString();await api.add("Posts",data,token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);setCustomDate(false);setPostDate("");onR();noti.notify("Fxscalproom","New analysis: "+ti);noti.sendPushToAll("Fxscalproom","New analysis: "+ti,token,pr?"premium":"all")}catch(e){setMs(e.message)}setLd(false)};
-  const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{const data={pair:pa,type:st,entry_price:en,take_profit:tp1,tp2:tp2||null,tp3:tp3||null,stop_loss:sl,status:"active",pnl:null,closed_at:null,is_premium:sigPr};if(sigCustomDate&&sigDate)data.created_at=new Date(sigDate).toISOString();await api.add("Signals",data,token);setMs(t.signalPub);setPa("");setEn("");setTp1("");setTp2("");setTp3("");setSl("");setSigPr(false);setSigCustomDate(false);setSigDate("");onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st);noti.sendPushToAll("Fxscalproom","New signal: "+pa+" "+st,token,sigPr?"premium":"all")}catch(e){setMs(e.message)}setLd(false)};
+  const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}const data={title:ti,description:de,category:ca,image_url:u,is_premium:pr,likes:0};if(customDate&&postDate)data.created_at=new Date(postDate).toISOString();await api.add("Posts",data,token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);setCustomDate(false);setPostDate("");onR();noti.notify("Fxscalproom","New analysis: "+ti);noti.sendPushToAll("Fxscalproom","New analysis: "+ti,token,postPushTarget)}catch(e){setMs(e.message)}setLd(false)};
+  const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{const data={pair:pa,type:st,entry_price:en,take_profit:tp1,tp2:tp2||null,tp3:tp3||null,stop_loss:sl,status:"active",pnl:null,closed_at:null,is_premium:sigPr};if(sigCustomDate&&sigDate)data.created_at=new Date(sigDate).toISOString();await api.add("Signals",data,token);setMs(t.signalPub);setPa("");setEn("");setTp1("");setTp2("");setTp3("");setSl("");setSigPr(false);setSigCustomDate(false);setSigDate("");onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st);noti.sendPushToAll("Fxscalproom","New signal: "+pa+" "+st,token,sigPushTarget)}catch(e){setMs(e.message)}setLd(false)};
   const delP=async id=>{if(!confirm("Delete?"))return;await api.del("Posts",id,token);onR()};
   const delS=async id=>{if(!confirm("Delete?"))return;await api.del("Signals",id,token);onR()};
   const setPremium=async(uid,expiry)=>{const data={membership:"premium"};if(expiry)data.premium_expires_at=new Date(expiry).toISOString();await api.patch("Users",uid,data,token);setMs(t.upgraded);setEditUserExp(null);setExpDate("");api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
@@ -4020,6 +4025,13 @@ function Adm({token,posts,signals,onR}){
         <div style={{width:40,height:22,borderRadius:11,background:customDate?"var(--B)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:customDate?20:2,transition:".2s"}}/></div>
       </div>
       {customDate&&<input className="ip" type="datetime-local" value={postDate} onChange={e=>setPostDate(e.target.value)}/>}
+      <div style={{display:"flex",gap:6,marginBottom:8}}>
+        {["all","premium","none"].map(opt=>
+          <div key={opt} onClick={()=>setPostPushTarget(opt)} style={{flex:1,padding:10,borderRadius:10,textAlign:"center",cursor:"pointer",background:postPushTarget===opt?"color-mix(in srgb,var(--B) 10%,transparent)":"transparent",border:`1px solid ${postPushTarget===opt?"color-mix(in srgb,var(--B) 20%,transparent)":"var(--brd)"}`,fontSize:11,fontWeight:600,color:postPushTarget===opt?"var(--B)":"var(--mu)"}}>
+            {opt==="all"?"🔔 All":opt==="premium"?"👑 Premium":"🔕 No Notif"}
+          </div>
+        )}
+      </div>
       <button className="bt" style={{background:"var(--R)",opacity:ld?.5:1}} onClick={pub} disabled={ld}>{ld?"...":t.publish}</button>
     </>}
     {tb==="signal"&&<>
@@ -4041,6 +4053,13 @@ function Adm({token,posts,signals,onR}){
         <div style={{width:40,height:22,borderRadius:11,background:sigCustomDate?"var(--B)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:sigCustomDate?20:2,transition:".2s"}}/></div>
       </div>
       {sigCustomDate&&<input className="ip" type="datetime-local" value={sigDate} onChange={e=>setSigDate(e.target.value)}/>}
+      <div style={{display:"flex",gap:6,marginBottom:8}}>
+        {["all","premium","none"].map(opt=>
+          <div key={opt} onClick={()=>setSigPushTarget(opt)} style={{flex:1,padding:10,borderRadius:10,textAlign:"center",cursor:"pointer",background:sigPushTarget===opt?"color-mix(in srgb,var(--G) 10%,transparent)":"transparent",border:`1px solid ${sigPushTarget===opt?"color-mix(in srgb,var(--G) 20%,transparent)":"var(--brd)"}`,fontSize:11,fontWeight:600,color:sigPushTarget===opt?"var(--G)":"var(--mu)"}}>
+            {opt==="all"?"🔔 All":opt==="premium"?"👑 Premium":"🔕 No Notif"}
+          </div>
+        )}
+      </div>
       <button className="bt" style={{background:"var(--G)",opacity:ld?.5:1}} onClick={pubS} disabled={ld}>{ld?"...":t.publishSignal}</button>
     </>}
     {tb==="manage"&&<>
