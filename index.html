@@ -22,27 +22,21 @@
 :root{--bg:#f5f5f7;--bg2:#ffffff;--glass:rgba(255,255,255,.55);--glass2:rgba(255,255,255,.35);--gb:rgba(255,255,255,.72);--card:rgba(255,255,255,.78);--brd:rgba(0,0,0,.06);--brd2:rgba(0,0,0,.10);--tx:#1d1d1f;--tx2:#424245;--mu:#86868b;--dm:#aeaeb2;--R:#ff3b30;--G:#28cd41;--B:#0071e3;--Y:#ff9f0a;--purple:#bf5af2;--r:22px;--r2:16px}
 [data-theme="dark"]{--bg:#050507;--bg2:#0a0a0c;--glass:rgba(30,30,32,.65);--glass2:rgba(30,30,32,.45);--gb:rgba(255,255,255,.08);--card:rgba(28,28,30,.82);--brd:rgba(255,255,255,.06);--brd2:rgba(255,255,255,.10);--tx:#e5e5e7;--tx2:#a1a1aa;--mu:#71717a;--dm:#52525b;--R:#ff453a;--G:#30d158;--B:#0a84ff;--Y:#ffd60a}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{background:transparent;overscroll-behavior:none;overflow-x:hidden}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','DM Sans',system-ui,sans-serif;background:transparent;color:var(--tx);-webkit-font-smoothing:antialiased;overflow-x:hidden;letter-spacing:-.2px;overscroll-behavior:none}
-/* Animated bg canvas - fixed fullscreen */
-#fxbg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+html{background:var(--bg);overscroll-behavior:none}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased;overflow-x:hidden;letter-spacing:-.2px;overscroll-behavior-y:none}
+/* Gradient mesh - hidden initially, shown after app loads */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .5s ease .3s;background:radial-gradient(ellipse 600px 400px at 15% 5%,rgba(0,113,227,.08),transparent),radial-gradient(ellipse 500px 500px at 85% 15%,rgba(191,90,242,.06),transparent),radial-gradient(ellipse 400px 600px at 50% 95%,rgba(40,205,65,.04),transparent),var(--bg)}
+body.app-ready::before{opacity:1}
+[data-theme="dark"] body::before{background:radial-gradient(ellipse 600px 400px at 15% 5%,rgba(0,113,227,.04),transparent),radial-gradient(ellipse 500px 500px at 85% 15%,rgba(191,90,242,.03),transparent),var(--bg)}
 ::-webkit-scrollbar{width:0}
 input,button,textarea,select{font-family:inherit;border:none;outline:none;color:var(--tx)}
 input::placeholder,textarea::placeholder{color:var(--dm)}
 img{display:block;max-width:100%}
 a{color:inherit;text-decoration:none}
 .m{font-family:'JetBrains Mono','DM Mono',monospace;font-variant-numeric:tabular-nums}
-.app{max-width:430px;margin:0 auto;min-height:100dvh;position:relative;z-index:1;background:transparent;overflow-x:hidden}
-/* ─── Header: glass blur + fade, blends with status bar ─── */
-.hd{padding:12px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:40;
-  background:linear-gradient(to bottom,rgba(245,245,247,.96) 0%,rgba(245,245,247,.92) 70%,rgba(245,245,247,0) 100%);
-  backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);
-  padding-bottom:16px}
-[data-theme="dark"] .hd{background:linear-gradient(to bottom,rgba(5,5,7,.96) 0%,rgba(5,5,7,.92) 70%,rgba(5,5,7,0) 100%)}
-/* Sticky filter bars */
-.sticky-bar{position:sticky;z-index:35;background:rgba(245,245,247,.95);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);margin-left:-16px;margin-right:-16px;padding:6px 16px 8px;display:flex;gap:6px;overflow-x:auto}
-.sticky-bar::-webkit-scrollbar{display:none}
-[data-theme="dark"] .sticky-bar{background:rgba(5,5,7,.95)}
+.app{max-width:430px;margin:0 auto;min-height:100dvh;position:relative;z-index:1}
+/* ─── Header: gradient fade, NOT glass blur ─── */
+.hd{padding:12px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:linear-gradient(to bottom,var(--bg) 60%,transparent);z-index:40}
 .lg{font-size:19px;font-weight:700;color:var(--tx);letter-spacing:-.4px}
 .lg b{color:var(--R);font-weight:700;font-style:normal}
 .ct{padding:16px 16px 100px}
@@ -112,11 +106,11 @@ select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;paddi
 @keyframes splashFadeOut{from{opacity:1}to{opacity:0;pointer-events:none}}
 @keyframes splashSlideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
 @keyframes dotBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
-.splash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:transparent}
+.splash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg)}
 .splash.out{animation:splashFadeOut .5s ease forwards}
 .splash-logo{font-size:42px;font-weight:700;letter-spacing:-.5px;animation:splashSlideUp .6s ease}
 .splash-logo b{color:var(--R);animation:splashPulse 2s ease-in-out infinite}
-.splash-sub{font-size:12px;color:var(--mu);margin-top:12px;animation:splashSlideUp .6s ease .15s both}
+.splash-sub{font-size:12px;color:var(--dm);margin-top:12px;animation:splashSlideUp .6s ease .15s both}
 .splash-dots{display:flex;gap:6px;margin-top:32px;animation:splashSlideUp .6s ease .3s both}
 .splash-dots span{width:6px;height:6px;border-radius:50%;background:var(--R)}
 .splash-dots span:nth-child(1){animation:dotBounce .6s ease infinite}
@@ -145,126 +139,7 @@ select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;paddi
 </style>
 </head>
 <body>
-<canvas id="fxbg"></canvas>
 <div id="root"></div>
-<script>
-(function(){
-  var canvas=document.getElementById('fxbg');
-  var ctx=canvas.getContext('2d');
-  var dark=document.documentElement.getAttribute('data-theme')==='dark';
-  var W,H;
-
-  function resize(){
-    W=canvas.width=window.innerWidth;
-    H=canvas.height=window.innerHeight;
-  }
-  resize();
-  window.addEventListener('resize',resize);
-
-  var observer=new MutationObserver(function(){
-    dark=document.documentElement.getAttribute('data-theme')==='dark';
-  });
-  observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-
-  // Light: vivid pastel orbs on white. Dark: glowing orbs on near-black.
-  var orbs=[
-    // blue orb - top left
-    {ox:.10, oy:.05, r:.65,
-     lc:'rgba(0,113,227,ALPHA)',   la:.42,
-     dc:'rgba(10,132,255,ALPHA)',  da:.50,
-     spd:0.00014, phase:0},
-    // purple orb - top right
-    {ox:.85, oy:.15, r:.58,
-     lc:'rgba(175,82,222,ALPHA)',  la:.38,
-     dc:'rgba(191,90,242,ALPHA)',  da:.45,
-     spd:0.00019, phase:2.1},
-    // green orb - bottom left
-    {ox:.15, oy:.80, r:.55,
-     lc:'rgba(30,195,55,ALPHA)',   la:.32,
-     dc:'rgba(48,209,88,ALPHA)',   da:.40,
-     spd:0.00016, phase:4.2},
-    // amber orb - bottom right
-    {ox:.80, oy:.78, r:.50,
-     lc:'rgba(255,149,0,ALPHA)',   la:.30,
-     dc:'rgba(255,214,10,ALPHA)',  da:.35,
-     spd:0.00021, phase:1.0},
-    // cyan orb - center
-    {ox:.50, oy:.50, r:.45,
-     lc:'rgba(50,173,230,ALPHA)',  la:.28,
-     dc:'rgba(100,210,255,ALPHA)', da:.32,
-     spd:0.00012, phase:3.3}
-  ];
-
-  var t=0;
-  var frameCount=0;
-  var themeMeta=document.querySelector('meta[name="theme-color"]');
-
-  function rgbToHex(r,g,b){
-    return '#'+[r,g,b].map(function(v){return ('0'+Math.round(v).toString(16)).slice(-2)}).join('');
-  }
-
-  function draw(){
-    t+=1;
-    frameCount++;
-    W=canvas.width; H=canvas.height;
-
-    // Base background
-    ctx.globalCompositeOperation='source-over';
-    ctx.fillStyle=dark?'#050507':'#f5f5f7';
-    ctx.fillRect(0,0,W,H);
-
-    // Draw orbs — speed multiplied 3x
-    orbs.forEach(function(o){
-      var amp=0.20;
-      var spd=o.spd*3;
-      var px=(o.ox + Math.sin(t*spd*Math.PI*2 + o.phase)*amp + Math.cos(t*spd*1.3*Math.PI*2 + o.phase+1)*amp*0.5)*W;
-      var py=(o.oy + Math.cos(t*spd*1.1*Math.PI*2 + o.phase+0.5)*amp + Math.sin(t*spd*0.9*Math.PI*2 + o.phase+2)*amp*0.4)*H;
-      var radius=o.r * Math.min(W,H) * 0.75;
-
-      var alpha=dark?o.da:o.la;
-      var baseColor=dark?o.dc:o.lc;
-      var c0=baseColor.replace('ALPHA', String(alpha));
-      var c1=baseColor.replace('ALPHA', String(alpha*0.3));
-      var c2=baseColor.replace('ALPHA','0');
-
-      var grad=ctx.createRadialGradient(px,py,0,px,py,radius);
-      grad.addColorStop(0, c0);
-      grad.addColorStop(0.45, c1);
-      grad.addColorStop(1,   c2);
-
-      ctx.globalCompositeOperation='source-over';
-      ctx.fillStyle=grad;
-      ctx.beginPath();
-      ctx.arc(px,py,radius,0,Math.PI*2);
-      ctx.fill();
-    });
-
-    // Veil overlay
-    ctx.globalCompositeOperation='source-over';
-    if(!dark){
-      ctx.fillStyle='rgba(255,255,255,0.52)';
-      ctx.fillRect(0,0,W,H);
-    } else {
-      ctx.fillStyle='rgba(5,5,7,0.30)';
-      ctx.fillRect(0,0,W,H);
-    }
-
-    // Sync theme-color (status bar) every 6 frames — sample top-center pixel
-    if(frameCount%6===0 && themeMeta){
-      try{
-        var sampleX=Math.floor(W*0.5);
-        var sampleY=4;
-        var px=ctx.getImageData(sampleX,sampleY,1,1).data;
-        var hex=rgbToHex(px[0],px[1],px[2]);
-        themeMeta.content=hex;
-      }catch(e){}
-    }
-
-    requestAnimationFrame(draw);
-  }
-  draw();
-})();
-</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin></script>
@@ -2802,7 +2677,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
   };
   return(<div className="fi">
     {/* Section toggle: Long Term / Day Trade */}
-    <div className="sticky-bar" style={{top:48,marginBottom:12}}>
+    <div style={{display:"flex",gap:6,marginBottom:12}}>
       {[{k:"longterm",l:t.longTerm||"Long Term"},{k:"daytrade",l:t.dayTrade||"Day Trade"}].map(s=>
         <div key={s.k} onClick={()=>{setSection(s.k);setOpenMsgId(null)}} style={{flex:1,padding:"10px 0",borderRadius:12,textAlign:"center",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,
           background:section===s.k?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",
@@ -2832,7 +2707,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
     {dtToast&&<div style={{background:"color-mix(in srgb,var(--G) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 15%,transparent)",borderRadius:10,padding:10,marginBottom:10,fontSize:13,color:"var(--G)",textAlign:"center",fontWeight:600}}>{dtToast}</div>}
 
     {section==="longterm"&&<>
-    <div className="sticky-bar" style={{top:106,marginBottom:14}}>
+    <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4}}>
       {Object.entries(cats).map(([c,label])=><div key={c} onClick={()=>setCat(c)} style={{padding:"7px 14px",borderRadius:10,cursor:"pointer",whiteSpace:"nowrap",background:cat===c?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${cat===c?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:12,fontWeight:600,color:cat===c?"var(--R)":"var(--mu)"}}>{label}</div>)}
     </div>
     <div className="g2">{f.map(p=>{
@@ -2968,7 +2843,7 @@ function Sigs({signals,userProfile,goToPlans}){
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
   const filtered=useMemo(()=>{if(filter==="all")return signals||[];return(signals||[]).filter(s=>s.status===filter)},[signals,filter]);
   return(<div className="fi">
-    <div className="sticky-bar" style={{top:48,marginBottom:14}}>
+    <div style={{display:"flex",gap:6,marginBottom:14}}>
       {["all","active","tp_hit","sl_hit"].map(f=><div key={f} onClick={()=>setFilter(f)} style={{padding:"7px 12px",borderRadius:10,cursor:"pointer",fontSize:11,fontWeight:600,whiteSpace:"nowrap",background:filter===f?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${filter===f?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,color:filter===f?"var(--R)":"var(--mu)"}}>{f==="all"?t.all:f==="active"?t.active:f==="tp_hit"?t.tpHit:t.slHit}</div>)}
     </div>
     {filtered.map(s=>{
