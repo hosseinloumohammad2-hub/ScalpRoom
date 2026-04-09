@@ -3969,6 +3969,7 @@ function Adm({token,posts,signals,onR}){
   const[sigCustomDate,setSigCustomDate]=useState(false),[sigDate,setSigDate]=useState("");
   const[postPushTarget,setPostPushTarget]=useState("all");
   const[sigPushTarget,setSigPushTarget]=useState("all");
+  const[msgPushTarget,setMsgPushTarget]=useState("all");
   const[editUserExp,setEditUserExp]=useState(null);
   const[expDate,setExpDate]=useState("");
   const[refCounts,setRefCounts]=useState({});
@@ -3980,7 +3981,7 @@ function Adm({token,posts,signals,onR}){
   fetch(`${SB}/rest/v1/ActivityLog?order=login_date.desc&select=user_id,login_date,created_at`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const act={};d.forEach(a=>{if(!act[a.user_id])act[a.user_id]=a.created_at||a.login_date});setUserActivity(act)}}).catch(()=>{});
   return()=>clearInterval(ui)}},[tb,token]);
   useEffect(()=>{if(tb==="msg"){api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}},[tb,token]);
-  const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrls=[];for(const img of msgImgs){const u=await api.img(img,token);if(u)imgUrls.push(u);else{setMs(t.uploadFailed);setLd(false);return}}const imgUrl=imgUrls.join(",");await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null},token);if(msgDtCats.length>0){await api.add("Posts",{title:msgTitle,description:msgBody,category:"daytrade",dt_category:msgDtCats.join(","),image_url:imgUrl||"",is_premium:msgTarget==="premium",likes:0},token)}setMs("Message sent!");noti.sendPushToAll(msgTitle,msgBody,token,msgTarget);setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImgs([]);setMsgPvs([]);setMsgDayTrade(false);setMsgDtCats([]);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
+  const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrls=[];for(const img of msgImgs){const u=await api.img(img,token);if(u)imgUrls.push(u);else{setMs(t.uploadFailed);setLd(false);return}}const imgUrl=imgUrls.join(",");await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null},token);if(msgDtCats.length>0){await api.add("Posts",{title:msgTitle,description:msgBody,category:"daytrade",dt_category:msgDtCats.join(","),image_url:imgUrl||"",is_premium:msgTarget==="premium",likes:0},token)}setMs("Message sent!");noti.sendPushToAll(msgTitle,msgBody,token,msgPushTarget);setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImgs([]);setMsgPvs([]);setMsgDayTrade(false);setMsgDtCats([]);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
   const delMsg=async(id)=>{if(!confirm("Delete?"))return;await api.del("Messages",id,token);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const saveMsg=async(id)=>{if(!editMsgTitle||!editMsgBody)return;await api.patch("Messages",id,{title:editMsgTitle,body:editMsgBody,target:editMsgTarget},token);setEditMsgId(null);setMs("Message updated!");onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}const data={title:ti,description:de,category:ca,image_url:u,is_premium:pr,likes:0};if(customDate&&postDate)data.created_at=new Date(postDate).toISOString();await api.add("Posts",data,token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);setCustomDate(false);setPostDate("");onR();noti.notify("Fxscalproom","New analysis: "+ti);noti.sendPushToAll("Fxscalproom","New analysis: "+ti,token,postPushTarget)}catch(e){setMs(e.message)}setLd(false)};
@@ -4197,6 +4198,13 @@ function Adm({token,posts,signals,onR}){
           })}
         </div>
         {msgDtCats.length===0&&<div style={{fontSize:10,color:"var(--dm)",marginTop:6,textAlign:"center"}}>{lang==="fa"?"انتخاب نشده — فقط پیام ارسال میشه":"None selected — message only"}</div>}
+      </div>
+      <div style={{display:"flex",gap:6,marginBottom:8}}>
+        {["all","premium","none"].map(opt=>
+          <div key={opt} onClick={()=>setMsgPushTarget(opt)} style={{flex:1,padding:10,borderRadius:10,textAlign:"center",cursor:"pointer",background:msgPushTarget===opt?"color-mix(in srgb,var(--B) 10%,transparent)":"transparent",border:`1px solid ${msgPushTarget===opt?"color-mix(in srgb,var(--B) 20%,transparent)":"var(--brd)"}`,fontSize:11,fontWeight:600,color:msgPushTarget===opt?"var(--B)":"var(--mu)"}}>
+            {opt==="all"?"🔔 All":opt==="premium"?"👑 Premium":"🔕 No Notif"}
+          </div>
+        )}
       </div>
       <button className="bt" style={{background:"var(--B)",opacity:ld?.5:1}} onClick={pubMsg} disabled={ld}>{ld?"...":(lang==="fa"?"ارسال پیام":"Send Message")}</button>
       <div style={{fontSize:13,fontWeight:600,marginTop:16,marginBottom:8}}>{lang==="fa"?"پیام‌های قبلی":"Previous Messages"} ({allMsgs.length})</div>
