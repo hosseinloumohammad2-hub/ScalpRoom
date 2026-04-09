@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fxscalproom-v3';
+const CACHE_NAME = 'fxscalproom-v4';
 
 const SKIP_DOMAINS = [
   'tradingview.com',
@@ -58,4 +58,32 @@ self.addEventListener('fetch', event => {
     );
     return;
   }
+});
+
+/* ─── Real Push Notifications ─── */
+self.addEventListener('push', event => {
+  let data = { title: 'Fxscalproom', body: 'New update!' };
+  try { if (event.data) data = event.data.json(); } catch (e) { try { data.body = event.data.text(); } catch (e2) {} }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Fxscalproom', {
+      body: data.body || '',
+      icon: data.icon || '/icon-192.png',
+      badge: '/icon-192.png',
+      vibrate: [200, 100, 200],
+      tag: data.tag || 'fx-' + Date.now(),
+      renotify: true,
+      data: { url: data.url || '/' }
+    })
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) { if (c.url.includes(self.location.origin) && 'focus' in c) return c.focus(); }
+      return clients.openWindow(event.notification.data?.url || '/');
+    })
+  );
 });
