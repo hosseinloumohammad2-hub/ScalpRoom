@@ -1114,21 +1114,69 @@ function useTheme(){
 }
 
 /* ─── Push Notifications ─── */
-function useNotifications(){
+/* ─── Push Notifications (Real Web Push) ─── */
+const VAPID_PUBLIC='BG2IT51QwLMNXlsCnDn_Gtwnv7HVbD1iemgN-ad7fu8fpSSxwunT3-NDEpFqRVRdA06tVYP5Hx8wCBksI_ORx7s';
+function urlB64ToArr(b64){const p='='.repeat((4-b64.length%4)%4);const r=(b64+p).replace(/-/g,'+').replace(/_/g,'/');const d=atob(r);const a=new Uint8Array(d.length);for(let i=0;i<d.length;i++)a[i]=d.charCodeAt(i);return a}
+
+function useNotifications(userId,token){
   const[enabled,setEnabled]=useState(false);
+  const[sub,setSub]=useState(null);
+
+  // Check existing subscription on mount
+  useEffect(()=>{
+    if(!('serviceWorker' in navigator)||!('PushManager' in window))return;
+    navigator.serviceWorker.ready.then(reg=>reg.pushManager.getSubscription()).then(s=>{if(s){setSub(s);setEnabled(true)}}).catch(()=>{});
+  },[]);
+
+  // Save subscription to Supabase
+  const saveSub=async(s,uid,tk)=>{
+    if(!s||!uid||!tk)return;
+    const j=s.toJSON();
+    try{await fetch(`${SB}/rest/v1/push_subscriptions`,{method:'POST',headers:{apikey:SK,Authorization:`Bearer ${tk}`,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates'},body:JSON.stringify({user_id:uid,endpoint:j.endpoint,p256dh:j.keys.p256dh,auth_key:j.keys.auth,sub_json:JSON.stringify(j)})})}catch(e){console.error('Save push sub error:',e)}
+  };
+
+  // Enable push notifications
   const enable=async()=>{
-    if(!("Notification" in window))return false;
-    const perm=await Notification.requestPermission();
-    if(perm==="granted"){setEnabled(true);return true}
-    return false;
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)){console.log('Push not supported');return false}
+    try{
+      const perm=await Notification.requestPermission();
+      if(perm!=='granted'){console.log('Permission denied');return false}
+      const reg=await navigator.serviceWorker.ready;
+      let s=await reg.pushManager.getSubscription();
+      if(!s){s=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToArr(VAPID_PUBLIC)})}
+      setSub(s);setEnabled(true);
+      if(userId&&token)await saveSub(s,userId,token);
+      return true;
+    }catch(e){console.error('Push subscribe error:',e);return false}
   };
-  const notify=(title,body)=>{
-    if(enabled&&"Notification" in window&&Notification.permission==="granted"){
-      new Notification(title,{body,icon:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><rect width='64' height='64' rx='12' fill='%2309090b'/><text x='50%25' y='55%25' text-anchor='middle' dominant-baseline='central' font-family='Arial' font-weight='800' font-size='20' fill='white'>Fx</text><circle cx='48' cy='44' r='4' fill='%23FF4136'/></svg>"});
-    }
+
+  // Re-save when user logs in
+  useEffect(()=>{if(sub&&userId&&token)saveSub(sub,userId,token)},[userId,token]);
+
+  // Local notification fallback
+  const notify=(title,body)=>{if(enabled&&Notification.permission==='granted')try{new Notification(title,{body,icon:'icon-192.png'})}catch(e){}};
+
+  // Send push to all subscribers (admin only)
+  const sendPushToAll=async(title,body,adminTk,target)=>{
+    try{
+      let url=`${SB}/rest/v1/push_subscriptions?select=sub_json,user_id`;
+      if(target==='premium'){
+        const ur=await fetch(`${SB}/rest/v1/Users?membership=eq.premium&select=id`,{headers:H(adminTk)});
+        const pu=await ur.json();
+        if(Array.isArray(pu)&&pu.length>0){url+=`&user_id=in.(${pu.map(u=>u.id).join(',')})`}else return;
+      }
+      const r=await fetch(url,{headers:H(adminTk)});
+      const subs=await r.json();
+      if(!Array.isArray(subs)||!subs.length){console.log('No push subs found');return}
+      const payload=subs.map(s=>{try{return JSON.parse(s.sub_json)}catch(e){return null}}).filter(Boolean);
+      console.log('Sending push to',payload.length,'subscribers');
+      const res=await fetch(`${SB}/functions/v1/send-push`,{method:'POST',headers:{Authorization:`Bearer ${adminTk}`,'Content-Type':'application/json',apikey:SK},body:JSON.stringify({title,body,subscriptions:payload})});
+      const result=await res.json();
+      console.log('Push result:',result);
+    }catch(e){console.error('sendPushToAll error:',e)}
   };
-  useEffect(()=>{if("Notification" in window&&Notification.permission==="granted")setEnabled(true)},[]);
-  return{enabled,enable,notify};
+
+  return{enabled,enable,notify,sendPushToAll};
 }
 
 /* ─── Theme Color Helper (status bar color for modals) ─── */
@@ -3919,7 +3967,7 @@ function Adm({token,posts,signals,onR}){
   const[editUserExp,setEditUserExp]=useState(null);
   const[expDate,setExpDate]=useState("");
   const[refCounts,setRefCounts]=useState({});
-  const[msgTitle,setMsgTitle]=useState(""),[msgBody,setMsgBody]=useState(""),[msgTarget,setMsgTarget]=useState("all"),[allMsgs,setAllMsgs]=useState([]),[msgImgs,setMsgImgs]=useState([]),[msgPvs,setMsgPvs]=useState([]),[msgDayTrade,setMsgDayTrade]=useState(false),[msgDtCats,setMsgDtCats]=useState([]),[editMsgId,setEditMsgId]=useState(null),[editMsgTitle,setEditMsgTitle]=useState(""),[editMsgBody,setEditMsgBody]=useState(""),[editMsgTarget,setEditMsgTarget]=useState("all");  const noti=useNotifications();
+  const[msgTitle,setMsgTitle]=useState(""),[msgBody,setMsgBody]=useState(""),[msgTarget,setMsgTarget]=useState("all"),[allMsgs,setAllMsgs]=useState([]),[msgImgs,setMsgImgs]=useState([]),[msgPvs,setMsgPvs]=useState([]),[msgDayTrade,setMsgDayTrade]=useState(false),[msgDtCats,setMsgDtCats]=useState([]),[editMsgId,setEditMsgId]=useState(null),[editMsgTitle,setEditMsgTitle]=useState(""),[editMsgBody,setEditMsgBody]=useState(""),[editMsgTarget,setEditMsgTarget]=useState("all");  const noti=useNotifications(null,token);
   const toggleMsgDtCat=(k)=>setMsgDtCats(prev=>prev.includes(k)?prev.filter(x=>x!==k):[...prev,k]);
   const[userActivity,setUserActivity]=useState({});
   useEffect(()=>{if(tb==="users"){const loadUsers=()=>{api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};loadUsers();const ui=setInterval(loadUsers,10000);fetch(`${SB}/rest/v1/Referrals?select=referrer_id,referred_id`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const counts={};d.forEach(r=>{counts[r.referrer_id]=(counts[r.referrer_id]||0)+1});setRefCounts(counts)}}).catch(()=>{});
@@ -3927,11 +3975,11 @@ function Adm({token,posts,signals,onR}){
   fetch(`${SB}/rest/v1/ActivityLog?order=login_date.desc&select=user_id,login_date,created_at`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const act={};d.forEach(a=>{if(!act[a.user_id])act[a.user_id]=a.created_at||a.login_date});setUserActivity(act)}}).catch(()=>{});
   return()=>clearInterval(ui)}},[tb,token]);
   useEffect(()=>{if(tb==="msg"){api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}},[tb,token]);
-  const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrls=[];for(const img of msgImgs){const u=await api.img(img,token);if(u)imgUrls.push(u);else{setMs(t.uploadFailed);setLd(false);return}}const imgUrl=imgUrls.join(",");await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null},token);if(msgDtCats.length>0){await api.add("Posts",{title:msgTitle,description:msgBody,category:"daytrade",dt_category:msgDtCats.join(","),image_url:imgUrl||"",is_premium:msgTarget==="premium",likes:0},token)}setMs("Message sent!");setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImgs([]);setMsgPvs([]);setMsgDayTrade(false);setMsgDtCats([]);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
+  const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrls=[];for(const img of msgImgs){const u=await api.img(img,token);if(u)imgUrls.push(u);else{setMs(t.uploadFailed);setLd(false);return}}const imgUrl=imgUrls.join(",");await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null},token);if(msgDtCats.length>0){await api.add("Posts",{title:msgTitle,description:msgBody,category:"daytrade",dt_category:msgDtCats.join(","),image_url:imgUrl||"",is_premium:msgTarget==="premium",likes:0},token)}setMs("Message sent!");noti.sendPushToAll(msgTitle,msgBody,token,msgTarget);setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImgs([]);setMsgPvs([]);setMsgDayTrade(false);setMsgDtCats([]);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
   const delMsg=async(id)=>{if(!confirm("Delete?"))return;await api.del("Messages",id,token);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const saveMsg=async(id)=>{if(!editMsgTitle||!editMsgBody)return;await api.patch("Messages",id,{title:editMsgTitle,body:editMsgBody,target:editMsgTarget},token);setEditMsgId(null);setMs("Message updated!");onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
-  const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}const data={title:ti,description:de,category:ca,image_url:u,is_premium:pr,likes:0};if(customDate&&postDate)data.created_at=new Date(postDate).toISOString();await api.add("Posts",data,token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);setCustomDate(false);setPostDate("");onR();noti.notify("Fxscalproom","New analysis: "+ti)}catch(e){setMs(e.message)}setLd(false)};
-  const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{const data={pair:pa,type:st,entry_price:en,take_profit:tp1,tp2:tp2||null,tp3:tp3||null,stop_loss:sl,status:"active",pnl:null,closed_at:null,is_premium:sigPr};if(sigCustomDate&&sigDate)data.created_at=new Date(sigDate).toISOString();await api.add("Signals",data,token);setMs(t.signalPub);setPa("");setEn("");setTp1("");setTp2("");setTp3("");setSl("");setSigPr(false);setSigCustomDate(false);setSigDate("");onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st)}catch(e){setMs(e.message)}setLd(false)};
+  const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}const data={title:ti,description:de,category:ca,image_url:u,is_premium:pr,likes:0};if(customDate&&postDate)data.created_at=new Date(postDate).toISOString();await api.add("Posts",data,token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);setCustomDate(false);setPostDate("");onR();noti.notify("Fxscalproom","New analysis: "+ti);noti.sendPushToAll("Fxscalproom","New analysis: "+ti,token,pr?"premium":"all")}catch(e){setMs(e.message)}setLd(false)};
+  const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{const data={pair:pa,type:st,entry_price:en,take_profit:tp1,tp2:tp2||null,tp3:tp3||null,stop_loss:sl,status:"active",pnl:null,closed_at:null,is_premium:sigPr};if(sigCustomDate&&sigDate)data.created_at=new Date(sigDate).toISOString();await api.add("Signals",data,token);setMs(t.signalPub);setPa("");setEn("");setTp1("");setTp2("");setTp3("");setSl("");setSigPr(false);setSigCustomDate(false);setSigDate("");onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st);noti.sendPushToAll("Fxscalproom","New signal: "+pa+" "+st,token,sigPr?"premium":"all")}catch(e){setMs(e.message)}setLd(false)};
   const delP=async id=>{if(!confirm("Delete?"))return;await api.del("Posts",id,token);onR()};
   const delS=async id=>{if(!confirm("Delete?"))return;await api.del("Signals",id,token);onR()};
   const setPremium=async(uid,expiry)=>{const data={membership:"premium"};if(expiry)data.premium_expires_at=new Date(expiry).toISOString();await api.patch("Users",uid,data,token);setMs(t.upgraded);setEditUserExp(null);setExpDate("");api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
@@ -4690,7 +4738,7 @@ function AdminGiveaway({token}){
 /* ─── Profile ─── */
 function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSupport,onSupportOpened}){
   const{t}=useLang();
-  const noti=useNotifications();
+  const noti=useNotifications(user?.id,token);
   const[showLang,setShowLang]=useState(false);
   const[showChat,setShowChat]=useState(false);
   const[editingName,setEditingName]=useState(false);
@@ -4927,12 +4975,12 @@ ReactDOM.render(<App/>,document.getElementById("root"));
 if('serviceWorker' in navigator){
   window.addEventListener('load',async function(){
     try{
-      if(!localStorage.getItem('sw_v7')){
+      if(!localStorage.getItem('sw_v8')){
         var regs=await navigator.serviceWorker.getRegistrations();
         for(var i=0;i<regs.length;i++){await regs[i].unregister()}
         var keys=await caches.keys();
         for(var j=0;j<keys.length;j++){await caches.delete(keys[j])}
-        localStorage.setItem('sw_v7','1');
+        localStorage.setItem('sw_v8','1');
       }
       navigator.serviceWorker.register('/sw.js');
     }catch(e){}
