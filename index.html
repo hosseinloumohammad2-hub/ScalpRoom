@@ -109,7 +109,7 @@ select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;paddi
 @keyframes splashFadeOut{from{opacity:1}to{opacity:0;pointer-events:none}}
 @keyframes splashSlideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
 @keyframes dotBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
-.splash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:transparent;backdrop-filter:blur(0px)}
+.splash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:transparent}
 .splash.out{animation:splashFadeOut .5s ease forwards}
 .splash-logo{font-size:42px;font-weight:700;letter-spacing:-.5px;animation:splashSlideUp .6s ease}
 .splash-logo b{color:var(--R);animation:splashPulse 2s ease-in-out infinite}
@@ -2799,7 +2799,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
   };
   return(<div className="fi">
     {/* Section toggle: Long Term / Day Trade */}
-    <div style={{display:"flex",gap:6,marginBottom:12}}>
+    <div style={{display:"flex",gap:6,marginBottom:12,position:"sticky",top:52,zIndex:35,background:"var(--bg)",paddingTop:4,paddingBottom:8,marginLeft:-16,marginRight:-16,paddingLeft:16,paddingRight:16,backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)"}}>
       {[{k:"longterm",l:t.longTerm||"Long Term"},{k:"daytrade",l:t.dayTrade||"Day Trade"}].map(s=>
         <div key={s.k} onClick={()=>{setSection(s.k);setOpenMsgId(null)}} style={{flex:1,padding:"10px 0",borderRadius:12,textAlign:"center",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,
           background:section===s.k?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",
@@ -2829,7 +2829,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
     {dtToast&&<div style={{background:"color-mix(in srgb,var(--G) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 15%,transparent)",borderRadius:10,padding:10,marginBottom:10,fontSize:13,color:"var(--G)",textAlign:"center",fontWeight:600}}>{dtToast}</div>}
 
     {section==="longterm"&&<>
-    <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4}}>
+    <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4,position:"sticky",top:105,zIndex:34,background:"var(--bg)",paddingTop:4,marginLeft:-16,marginRight:-16,paddingLeft:16,paddingRight:16,backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)"}}>
       {Object.entries(cats).map(([c,label])=><div key={c} onClick={()=>setCat(c)} style={{padding:"7px 14px",borderRadius:10,cursor:"pointer",whiteSpace:"nowrap",background:cat===c?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${cat===c?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:12,fontWeight:600,color:cat===c?"var(--R)":"var(--mu)"}}>{label}</div>)}
     </div>
     <div className="g2">{f.map(p=>{
@@ -2965,7 +2965,7 @@ function Sigs({signals,userProfile,goToPlans}){
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
   const filtered=useMemo(()=>{if(filter==="all")return signals||[];return(signals||[]).filter(s=>s.status===filter)},[signals,filter]);
   return(<div className="fi">
-    <div style={{display:"flex",gap:6,marginBottom:14}}>
+    <div style={{display:"flex",gap:6,marginBottom:14,position:"sticky",top:52,zIndex:35,background:"var(--bg)",paddingTop:4,paddingBottom:8,marginLeft:-16,marginRight:-16,paddingLeft:16,paddingRight:16,backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",overflowX:"auto"}}>
       {["all","active","tp_hit","sl_hit"].map(f=><div key={f} onClick={()=>setFilter(f)} style={{padding:"7px 12px",borderRadius:10,cursor:"pointer",fontSize:11,fontWeight:600,whiteSpace:"nowrap",background:filter===f?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${filter===f?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,color:filter===f?"var(--R)":"var(--mu)"}}>{f==="all"?t.all:f==="active"?t.active:f==="tp_hit"?t.tpHit:t.slHit}</div>)}
     </div>
     {filtered.map(s=>{
