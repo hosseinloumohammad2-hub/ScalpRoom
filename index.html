@@ -24,10 +24,34 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{background:var(--bg);overscroll-behavior:none}
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased;overflow-x:hidden;letter-spacing:-.2px;overscroll-behavior-y:none}
-/* Gradient mesh - hidden initially, shown after app loads */
-body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .5s ease .3s;background:radial-gradient(ellipse 600px 400px at 15% 5%,rgba(0,113,227,.08),transparent),radial-gradient(ellipse 500px 500px at 85% 15%,rgba(191,90,242,.06),transparent),radial-gradient(ellipse 400px 600px at 50% 95%,rgba(40,205,65,.04),transparent),var(--bg)}
-body.app-ready::before{opacity:1}
-[data-theme="dark"] body::before{background:radial-gradient(ellipse 600px 400px at 15% 5%,rgba(0,113,227,.04),transparent),radial-gradient(ellipse 500px 500px at 85% 15%,rgba(191,90,242,.03),transparent),var(--bg)}
+/* ─── iOS 26 Animated Liquid Glass Background ─── */
+@keyframes orb1{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(40px,-30px) scale(1.08)}50%{transform:translate(20px,50px) scale(.94)}75%{transform:translate(-30px,20px) scale(1.05)}}
+@keyframes orb2{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(-50px,30px) scale(1.1)}50%{transform:translate(30px,-40px) scale(.92)}75%{transform:translate(50px,10px) scale(1.06)}}
+@keyframes orb3{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(30px,40px) scale(.96)}50%{transform:translate(-20px,-30px) scale(1.07)}75%{transform:translate(-40px,50px) scale(.97)}}
+@keyframes orb4{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-35px,-25px) scale(1.04)}66%{transform:translate(45px,35px) scale(.95)}}
+@keyframes shimmer{0%,100%{opacity:.5}50%{opacity:1}}
+/* Canvas layer for animated orbs */
+#fx-bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;width:100%;height:100%;opacity:0;transition:opacity .8s ease .4s}
+body.app-ready #fx-bg-canvas{opacity:1}
+/* Light mode orbs */
+.fx-orb{position:absolute;border-radius:50%;filter:blur(80px);will-change:transform}
+.fx-orb-1{width:480px;height:380px;background:radial-gradient(circle,rgba(0,113,227,.18) 0%,rgba(0,113,227,.06) 50%,transparent 70%);top:-60px;left:-80px;animation:orb1 14s ease-in-out infinite}
+.fx-orb-2{width:420px;height:420px;background:radial-gradient(circle,rgba(191,90,242,.15) 0%,rgba(191,90,242,.05) 50%,transparent 70%);top:10%;right:-100px;animation:orb2 18s ease-in-out infinite}
+.fx-orb-3{width:360px;height:460px;background:radial-gradient(circle,rgba(40,205,65,.10) 0%,rgba(40,205,65,.03) 50%,transparent 70%);bottom:15%;left:10%;animation:orb3 22s ease-in-out infinite}
+.fx-orb-4{width:300px;height:300px;background:radial-gradient(circle,rgba(255,159,10,.12) 0%,rgba(255,159,10,.04) 50%,transparent 70%);bottom:-40px;right:-40px;animation:orb4 16s ease-in-out infinite}
+.fx-orb-5{width:250px;height:250px;background:radial-gradient(circle,rgba(0,113,227,.08) 0%,transparent 70%);top:45%;left:50%;transform:translateX(-50%);animation:orb2 20s ease-in-out infinite reverse}
+/* Noise grain overlay for glass texture */
+.fx-grain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .8s ease .4s}
+body.app-ready .fx-grain{opacity:1}
+[data-theme="dark"] .fx-orb-1{background:radial-gradient(circle,rgba(10,132,255,.12) 0%,rgba(10,132,255,.04) 50%,transparent 70%)}
+[data-theme="dark"] .fx-orb-2{background:radial-gradient(circle,rgba(191,90,242,.10) 0%,rgba(191,90,242,.03) 50%,transparent 70%)}
+[data-theme="dark"] .fx-orb-3{background:radial-gradient(circle,rgba(48,209,88,.07) 0%,rgba(48,209,88,.02) 50%,transparent 70%)}
+[data-theme="dark"] .fx-orb-4{background:radial-gradient(circle,rgba(255,214,10,.08) 0%,rgba(255,214,10,.02) 50%,transparent 70%)}
+[data-theme="dark"] .fx-orb-5{background:radial-gradient(circle,rgba(10,132,255,.05) 0%,transparent 70%)}
+/* Shimmer highlight line - light mode only */
+.fx-shimmer{position:fixed;top:0;left:0;right:0;height:1px;z-index:1;pointer-events:none;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.9) 30%,rgba(255,255,255,1) 50%,rgba(255,255,255,.9) 70%,transparent 100%);animation:shimmer 4s ease-in-out infinite;opacity:0;transition:opacity .8s ease .5s}
+body.app-ready .fx-shimmer{opacity:.6}
+[data-theme="dark"] .fx-shimmer{opacity:0!important}
 ::-webkit-scrollbar{width:0}
 input,button,textarea,select{font-family:inherit;border:none;outline:none;color:var(--tx)}
 input::placeholder,textarea::placeholder{color:var(--dm)}
@@ -139,6 +163,15 @@ select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;paddi
 </style>
 </head>
 <body>
+<!-- iOS 26 Animated Liquid Glass Background -->
+<div id="fx-bg-canvas" aria-hidden="true">
+  <div class="fx-orb fx-orb-1"></div>
+  <div class="fx-orb fx-orb-2"></div>
+  <div class="fx-orb fx-orb-3"></div>
+  <div class="fx-orb fx-orb-4"></div>
+  <div class="fx-orb fx-orb-5"></div>
+</div>
+<div class="fx-shimmer" aria-hidden="true"></div>
 <div id="root"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
