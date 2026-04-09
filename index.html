@@ -175,7 +175,31 @@ const api={
   img:async(f,tk)=>{const n=`${Date.now()}_${Math.random().toString(36).slice(2,8)}.${f.name?.split('.').pop()||'jpg'}`;const r=await fetch(`${SB}/storage/v1/object/charts/${n}`,{method:"POST",headers:{apikey:SK,Authorization:`Bearer ${tk}`,"Content-Type":f.type||"image/jpeg"},body:f});if(!r.ok)return null;return`${SB}/storage/v1/object/public/charts/${n}`},
 };
 
-/* ─── SVG Icons ─── */
+/* ─── Relative Time (multi-language) ─── */
+function relativeTime(dateStr,lang){
+  if(!dateStr)return"";
+  const diff=Date.now()-new Date(dateStr).getTime();
+  const sec=Math.floor(diff/1000);
+  const min=Math.floor(sec/60);
+  const hr=Math.floor(min/60);
+  const day=Math.floor(hr/24);
+  const wk=Math.floor(day/7);
+  const L={
+    fa:{now:"همین الان",m:"دقیقه پیش",h:"ساعت پیش",d:"روز پیش",w:"هفته پیش"},
+    ar:{now:"الآن",m:"دقيقة مضت",h:"ساعة مضت",d:"يوم مضى",w:"أسبوع مضى"},
+    tr:{now:"Az önce",m:"dk önce",h:"sa önce",d:"gün önce",w:"hf önce"},
+    ru:{now:"Только что",m:"мин назад",h:"ч назад",d:"дн назад",w:"нед назад"},
+    es:{now:"Ahora",m:"min",h:"h",d:"d",w:"sem"},
+    en:{now:"Just now",m:"min ago",h:"h ago",d:"d ago",w:"w ago"}
+  };
+  const t=L[lang]||L.en;
+  if(min<1)return t.now;
+  if(min<60)return`${min} ${t.m}`;
+  if(hr<24)return`${hr} ${t.h}`;
+  if(day<7)return`${day} ${t.d}`;
+  if(wk<5)return`${wk} ${t.w}`;
+  return new Date(dateStr).toLocaleDateString();
+}
 const IC={
   home:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
   analysis:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0022 16z"/><polyline points="7.5 4.21 12 6.81 16.5 4.21"/><polyline points="7.5 19.79 7.5 14.6 3 12"/><polyline points="21 12 16.5 14.6 16.5 19.79"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
@@ -2117,7 +2141,7 @@ function PostModal({post,onClose}){
       {post.description&&<p style={{fontSize:14,color:"var(--tx2)",lineHeight:1.7,marginBottom:6,whiteSpace:"pre-wrap"}}>{post.description}</p>}
       <TranslateBtn text={[post.title,post.description].filter(Boolean).join("\n\n")}/>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"var(--dm)",marginTop:8}}>
-        <span>{post.created_at?new Date(post.created_at).toLocaleDateString():""}</span>
+        <span>{post.created_at?relativeTime(post.created_at,lang):""}</span>
       </div>
       {post.is_premium&&<div style={{marginTop:12,fontSize:11,fontWeight:600,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"4px 10px",borderRadius:8,display:"inline-block"}}>PREMIUM</div>}
     </div>}
@@ -2769,7 +2793,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
       <div style={{padding:"10px 12px"}}><div style={{fontSize:13,fontWeight:600,lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
       <div style={{fontSize:11,color:"var(--dm)",marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",filter:locked?"blur(4px)":"none"}}>{p.description||""}</div>
       <div style={{display:"flex",justifyContent:"space-between",marginTop:8,alignItems:"center"}}>
-        <span style={{fontSize:10,color:"var(--dm)"}}>{p.created_at?new Date(p.created_at).toLocaleDateString():""}</span>
+        <span style={{fontSize:10,color:"var(--dm)"}}>{p.created_at?relativeTime(p.created_at,lang):""}</span>
         {p.is_premium&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 6px",borderRadius:4}}>PRO</span>}
       </div>
       {!locked&&<div onClick={(e)=>{e.stopPropagation();generateShareCard("analysis",p)}} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:6,borderRadius:6,background:"color-mix(in srgb,var(--B) 8%,transparent)",cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)",marginTop:6}}>
@@ -2810,7 +2834,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
           <div style={{fontSize:13,fontWeight:600,lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
           <div style={{fontSize:11,color:"var(--dm)",marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",filter:locked?"blur(4px)":"none"}}>{p.description||""}</div>
           <div style={{display:"flex",justifyContent:"space-between",marginTop:8,alignItems:"center"}}>
-            <span style={{fontSize:10,color:"var(--dm)"}}>{p.created_at?new Date(p.created_at).toLocaleDateString():""}</span>
+            <span style={{fontSize:10,color:"var(--dm)"}}>{p.created_at?relativeTime(p.created_at,lang):""}</span>
             {p.is_premium&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 6px",borderRadius:4}}>PRO</span>}
           </div>
           {isAdmin&&<div style={{marginTop:6}}>
@@ -3976,7 +4000,7 @@ function Adm({token,posts,signals,onR}){
         {p.image_url?<img src={p.image_url} style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/>:<div style={{width:36,height:36,borderRadius:6,background:"var(--bg)"}}/>}
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
-          <div style={{fontSize:10,color:"var(--dm)"}}>{p.category} · {p.created_at?new Date(p.created_at).toLocaleDateString():""}</div>
+          <div style={{fontSize:10,color:"var(--dm)"}}>{p.category} · {p.created_at?relativeTime(p.created_at,lang):""}</div>
         </div>
         {p.is_premium&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",padding:"2px 5px",borderRadius:4,background:"color-mix(in srgb,var(--R) 10%,transparent)"}}>PRO</span>}
         <div onClick={()=>setEditPost(p)} style={{cursor:"pointer",color:"var(--B)",padding:4}}>{IC.edit}</div>
