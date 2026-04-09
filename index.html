@@ -2554,56 +2554,6 @@ function TVTopStories({colorTheme}){
   </div>);
 }
 
-function FinnhubNews({lang}){
-  const[news,setNews]=useState([]);
-  const[expanded,setExpanded]=useState(false);
-  const[expandedId,setExpandedId]=useState(null);
-  useEffect(()=>{
-    const f=async()=>{
-      // Try multiple APIs — first one that works wins
-      const apis=[
-        {url:"https://www.alphavantage.co/query?function=NEWS_SENTIMENT&topics=financial_markets,economy_monetary&limit=12&apikey=demo",parse:d=>d?.feed?.map((n,i)=>({id:i,headline:n.title,summary:n.summary,source:n.source,image:n.banner_image,datetime:new Date(n.time_published?.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/,"$1-$2-$3T$4:$5:$6")).getTime()/1000}))||[]},
-        {url:"https://newsdata.io/api/1/latest?apikey=pub_626aborr6uo5lnm4tgo3jt9hm8e4l5cqp2&category=business&language=en&size=10",parse:d=>d?.results?.map((n,i)=>({id:i,headline:n.title,summary:n.description,source:n.source_name,image:n.image_url,datetime:new Date(n.pubDate).getTime()/1000}))||[]},
-        {url:"https://finnhub.io/api/v1/news?category=general&token=ctv8hrpr01qjb0bk0q70ctv8hrpr01qjb0bk0q7g",parse:d=>Array.isArray(d)?d.filter(n=>n.headline&&n.summary).slice(0,12):[]},
-      ];
-      for(const api of apis){
-        try{
-          const r=await fetch(api.url);
-          if(!r.ok)continue;
-          const d=await r.json();
-          const parsed=api.parse(d);
-          if(parsed.length>0){setNews(parsed);return}
-        }catch(e){continue}
-      }
-    };
-    f();
-    const i=setInterval(f,8*60*1000);
-    return()=>clearInterval(i);
-  },[]);
-  if(!news.length)return null;
-  const titles={fa:"📰 جزئیات اخبار",ar:"📰 تفاصيل الأخبار",tr:"📰 Haber Detayları",ru:"📰 Подробности",es:"📰 Detalles"};
-  const shown=expanded?news:news.slice(0,5);
-  return(<div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}>
-    <div style={{padding:"12px 14px 8px",fontSize:14,fontWeight:700}}>{titles[lang]||"📰 News Details"}</div>
-    {shown.map((n,i)=>{
-      const isOpen=expandedId===n.id;
-      const timeStr=new Date(n.datetime*1000).toLocaleString([],{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
-      return<div key={n.id||i} style={{borderTop:"1px solid var(--brd)"}}>
-        <div onClick={()=>setExpandedId(isOpen?null:n.id)} style={{display:"flex",gap:10,padding:"10px 14px",cursor:"pointer",alignItems:"center"}}>
-          {n.image&&<img src={n.image} style={{width:44,height:44,borderRadius:8,objectFit:"cover",flexShrink:0}} alt="" onError={e=>{e.target.style.display="none"}}/>}
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:12,fontWeight:600,lineHeight:1.4,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{n.headline}</div>
-            <div style={{fontSize:9,color:"var(--dm)",marginTop:3}}>{n.source} · {timeStr}</div>
-          </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" style={{flexShrink:0,transition:"transform .2s",transform:isOpen?"rotate(180deg)":"rotate(0)"}}><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-        {isOpen&&<div style={{padding:"0 14px 12px",fontSize:11,color:"var(--tx2)",lineHeight:1.7,borderLeft:"3px solid var(--B)",marginLeft:14,marginRight:14,paddingLeft:10,background:"color-mix(in srgb,var(--B) 3%,transparent)",borderRadius:"0 8px 8px 0"}}>{n.summary}</div>}
-      </div>
-    })}
-    {news.length>5&&<div onClick={()=>setExpanded(!expanded)} style={{textAlign:"center",padding:"10px",cursor:"pointer",fontSize:11,fontWeight:600,color:"var(--B)",borderTop:"1px solid var(--brd)"}}>{expanded?{fa:"بستن",ar:"إغلاق",tr:"Kapat",ru:"Свернуть",es:"Cerrar"}[lang]||"Show less":{fa:"مشاهده بیشتر",ar:"المزيد",tr:"Daha fazla",ru:"Ещё",es:"Ver más"}[lang]||"Show more"}</div>}
-  </div>);
-}
-
 /* ─── Home ─── */
 function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,toggle,userProfile,token,onR,online}){
   const{t,lang}=useLang();
@@ -2772,7 +2722,6 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
     <PostModal post={sel} onClose={()=>setSel(null)}/>
     {/* ─── Breaking Market News ─── */}
     {online!==false&&<div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVTopStories colorTheme={theme}/></div>}
-    <FinnhubNews lang={lang}/>
     {/* ─── Disclaimer & Copyright ─── */}
     <div style={{textAlign:"center",padding:"28px 12px 8px",borderTop:"1px solid var(--brd)",marginTop:20}}>
       <div style={{fontSize:18,fontWeight:800,letterSpacing:"-.3px",marginBottom:10}}>Fxscalproom<span style={{color:"var(--R)"}}>.</span></div>
