@@ -2526,8 +2526,8 @@ function ImageCarousel({urls,style,borderRadius}){
   </div>;
 }
 
-/* ─── TradingView Top Stories (Breaking Market News) ─── */
-function TVTopStories({colorTheme}){
+/* ─── TradingView Timeline (World News) ─── */
+function TVTimeline({colorTheme}){
   const ref=useRef(null);
   const loaded=useRef(false);
   useEffect(()=>{
@@ -2537,18 +2537,17 @@ function TVTopStories({colorTheme}){
     s.src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js";
     s.async=true;
     s.innerHTML=JSON.stringify({
-      feedMode:"market",
-      market:"forex",
+      feedMode:"all_symbols",
       isTransparent:true,
       displayMode:"compact",
       width:"100%",
-      height:450,
+      height:500,
       colorTheme:colorTheme||"light",
       locale:"en"
     });
     ref.current.appendChild(s);
   },[colorTheme]);
-  return(<div ref={ref} style={{position:"relative",overflow:"hidden",transform:"scale(0.85)",transformOrigin:"top left",width:"117.6%",marginBottom:-68}}>
+  return(<div ref={ref} style={{position:"relative",overflow:"hidden",transform:"scale(0.85)",transformOrigin:"top left",width:"117.6%",marginBottom:-75}}>
     <div className="tradingview-widget-container__widget"></div>
     <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,zIndex:2,cursor:"default"}}></div>
   </div>);
@@ -2720,8 +2719,8 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
     {(!posts||!posts.length)&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:13}}>{t.noAnalyses}</div>}
     {showPremPop&&<PremiumPopup onClose={()=>setShowPremPop(false)} onGoPlans={goToPlans}/>}
     <PostModal post={sel} onClose={()=>setSel(null)}/>
-    {/* ─── Breaking Market News ─── */}
-    {online!==false&&<div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVTopStories colorTheme={theme}/></div>}
+    {/* ─── World News (TradingView Timeline) ─── */}
+    {online!==false&&<div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVTimeline colorTheme={theme}/></div>}
     {/* ─── Disclaimer & Copyright ─── */}
     <div style={{textAlign:"center",padding:"28px 12px 8px",borderTop:"1px solid var(--brd)",marginTop:20}}>
       <div style={{fontSize:18,fontWeight:800,letterSpacing:"-.3px",marginBottom:10}}>Fxscalproom<span style={{color:"var(--R)"}}>.</span></div>
