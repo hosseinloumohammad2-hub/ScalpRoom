@@ -2757,65 +2757,23 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
   const[addingDT,setAddingDT]=useState(null);
   const[dtToast,setDtToast]=useState("");
   const[dtCat,setDtCat]=useState("all");
-  const[dtPeriod,setDtPeriod]=useState("today");
-  const[dtPeriodAuto,setDtPeriodAuto]=useState(true);
   const DT_CATS=[{k:"all",l:"All"},{k:"forex",l:"Forex"},{k:"crypto",l:"Crypto"},{k:"indices",l:"Indices"},{k:"stocks",l:"US Stocks"}];
-  const DT_PERIODS=[
-    {k:"today",l:{fa:"امروز",en:"Today",ar:"اليوم",tr:"Bugün",ru:"Сегодня",es:"Hoy"}},
-    {k:"yesterday",l:{fa:"دیروز",en:"Yesterday",ar:"أمس",tr:"Dün",ru:"Вчера",es:"Ayer"}},
-    {k:"week",l:{fa:"این هفته",en:"This week",ar:"هذا الأسبوع",tr:"Bu hafta",ru:"Эта неделя",es:"Esta semana"}},
-    {k:"all",l:{fa:"همه",en:"All",ar:"الكل",tr:"Tümü",ru:"Все",es:"Todo"}}
-  ];
   // Long-term posts = posts that are NOT daytrade category
   const longTermPosts=useMemo(()=>(posts||[]).filter(p=>p.category!=="daytrade"),[posts]);
   // Day trade posts = posts with category "daytrade"
   const dayTradePosts=useMemo(()=>(posts||[]).filter(p=>p.category==="daytrade"),[posts]);
-  // Auto-select best non-empty period on first load (today → yesterday → week → all)
-  React.useEffect(()=>{
-    if(!dtPeriodAuto)return;
-    if(!dayTradePosts.length)return;
-    const now=new Date();
-    const startOfToday=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
-    const startOfYesterday=startOfToday-86400000;
-    const startOfWeek=startOfToday-6*86400000;
-    const times=dayTradePosts.map(p=>p.created_at?new Date(p.created_at).getTime():0);
-    const hasToday=times.some(t=>t>=startOfToday);
-    const hasYesterday=times.some(t=>t>=startOfYesterday&&t<startOfToday);
-    const hasWeek=times.some(t=>t>=startOfWeek);
-    let next="all";
-    if(hasToday)next="today";
-    else if(hasYesterday)next="yesterday";
-    else if(hasWeek)next="week";
-    if(next!==dtPeriod)setDtPeriod(next);
-  },[dayTradePosts,dtPeriodAuto]);
   const f=useMemo(()=>{let list=cat==="all"?longTermPosts:longTermPosts.filter(p=>p.category===cat);
     if(q){const ql=q.toLowerCase();list=list.filter(p=>(p.title||"").toLowerCase().includes(ql)||(p.description||"").toLowerCase().includes(ql))}
     return list;
   },[longTermPosts,cat,q]);
-  // Day trade filtered by search + sub-category + period (supports comma-separated)
+  // Day trade filtered by search + sub-category, sorted newest first
   const dtFiltered=useMemo(()=>{
     let list=dayTradePosts;
     if(dtCat!=="all")list=list.filter(p=>(p.dt_category||"").split(",").includes(dtCat));
     if(q){const ql=q.toLowerCase();list=list.filter(p=>(p.title||"").toLowerCase().includes(ql)||(p.description||"").toLowerCase().includes(ql))}
-    // Period filter
-    if(dtPeriod!=="all"){
-      const now=new Date();
-      const startOfToday=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
-      const startOfYesterday=startOfToday-86400000;
-      const startOfWeek=startOfToday-6*86400000;
-      list=list.filter(p=>{
-        if(!p.created_at)return false;
-        const t=new Date(p.created_at).getTime();
-        if(dtPeriod==="today")return t>=startOfToday;
-        if(dtPeriod==="yesterday")return t>=startOfYesterday&&t<startOfToday;
-        if(dtPeriod==="week")return t>=startOfWeek;
-        return true;
-      });
-    }
-    // Sort newest first
     list=[...list].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
     return list;
-  },[dayTradePosts,dtCat,q,dtPeriod]);
+  },[dayTradePosts,dtCat,q]);
   // Group day trade posts by day for date separators
   const dtGrouped=useMemo(()=>{
     const groups=[];
@@ -2932,15 +2890,8 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
 
     {section==="daytrade"&&<>
       {/* Sub-category filter */}
-      <div style={{display:"flex",gap:4,marginBottom:8,overflowX:"auto",paddingBottom:4}}>
+      <div style={{display:"flex",gap:4,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
         {DT_CATS.map(c=><div key={c.k} onClick={()=>setDtCat(c.k)} style={{padding:"7px 14px",borderRadius:10,cursor:"pointer",whiteSpace:"nowrap",background:dtCat===c.k?"color-mix(in srgb,var(--Y) 10%,transparent)":"transparent",border:`1px solid ${dtCat===c.k?"color-mix(in srgb,var(--Y) 25%,transparent)":"var(--brd)"}`,fontSize:12,fontWeight:600,color:dtCat===c.k?"var(--Y)":"var(--mu)"}}>{c.l}</div>)}
-      </div>
-      {/* Period filter (Today / Yesterday / Week / All) */}
-      <div style={{display:"flex",gap:5,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
-        {DT_PERIODS.map(pr=>{
-          const active=dtPeriod===pr.k;
-          return<div key={pr.k} onClick={()=>{setDtPeriod(pr.k);setDtPeriodAuto(false)}} style={{padding:"4px 10px",borderRadius:14,cursor:"pointer",whiteSpace:"nowrap",background:active?"var(--R)":"transparent",border:`1px solid ${active?"var(--R)":"var(--brd)"}`,fontSize:10,fontWeight:700,color:active?"#fff":"var(--mu)",transition:"all .2s"}}>{pr.l[lang]||pr.l.en}</div>
-        })}
       </div>
       {/* Day Trade posts grouped by day */}
       {dtGrouped.length>0&&<div style={{marginBottom:16}}>{dtGrouped.map(group=>(
