@@ -2833,7 +2833,10 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
         if(diffDays===0)label={fa:"امروز",en:"Today",ar:"اليوم",tr:"Bugün",ru:"Сегодня",es:"Hoy"}[lang]||"Today";
         else if(diffDays===1)label={fa:"دیروز",en:"Yesterday",ar:"أمس",tr:"Dün",ru:"Вчера",es:"Ayer"}[lang]||"Yesterday";
         else if(diffDays>1&&diffDays<7)label=({fa:`${diffDays} روز پیش`,en:`${diffDays} days ago`,ar:`قبل ${diffDays} أيام`,tr:`${diffDays} gün önce`,ru:`${diffDays} дн. назад`,es:`hace ${diffDays} días`})[lang]||`${diffDays} days ago`;
-        else label=d.toLocaleDateString(lang==="fa"?"fa-IR":lang,{year:"numeric",month:"short",day:"numeric"});
+        else if(diffDays>=7&&diffDays<14)label={fa:"یک هفته پیش",en:"1 week ago",ar:"قبل أسبوع",tr:"1 hafta önce",ru:"неделю назад",es:"hace 1 semana"}[lang]||"1 week ago";
+        else if(diffDays<30){const w=Math.floor(diffDays/7);label=({fa:`${w} هفته پیش`,en:`${w} weeks ago`,ar:`قبل ${w} أسابيع`,tr:`${w} hafta önce`,ru:`${w} нед. назад`,es:`hace ${w} semanas`})[lang]||`${w} weeks ago`;}
+        else if(diffDays<60)label={fa:"یک ماه پیش",en:"1 month ago",ar:"قبل شهر",tr:"1 ay önce",ru:"месяц назад",es:"hace 1 mes"}[lang]||"1 month ago";
+        else{const m=Math.floor(diffDays/30);label=({fa:`${m} ماه پیش`,en:`${m} months ago`,ar:`قبل ${m} أشهر`,tr:`${m} ay önce`,ru:`${m} мес. назад`,es:`hace ${m} meses`})[lang]||`${m} months ago`;}
         currentGroup={key,label,items:[]};
         groups.push(currentGroup);
         currentKey=key;
@@ -2945,7 +2948,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
           {/* Date separator */}
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,marginTop:4}}>
             <div style={{flex:1,height:1,background:"var(--brd)"}}/>
-            <span style={{fontSize:9,fontWeight:700,color:"var(--mu)",padding:"2px 8px",borderRadius:10,background:"color-mix(in srgb,var(--R) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 15%,transparent)",whiteSpace:"nowrap"}}>{group.label} · {group.items.length}</span>
+            <span style={{fontSize:9,fontWeight:700,color:"var(--mu)",padding:"2px 8px",borderRadius:10,background:"color-mix(in srgb,var(--R) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 15%,transparent)",whiteSpace:"nowrap"}}>{group.label}</span>
             <div style={{flex:1,height:1,background:"var(--brd)"}}/>
           </div>
           <div className="g2">{group.items.map(p=>{
