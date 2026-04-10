@@ -1233,18 +1233,17 @@ function useOnlineStatus(){
 
 /* ─── Splash Screen ─── */
 function SplashScreen({onDone}){
-  const[out,setOut]=useState(false);
   useEffect(()=>{
-    // Remove the static boot splash now that React's splash is showing
+    // The static boot splash is already showing - just wait then remove it
     var bs=document.getElementById("boot-splash");
-    if(bs){bs.classList.add("fade");setTimeout(function(){bs&&bs.parentNode&&bs.parentNode.removeChild(bs)},400)}
-    const t1=setTimeout(()=>setOut(true),1800);const t2=setTimeout(onDone,2300);return()=>{clearTimeout(t1);clearTimeout(t2)}
+    var t=setTimeout(function(){
+      if(bs){bs.classList.add("fade");setTimeout(function(){bs&&bs.parentNode&&bs.parentNode.removeChild(bs);onDone()},350)}
+      else{onDone()}
+    },1200);
+    return()=>clearTimeout(t);
   },[]);
-  return(<div className={`splash${out?" out":""}`}>
-    <div className="splash-logo">Fxscalproom<b>.</b></div>
-    <div className="splash-sub">Professional Trading Signals</div>
-    <div className="splash-dots"><span/><span/><span/></div>
-  </div>);
+  // Don't render anything - the static boot-splash in HTML is what's visible
+  return null;
 }
 
 /* ─── Onboarding ─── */
