@@ -2909,16 +2909,16 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
     </>}
 
     {section==="daytrade"&&<>
+      {/* Sub-category filter */}
+      <div style={{display:"flex",gap:4,marginBottom:8,overflowX:"auto",paddingBottom:4}}>
+        {DT_CATS.map(c=><div key={c.k} onClick={()=>setDtCat(c.k)} style={{padding:"7px 14px",borderRadius:10,cursor:"pointer",whiteSpace:"nowrap",background:dtCat===c.k?"color-mix(in srgb,var(--Y) 10%,transparent)":"transparent",border:`1px solid ${dtCat===c.k?"color-mix(in srgb,var(--Y) 25%,transparent)":"var(--brd)"}`,fontSize:12,fontWeight:600,color:dtCat===c.k?"var(--Y)":"var(--mu)"}}>{c.l}</div>)}
+      </div>
       {/* Period filter (Today / Yesterday / Week / All) */}
-      <div style={{display:"flex",gap:6,marginBottom:10,overflowX:"auto",paddingBottom:4}}>
+      <div style={{display:"flex",gap:5,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
         {DT_PERIODS.map(pr=>{
           const active=dtPeriod===pr.k;
-          return<div key={pr.k} onClick={()=>setDtPeriod(pr.k)} style={{padding:"8px 16px",borderRadius:20,cursor:"pointer",whiteSpace:"nowrap",background:active?"var(--R)":"transparent",border:`1px solid ${active?"var(--R)":"var(--brd)"}`,fontSize:12,fontWeight:700,color:active?"#fff":"var(--mu)",transition:"all .2s"}}>{pr.l[lang]||pr.l.en}</div>
+          return<div key={pr.k} onClick={()=>setDtPeriod(pr.k)} style={{padding:"4px 10px",borderRadius:14,cursor:"pointer",whiteSpace:"nowrap",background:active?"var(--R)":"transparent",border:`1px solid ${active?"var(--R)":"var(--brd)"}`,fontSize:10,fontWeight:700,color:active?"#fff":"var(--mu)",transition:"all .2s"}}>{pr.l[lang]||pr.l.en}</div>
         })}
-      </div>
-      {/* Sub-category filter */}
-      <div style={{display:"flex",gap:4,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
-        {DT_CATS.map(c=><div key={c.k} onClick={()=>setDtCat(c.k)} style={{padding:"7px 14px",borderRadius:10,cursor:"pointer",whiteSpace:"nowrap",background:dtCat===c.k?"color-mix(in srgb,var(--Y) 10%,transparent)":"transparent",border:`1px solid ${dtCat===c.k?"color-mix(in srgb,var(--Y) 25%,transparent)":"var(--brd)"}`,fontSize:12,fontWeight:600,color:dtCat===c.k?"var(--Y)":"var(--mu)"}}>{c.l}</div>)}
       </div>
       {/* Day Trade posts grouped by day */}
       {dtGrouped.length>0&&<div style={{marginBottom:16}}>{dtGrouped.map(group=>(
@@ -2926,7 +2926,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
           {/* Date separator */}
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,marginTop:4}}>
             <div style={{flex:1,height:1,background:"var(--brd)"}}/>
-            <span style={{fontSize:11,fontWeight:700,color:"var(--mu)",padding:"4px 10px",borderRadius:12,background:"color-mix(in srgb,var(--R) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 15%,transparent)",whiteSpace:"nowrap"}}>{group.label} · {group.items.length}</span>
+            <span style={{fontSize:9,fontWeight:700,color:"var(--mu)",padding:"2px 8px",borderRadius:10,background:"color-mix(in srgb,var(--R) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 15%,transparent)",whiteSpace:"nowrap"}}>{group.label} · {group.items.length}</span>
             <div style={{flex:1,height:1,background:"var(--brd)"}}/>
           </div>
           <div className="g2">{group.items.map(p=>{
