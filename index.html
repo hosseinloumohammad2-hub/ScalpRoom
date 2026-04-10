@@ -2757,7 +2757,14 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
   const[addingDT,setAddingDT]=useState(null);
   const[dtToast,setDtToast]=useState("");
   const[dtCat,setDtCat]=useState("all");
+  const[dtPeriod,setDtPeriod]=useState("today");
   const DT_CATS=[{k:"all",l:"All"},{k:"forex",l:"Forex"},{k:"crypto",l:"Crypto"},{k:"indices",l:"Indices"},{k:"stocks",l:"US Stocks"}];
+  const DT_PERIODS=[
+    {k:"today",l:{fa:"امروز",en:"Today",ar:"اليوم",tr:"Bugün",ru:"Сегодня",es:"Hoy"}},
+    {k:"yesterday",l:{fa:"دیروز",en:"Yesterday",ar:"أمس",tr:"Dün",ru:"Вчера",es:"Ayer"}},
+    {k:"week",l:{fa:"این هفته",en:"This week",ar:"هذا الأسبوع",tr:"Bu hafta",ru:"Эта неделя",es:"Esta semana"}},
+    {k:"all",l:{fa:"همه",en:"All",ar:"الكل",tr:"Tümü",ru:"Все",es:"Todo"}}
+  ];
   // Long-term posts = posts that are NOT daytrade category
   const longTermPosts=useMemo(()=>(posts||[]).filter(p=>p.category!=="daytrade"),[posts]);
   // Day trade posts = posts with category "daytrade"
@@ -2766,13 +2773,56 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
     if(q){const ql=q.toLowerCase();list=list.filter(p=>(p.title||"").toLowerCase().includes(ql)||(p.description||"").toLowerCase().includes(ql))}
     return list;
   },[longTermPosts,cat,q]);
-  // Day trade filtered by search + sub-category (supports comma-separated)
+  // Day trade filtered by search + sub-category + period (supports comma-separated)
   const dtFiltered=useMemo(()=>{
     let list=dayTradePosts;
     if(dtCat!=="all")list=list.filter(p=>(p.dt_category||"").split(",").includes(dtCat));
     if(q){const ql=q.toLowerCase();list=list.filter(p=>(p.title||"").toLowerCase().includes(ql)||(p.description||"").toLowerCase().includes(ql))}
+    // Period filter
+    if(dtPeriod!=="all"){
+      const now=new Date();
+      const startOfToday=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+      const startOfYesterday=startOfToday-86400000;
+      const startOfWeek=startOfToday-6*86400000;
+      list=list.filter(p=>{
+        if(!p.created_at)return false;
+        const t=new Date(p.created_at).getTime();
+        if(dtPeriod==="today")return t>=startOfToday;
+        if(dtPeriod==="yesterday")return t>=startOfYesterday&&t<startOfToday;
+        if(dtPeriod==="week")return t>=startOfWeek;
+        return true;
+      });
+    }
+    // Sort newest first
+    list=[...list].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
     return list;
-  },[dayTradePosts,dtCat,q]);
+  },[dayTradePosts,dtCat,q,dtPeriod]);
+  // Group day trade posts by day for date separators
+  const dtGrouped=useMemo(()=>{
+    const groups=[];
+    const now=new Date();
+    const startOfToday=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+    let currentKey=null;
+    let currentGroup=null;
+    dtFiltered.forEach(p=>{
+      const d=p.created_at?new Date(p.created_at):new Date(0);
+      const dayStart=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
+      const key=dayStart;
+      if(key!==currentKey){
+        const diffDays=Math.round((startOfToday-dayStart)/86400000);
+        let label;
+        if(diffDays===0)label={fa:"امروز",en:"Today",ar:"اليوم",tr:"Bugün",ru:"Сегодня",es:"Hoy"}[lang]||"Today";
+        else if(diffDays===1)label={fa:"دیروز",en:"Yesterday",ar:"أمس",tr:"Dün",ru:"Вчера",es:"Ayer"}[lang]||"Yesterday";
+        else if(diffDays>1&&diffDays<7)label=({fa:`${diffDays} روز پیش`,en:`${diffDays} days ago`,ar:`قبل ${diffDays} أيام`,tr:`${diffDays} gün önce`,ru:`${diffDays} дн. назад`,es:`hace ${diffDays} días`})[lang]||`${diffDays} days ago`;
+        else label=d.toLocaleDateString(lang==="fa"?"fa-IR":lang,{year:"numeric",month:"short",day:"numeric"});
+        currentGroup={key,label,items:[]};
+        groups.push(currentGroup);
+        currentKey=key;
+      }
+      currentGroup.items.push(p);
+    });
+    return groups;
+  },[dtFiltered,lang]);
   // Visible messages for Day Trade tab (from notifications)
   const dtMsgs=useMemo(()=>{
     if(!q)return msgs||[];
@@ -2859,12 +2909,27 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
     </>}
 
     {section==="daytrade"&&<>
+      {/* Period filter (Today / Yesterday / Week / All) */}
+      <div style={{display:"flex",gap:6,marginBottom:10,overflowX:"auto",paddingBottom:4}}>
+        {DT_PERIODS.map(pr=>{
+          const active=dtPeriod===pr.k;
+          return<div key={pr.k} onClick={()=>setDtPeriod(pr.k)} style={{padding:"8px 16px",borderRadius:20,cursor:"pointer",whiteSpace:"nowrap",background:active?"var(--R)":"transparent",border:`1px solid ${active?"var(--R)":"var(--brd)"}`,fontSize:12,fontWeight:700,color:active?"#fff":"var(--mu)",transition:"all .2s"}}>{pr.l[lang]||pr.l.en}</div>
+        })}
+      </div>
       {/* Sub-category filter */}
       <div style={{display:"flex",gap:4,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
         {DT_CATS.map(c=><div key={c.k} onClick={()=>setDtCat(c.k)} style={{padding:"7px 14px",borderRadius:10,cursor:"pointer",whiteSpace:"nowrap",background:dtCat===c.k?"color-mix(in srgb,var(--Y) 10%,transparent)":"transparent",border:`1px solid ${dtCat===c.k?"color-mix(in srgb,var(--Y) 25%,transparent)":"var(--brd)"}`,fontSize:12,fontWeight:600,color:dtCat===c.k?"var(--Y)":"var(--mu)"}}>{c.l}</div>)}
       </div>
-      {/* Day Trade posts (saved from notifications) */}
-      {dtFiltered.length>0&&<div className="g2" style={{marginBottom:16}}>{dtFiltered.map(p=>{
+      {/* Day Trade posts grouped by day */}
+      {dtGrouped.length>0&&<div style={{marginBottom:16}}>{dtGrouped.map(group=>(
+        <div key={group.key} style={{marginBottom:18}}>
+          {/* Date separator */}
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,marginTop:4}}>
+            <div style={{flex:1,height:1,background:"var(--brd)"}}/>
+            <span style={{fontSize:11,fontWeight:700,color:"var(--mu)",padding:"4px 10px",borderRadius:12,background:"color-mix(in srgb,var(--R) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 15%,transparent)",whiteSpace:"nowrap"}}>{group.label} · {group.items.length}</span>
+            <div style={{flex:1,height:1,background:"var(--brd)"}}/>
+          </div>
+          <div className="g2">{group.items.map(p=>{
         const locked=p.is_premium&&!isPremiumUser;
         return<div key={p.id} onClick={()=>{if(locked){setShowPremPop(true)}else setSel(p)}} className="cd" style={{padding:0,overflow:"hidden",cursor:"pointer",position:"relative"}}>
         {p.image_url?(p.image_url.includes(",")?<div style={{filter:locked?"blur(8px)":"none"}}><ImageCarousel urls={p.image_url} style={{width:"100%",height:120,objectFit:"cover"}} borderRadius={0}/></div>:<img src={p.image_url} style={{width:"100%",height:120,objectFit:"cover",filter:locked?"blur(8px)":"none"}} alt=""/>):<div style={{width:"100%",height:120,background:"color-mix(in srgb,var(--R) 3%,var(--bg2))",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
@@ -2916,7 +2981,9 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
             Share
           </div>}
         </div>
-      </div>})}</div>}
+      </div>})}</div>
+        </div>
+      ))}</div>}
 
       {/* Notifications section for admin to add to day trade */}
       {isAdmin&&dtMsgs.length>0&&<>
