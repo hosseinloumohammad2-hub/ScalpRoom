@@ -9,6 +9,26 @@
 <script>
 (function(){try{var t=localStorage.getItem("fxtheme");if(!t||t==="light")t="liquid";var isLiquid=t==="liquid";var c=isLiquid?"#f5f5f7":"#050507";document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.removeAttribute("media");m.content=c});if(!isLiquid)document.documentElement.setAttribute("data-theme","dark");else document.documentElement.setAttribute("data-theme","liquid")}catch(e){}})();
 </script>
+<style>
+/* Instant boot splash - rendered immediately, before React/fonts load */
+html,body{margin:0;padding:0;background:#f5f5f7}
+html[data-theme="dark"],html[data-theme="dark"] body{background:#050507}
+#boot-splash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',system-ui,sans-serif}
+html[data-theme="dark"] #boot-splash{background:#050507}
+#boot-splash .bsl{font-size:42px;font-weight:700;letter-spacing:-.5px;color:#1d1d1f;animation:bsUp .5s ease}
+html[data-theme="dark"] #boot-splash .bsl{color:#e5e5e7}
+#boot-splash .bsl b{color:#ff3b30;font-style:normal;animation:bsP 2s ease-in-out infinite}
+#boot-splash .bss{font-size:12px;color:#aeaeb2;margin-top:12px;animation:bsUp .5s ease .1s both}
+#boot-splash .bsd{display:flex;gap:6px;margin-top:32px;animation:bsUp .5s ease .2s both}
+#boot-splash .bsd span{width:6px;height:6px;border-radius:50%;background:#ff3b30;display:inline-block}
+#boot-splash .bsd span:nth-child(1){animation:bsB 1.2s ease infinite}
+#boot-splash .bsd span:nth-child(2){animation:bsB 1.2s ease .15s infinite}
+#boot-splash .bsd span:nth-child(3){animation:bsB 1.2s ease .3s infinite}
+#boot-splash.fade{opacity:0;transition:opacity .35s ease;pointer-events:none}
+@keyframes bsUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bsP{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes bsB{0%,80%,100%{transform:translateY(0);opacity:.5}40%{transform:translateY(-8px);opacity:1}}
+</style>
 <title>Fxscalproom.</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -139,6 +159,11 @@ select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;paddi
 </style>
 </head>
 <body>
+<div id="boot-splash">
+  <div class="bsl">Fxscalproom<b>.</b></div>
+  <div class="bss">Professional Trading Signals</div>
+  <div class="bsd"><span></span><span></span><span></span></div>
+</div>
 <div id="root"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
@@ -1209,7 +1234,12 @@ function useOnlineStatus(){
 /* ─── Splash Screen ─── */
 function SplashScreen({onDone}){
   const[out,setOut]=useState(false);
-  useEffect(()=>{const t1=setTimeout(()=>setOut(true),1800);const t2=setTimeout(onDone,2300);return()=>{clearTimeout(t1);clearTimeout(t2)}},[]);
+  useEffect(()=>{
+    // Remove the static boot splash now that React's splash is showing
+    var bs=document.getElementById("boot-splash");
+    if(bs){bs.classList.add("fade");setTimeout(function(){bs&&bs.parentNode&&bs.parentNode.removeChild(bs)},400)}
+    const t1=setTimeout(()=>setOut(true),1800);const t2=setTimeout(onDone,2300);return()=>{clearTimeout(t1);clearTimeout(t2)}
+  },[]);
   return(<div className={`splash${out?" out":""}`}>
     <div className="splash-logo">Fxscalproom<b>.</b></div>
     <div className="splash-sub">Professional Trading Signals</div>
@@ -4909,7 +4939,7 @@ function App(){
   useEffect(()=>{refreshSession();const i=setInterval(refreshSession,30*60*1000);return()=>clearInterval(i)},[refreshSession]);
   const setLang=(l)=>{setLangState(l);try{localStorage.setItem("fxlang",l)}catch(e){};document.documentElement.setAttribute("lang",l)};
   useEffect(()=>{document.documentElement.setAttribute("lang",lang)},[]);
-  useEffect(()=>{if(!showSplash)document.body.classList.add("app-ready")},[]);
+  useEffect(()=>{if(!showSplash){document.body.classList.add("app-ready");var bs=document.getElementById("boot-splash");if(bs){bs.classList.add("fade");setTimeout(function(){bs&&bs.parentNode&&bs.parentNode.removeChild(bs)},400)}}},[]);
   const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p)){setP(p);try{localStorage.setItem("fx_pc",String(p.length))}catch(e){}}const s=await api.get("Signals",tk);if(Array.isArray(s)){setS(s);try{localStorage.setItem("fx_sc",String(s.length))}catch(e){}}const m=await api.get("Messages",tk);if(Array.isArray(m))setMsgs(m);try{const st=await fetch(`${SB}/rest/v1/Stories?order=created_at.desc`,{headers:H(tk)});const stD=await st.json();if(Array.isArray(stD)){const now=new Date();setStories(stD.filter(x=>new Date(x.expires_at)>now))}}catch(e){}}catch(e){}},[tk]);
   const chk=useCallback(async(u,t)=>{try{const r=await fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{headers:H(t)});const d=await r.json();if(Array.isArray(d)&&d[0]){setUp(d[0]);if(d[0].role==="admin")setAdm(true)}}catch(e){}},[]);
   useEffect(()=>{if(tk)load()},[tk,load]);
