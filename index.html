@@ -3002,12 +3002,26 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
 
 /* ─── Signals ─── */
 function Sigs({signals,userProfile,goToPlans}){
-  const{t}=useLang();
+  const{t,lang}=useLang();
+  const[section,setSection]=useState("short");
   const[filter,setFilter]=useState("all");
   const[showPremPop,setShowPremPop]=useState(false);
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
-  const filtered=useMemo(()=>{if(filter==="all")return signals||[];return(signals||[]).filter(s=>s.status===filter)},[signals,filter]);
+  const sectionSignals=useMemo(()=>{
+    const s=signals||[];
+    if(section==="short")return s.filter(sig=>sig.signal_term!=="long");
+    return s.filter(sig=>sig.signal_term==="long");
+  },[signals,section]);
+  const filtered=useMemo(()=>{if(filter==="all")return sectionSignals;return sectionSignals.filter(s=>s.status===filter)},[sectionSignals,filter]);
   return(<div className="fi">
+    {/* Section tabs: Short / Long term */}
+    <div style={{display:"flex",gap:6,marginBottom:12}}>
+      {["short","long"].map(s=>
+        <div key={s} onClick={()=>{setSection(s);setFilter("all")}} style={{flex:1,padding:12,borderRadius:12,textAlign:"center",cursor:"pointer",background:section===s?"color-mix(in srgb,var(--B) 10%,transparent)":"transparent",border:`1px solid ${section===s?"color-mix(in srgb,var(--B) 20%,transparent)":"var(--brd)"}`,fontSize:13,fontWeight:600,color:section===s?"var(--B)":"var(--mu)"}}>
+          {s==="short"?{fa:"⚡ کوتاه‌مدت",ar:"⚡ قصير المدى",tr:"⚡ Kısa Vadeli",ru:"⚡ Краткосрочные",es:"⚡ Corto plazo"}[lang]||"⚡ Short Term":{fa:"📈 بلندمدت",ar:"📈 طويل المدى",tr:"📈 Uzun Vadeli",ru:"📈 Долгосрочные",es:"📈 Largo plazo"}[lang]||"📈 Long Term"}
+        </div>
+      )}
+    </div>
     <div style={{display:"flex",gap:6,marginBottom:14}}>
       {["all","active","tp_hit","sl_hit"].map(f=><div key={f} onClick={()=>setFilter(f)} style={{padding:"7px 12px",borderRadius:10,cursor:"pointer",fontSize:11,fontWeight:600,whiteSpace:"nowrap",background:filter===f?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${filter===f?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,color:filter===f?"var(--R)":"var(--mu)"}}>{f==="all"?t.all:f==="active"?t.active:f==="tp_hit"?t.tpHit:t.slHit}</div>)}
     </div>
@@ -4008,6 +4022,7 @@ function Adm({token,posts,signals,onR}){
   const[editPost,setEditPost]=useState(null);
   const[customDate,setCustomDate]=useState(false),[postDate,setPostDate]=useState("");
   const[sigCustomDate,setSigCustomDate]=useState(false),[sigDate,setSigDate]=useState("");
+  const[sigTerm,setSigTerm]=useState("short");
   const[postPushTarget,setPostPushTarget]=useState("all");
   const[sigPushTarget,setSigPushTarget]=useState("all");
   const[msgPushTarget,setMsgPushTarget]=useState("all");
@@ -4026,7 +4041,7 @@ function Adm({token,posts,signals,onR}){
   const delMsg=async(id)=>{if(!confirm("Delete?"))return;await api.del("Messages",id,token);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const saveMsg=async(id)=>{if(!editMsgTitle||!editMsgBody)return;await api.patch("Messages",id,{title:editMsgTitle,body:editMsgBody,target:editMsgTarget},token);setEditMsgId(null);setMs("Message updated!");onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}const data={title:ti,description:de,category:ca,image_url:u,is_premium:pr,likes:0};if(customDate&&postDate)data.created_at=new Date(postDate).toISOString();await api.add("Posts",data,token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);setCustomDate(false);setPostDate("");onR();noti.notify("Fxscalproom","New analysis: "+ti);noti.sendPushToAll("Fxscalproom","New analysis: "+ti,token,postPushTarget)}catch(e){setMs(e.message)}setLd(false)};
-  const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{const data={pair:pa,type:st,entry_price:en,take_profit:tp1,tp2:tp2||null,tp3:tp3||null,stop_loss:sl,status:"active",pnl:null,closed_at:null,is_premium:sigPr};if(sigCustomDate&&sigDate)data.created_at=new Date(sigDate).toISOString();await api.add("Signals",data,token);setMs(t.signalPub);setPa("");setEn("");setTp1("");setTp2("");setTp3("");setSl("");setSigPr(false);setSigCustomDate(false);setSigDate("");onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st);noti.sendPushToAll("Fxscalproom","New signal: "+pa+" "+st,token,sigPushTarget)}catch(e){setMs(e.message)}setLd(false)};
+  const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{const data={pair:pa,type:st,entry_price:en,take_profit:tp1,tp2:tp2||null,tp3:tp3||null,stop_loss:sl,status:"active",pnl:null,closed_at:null,is_premium:sigPr,signal_term:sigTerm};if(sigCustomDate&&sigDate)data.created_at=new Date(sigDate).toISOString();await api.add("Signals",data,token);setMs(t.signalPub);setPa("");setEn("");setTp1("");setTp2("");setTp3("");setSl("");setSigPr(false);setSigTerm("short");setSigCustomDate(false);setSigDate("");onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st);noti.sendPushToAll("Fxscalproom","New signal: "+pa+" "+st,token,sigPushTarget)}catch(e){setMs(e.message)}setLd(false)};
   const delP=async id=>{if(!confirm("Delete?"))return;await api.del("Posts",id,token);onR()};
   const delS=async id=>{if(!confirm("Delete?"))return;await api.del("Signals",id,token);onR()};
   const setPremium=async(uid,expiry)=>{const data={membership:"premium"};if(expiry)data.premium_expires_at=new Date(expiry).toISOString();await api.patch("Users",uid,data,token);setMs(t.upgraded);setEditUserExp(null);setExpDate("");api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
@@ -4077,6 +4092,9 @@ function Adm({token,posts,signals,onR}){
       <button className="bt" style={{background:"var(--R)",opacity:ld?.5:1}} onClick={pub} disabled={ld}>{ld?"...":t.publish}</button>
     </>}
     {tb==="signal"&&<>
+      <div style={{display:"flex",gap:6,marginBottom:8}}>{["short","long"].map(term=>
+        <div key={term} onClick={()=>setSigTerm(term)} style={{flex:1,padding:12,borderRadius:10,textAlign:"center",cursor:"pointer",background:sigTerm===term?"color-mix(in srgb,var(--B) 10%,transparent)":"transparent",border:`1px solid ${sigTerm===term?"color-mix(in srgb,var(--B) 20%,transparent)":"var(--brd)"}`,fontSize:13,fontWeight:600,color:sigTerm===term?"var(--B)":"var(--mu)"}}>{term==="short"?(lang==="fa"?"⚡ کوتاه‌مدت":"⚡ Short Term"):(lang==="fa"?"📈 بلندمدت":"📈 Long Term")}</div>
+      )}</div>
       <input className="ip" placeholder={t.pair+" (e.g. XAUUSD)"} value={pa} onChange={e=>setPa(e.target.value)}/>
       <div style={{display:"flex",gap:6,marginBottom:8}}>{["BUY","SELL"].map(typ=>
         <div key={typ} onClick={()=>setSt(typ)} style={{flex:1,padding:12,borderRadius:10,textAlign:"center",cursor:"pointer",background:st===typ?(typ==="BUY"?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)"):"transparent",border:`1px solid ${st===typ?(typ==="BUY"?"color-mix(in srgb,var(--G) 20%,transparent)":"color-mix(in srgb,var(--R) 20%,transparent)"):"var(--brd)"}`,fontSize:14,fontWeight:600,color:st===typ?(typ==="BUY"?"var(--G)":"var(--R)"):"var(--mu)"}}>{typ}</div>
