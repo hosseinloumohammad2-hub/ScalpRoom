@@ -2213,14 +2213,17 @@ function SignalEditModal({sig,onClose,onSave}){
   const[pubDate,setPubDate]=useState(sig?.created_at?sig.created_at.slice(0,16):"");
   const[sigPr,setSigPr]=useState(sig?.is_premium||false);
   const[sigTerm,setSigTerm]=useState(sig?.signal_term||"short");
+  const[ePair,setEPair]=useState(sig?.pair||"");
   if(!sig)return null;
-  const save=()=>{onSave(sig.id,{status,pnl:pnl||null,closed_at:closedAt?new Date(closedAt).toISOString():null,take_profit:etp1||null,tp2:etp2||null,tp3:etp3||null,created_at:pubDate?new Date(pubDate).toISOString():sig.created_at,is_premium:sigPr,signal_term:sigTerm});onClose()};
+  const save=()=>{onSave(sig.id,{pair:ePair||sig.pair,status,pnl:pnl||null,closed_at:closedAt?new Date(closedAt).toISOString():null,take_profit:etp1||null,tp2:etp2||null,tp3:etp3||null,created_at:pubDate?new Date(pubDate).toISOString():sig.created_at,is_premium:sigPr,signal_term:sigTerm});onClose()};
   return(<div className="modal-overlay" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
       <span style={{fontSize:15,fontWeight:700}}>{t.editSignal}</span>
       <div onClick={onClose} style={{cursor:"pointer",color:"var(--mu)"}}>{IC.x}</div>
     </div>
     <div style={{fontSize:13,color:"var(--mu)",marginBottom:12}}>{sig.pair} — {sig.type}</div>
+    <div style={{fontSize:12,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>{t.pair}</div>
+    <input className="ip" placeholder={t.pair} value={ePair} onChange={e=>setEPair(e.target.value)}/>
     <div style={{fontSize:12,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>{t.status}</div>
     <div style={{display:"flex",gap:6,marginBottom:12}}>{["active","tp_hit","sl_hit"].map(s=>
       <div key={s} onClick={()=>setStatus(s)} style={{flex:1,padding:10,borderRadius:10,textAlign:"center",cursor:"pointer",
