@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
+<!-- These will be updated dynamically by JS, but provide good defaults -->
+<title>Article — Fxscalproom</title>
+<meta name="description" content="Read trading insights and analysis from Fxscalproom.">
+<meta name="robots" content="index, follow">
+
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<meta name="theme-color" content="#fbfbfd" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+:root{
+  --bg:#fbfbfd;--bg-alt:#f5f5f7;--bg-section:#ffffff;
+  --tx:#1d1d1f;--tx-2:#424245;--mu:#6e6e73;--dm:#86868b;
+  --line:rgba(0,0,0,.08);--line-2:rgba(0,0,0,.16);
+  --blue:#0071e3;--red:#ff3b30;
+  --glass:rgba(251,251,253,.72);--glass-border:rgba(0,0,0,.06);
+  --sf:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','Inter',system-ui,sans-serif;
+  --serif:'Newsreader',Georgia,serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#000;--bg-alt:#0a0a0a;--bg-section:#161617;
+    --tx:#f5f5f7;--tx-2:#d2d2d7;--mu:#a1a1a6;--dm:#86868b;
+    --line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.16);
+    --blue:#2997ff;--glass:rgba(0,0,0,.72);--glass-border:rgba(255,255,255,.08);
+  }
+}
+[data-theme="dark"]{
+  --bg:#000;--bg-alt:#0a0a0a;--bg-section:#161617;
+  --tx:#f5f5f7;--tx-2:#d2d2d7;--mu:#a1a1a6;--dm:#86868b;
+  --line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.16);
+  --blue:#2997ff;--glass:rgba(0,0,0,.72);--glass-border:rgba(255,255,255,.08);
+}
+
+html{background:var(--bg);scroll-behavior:smooth}
+body{
+  font-family:var(--sf);background:var(--bg);color:var(--tx);
+  -webkit-font-smoothing:antialiased;line-height:1.5;letter-spacing:-.005em;
+  min-height:100vh;transition:background .4s ease,color .4s ease;
+}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+
+/* NAV */
+nav{
+  position:sticky;top:0;z-index:9999;height:48px;
+  background:var(--glass);
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--glass-border);
+}
+.nav-inner{
+  max-width:1024px;margin:0 auto;height:100%;padding:0 22px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+.logo{font-size:21px;font-weight:600;letter-spacing:-.02em;color:var(--tx);display:flex;align-items:baseline}
+.logo b{color:var(--red);font-weight:600}
+.nav-links{display:flex;gap:36px;align-items:center;list-style:none}
+.nav-links a{font-size:12px;color:var(--tx);opacity:.8}
+.nav-links a:hover{opacity:1}
+.nav-right{display:flex;align-items:center;gap:14px}
+.theme-toggle{
+  width:32px;height:32px;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;color:var(--tx);opacity:.8;
+}
+.theme-toggle:hover{opacity:1;background:var(--bg-alt)}
+.theme-toggle svg{width:14px;height:14px}
+.theme-toggle .sun{display:none}
+[data-theme="dark"] .theme-toggle .sun{display:block}
+[data-theme="dark"] .theme-toggle .moon{display:none}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .theme-toggle .sun{display:block}
+  :root:not([data-theme="light"]) .theme-toggle .moon{display:none}
+}
+@media (max-width:833px){.nav-links{display:none}}
+
+.btn-sm{
+  padding:6px 14px;background:var(--blue);color:#fff;border-radius:980px;
+  font-size:12px;font-weight:400;display:inline-flex;align-items:center;
+}
+
+/* ARTICLE */
+article{
+  max-width:720px;
+  margin:0 auto;
+  padding:60px 22px 100px;
+}
+
+.breadcrumb{
+  font-size:14px;
+  color:var(--mu);
+  margin-bottom:32px;
+}
+.breadcrumb a{color:var(--blue)}
+.breadcrumb a:hover{text-decoration:underline}
+
+.article-tag{
+  display:inline-flex;
+  padding:6px 14px;
+  background:var(--bg-alt);
+  border-radius:980px;
+  font-size:12px;
+  font-weight:500;
+  color:var(--tx);
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  margin-bottom:24px;
+}
+
+article h1{
+  font-size:clamp(36px,5vw,64px);
+  font-weight:600;
+  letter-spacing:-.022em;
+  line-height:1.05;
+  color:var(--tx);
+  margin-bottom:20px;
+}
+
+.article-subtitle{
+  font-size:24px;
+  font-weight:400;
+  color:var(--mu);
+  line-height:1.4;
+  margin-bottom:32px;
+  letter-spacing:-.01em;
+}
+
+.article-meta{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  font-size:13px;
+  color:var(--mu);
+  padding-bottom:32px;
+  border-bottom:1px solid var(--line);
+  margin-bottom:48px;
+}
+.article-meta .author{font-weight:500;color:var(--tx)}
+
+.article-cover{
+  width:100%;
+  border-radius:20px;
+  margin-bottom:48px;
+  overflow:hidden;
+  background:var(--bg-alt);
+}
+.article-cover img{width:100%;height:auto;display:block}
+
+.article-content{
+  font-family:var(--serif);
+  font-size:21px;
+  line-height:1.65;
+  color:var(--tx-2);
+  letter-spacing:-.005em;
+  font-variation-settings:"opsz" 16;
+}
+.article-content p{margin-bottom:24px}
+.article-content h2{
+  font-family:var(--sf);
+  font-size:32px;
+  font-weight:600;
+  letter-spacing:-.018em;
+  color:var(--tx);
+  margin:48px 0 16px;
+  line-height:1.15;
+}
+.article-content h3{
+  font-family:var(--sf);
+  font-size:24px;
+  font-weight:600;
+  letter-spacing:-.014em;
+  color:var(--tx);
+  margin:40px 0 12px;
+}
+.article-content ul,.article-content ol{
+  margin:0 0 24px 24px;
+  padding-left:8px;
+}
+.article-content li{margin-bottom:8px}
+.article-content strong{color:var(--tx);font-weight:600}
+.article-content a{color:var(--blue);text-decoration:underline}
+.article-content blockquote{
+  margin:32px 0;
+  padding:24px 32px;
+  background:var(--bg-alt);
+  border-left:3px solid var(--blue);
+  border-radius:8px;
+  font-style:italic;
+}
+.article-content code{
+  font-family:'SF Mono',ui-monospace,monospace;
+  font-size:.85em;
+  background:var(--bg-alt);
+  padding:2px 6px;
+  border-radius:4px;
+}
+.article-content img{
+  width:100%;
+  border-radius:12px;
+  margin:32px 0;
+}
+
+/* CTA at end of article */
+.article-cta{
+  margin-top:64px;
+  padding:48px 40px;
+  background:var(--bg-alt);
+  border-radius:24px;
+  text-align:center;
+}
+.article-cta h3{
+  font-size:28px;
+  font-weight:600;
+  letter-spacing:-.018em;
+  color:var(--tx);
+  margin-bottom:8px;
+}
+.article-cta p{
+  font-size:17px;
+  color:var(--mu);
+  margin-bottom:24px;
+  letter-spacing:-.022em;
+}
+.btn{
+  display:inline-flex;
+  align-items:center;
+  padding:12px 22px;
+  background:var(--blue);
+  color:#fff;
+  border-radius:980px;
+  font-size:17px;
+  font-weight:400;
+  letter-spacing:-.022em;
+  transition:background .3s;
+}
+.btn:hover{background:#0077ed}
+
+/* LOADING */
+.state{
+  text-align:center;
+  padding:120px 22px;
+  color:var(--mu);
+  font-size:17px;
+}
+.state .spinner{
+  width:32px;height:32px;
+  border:2.5px solid var(--line);
+  border-top-color:var(--blue);
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+  margin:0 auto 16px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* FOOTER */
+footer{
+  background:var(--bg-alt);
+  padding:40px 22px 20px;
+  font-size:12px;
+  color:var(--mu);
+  border-top:1px solid var(--line);
+  text-align:center;
+}
+footer .legal{max-width:600px;margin:0 auto;line-height:1.5;font-size:11px;margin-top:8px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">Fxscalproom<b>.</b></a>
+    <ul class="nav-links">
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/#markets">Markets</a></li>
+      <li><a href="/#how">How it works</a></li>
+      <li><a href="/blog/">Blog</a></li>
+      <li><a href="/#faq">FAQ</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <a href="/app" class="btn-sm">Open App</a>
+    </div>
+  </div>
+</nav>
+
+<div id="articleContainer">
+  <div class="state">
+    <div class="spinner"></div>
+    <div>Loading article…</div>
+  </div>
+</div>
+
+<footer>
+  <div>Copyright © 2026 Fxscalproom. All rights reserved.</div>
+  <div class="legal">Trading forex and CFDs involves substantial risk. Past performance is not indicative of future results.</div>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://fjdjqaffoeixspcmxprw.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
+
+/* Theme toggle */
+(function(){
+  const root=document.documentElement;
+  const toggle=document.getElementById('themeToggle');
+  const stored=localStorage.getItem('fx-theme');
+  if(stored==='dark'||stored==='light')root.setAttribute('data-theme',stored);
+  toggle.addEventListener('click',()=>{
+    const current=root.getAttribute('data-theme');
+    let next;
+    if(current==='dark')next='light';
+    else if(current==='light')next='dark';
+    else{
+      const prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
+      next=prefersDark?'light':'dark';
+    }
+    root.setAttribute('data-theme',next);
+    localStorage.setItem('fx-theme',next);
+  });
+})();
+
+/* Get slug from URL */
+function getSlug(){
+  const params=new URLSearchParams(window.location.search);
+  return params.get('slug');
+}
+
+function escapeHtml(s){
+  if(!s)return '';
+  return String(s).replace(/[&<>"']/g,c=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function formatDate(d){
+  if(!d)return '';
+  const date=new Date(d);
+  return date.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+}
+
+async function loadArticle(){
+  const container=document.getElementById('articleContainer');
+  const slug=getSlug();
+
+  if(!slug){
+    container.innerHTML='<div class="state">No article specified. <a href="/blog/" style="color:var(--blue)">Back to blog</a></div>';
+    return;
+  }
+
+  try{
+    const res=await fetch(
+      `${SUPABASE_URL}/rest/v1/Articles?slug=eq.${encodeURIComponent(slug)}&published=eq.true&select=*&limit=1`,
+      {
+        headers:{
+          'apikey':SUPABASE_ANON_KEY,
+          'Authorization':`Bearer ${SUPABASE_ANON_KEY}`
+        }
+      }
+    );
+    if(!res.ok)throw new Error('Failed');
+    const data=await res.json();
+
+    if(!Array.isArray(data)||data.length===0){
+      container.innerHTML='<div class="state">Article not found. <a href="/blog/" style="color:var(--blue)">Back to blog</a></div>';
+      return;
+    }
+
+    const a=data[0];
+
+    /* Update document head for SEO */
+    document.title=`${a.meta_title||a.title} | Fxscalproom`;
+    setMeta('description',a.meta_desc||a.excerpt||'');
+    setMeta('keywords',a.meta_keywords||'');
+    setOg('og:title',a.title);
+    setOg('og:description',a.meta_desc||a.excerpt||'');
+    setOg('og:type','article');
+    setOg('og:url',window.location.href);
+    if(a.cover_image)setOg('og:image',a.cover_image);
+
+    /* Inject structured data */
+    const schema={
+      "@context":"https://schema.org",
+      "@type":"Article",
+      "headline":a.title,
+      "description":a.meta_desc||a.excerpt||"",
+      "image":a.cover_image||"",
+      "author":{"@type":"Organization","name":a.author||"Fxscalproom"},
+      "publisher":{
+        "@type":"Organization",
+        "name":"Fxscalproom",
+        "logo":{"@type":"ImageObject","url":"https://fxscalproom.com/icon-512.png"}
+      },
+      "datePublished":a.created_at,
+      "dateModified":a.updated_at||a.created_at,
+      "mainEntityOfPage":{
+        "@type":"WebPage",
+        "@id":window.location.href
+      }
+    };
+    const schemaScript=document.createElement('script');
+    schemaScript.type='application/ld+json';
+    schemaScript.textContent=JSON.stringify(schema);
+    document.head.appendChild(schemaScript);
+
+    /* Render article */
+    container.innerHTML=`
+      <article>
+        <div class="breadcrumb">
+          <a href="/">Home</a> · <a href="/blog/">Blog</a> · <span>${escapeHtml(a.title)}</span>
+        </div>
+        <span class="article-tag">${escapeHtml(a.category||'General')}</span>
+        <h1>${escapeHtml(a.title)}</h1>
+        ${a.subtitle?`<p class="article-subtitle">${escapeHtml(a.subtitle)}</p>`:''}
+        <div class="article-meta">
+          <span class="author">${escapeHtml(a.author||'Fxscalproom')}</span>
+          <span>·</span>
+          <span>${formatDate(a.created_at)}</span>
+          <span>·</span>
+          <span>${a.read_time||5} min read</span>
+        </div>
+        ${a.cover_image?`<div class="article-cover"><img src="${escapeHtml(a.cover_image)}" alt="${escapeHtml(a.title)}"></div>`:''}
+        <div class="article-content">${a.content||''}</div>
+        <div class="article-cta">
+          <h3>Get real-time signals</h3>
+          <p>Join thousands of traders getting professional forex signals delivered in real time.</p>
+          <a href="/app" class="btn">Open App</a>
+        </div>
+      </article>
+    `;
+
+    /* Increment view count (fire and forget) */
+    fetch(`${SUPABASE_URL}/rest/v1/Articles?slug=eq.${encodeURIComponent(slug)}`,{
+      method:'PATCH',
+      headers:{
+        'apikey':SUPABASE_ANON_KEY,
+        'Authorization':`Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type':'application/json',
+        'Prefer':'return=minimal'
+      },
+      body:JSON.stringify({views:(a.views||0)+1})
+    }).catch(()=>{});
+
+  }catch(e){
+    console.error(e);
+    container.innerHTML='<div class="state">Failed to load article. Please try again later.</div>';
+  }
+}
+
+function setMeta(name,content){
+  let el=document.querySelector(`meta[name="${name}"]`);
+  if(!el){el=document.createElement('meta');el.name=name;document.head.appendChild(el)}
+  el.content=content;
+}
+function setOg(prop,content){
+  let el=document.querySelector(`meta[property="${prop}"]`);
+  if(!el){el=document.createElement('meta');el.setAttribute('property',prop);document.head.appendChild(el)}
+  el.content=content;
+}
+
+loadArticle();
+</script>
+
+</body>
+</html>
