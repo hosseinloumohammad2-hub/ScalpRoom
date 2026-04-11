@@ -191,7 +191,7 @@
   --glass-border:rgba(255,255,255,.08);
 }
 
-html{background:var(--bg);scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+html{background:var(--bg);scroll-behavior:smooth;-webkit-text-size-adjust:100%;overflow-x:hidden}
 body{
   font-family:var(--sf);
   background:var(--bg);
@@ -406,6 +406,9 @@ nav{
   padding:0 22px;
   perspective:1500px;
 }
+@media (max-width:734px){
+  .hero-visual{max-width:260px;padding:0 16px}
+}
 .phone-frame{
   width:100%;
   aspect-ratio:9/19.5;
@@ -418,6 +421,12 @@ nav{
     0 0 80px rgba(0,113,227,.15);
   position:relative;
   animation:floatPhone 6s ease-in-out infinite;
+}
+@media (max-width:734px){
+  .phone-frame{border-radius:36px;padding:6px}
+  .phone-screen{border-radius:32px}
+  .phone-img{border-radius:32px}
+  .phone-notch{width:70px;height:20px;top:6px;border-radius:12px}
 }
 @keyframes floatPhone{
   0%,100%{transform:translateY(0) rotateX(2deg)}
@@ -720,7 +729,16 @@ section{
   grid-template-columns:repeat(2,1fr);
   gap:20px;
 }
-@media (max-width:900px){.mkt-cats{grid-template-columns:1fr}}
+@media (max-width:900px){.mkt-cats{grid-template-columns:1fr}
+  .mkt-cat{padding:20px}
+  .mkt-cat [style*="grid-column"]{grid-column:span 1 !important}
+  .mkt-cat-title{font-size:18px}
+  .mkt-cat-head{gap:10px;margin-bottom:14px}
+  .mkt-cat-icon{width:36px;height:36px;border-radius:10px}
+  .mkt-cat-icon svg{width:18px;height:18px}
+  .mkt-pills{gap:5px}
+  .mkt-pill{padding:5px 10px;font-size:10px}
+}
 
 .mkt-cat{
   background:var(--bg-section);
@@ -729,8 +747,12 @@ section{
   padding:32px;
   text-align:left;
   transition:transform .4s cubic-bezier(.4,0,.2,1);
+  min-width:0;
+  box-sizing:border-box;
 }
 .mkt-cat:hover{transform:translateY(-3px)}
+.mkt-cat-wide{grid-column:span 2}
+@media (max-width:900px){.mkt-cat-wide{grid-column:span 1}}
 
 .mkt-cat-head{
   display:flex;
@@ -1402,7 +1424,7 @@ footer{
     </div>
 
     <!-- Iran Market -->
-    <div class="mkt-cat" style="grid-column:span 2">
+    <div class="mkt-cat mkt-cat-wide">
       <div class="mkt-cat-head">
         <div class="mkt-cat-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V10l7-5 7 5v11"/><path d="M9 21v-6h6v6"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>
