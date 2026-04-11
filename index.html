@@ -1182,83 +1182,6 @@ function useNotifications(userId,token){
   return{enabled,enable,notify,sendPushToAll};
 }
 
-/* ─── High-Impact News Alerts ─── */
-/* Fetches ForexFactory weekly calendar and fires a local notification
-   5 minutes before every HIGH impact event. Each event is only alerted once. */
-function useNewsAlerts(){
-  const events=useRef([]);
-  const fired=useRef(new Set());
-  // Load already-fired event ids from localStorage (survives reloads)
-  useEffect(()=>{
-    try{
-      const raw=localStorage.getItem("fx_news_fired");
-      if(raw){const arr=JSON.parse(raw);if(Array.isArray(arr))arr.forEach(id=>fired.current.add(id))}
-    }catch(e){}
-  },[]);
-  const persistFired=()=>{
-    try{
-      // Keep only last 200 to avoid unbounded growth
-      const arr=Array.from(fired.current).slice(-200);
-      localStorage.setItem("fx_news_fired",JSON.stringify(arr));
-    }catch(e){}
-  };
-  // Fetch calendar every 15 minutes
-  useEffect(()=>{
-    let cancelled=false;
-    const fetchCal=async()=>{
-      try{
-        const r=await fetch("https://nfs.faireconomy.media/ff_calendar_thisweek.json",{cache:"no-store"});
-        if(!r.ok)return;
-        const data=await r.json();
-        if(cancelled||!Array.isArray(data))return;
-        // Keep only HIGH impact, future events
-        const now=Date.now();
-        events.current=data.filter(e=>{
-          if(!e||e.impact!=="High"||!e.date)return false;
-          const t=new Date(e.date).getTime();
-          return !isNaN(t)&&t>now-60000; // include events up to 1 min in past (safety)
-        }).map(e=>({
-          id:`${e.country||""}_${e.title||""}_${e.date}`,
-          title:e.title||"Economic Event",
-          country:e.country||"",
-          time:new Date(e.date).getTime()
-        }));
-      }catch(e){/* fail silently — calendar is best-effort */}
-    };
-    fetchCal();
-    const i=setInterval(fetchCal,15*60*1000);
-    return()=>{cancelled=true;clearInterval(i)};
-  },[]);
-  // Check every 30 seconds: any event that's 4–5 minutes away and not yet fired?
-  useEffect(()=>{
-    const check=()=>{
-      if(!events.current.length)return;
-      if(typeof Notification==="undefined"||Notification.permission!=="granted")return;
-      const now=Date.now();
-      events.current.forEach(e=>{
-        const diff=e.time-now;
-        // Fire when we're in the 4:30–5:00 window before the event
-        if(diff>0&&diff<=5*60*1000&&diff>=4.5*60*1000&&!fired.current.has(e.id)){
-          fired.current.add(e.id);
-          persistFired();
-          try{
-            const flag=({USD:"🇺🇸",EUR:"🇪🇺",GBP:"🇬🇧",JPY:"🇯🇵",CAD:"🇨🇦",AUD:"🇦🇺",CHF:"🇨🇭",NZD:"🇳🇿",CNY:"🇨🇳"})[e.country]||"🔴";
-            new Notification(`⚠️ 5 minutes until ${e.title}`,{
-              body:`${flag} ${e.country} — High impact news. Trade with caution.`,
-              icon:"icon-192.png",
-              badge:"icon-192.png",
-              tag:"news-"+e.id
-            });
-          }catch(err){}
-        }
-      });
-    };
-    check();
-    const i=setInterval(check,30*1000);
-    return()=>clearInterval(i);
-  },[]);
-}
-
 /* ─── Theme Color Helper (status bar color for modals) ─── */
 function setThemeColor(color){document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.remove());const meta=document.createElement("meta");meta.name="theme-color";meta.content=color;document.head.appendChild(meta)}
 function getThemeColor(){try{return localStorage.getItem("fxtheme")==="dark"?"#050507":"#f5f5f7"}catch(e){return"#f5f5f7"}}
@@ -5091,7 +5014,6 @@ function App(){
   useEffect(()=>{if(tk){const i=setInterval(load,30000);return()=>clearInterval(i)}},[tk,load]);
   const{PTR}=usePullToRefresh(load);
   useActivityTracker(usr?.id,tk);
-  useNewsAlerts();
   // Tab bar scroll: dock to bottom when scrolling down, float when scrolling up
   useEffect(()=>{
     let lastY=0;
