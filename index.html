@@ -3009,7 +3009,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
 function Sigs({signals,userProfile,goToPlans}){
   const{t,lang}=useLang();
   const[filter,setFilter]=useState("all");
-  const[term,setTerm]=useState("short");
+  const[term,setTerm]=useState("long");
   const[showPremPop,setShowPremPop]=useState(false);
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
   const termSigs=useMemo(()=>(signals||[]).filter(s=>(s.signal_term||"short")===term),[signals,term]);
@@ -3019,18 +3019,27 @@ function Sigs({signals,userProfile,goToPlans}){
   return(<div className="fi">
     {/* Term toggle: Short / Long with animated SVG emojis */}
     <div style={{display:"flex",gap:6,marginBottom:12}}>
-      {[{k:"short",l:shortLabel},{k:"long",l:longLabel}].map(s=>
+      {[{k:"long",l:longLabel},{k:"short",l:shortLabel}].map(s=>
         <div key={s.k} onClick={()=>setTerm(s.k)} style={{flex:1,padding:"10px 0",borderRadius:12,textAlign:"center",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,
           background:term===s.k?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",
           border:`1px solid ${term===s.k?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,
           fontSize:13,fontWeight:700,color:term===s.k?"var(--R)":"var(--mu)"
         }}>
-          {s.k==="short"?<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" fill={term===s.k?"#eab308":"var(--dm)"} stroke={term===s.k?"#f59e0b":"var(--dm)"} strokeWidth="1" strokeLinejoin="round">
-              <animate attributeName="opacity" values="1;0.4;1;1;0.4;1" dur="1.4s" repeatCount="indefinite"/>
+          {s.k==="short"?<svg width="20" height="20" viewBox="0 0 24 28" fill="none">
+            <path d="M14 1 L5 15 L11 15 L9 27 L19 11 L13 11 L14 1 Z" fill={term===s.k?"#fbbf24":"var(--dm)"} stroke={term===s.k?"#f59e0b":"var(--dm)"} strokeWidth="0.8" strokeLinejoin="round">
+              <animate attributeName="opacity" values="0;0;1;1;0;0;1;0" dur="1.2s" repeatCount="indefinite"/>
+              <animateTransform attributeName="transform" type="translate" values="0 -4;0 -4;0 0;0 0;0 0;0 0;0 0;0 0" dur="1.2s" repeatCount="indefinite"/>
             </path>
-            <circle cx="19" cy="5" r="1" fill={term===s.k?"#fbbf24":"var(--dm)"}><animate attributeName="opacity" values="0;1;0" dur="1.4s" repeatCount="indefinite"/></circle>
-            <circle cx="5" cy="19" r="1" fill={term===s.k?"#fbbf24":"var(--dm)"}><animate attributeName="opacity" values="0;1;0" dur="1.4s" begin="0.4s" repeatCount="indefinite"/></circle>
+            <path d="M14 1 L5 15 L11 15 L9 27 L19 11 L13 11 L14 1 Z" fill="none" stroke={term===s.k?"#fde047":"var(--dm)"} strokeWidth="2" strokeLinejoin="round" opacity="0.6">
+              <animate attributeName="opacity" values="0;0;0.8;0;0;0;0.8;0" dur="1.2s" repeatCount="indefinite"/>
+            </path>
+            <circle cx="14" cy="1" r="1" fill={term===s.k?"#fef08a":"var(--dm)"}>
+              <animate attributeName="opacity" values="0;1;0;0;0;1;0;0" dur="1.2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="9" cy="27" r="1.2" fill={term===s.k?"#fef08a":"var(--dm)"}>
+              <animate attributeName="opacity" values="0;0;0;1;0;0;0;1" dur="1.2s" repeatCount="indefinite"/>
+              <animate attributeName="r" values="0;0;0;2.5;0;0;0;2.5" dur="1.2s" repeatCount="indefinite"/>
+            </circle>
           </svg>
           :<svg width="22" height="20" viewBox="0 0 28 24" fill="none">
             <circle cx="14" cy="12" r="9" stroke={term===s.k?"#10b981":"var(--dm)"} strokeWidth="1.5" fill="none" opacity="0.3"/>
