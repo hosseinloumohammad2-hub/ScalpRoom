@@ -1045,7 +1045,6 @@ footer{
 }
 [data-theme="dark"] .app-banner{box-shadow:0 -10px 40px rgba(0,0,0,.5)}
 @keyframes slideUp{to{transform:translateY(0)}}
-.app-banner.hidden{display:none !important}
 @media (max-width:734px){
   .app-banner{display:flex;align-items:center;gap:12px}
 }
@@ -1670,9 +1669,6 @@ footer{
     <div class="sub"><span class="stars">★ 4.8</span> · Live Signals & Analysis</div>
   </div>
   <a href="/app" class="app-banner-btn">Open</a>
-  <button class="app-banner-close" id="appBannerClose" aria-label="Close">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-  </button>
 </div>
 
 <script>
@@ -1712,24 +1708,7 @@ const io=new IntersectionObserver(entries=>{
 },{threshold:.12,rootMargin:'0px 0px -80px 0px'});
 document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
-/* Mobile app banner */
-(function(){
-  const banner=document.getElementById('appBanner');
-  const closeBtn=document.getElementById('appBannerClose');
-  const dismissKey='fx-banner-dismissed';
-  const ttl=7*24*60*60*1000;
-  try{
-    const dismissed=parseInt(localStorage.getItem(dismissKey)||'0');
-    if(dismissed && (Date.now()-dismissed)<ttl){
-      banner.classList.add('hidden');
-      return;
-    }
-  }catch(e){}
-  closeBtn.addEventListener('click',()=>{
-    banner.classList.add('hidden');
-    try{localStorage.setItem(dismissKey,String(Date.now()))}catch(e){}
-  });
-})();
+/* Mobile app banner — always visible */
 </script>
 
 </body>
