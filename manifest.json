@@ -2,7 +2,7 @@
   "name": "Fxscalproom",
   "short_name": "Fxscalproom",
   "description": "Professional Trading Signals & Analysis",
-  "start_url": "/",
+  "start_url": "/app",
   "display": "standalone",
   "background_color": "#050507",
   "theme_color": "#050507",
