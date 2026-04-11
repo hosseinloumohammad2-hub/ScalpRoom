@@ -41,10 +41,10 @@ a{color:inherit;text-decoration:none}
 .lg b{color:var(--R);font-weight:700;font-style:normal}
 .ct{padding:16px 16px 100px}
 /* ─── Glass Tab Bar (matching demo) ─── */
-.tb{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:398px;display:flex;padding:10px 4px calc(env(safe-area-inset-bottom,6px) + 4px);border-radius:22px;background:rgba(255,255,255,.5);backdrop-filter:blur(50px) saturate(2);-webkit-backdrop-filter:blur(50px) saturate(2);border:1px solid rgba(255,255,255,.7);box-shadow:0 4px 30px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.7);z-index:50;transition:all .35s cubic-bezier(.4,0,.2,1)}
-[data-theme="dark"] .tb{background:rgba(30,30,32,.55);border-color:rgba(255,255,255,.08);box-shadow:0 4px 30px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.04)}
+.tb{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);width:auto;max-width:calc(100% - 40px);display:flex;padding:8px 6px calc(env(safe-area-inset-bottom,6px) + 2px);border-radius:34px;background:rgba(255,255,255,.42);backdrop-filter:blur(60px) saturate(1.8);-webkit-backdrop-filter:blur(60px) saturate(1.8);border:0.5px solid rgba(255,255,255,.55);box-shadow:0 8px 32px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06),inset 0 1px 0 rgba(255,255,255,.6);z-index:50;transition:all .35s cubic-bezier(.4,0,.2,1)}
+[data-theme="dark"] .tb{background:rgba(28,28,30,.5);border-color:rgba(255,255,255,.1);box-shadow:0 8px 32px rgba(0,0,0,.4),0 2px 8px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.06)}
 .tb.tb-shrink{bottom:0;width:100%;max-width:430px;border-radius:0;border-left:none;border-right:none;border-bottom:none}
-.ti{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:all .2s ease;padding:6px 0;border-radius:16px;position:relative;color:var(--dm)}
+.ti{flex:0 0 auto;min-width:62px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:all .2s ease;padding:6px 8px;border-radius:20px;position:relative;color:var(--dm)}
 .ti-active{color:var(--B)!important}
 .ti-active::before{content:'';position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:20px;height:3px;border-radius:2px;background:var(--B)}
 .tl{font-size:10px;font-weight:600;letter-spacing:.2px}
