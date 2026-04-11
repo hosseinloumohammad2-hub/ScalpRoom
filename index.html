@@ -705,9 +705,12 @@ function StoryRing({stories,onClick,seen}){
       <svg className="ring-spin" viewBox="0 0 64 64" width="100%" height="100%" style={{display:"block"}}>
         <defs>
           <linearGradient id="storyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FF4136"/>
-            <stop offset="50%" stopColor="#111111"/>
-            <stop offset="100%" stopColor="#FF4136"/>
+            <stop offset="0%" stopColor="#515BD4"/>
+            <stop offset="20%" stopColor="#8134AF"/>
+            <stop offset="40%" stopColor="#DD2A7B"/>
+            <stop offset="60%" stopColor="#FD1D1D"/>
+            <stop offset="80%" stopColor="#F58529"/>
+            <stop offset="100%" stopColor="#FEDA77"/>
           </linearGradient>
           <linearGradient id="storyGradSeen" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="var(--brd2)"/>
