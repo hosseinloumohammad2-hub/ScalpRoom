@@ -2380,7 +2380,7 @@ function Auth({onAuth,lang,setLang}){
     if(tk&&u&&(u.email_confirmed_at||u.confirmed_at)){await api.add("Users",{id:u.id,email:e,full_name:n,membership:"free",role:"user"},tk);onAuth(tk,u,r.refresh_token||(r.session?.refresh_token))}
     // Otherwise show "check your email" message — user MUST confirm before logging in
     else{setOk(t.confirmEmailSent||"✉️ A confirmation link has been sent to your email. Please verify your email, then sign in.");setM("login");setE(e);setP("")}}}catch(x){setEr(x.message)}setLd(false)};
-  const googleLogin=()=>{window.location.href=`${SB}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin+window.location.pathname)}`};
+  const googleLogin=()=>{window.location.href=`${SB}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent("https://fxscalproom.com/app")}`};
   useEffect(()=>{
     const hash=window.location.hash;
     if(hash&&hash.includes("access_token")){
