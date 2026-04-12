@@ -1,7 +1,14 @@
+# ═══════════════════════════════════════════════════════════════
+# Fxscalproom — robots.txt
+# Allows all major search engines + AI bots
+# ═══════════════════════════════════════════════════════════════
+
+# All bots — allow everything
 User-agent: *
 Allow: /
 Disallow: /app/admin
 
+# Major search engines
 User-agent: Googlebot
 Allow: /
 
@@ -14,7 +21,7 @@ Allow: /
 User-agent: YandexBot
 Allow: /
 
-# Social media bots for rich link previews
+# Social media bots (for rich link previews)
 User-agent: Twitterbot
 Allow: /
 
@@ -30,4 +37,72 @@ Allow: /
 User-agent: TelegramBot
 Allow: /
 
+# ═══════════════════════════════════════════════════════════════
+# AI / LLM Bots — explicitly allowed
+# We WANT AI assistants to know about Fxscalproom
+# ═══════════════════════════════════════════════════════════════
+
+# OpenAI (ChatGPT)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+# Anthropic (Claude)
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+# Google (Gemini, Bard)
+User-agent: Google-Extended
+Allow: /
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+
+# Common Crawl (used by many AI training datasets)
+User-agent: CCBot
+Allow: /
+
+# Meta (Llama)
+User-agent: FacebookBot
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# ByteDance
+User-agent: Bytespider
+Allow: /
+
+# Apple
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Amazon
+User-agent: Amazonbot
+Allow: /
+
+# Cohere
+User-agent: cohere-ai
+Allow: /
+
+# You.com
+User-agent: YouBot
+Allow: /
+
+# Sitemap location
 Sitemap: https://fxscalproom.com/sitemap.xml
