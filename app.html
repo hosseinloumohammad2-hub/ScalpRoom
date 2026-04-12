@@ -3819,8 +3819,9 @@ function PostEditModal({post,onClose,onSave}){
   const[ca,setCa]=useState(post?.category||"gold");
   const[pr,setPr]=useState(post?.is_premium||false);
   const[dt,setDt]=useState(post?.created_at?post.created_at.slice(0,16):"");
+  const[showOnWeb,setShowOnWeb]=useState(post?.show_on_website||false);
   if(!post)return null;
-  const save=()=>{onSave(post.id,{title:ti,description:de,category:ca,is_premium:pr,created_at:dt?new Date(dt).toISOString():post.created_at});onClose()};
+  const save=()=>{onSave(post.id,{title:ti,description:de,category:ca,is_premium:pr,show_on_website:showOnWeb,created_at:dt?new Date(dt).toISOString():post.created_at});onClose()};
   return(<div className="modal-overlay" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
       <span style={{fontSize:15,fontWeight:700}}>Edit Post</span>
@@ -3834,6 +3835,10 @@ function PostEditModal({post,onClose,onSave}){
     <div onClick={()=>setPr(!pr)} className="cd" style={{padding:10,marginBottom:8,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <span style={{fontSize:12}}>Premium</span>
       <div style={{width:36,height:20,borderRadius:10,background:pr?"var(--R)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:16,height:16,borderRadius:8,background:"#fff",position:"absolute",top:2,left:pr?18:2,transition:".2s"}}/></div>
+    </div>
+    <div onClick={()=>setShowOnWeb(!showOnWeb)} className="cd" style={{padding:10,marginBottom:8,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <span style={{fontSize:12}}>🌐 Show on Website</span>
+      <div style={{width:36,height:20,borderRadius:10,background:showOnWeb?"var(--G)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:16,height:16,borderRadius:8,background:"#fff",position:"absolute",top:2,left:showOnWeb?18:2,transition:".2s"}}/></div>
     </div>
     <div style={{fontSize:12,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>Publish Date</div>
     <input className="ip" type="datetime-local" value={dt} onChange={e=>setDt(e.target.value)}/>
@@ -4433,6 +4438,7 @@ function Adm({token,posts,signals,onR}){
   const{t,lang}=useLang();
   const[tb,setTb]=useState("post");
   const[ti,setTi]=useState(""),[de,setDe]=useState(""),[ca,setCa]=useState("gold"),[pr,setPr]=useState(false),[fi2,setFi]=useState(null),[pv,setPv]=useState(null);
+  const[showOnWeb,setShowOnWeb]=useState(false);
   const[pa,setPa]=useState(""),[st,setSt]=useState("BUY"),[en,setEn]=useState(""),[tp1,setTp1]=useState(""),[tp2,setTp2]=useState(""),[tp3,setTp3]=useState(""),[sl,setSl]=useState(""),[sigPr,setSigPr]=useState(false),[sigTerm,setSigTerm]=useState("short");
   const[ld,setLd]=useState(false),[ms,setMs]=useState("");
   const[users,setUsers]=useState([]);
@@ -4457,7 +4463,7 @@ function Adm({token,posts,signals,onR}){
   const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrls=[];for(const img of msgImgs){const u=await api.img(img,token);if(u)imgUrls.push(u);else{setMs(t.uploadFailed);setLd(false);return}}const imgUrl=imgUrls.join(",");await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null},token);if(msgDtCats.length>0){await api.add("Posts",{title:msgTitle,description:msgBody,category:"daytrade",dt_category:msgDtCats.join(","),image_url:imgUrl||"",is_premium:msgTarget==="premium",likes:0},token)}setMs("Message sent!");noti.sendPushToAll(msgTitle,msgBody,token,msgPushTarget);setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImgs([]);setMsgPvs([]);setMsgDayTrade(false);setMsgDtCats([]);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
   const delMsg=async(id)=>{if(!confirm("Delete?"))return;await api.del("Messages",id,token);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const saveMsg=async(id)=>{if(!editMsgTitle||!editMsgBody)return;await api.patch("Messages",id,{title:editMsgTitle,body:editMsgBody,target:editMsgTarget},token);setEditMsgId(null);setMs("Message updated!");onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
-  const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}const data={title:ti,description:de,category:ca,image_url:u,is_premium:pr,likes:0};if(customDate&&postDate)data.created_at=new Date(postDate).toISOString();await api.add("Posts",data,token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);setCustomDate(false);setPostDate("");onR();noti.notify("Fxscalproom","New analysis: "+ti);noti.sendPushToAll("Fxscalproom","New analysis: "+ti,token,postPushTarget)}catch(e){setMs(e.message)}setLd(false)};
+  const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}const data={title:ti,description:de,category:ca,image_url:u,is_premium:pr,show_on_website:showOnWeb,likes:0};if(customDate&&postDate)data.created_at=new Date(postDate).toISOString();await api.add("Posts",data,token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);setCustomDate(false);setPostDate("");setShowOnWeb(false);onR();noti.notify("Fxscalproom","New analysis: "+ti);noti.sendPushToAll("Fxscalproom","New analysis: "+ti,token,postPushTarget)}catch(e){setMs(e.message)}setLd(false)};
   const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{const data={pair:pa,type:st,entry_price:en,take_profit:tp1,tp2:tp2||null,tp3:tp3||null,stop_loss:sl,status:"active",pnl:null,closed_at:null,is_premium:sigPr,signal_term:sigTerm};if(sigCustomDate&&sigDate)data.created_at=new Date(sigDate).toISOString();await api.add("Signals",data,token);setMs(t.signalPub);setPa("");setEn("");setTp1("");setTp2("");setTp3("");setSl("");setSigPr(false);setSigTerm("short");setSigCustomDate(false);setSigDate("");onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st);noti.sendPushToAll("Fxscalproom","New signal: "+pa+" "+st,token,sigPushTarget)}catch(e){setMs(e.message)}setLd(false)};
   const delP=async id=>{if(!confirm("Delete?"))return;await api.del("Posts",id,token);onR()};
   const delS=async id=>{if(!confirm("Delete?"))return;await api.del("Signals",id,token);onR()};
@@ -4493,6 +4499,13 @@ function Adm({token,posts,signals,onR}){
       <div onClick={()=>setPr(!pr)} className="cd" style={{padding:12,marginBottom:8,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <span style={{fontSize:13}}>Premium</span>
         <div style={{width:40,height:22,borderRadius:11,background:pr?"var(--R)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:pr?20:2,transition:".2s"}}/></div>
+      </div>
+      <div onClick={()=>setShowOnWeb(!showOnWeb)} className="cd" style={{padding:12,marginBottom:8,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div style={{display:"flex",flexDirection:"column",gap:2}}>
+          <span style={{fontSize:13,fontWeight:600}}>🌐 Show on Website</span>
+          <span style={{fontSize:10,color:"var(--dm)"}}>Publish to fxscalproom.com/free-analysis</span>
+        </div>
+        <div style={{width:40,height:22,borderRadius:11,background:showOnWeb?"var(--G)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:showOnWeb?20:2,transition:".2s"}}/></div>
       </div>
       <div onClick={()=>setCustomDate(!customDate)} className="cd" style={{padding:12,marginBottom:8,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <span style={{fontSize:13}}>Custom Date</span>
