@@ -4,7 +4,8 @@
   "rewrites": [
     { "source": "/app", "destination": "/app.html" },
     { "source": "/app/:path*", "destination": "/app.html" },
-    { "source": "/free-analysis", "destination": "/free-analysis.html" }
+    { "source": "/free-analysis", "destination": "/free-analysis.html" },
+    { "source": "/about", "destination": "/about.html" }
   ],
   "headers": [
     {
@@ -27,6 +28,20 @@
       "source": "/robots.txt",
       "headers": [
         { "key": "Content-Type", "value": "text/plain; charset=utf-8" }
+      ]
+    },
+    {
+      "source": "/llms.txt",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
+    },
+    {
+      "source": "/llms-full.txt",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
       ]
     },
     {
