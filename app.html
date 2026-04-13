@@ -8521,7 +8521,7 @@ OUTPUT FORMAT (concise):
 
 Be precise and direct. Use NeoWave notation.`}];
       }
-      const resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4000,system:SYSTEM_PROMPT,messages:[{role:"user",content:userContent}]})});
+      const resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4000,system:SYSTEM_PROMPT,messages:[{role:"user",content:userContent}]})});
       const data=await resp.json();
       if(data.error){setError(data.error.message);return}
       const text=data.content?.map(c=>c.text||"").join("\n")||"";
