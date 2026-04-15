@@ -3682,10 +3682,141 @@ function WhatWeCover({lang}){
   </div>);
 }
 
+/* ─── IB Request Popup ─── */
+function IBRequestPopup({onClose,userId,token,userEmail}){
+  const{lang}=useLang();
+  const[step,setStep]=useState("intro"); // intro | form | done
+  const[uid,setUid]=useState("");
+  const[sending,setSending]=useState(false);
+  const[err,setErr]=useState("");
+
+  const IB_CODE="E4AOYK";
+  const REGISTER_LINK=`https://fa.amarketsworld.com/sign-up/real-persian/?g=${IB_CODE}`;
+
+  const tx={
+    title:{fa:"عضویت رایگان از طریق IB",en:"Free Membership via IB"},
+    step1Title:{fa:"چطور عضو رایگان شوید؟",en:"How to get free membership?"},
+    s1:{fa:`۱. روی لینک زیر کلیک کنید و در AMarkets ثبت‌نام کنید (یا اگر حساب دارید وارد شوید).`,en:`1. Click the link below and register on AMarkets (or log in if you have an account).`},
+    s2:{fa:`۲. در پروفایل AMarkets خود، به بخش «کد معرف» یا «My Partner» بروید.`,en:`2. In your AMarkets profile, go to "Partner Code" or "My Partner" section.`},
+    s3:{fa:`۳. کد IB زیر را وارد کنید:`,en:`3. Enter the IB code below:`},
+    s4:{fa:`۴. شناسه کیف پول (Wallet ID) خود را از پروفایل AMarkets کپی کرده و در فرم زیر وارد کنید.`,en:`4. Copy your Wallet ID from AMarkets profile and enter it in the form below.`},
+    s5:{fa:`۵. بعد از ارسال درخواست، منتظر تأیید ادمین بشید. پس از تأیید اشتراک پرمیوم شما فعال میشه! ✅`,en:`5. After submitting, wait for admin approval. Once approved, your premium will be activated! ✅`},
+    ibCode:{fa:"کد IB شما:",en:"Your IB Code:"},
+    regLink:{fa:"لینک ثبت‌نام AMarkets",en:"AMarkets Registration Link"},
+    next:{fa:"ادامه",en:"Next"},
+    walletPlaceholder:{fa:"شناسه کیف پول AMarkets (مثال: 1443946)",en:"AMarkets Wallet ID (e.g. 1443946)"},
+    submit:{fa:"ارسال درخواست",en:"Submit Request"},
+    doneTitle:{fa:"درخواست ارسال شد! ✅",en:"Request submitted! ✅"},
+    doneDesc:{fa:"درخواست شما دریافت شد. پس از بررسی و تأیید توسط ادمین، اشتراک پرمیوم شما فعال خواهد شد.",en:"Your request has been received. Once reviewed and approved by admin, your premium membership will be activated."},
+    cancel:{fa:"بستن",en:"Close"},
+    errEmpty:{fa:"لطفاً شناسه کیف پول را وارد کنید",en:"Please enter your Wallet ID"},
+    errShort:{fa:"شناسه کیف پول معتبر نیست",en:"Invalid Wallet ID"},
+    copied:{fa:"کپی شد!",en:"Copied!"},
+  };
+  const g=(k)=>(tx[k]&&(tx[k][lang]||tx[k].en))||"";
+
+  const[copiedCode,setCopiedCode]=useState(false);
+  const copyCode=()=>{
+    try{navigator.clipboard.writeText(IB_CODE)}catch(e){}
+    setCopiedCode(true);setTimeout(()=>setCopiedCode(false),2000);
+  };
+
+  const submit=async()=>{
+    if(!uid.trim()){setErr(g("errEmpty"));return}
+    if(uid.trim().length<4){setErr(g("errShort"));return}
+    setErr("");setSending(true);
+    try{
+      await fetch(`${SB}/rest/v1/IBRequests`,{
+        method:"POST",
+        headers:H(token),
+        body:JSON.stringify({user_id:userId,amarkets_wallet_id:uid.trim(),ib_code:IB_CODE,status:"pending",user_email:userEmail||""})
+      });
+      setStep("done");
+    }catch(e){setErr(lang==="fa"?"خطا در ارسال. دوباره تلاش کنید.":"Error sending. Please try again.")}
+    setSending(false);
+  };
+
+  return(
+    <div className="modal-overlay" onClick={onClose} style={{alignItems:"flex-end",padding:0}}>
+      <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:430,background:"var(--bg)",borderRadius:"20px 20px 0 0",padding:"8px 16px calc(env(safe-area-inset-bottom,12px) + 16px)",animation:"fi .2s ease",maxHeight:"90vh",overflowY:"auto"}}>
+        <div style={{width:36,height:4,borderRadius:2,background:"var(--brd2)",margin:"0 auto 16px"}}/>
+
+        {step==="done"?(
+          <div style={{textAlign:"center",padding:"20px 0"}}>
+            <div style={{width:64,height:64,borderRadius:"50%",background:"color-mix(in srgb,var(--G) 10%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--G)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div style={{fontSize:18,fontWeight:700,marginBottom:10}}>{g("doneTitle")}</div>
+            <div style={{fontSize:13,color:"var(--tx2)",lineHeight:1.7,marginBottom:20}}>{g("doneDesc")}</div>
+            <div onClick={onClose} className="bt" style={{background:"var(--G)"}}>OK</div>
+          </div>
+        ):step==="intro"?(
+          <div>
+            <div style={{textAlign:"center",marginBottom:16}}>
+              <div style={{fontSize:28,marginBottom:8}}>🎁</div>
+              <div style={{fontSize:15,fontWeight:700}}>{g("title")}</div>
+            </div>
+            <div style={{fontSize:14,fontWeight:700,marginBottom:12,color:"var(--tx)"}}>{g("step1Title")}</div>
+
+            {/* Steps */}
+            {[g("s1"),g("s2"),null,g("s4"),g("s5")].map((s,i)=>{
+              if(i===2) return(
+                <div key={i}>
+                  <div style={{fontSize:13,color:"var(--tx2)",lineHeight:1.7,marginBottom:8}}>{g("s3")}</div>
+                  {/* IB Code display */}
+                  <div style={{display:"flex",alignItems:"center",gap:8,padding:12,borderRadius:12,background:"color-mix(in srgb,var(--G) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 20%,transparent)",marginBottom:12}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:10,color:"var(--mu)",fontWeight:600,marginBottom:4}}>{g("ibCode")}</div>
+                      <div className="m" style={{fontSize:22,fontWeight:700,color:"var(--G)",letterSpacing:2}}>{IB_CODE}</div>
+                    </div>
+                    <div onClick={copyCode} style={{padding:"8px 14px",borderRadius:10,background:copiedCode?"color-mix(in srgb,var(--G) 15%,transparent)":"var(--bg2)",border:"1px solid var(--brd)",cursor:"pointer",fontSize:12,fontWeight:700,color:copiedCode?"var(--G)":"var(--tx)",transition:".2s"}}>
+                      {copiedCode?g("copied"):"Copy"}
+                    </div>
+                  </div>
+                  {/* Register link */}
+                  <a href={REGISTER_LINK} target="_blank" rel="noopener" style={{display:"flex",alignItems:"center",gap:10,padding:12,borderRadius:12,background:"color-mix(in srgb,var(--B) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--B) 15%,transparent)",marginBottom:12,textDecoration:"none",cursor:"pointer"}}>
+                    <div style={{width:36,height:36,borderRadius:10,background:"var(--B)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:600,color:"var(--B)"}}>{g("regLink")}</div>
+                      <div style={{fontSize:10,color:"var(--mu)",marginTop:2}}>fa.amarketsworld.com</div>
+                    </div>
+                  </a>
+                </div>
+              );
+              return<div key={i} style={{fontSize:13,color:"var(--tx2)",lineHeight:1.7,marginBottom:10}}>{s}</div>;
+            })}
+
+            <div onClick={()=>setStep("form")} className="bt" style={{background:"var(--G)",marginTop:8}}>{g("next")} →</div>
+            <div onClick={onClose} style={{textAlign:"center",padding:"12px 0 0",fontSize:13,color:"var(--dm)",cursor:"pointer",fontWeight:600}}>{g("cancel")}</div>
+          </div>
+        ):(
+          <div>
+            <div onClick={()=>setStep("intro")} style={{display:"flex",alignItems:"center",gap:6,marginBottom:14,cursor:"pointer",color:"var(--B)"}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              <span style={{fontSize:13,fontWeight:600}}>{lang==="fa"?"برگشت":"Back"}</span>
+            </div>
+            <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{lang==="fa"?"شناسه AMarkets خود را وارد کنید":"Enter your AMarkets Wallet ID"}</div>
+            <div style={{fontSize:12,color:"var(--mu)",marginBottom:14,lineHeight:1.6}}>{lang==="fa"?"شناسه کیف پول را از پروفایل AMarkets کپی کنید (عدد کنار «شماره کیف پول»)":"Copy the Wallet ID number from your AMarkets profile."}</div>
+            <input className="ip" placeholder={g("walletPlaceholder")} value={uid} onChange={e=>{setUid(e.target.value);setErr("")}} style={{marginBottom:4}}/>
+            {err&&<div style={{fontSize:12,color:"var(--R)",marginBottom:10,paddingRight:4}}>{err}</div>}
+            <div onClick={submit} className="bt" style={{background:"var(--G)",opacity:sending?.5:1,marginTop:8}}>
+              {sending?(lang==="fa"?"در حال ارسال...":"Sending..."):g("submit")}
+            </div>
+            <div onClick={onClose} style={{textAlign:"center",padding:"12px 0 0",fontSize:13,color:"var(--dm)",cursor:"pointer",fontWeight:600}}>{g("cancel")}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Plans ─── */
 function Plans({userProfile,goToSupport,token}){
   const{t,lang}=useLang();
   const[showContact,setShowContact]=useState(false);
+  const[showIB,setShowIB]=useState(false);
   const[selectedPlan,setSelectedPlan]=useState(null);
   const{promo}=usePromo();
   const isPremium=userProfile?.membership==="premium";
@@ -3761,6 +3892,37 @@ function Plans({userProfile,goToSupport,token}){
       <div style={{fontSize:13,color:"var(--mu)"}}>{t.unlock}</div>
     </div>
 
+    {/* ─── FREE via IB Banner ─── */}
+    <div onClick={()=>setShowIB(true)} className="cd" style={{marginBottom:14,padding:16,borderColor:"color-mix(in srgb,var(--G) 30%,transparent)",background:"color-mix(in srgb,var(--G) 4%,transparent)",cursor:"pointer",position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:0,right:0,background:"var(--G)",color:"#fff",fontSize:10,fontWeight:700,padding:"4px 14px 4px 18px",borderRadius:"0 0 0 14px"}}>
+        {lang==="fa"?"رایگان":"FREE"}
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:12}}>
+        <div style={{width:44,height:44,borderRadius:12,background:"color-mix(in srgb,var(--G) 15%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 25%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <span style={{fontSize:22}}>🎁</span>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:14,fontWeight:700,color:"var(--G)",marginBottom:2}}>
+            {lang==="fa"?"عضویت پرمیوم رایگان":"Free Premium Membership"}
+          </div>
+          <div style={{fontSize:11,color:"var(--tx2)",lineHeight:1.5}}>
+            {lang==="fa"?"از طریق IB آمارکتس — بدون پرداخت":"Via AMarkets IB — No payment needed"}
+          </div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--G)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div style={{fontSize:11,color:"var(--G)",marginTop:10,fontWeight:600,borderTop:"1px solid color-mix(in srgb,var(--G) 15%,transparent)",paddingTop:8}}>
+        {lang==="fa"?"👆 بزن و آموزش کامل رو ببین":"👆 Tap to see the full guide"}
+      </div>
+    </div>
+
+    {/* Divider */}
+    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+      <div style={{flex:1,height:1,background:"var(--brd)"}}/>
+      <span style={{fontSize:11,color:"var(--mu)",fontWeight:600}}>{lang==="fa"?"یا با پرداخت مستقیم":"OR pay directly"}</span>
+      <div style={{flex:1,height:1,background:"var(--brd)"}}/>
+    </div>
+
     {/* Sale Banner with Countdown */}
     {disc>0&&promo&&<div className="cd" style={{marginBottom:14,padding:16,borderColor:"color-mix(in srgb,var(--R) 30%,transparent)",background:"color-mix(in srgb,var(--R) 4%,transparent)",position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",top:0,right:0,background:"var(--R)",color:"#fff",fontSize:10,fontWeight:700,padding:"4px 14px 4px 18px",borderRadius:"0 0 0 14px"}}>{disc}% OFF</div>
@@ -3807,6 +3969,7 @@ function Plans({userProfile,goToSupport,token}){
       <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,marginTop:12,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.tg} {t.contact}</div>
     </div>
     {showContact&&<ContactPopup onClose={()=>{setShowContact(false);setSelectedPlan(null)}} onSupport={goToSupport} plan={selectedPlan} userId={userProfile?.id} token={token}/>}
+    {showIB&&<IBRequestPopup onClose={()=>setShowIB(false)} userId={userProfile?.id} token={token} userEmail={userProfile?.email}/>}
   </div>);
 }
 
