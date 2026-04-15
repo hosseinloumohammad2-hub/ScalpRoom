@@ -3686,9 +3686,19 @@ function WhatWeCover({lang}){
 function AMarketsIBFlow({userProfile,token,lang,onSuccess}){
   const[step,setStep]=useState("intro"); // intro, guide, form, pending, active
   const[walletNum,setWalletNum]=useState("");
-  const[ibCode,setIbCode]=useState("");
   const[loading,setLoading]=useState(false);
   const[existing,setExisting]=useState(null);
+
+  // aMarkets Logo SVG
+  const amLogo=<svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="18" fill="#1a1a1a"/><path d="M50 18L28 72h10l4-11h16l4 11h10L50 18zm-5 35l5-14 5 14h-10z" fill="#F5851F"/><circle cx="68" cy="28" r="4" fill="#F5851F"/></svg>;
+
+  // Banner URLs
+  const bannerFA="https://d1ahm5rxndao67.cloudfront.net/pictures/4457/original.png?1714031152";
+  const bannerEN="https://d1ahm5rxndao67.cloudfront.net/pictures/4056/original.gif?1700830196";
+  const bannerLinkFA="https://fa.amarketsworld.com/cashback-persian/?g=E4AOYK&utm_campaign=391&utm_content=img&utm_medium=banner&utm_source=partner&utm_term=4457";
+  const bannerLinkEN="https://amarketstrading.co/sign-up/real-en/?g=E4AOYK?utm_campaign=373&utm_content=flash&utm_medium=banner&utm_source=partner&utm_term=4056";
+  const regLinkFA="https://fa.amarketsworld.com/sign-up/real-persian/?g=E4A0YK";
+  const regLinkEN="https://amarketstrading.co/sign-up/real-en/?g=E4A0YK";
 
   // Check for existing IB request
   useEffect(()=>{
@@ -3707,11 +3717,11 @@ function AMarketsIBFlow({userProfile,token,lang,onSuccess}){
   },[userProfile?.id,token]);
 
   const submitIB=async()=>{
-    if(!walletNum.trim()||!ibCode.trim())return;
+    if(!walletNum.trim())return;
     setLoading(true);
     try{
       await fetch(`${SB}/rest/v1/IBRequests`,{method:"POST",headers:H(token),body:JSON.stringify({
-        user_id:userProfile.id,wallet_number:walletNum.trim(),ib_code:ibCode.trim(),status:"pending"
+        user_id:userProfile.id,wallet_number:walletNum.trim(),ib_code:"E4A0YK",status:"pending"
       })});
       setStep("pending");
     }catch(e){}
@@ -3719,37 +3729,40 @@ function AMarketsIBFlow({userProfile,token,lang,onSuccess}){
   };
 
   const ibTx={
-    freeTitle:{fa:"🆓 پریمیوم رایگان با aMarkets",en:"🆓 Free Premium via aMarkets",ar:"🆓 بريميوم مجاني عبر aMarkets",tr:"🆓 aMarkets ile Ücretsiz Premium",ru:"🆓 Бесплатный Премиум через aMarkets",es:"🆓 Premium Gratis vía aMarkets"},
-    freeDesc:{fa:"با افتتاح حساب در aMarkets و وارد کردن کد IB ما، اشتراک پریمیوم رو رایگان دریافت کنید!",en:"Open an account at aMarkets with our IB code and get Premium for free!",ar:"افتح حساب في aMarkets بكود IB وأحصل على بريميوم مجاناً!",tr:"aMarkets'te IB kodumuzla hesap açın, Premium kazanın!",ru:"Откройте счёт в aMarkets с нашим IB кодом — получите Премиум бесплатно!",es:"¡Abre cuenta en aMarkets con nuestro código IB y obtén Premium gratis!"},
-    startBtn:{fa:"شروع ثبت‌نام رایگان",en:"Start Free Registration",ar:"ابدأ التسجيل المجاني",tr:"Ücretsiz Kayıt Başlat",ru:"Начать бесплатную регистрацию",es:"Iniciar registro gratuito"},
-    guideTitle:{fa:"راهنمای ثبت‌نام aMarkets",en:"aMarkets Registration Guide",ar:"دليل التسجيل في aMarkets",tr:"aMarkets Kayıt Rehberi",ru:"Руководство по регистрации aMarkets",es:"Guía de registro aMarkets"},
-    step1:{fa:"۱. از لینک زیر در سایت aMarkets ثبت‌نام کنید",en:"1. Register on aMarkets using the link below",ar:"1. سجّل في aMarkets من الرابط أدناه",tr:"1. Aşağıdaki linkten aMarkets'e kayıt olun",ru:"1. Зарегистрируйтесь в aMarkets по ссылке ниже",es:"1. Regístrese en aMarkets usando el enlace abajo"},
-    step2:{fa:"۲. حساب Standard باز کنید (فارکس)",en:"2. Open a Standard account (Forex)",ar:"2. افتح حساب Standard (فوركس)",tr:"2. Standard hesap açın (Forex)",ru:"2. Откройте счёт Standard (Форекс)",es:"2. Abra una cuenta Standard (Forex)"},
-    step3:{fa:"۳. در منوی سایت، بخش «My Partner» یا «کد معرف» را باز کنید",en:"3. In the menu, open 'My Partner' or 'Partner Code' section",ar:"3. في القائمة، افتح قسم 'My Partner' أو 'كود الشريك'",tr:"3. Menüden 'My Partner' veya 'Partner Kodu' bölümünü açın",ru:"3. В меню откройте раздел 'My Partner' или 'Код партнёра'",es:"3. En el menú, abra la sección 'My Partner' o 'Código de socio'"},
-    step4:{fa:"۴. کد IB زیر را در فیلد «کد همکار» وارد کنید و «ایجاد درخواست» بزنید",en:"4. Enter the IB code below in the 'Enter partner code' field and tap 'Submit request'",ar:"4. أدخل كود IB أدناه في حقل 'كود الشريك' واضغط 'إرسال الطلب'",tr:"4. Aşağıdaki IB kodunu 'Partner kodu' alanına girin ve 'Talep gönder'e basın",ru:"4. Введите IB код ниже в поле 'Код партнёра' и нажмите 'Отправить запрос'",es:"4. Ingrese el código IB abajo en el campo 'Código de socio' y presione 'Enviar solicitud'"},
-    step5:{fa:"۵. حداقل ۲۰۰ دلار والت خود را شارژ کنید",en:"5. Deposit at least $200 into your wallet",ar:"5. أودع ما لا يقل عن 200$ في محفظتك",tr:"5. Cüzdanınıza en az 200$ yatırın",ru:"5. Пополните кошелёк минимум на $200",es:"5. Deposite al menos $200 en su billetera"},
-    step6:{fa:"۶. از بونوس و کردیت مزایای بیشتر استفاده کنید",en:"6. Take advantage of bonus and credit benefits",ar:"6. استفد من مزايا البونص والكريديت",tr:"6. Bonus ve kredi avantajlarından yararlanın",ru:"6. Воспользуйтесь бонусами и кредитами",es:"6. Aproveche los bonos y beneficios de crédito"},
-    ibCodeLabel:{fa:"کد IB ما:",en:"Our IB Code:",ar:"كود IB الخاص بنا:",tr:"IB Kodumuz:",ru:"Наш IB код:",es:"Nuestro código IB:"},
+    freeTitle:{fa:"پریمیوم رایگان با آمارکتس",en:"Free Premium via AMarkets",ar:"بريميوم مجاني عبر AMarkets",tr:"AMarkets ile Ücretsiz Premium",ru:"Бесплатный Премиум через AMarkets",es:"Premium Gratis vía AMarkets"},
+    freeDesc:{fa:"با افتتاح حساب در آمارکتس و وارد کردن کد همکار ما، اشتراک پریمیوم رو رایگان دریافت کنید!",en:"Open an account at AMarkets with our partner code and get Premium for free!",ar:"افتح حساب في AMarkets بكود الشريك وأحصل على بريميوم مجاناً!",tr:"AMarkets'te partner kodumuzla hesap açın, Premium kazanın!",ru:"Откройте счёт в AMarkets с нашим партнёрским кодом — Премиум бесплатно!",es:"¡Abre cuenta en AMarkets con nuestro código y obtén Premium gratis!"},
+    freeBadge:{fa:"رایگان",en:"FREE",ar:"مجاني",tr:"ÜCRETSİZ",ru:"БЕСПЛАТНО",es:"GRATIS"},
+    startBtn:{fa:"شروع — دریافت پریمیوم رایگان",en:"Start — Get Free Premium",ar:"ابدأ — أحصل على بريميوم مجاناً",tr:"Başla — Ücretsiz Premium Al",ru:"Начать — Получить Премиум бесплатно",es:"Iniciar — Obtener Premium Gratis"},
+    guideTitle:{fa:"راهنمای دریافت پریمیوم رایگان",en:"How to Get Free Premium",ar:"كيفية الحصول على بريميوم مجاني",tr:"Ücretsiz Premium Nasıl Alınır",ru:"Как получить Премиум бесплатно",es:"Cómo obtener Premium gratis"},
+    step1:{fa:"در آمارکتس ثبت‌نام کنید یا اگر حساب دارید، وارد شوید و یک حساب Standard جدید باز کنید",en:"Register on AMarkets, or if you already have an account, log in and open a new Standard account",ar:"سجّل في AMarkets أو إذا كان لديك حساب، سجّل الدخول وافتح حساب Standard جديد",tr:"AMarkets'e kayıt olun veya hesabınız varsa giriş yapıp yeni bir Standard hesap açın",ru:"Зарегистрируйтесь в AMarkets или войдите и откройте новый Standard счёт",es:"Regístrese en AMarkets o inicie sesión y abra una cuenta Standard nueva"},
+    step2:{fa:"حداقل ۲۰۰ دلار والت (کیف پول) خود را شارژ کنید",en:"Deposit at least $200 into your wallet",ar:"أودع ما لا يقل عن 200$ في محفظتك",tr:"Cüzdanınıza en az 200$ yatırın",ru:"Пополните кошелёк минимум на $200",es:"Deposite al menos $200 en su billetera"},
+    step3:{fa:"در منوی سایت، روی آیکون پروفایل بزنید و گزینه «My Partner» یا «کد معرف» را باز کنید",en:"In the menu, tap your profile icon and open 'My Partner' or 'Partner Code'",ar:"في القائمة، اضغط على أيقونة الملف واختر 'My Partner'",tr:"Menüde profil simgesine tıklayın ve 'My Partner' bölümünü açın",ru:"В меню нажмите на иконку профиля и откройте 'My Partner'",es:"En el menú, toque el ícono de perfil y abra 'My Partner'"},
+    step4:{fa:"کد همکار زیر را در فیلد «کد همکار خود را وارد کنید» وارد کنید و دکمه «ایجاد درخواست» را بزنید",en:"Enter the partner code below in the 'Enter partner code' field and tap 'Submit request'",ar:"أدخل كود الشريك أدناه في الحقل واضغط 'إرسال الطلب'",tr:"Aşağıdaki partner kodunu alana girin ve 'Talep gönder'e basın",ru:"Введите код партнёра ниже и нажмите 'Отправить запрос'",es:"Ingrese el código de socio y presione 'Enviar solicitud'"},
+    step5:{fa:"بعد از تأیید درخواست در آمارکتس، شماره کیف پول خود را در مرحله بعد وارد کنید تا ادمین بررسی کنه",en:"After your request is approved by AMarkets, enter your wallet number in the next step for admin verification",ar:"بعد موافقة AMarkets، أدخل رقم محفظتك في الخطوة التالية للتحقق",tr:"AMarkets onayından sonra, doğrulama için cüzdan numaranızı girin",ru:"После одобрения AMarkets, введите номер кошелька для проверки админом",es:"Tras la aprobación de AMarkets, ingrese su número de billetera para verificación"},
+    step6:{fa:"از بونوس ۱۵٪ واریز اول و کش‌بک تا ۱۷$ در هر لات بهره‌مند شوید!",en:"Enjoy 15% first deposit bonus and up to $17 cashback per lot!",ar:"استمتع ببونص 15% على الإيداع الأول وكاشباك حتى 17$ لكل لوت!",tr:"İlk yatırımda %15 bonus ve lot başına 17$'a kadar cashback kazanın!",ru:"Получите бонус 15% на первый депозит и кэшбэк до $17 за лот!",es:"¡Disfrute un bono del 15% y cashback de hasta $17 por lote!"},
+    partnerCode:{fa:"کد همکار:",en:"Partner Code:",ar:"كود الشريك:",tr:"Partner Kodu:",ru:"Код партнёра:",es:"Código de socio:"},
     ibCodeValue:"E4A0YK",
-    openAmarkets:{fa:"باز کردن سایت aMarkets",en:"Open aMarkets Website",ar:"فتح موقع aMarkets",tr:"aMarkets Sitesini Aç",ru:"Открыть сайт aMarkets",es:"Abrir sitio aMarkets"},
-    nextStep:{fa:"مرحله بعد: ثبت اطلاعات",en:"Next: Submit Details",ar:"التالي: إرسال التفاصيل",tr:"Sonraki: Bilgileri Gönder",ru:"Далее: Отправить данные",es:"Siguiente: Enviar detalles"},
-    formTitle:{fa:"ثبت اطلاعات حساب aMarkets",en:"Submit aMarkets Account Details",ar:"إرسال تفاصيل حساب aMarkets",tr:"aMarkets Hesap Bilgilerini Gönderin",ru:"Отправьте данные аккаунта aMarkets",es:"Enviar detalles de cuenta aMarkets"},
+    openAmarkets:{fa:"ثبت‌نام در آمارکتس",en:"Register on AMarkets",ar:"التسجيل في AMarkets",tr:"AMarkets'e Kayıt Ol",ru:"Регистрация в AMarkets",es:"Registrarse en AMarkets"},
+    nextStep:{fa:"مرحله بعد: ثبت شماره کیف پول",en:"Next: Submit Wallet Number",ar:"التالي: إرسال رقم المحفظة",tr:"Sonraki: Cüzdan Numarasını Gönder",ru:"Далее: Отправить номер кошелька",es:"Siguiente: Enviar número de billetera"},
+    formTitle:{fa:"ثبت شماره کیف پول آمارکتس",en:"Submit AMarkets Wallet Number",ar:"إرسال رقم محفظة AMarkets",tr:"AMarkets Cüzdan Numarasını Gönderin",ru:"Отправьте номер кошелька AMarkets",es:"Enviar número de billetera AMarkets"},
+    formDesc:{fa:"شماره کیف پول خود را وارد کنید تا ادمین حساب شما را بررسی و تأیید کند.",en:"Enter your wallet number so admin can verify and approve your account.",ar:"أدخل رقم محفظتك ليتمكن المسؤول من التحقق والموافقة.",tr:"Cüzdan numaranızı girin, admin doğrulayıp onaylasın.",ru:"Введите номер кошелька для проверки и подтверждения админом.",es:"Ingrese su número de billetera para verificación y aprobación del admin."},
     walletLabel:{fa:"شماره کیف پول (Wallet Number)",en:"Wallet Number",ar:"رقم المحفظة",tr:"Cüzdan Numarası",ru:"Номер кошелька",es:"Número de billetera"},
-    walletPh:{fa:"شماره والت aMarkets خود را وارد کنید",en:"Enter your aMarkets wallet number",ar:"أدخل رقم محفظتك في aMarkets",tr:"aMarkets cüzdan numaranızı girin",ru:"Введите номер кошелька aMarkets",es:"Ingrese su número de billetera aMarkets"},
-    ibCodeInput:{fa:"کد IB وارد شده",en:"IB Code Entered",ar:"كود IB المدخل",tr:"Girilen IB Kodu",ru:"Введённый IB код",es:"Código IB ingresado"},
-    ibCodePh:{fa:"کد IB که در حساب وارد کردید",en:"The IB code you entered in your account",ar:"كود IB الذي أدخلته في حسابك",tr:"Hesabınıza girdiğiniz IB kodu",ru:"IB код, введённый в аккаунт",es:"El código IB que ingresó en su cuenta"},
-    submitBtn:{fa:"ارسال درخواست",en:"Submit Request",ar:"إرسال الطلب",tr:"Talep Gönder",ru:"Отправить запрос",es:"Enviar solicitud"},
+    walletPh:{fa:"مثلاً: 1443946",en:"e.g. 1443946",ar:"مثلاً: 1443946",tr:"Örn: 1443946",ru:"Напр: 1443946",es:"Ej: 1443946"},
+    submitBtn:{fa:"ارسال درخواست تأیید",en:"Submit for Verification",ar:"إرسال للتحقق",tr:"Doğrulama İçin Gönder",ru:"Отправить на проверку",es:"Enviar para verificación"},
     pendingTitle:{fa:"⏳ درخواست شما ثبت شد",en:"⏳ Request Submitted",ar:"⏳ تم تسجيل طلبك",tr:"⏳ Talebiniz Kaydedildi",ru:"⏳ Заявка отправлена",es:"⏳ Solicitud registrada"},
     pendingDesc:{fa:"درخواست شما در حال بررسی توسط ادمین است. پس از تأیید، اشتراک پریمیوم فعال خواهد شد.",en:"Your request is being reviewed by admin. Premium will be activated after approval.",ar:"طلبك قيد المراجعة. سيتم تفعيل البريميوم بعد الموافقة.",tr:"Talebiniz inceleniyor. Onay sonrası Premium aktifleştirilecek.",ru:"Заявка на рассмотрении. Премиум будет активирован после одобрения.",es:"Su solicitud está en revisión. Premium se activará tras la aprobación."},
     activeTitle:{fa:"✅ اشتراک IB فعال است",en:"✅ IB Subscription Active",ar:"✅ اشتراك IB نشط",tr:"✅ IB Aboneliği Aktif",ru:"✅ IB подписка активна",es:"✅ Suscripción IB activa"},
-    activeDesc:{fa:"حساب aMarkets شما باید فعال باشه. اگر حسابتون غیرفعال بشه، اشتراک پریمیوم قطع خواهد شد.",en:"Your aMarkets account must remain active. If deactivated, your Premium will be revoked.",ar:"يجب أن يبقى حسابك في aMarkets نشطاً. إذا تم تعطيله، سيتم إلغاء البريميوم.",tr:"aMarkets hesabınız aktif kalmalı. Devre dışı kalırsa Premium iptal edilir.",ru:"Ваш аккаунт aMarkets должен быть активен. При деактивации Премиум будет отменён.",es:"Su cuenta aMarkets debe permanecer activa. Si se desactiva, se revocará el Premium."},
+    activeDesc:{fa:"حساب آمارکتس شما باید فعال باشه. اگر حسابتون غیرفعال بشه، اشتراک پریمیوم قطع خواهد شد.",en:"Your AMarkets account must remain active. If deactivated, your Premium will be revoked.",ar:"يجب أن يبقى حسابك نشطاً. إذا تم تعطيله، سيتم إلغاء البريميوم.",tr:"AMarkets hesabınız aktif kalmalı. Devre dışı kalırsa Premium iptal edilir.",ru:"Ваш аккаунт должен быть активен. При деактивации Премиум будет отменён.",es:"Su cuenta debe permanecer activa. Si se desactiva, se revocará el Premium."},
     importantNote:{fa:"⚠ توجه: حساب شما روزانه بررسی میشه",en:"⚠ Note: Your account is checked daily",ar:"⚠ ملاحظة: يتم فحص حسابك يومياً",tr:"⚠ Not: Hesabınız günlük kontrol edilir",ru:"⚠ Внимание: Ваш аккаунт проверяется ежедневно",es:"⚠ Nota: Su cuenta se verifica diariamente"},
     minDeposit:{fa:"حداقل واریز: ۲۰۰ دلار",en:"Minimum deposit: $200",ar:"الحد الأدنى للإيداع: 200$",tr:"Minimum depozito: 200$",ru:"Минимальный депозит: $200",es:"Depósito mínimo: $200"},
     accountType:{fa:"نوع حساب: Standard (فارکس)",en:"Account type: Standard (Forex)",ar:"نوع الحساب: Standard (فوركس)",tr:"Hesap türü: Standard (Forex)",ru:"Тип счёта: Standard (Форекс)",es:"Tipo de cuenta: Standard (Forex)"},
     back:{fa:"بازگشت",en:"Back",ar:"رجوع",tr:"Geri",ru:"Назад",es:"Volver"},
   };
   const g=(k)=>(ibTx[k]&&ibTx[k][lang])||(ibTx[k]&&ibTx[k].en)||ibTx[k]||"";
+  const isFA=lang==="fa";
+  const regLink=isFA?regLinkFA:regLinkEN;
 
+  // ─── Active State ───
   if(step==="active"){
     return(<div className="cd" style={{padding:16,marginBottom:16,borderColor:"color-mix(in srgb,var(--G) 30%,transparent)",background:"color-mix(in srgb,var(--G) 4%,transparent)"}}>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
@@ -3761,6 +3774,7 @@ function AMarketsIBFlow({userProfile,token,lang,onSuccess}){
     </div>);
   }
 
+  // ─── Pending State ───
   if(step==="pending"){
     return(<div className="cd" style={{padding:20,marginBottom:16,borderColor:"color-mix(in srgb,var(--Y) 30%,transparent)",background:"color-mix(in srgb,var(--Y) 4%,transparent)",textAlign:"center"}}>
       <div style={{fontSize:40,marginBottom:12}}>⏳</div>
@@ -3770,65 +3784,93 @@ function AMarketsIBFlow({userProfile,token,lang,onSuccess}){
     </div>);
   }
 
+  // ─── Form: Enter Wallet Number ───
   if(step==="form"){
     return(<div className="cd" style={{padding:16,marginBottom:16}}>
       <div onClick={()=>setStep("guide")} style={{fontSize:12,color:"var(--B)",fontWeight:600,cursor:"pointer",marginBottom:12,display:"flex",alignItems:"center",gap:4}}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         {g("back")}
       </div>
-      <div style={{fontSize:15,fontWeight:700,marginBottom:16}}>{g("formTitle")}</div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+        {amLogo}
+        <div style={{fontSize:15,fontWeight:700}}>{g("formTitle")}</div>
+      </div>
+      <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.7,marginBottom:14}}>{g("formDesc")}</div>
       <div style={{fontSize:12,fontWeight:600,color:"var(--tx2)",marginBottom:6}}>{g("walletLabel")}</div>
-      <input className="ip" placeholder={g("walletPh")} value={walletNum} onChange={e=>setWalletNum(e.target.value)}/>
-      <div style={{fontSize:12,fontWeight:600,color:"var(--tx2)",marginBottom:6,marginTop:4}}>{g("ibCodeInput")}</div>
-      <input className="ip" placeholder={g("ibCodePh")} value={ibCode} onChange={e=>setIbCode(e.target.value)}/>
+      <input className="ip" placeholder={g("walletPh")} value={walletNum} onChange={e=>setWalletNum(e.target.value)} style={{fontSize:16,fontWeight:600}}/>
       <div style={{padding:10,borderRadius:10,background:"color-mix(in srgb,var(--Y) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 15%,transparent)",marginBottom:12,marginTop:4}}>
         <div style={{fontSize:11,color:"var(--Y)",fontWeight:600}}>{g("minDeposit")}</div>
         <div style={{fontSize:11,color:"var(--Y)",fontWeight:600,marginTop:4}}>{g("accountType")}</div>
       </div>
-      <div onClick={submitIB} className="bt" style={{background:"var(--G)",opacity:loading||!walletNum.trim()||!ibCode.trim()?.5:1}}>
+      <div onClick={submitIB} className="bt" style={{background:"var(--G)",opacity:loading||!walletNum.trim()?.5:1}}>
         {loading?"...":(g("submitBtn"))}
       </div>
     </div>);
   }
 
+  // ─── Guide: Step-by-step instructions ───
   if(step==="guide"){
+    const steps=[g("step1"),g("step2"),g("step3"),g("step4"),g("step5"),g("step6")];
+    const stepIcons=["👤","💰","☰","📝","📋","🎁"];
     return(<div className="cd" style={{padding:16,marginBottom:16}}>
       <div onClick={()=>setStep("intro")} style={{fontSize:12,color:"var(--B)",fontWeight:600,cursor:"pointer",marginBottom:12,display:"flex",alignItems:"center",gap:4}}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         {g("back")}
       </div>
-      <div style={{fontSize:15,fontWeight:700,marginBottom:14}}>{g("guideTitle")}</div>
-      {[g("step1"),g("step2"),g("step3"),g("step4"),g("step5"),g("step6")].map((s,i)=>
-        <div key={i} style={{display:"flex",gap:10,marginBottom:10,alignItems:"flex-start"}}>
-          <div style={{width:24,height:24,borderRadius:12,background:"color-mix(in srgb,var(--B) 10%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:11,fontWeight:700,color:"var(--B)"}}>{i+1}</div>
-          <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.6,paddingTop:3}}>{s}</div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}>
+        {amLogo}
+        <div style={{fontSize:15,fontWeight:700}}>{g("guideTitle")}</div>
+      </div>
+
+      {steps.map((s,i)=>
+        <div key={i} style={{display:"flex",gap:10,marginBottom:12,alignItems:"flex-start"}}>
+          <div style={{width:28,height:28,borderRadius:14,background:i===3?"color-mix(in srgb,var(--G) 12%,transparent)":"color-mix(in srgb,var(--B) 8%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:13}}>{stepIcons[i]}</div>
+          <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.7,paddingTop:4}}>{s}</div>
         </div>
       )}
-      <div style={{padding:14,borderRadius:12,background:"color-mix(in srgb,var(--G) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 20%,transparent)",marginTop:12,marginBottom:12,textAlign:"center"}}>
-        <div style={{fontSize:11,color:"var(--dm)",fontWeight:600,marginBottom:4}}>{g("ibCodeLabel")}</div>
-        <div className="m" style={{fontSize:28,fontWeight:700,color:"var(--G)",letterSpacing:2}}>{g("ibCodeValue")}</div>
+
+      {/* Partner Code Box */}
+      <div style={{padding:16,borderRadius:14,background:"color-mix(in srgb,var(--G) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 20%,transparent)",marginTop:8,marginBottom:14,textAlign:"center"}}>
+        <div style={{fontSize:11,color:"var(--dm)",fontWeight:600,marginBottom:6}}>{g("partnerCode")}</div>
+        <div className="m" style={{fontSize:32,fontWeight:700,color:"var(--G)",letterSpacing:3}}>E4A0YK</div>
+        <div onClick={()=>{navigator.clipboard?.writeText("E4A0YK")}} style={{display:"inline-flex",alignItems:"center",gap:4,marginTop:8,fontSize:11,color:"var(--B)",fontWeight:600,cursor:"pointer",padding:"4px 12px",borderRadius:8,background:"color-mix(in srgb,var(--B) 8%,transparent)"}}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          {isFA?"کپی کد":"Copy Code"}
+        </div>
       </div>
-      <a href="https://fa.amarketsworld.com/sign-up/real-persian/?g=E4A0YK" target="_blank" rel="noopener" className="bt" style={{background:"#0088cc",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:8,textDecoration:"none"}}>
+
+      {/* Register Button */}
+      <a href={regLink} target="_blank" rel="noopener" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:14,borderRadius:14,background:"#F5851F",color:"#fff",fontSize:14,fontWeight:700,marginBottom:8,textDecoration:"none",cursor:"pointer"}}>
+        {amLogo}
         {g("openAmarkets")}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
       </a>
-      <div onClick={()=>setStep("form")} className="bt" style={{background:"var(--G)"}}>{g("nextStep")}</div>
+
+      <div onClick={()=>setStep("form")} className="bt" style={{background:"var(--G)",fontSize:14}}>{g("nextStep")}</div>
     </div>);
   }
 
-  // Intro step
-  return(<div className="cd-glass cd" style={{padding:16,marginBottom:16,position:"relative",overflow:"hidden"}}>
-    <div style={{position:"absolute",top:0,right:0,background:"var(--G)",color:"#fff",fontSize:9,fontWeight:700,padding:"4px 12px 4px 16px",borderRadius:"0 0 0 12px"}}>{lang==="fa"?"رایگان":"FREE"}</div>
-    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12,marginTop:4}}>
-      <div style={{width:44,height:44,borderRadius:12,background:"linear-gradient(135deg,#00b894,#00cec9)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-        <span style={{fontSize:22}}>🏦</span>
+  // ─── Intro: Main card ───
+  return(<div style={{marginBottom:16}}>
+    {/* Banner */}
+    <a href={isFA?bannerLinkFA:bannerLinkEN} target="_blank" rel="noopener" style={{display:"block",borderRadius:14,overflow:"hidden",marginBottom:10}}>
+      <img src={isFA?bannerFA:bannerEN} alt="AMarkets" style={{width:"100%",height:"auto",display:"block",borderRadius:14}}/>
+    </a>
+
+    {/* Main Card */}
+    <div className="cd-glass cd" style={{padding:16,position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:0,right:0,background:"linear-gradient(135deg,#00b894,#00cec9)",color:"#fff",fontSize:10,fontWeight:800,padding:"5px 14px 5px 18px",borderRadius:"0 0 0 14px",letterSpacing:.5}}>{g("freeBadge")}</div>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12,marginTop:4}}>
+        {amLogo}
+        <div>
+          <div style={{fontSize:15,fontWeight:700}}>{g("freeTitle")}</div>
+          <div style={{fontSize:11,color:"var(--tx2)",marginTop:3,lineHeight:1.6}}>{g("freeDesc")}</div>
+        </div>
       </div>
-      <div>
-        <div style={{fontSize:14,fontWeight:700}}>{g("freeTitle")}</div>
-        <div style={{fontSize:11,color:"var(--tx2)",marginTop:2,lineHeight:1.5}}>{g("freeDesc")}</div>
+      <div onClick={()=>setStep("guide")} className="bt" style={{background:"linear-gradient(135deg,#F5851F,#FF6B00)",fontSize:14,fontWeight:700,letterSpacing:.3}}>
+        {g("startBtn")}
       </div>
     </div>
-    <div onClick={()=>setStep("guide")} className="bt" style={{background:"linear-gradient(135deg,#00b894,#00cec9)"}}>{g("startBtn")}</div>
   </div>);
 }
 
