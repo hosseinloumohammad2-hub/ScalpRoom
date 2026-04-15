@@ -3682,6 +3682,284 @@ function WhatWeCover({lang}){
   </div>);
 }
 
+/* ─── aMarkets IB Request Component ─── */
+function AMarketsIBFlow({userProfile,token,lang,onSuccess}){
+  const[step,setStep]=useState("intro"); // intro, guide, form, pending, active
+  const[walletNum,setWalletNum]=useState("");
+  const[ibCode,setIbCode]=useState("");
+  const[loading,setLoading]=useState(false);
+  const[existing,setExisting]=useState(null);
+
+  // Check for existing IB request
+  useEffect(()=>{
+    if(!userProfile?.id||!token)return;
+    (async()=>{
+      try{
+        const r=await fetch(`${SB}/rest/v1/IBRequests?user_id=eq.${userProfile.id}&order=created_at.desc&limit=1`,{headers:H(token)});
+        const d=await r.json();
+        if(Array.isArray(d)&&d[0]){
+          setExisting(d[0]);
+          if(d[0].status==="approved")setStep("active");
+          else if(d[0].status==="pending")setStep("pending");
+        }
+      }catch(e){}
+    })();
+  },[userProfile?.id,token]);
+
+  const submitIB=async()=>{
+    if(!walletNum.trim()||!ibCode.trim())return;
+    setLoading(true);
+    try{
+      await fetch(`${SB}/rest/v1/IBRequests`,{method:"POST",headers:H(token),body:JSON.stringify({
+        user_id:userProfile.id,wallet_number:walletNum.trim(),ib_code:ibCode.trim(),status:"pending"
+      })});
+      setStep("pending");
+    }catch(e){}
+    setLoading(false);
+  };
+
+  const ibTx={
+    freeTitle:{fa:"🆓 پریمیوم رایگان با aMarkets",en:"🆓 Free Premium via aMarkets",ar:"🆓 بريميوم مجاني عبر aMarkets",tr:"🆓 aMarkets ile Ücretsiz Premium",ru:"🆓 Бесплатный Премиум через aMarkets",es:"🆓 Premium Gratis vía aMarkets"},
+    freeDesc:{fa:"با افتتاح حساب در aMarkets و وارد کردن کد IB ما، اشتراک پریمیوم رو رایگان دریافت کنید!",en:"Open an account at aMarkets with our IB code and get Premium for free!",ar:"افتح حساب في aMarkets بكود IB وأحصل على بريميوم مجاناً!",tr:"aMarkets'te IB kodumuzla hesap açın, Premium kazanın!",ru:"Откройте счёт в aMarkets с нашим IB кодом — получите Премиум бесплатно!",es:"¡Abre cuenta en aMarkets con nuestro código IB y obtén Premium gratis!"},
+    startBtn:{fa:"شروع ثبت‌نام رایگان",en:"Start Free Registration",ar:"ابدأ التسجيل المجاني",tr:"Ücretsiz Kayıt Başlat",ru:"Начать бесплатную регистрацию",es:"Iniciar registro gratuito"},
+    guideTitle:{fa:"راهنمای ثبت‌نام aMarkets",en:"aMarkets Registration Guide",ar:"دليل التسجيل في aMarkets",tr:"aMarkets Kayıt Rehberi",ru:"Руководство по регистрации aMarkets",es:"Guía de registro aMarkets"},
+    step1:{fa:"۱. از لینک زیر در سایت aMarkets ثبت‌نام کنید",en:"1. Register on aMarkets using the link below",ar:"1. سجّل في aMarkets من الرابط أدناه",tr:"1. Aşağıdaki linkten aMarkets'e kayıt olun",ru:"1. Зарегистрируйтесь в aMarkets по ссылке ниже",es:"1. Regístrese en aMarkets usando el enlace abajo"},
+    step2:{fa:"۲. حساب Standard باز کنید (فارکس)",en:"2. Open a Standard account (Forex)",ar:"2. افتح حساب Standard (فوركس)",tr:"2. Standard hesap açın (Forex)",ru:"2. Откройте счёт Standard (Форекс)",es:"2. Abra una cuenta Standard (Forex)"},
+    step3:{fa:"۳. در منوی سایت، بخش «My Partner» یا «کد معرف» را باز کنید",en:"3. In the menu, open 'My Partner' or 'Partner Code' section",ar:"3. في القائمة، افتح قسم 'My Partner' أو 'كود الشريك'",tr:"3. Menüden 'My Partner' veya 'Partner Kodu' bölümünü açın",ru:"3. В меню откройте раздел 'My Partner' или 'Код партнёра'",es:"3. En el menú, abra la sección 'My Partner' o 'Código de socio'"},
+    step4:{fa:"۴. کد IB زیر را در فیلد «کد همکار» وارد کنید و «ایجاد درخواست» بزنید",en:"4. Enter the IB code below in the 'Enter partner code' field and tap 'Submit request'",ar:"4. أدخل كود IB أدناه في حقل 'كود الشريك' واضغط 'إرسال الطلب'",tr:"4. Aşağıdaki IB kodunu 'Partner kodu' alanına girin ve 'Talep gönder'e basın",ru:"4. Введите IB код ниже в поле 'Код партнёра' и нажмите 'Отправить запрос'",es:"4. Ingrese el código IB abajo en el campo 'Código de socio' y presione 'Enviar solicitud'"},
+    step5:{fa:"۵. حداقل ۲۰۰ دلار والت خود را شارژ کنید",en:"5. Deposit at least $200 into your wallet",ar:"5. أودع ما لا يقل عن 200$ في محفظتك",tr:"5. Cüzdanınıza en az 200$ yatırın",ru:"5. Пополните кошелёк минимум на $200",es:"5. Deposite al menos $200 en su billetera"},
+    step6:{fa:"۶. از بونوس و کردیت مزایای بیشتر استفاده کنید",en:"6. Take advantage of bonus and credit benefits",ar:"6. استفد من مزايا البونص والكريديت",tr:"6. Bonus ve kredi avantajlarından yararlanın",ru:"6. Воспользуйтесь бонусами и кредитами",es:"6. Aproveche los bonos y beneficios de crédito"},
+    ibCodeLabel:{fa:"کد IB ما:",en:"Our IB Code:",ar:"كود IB الخاص بنا:",tr:"IB Kodumuz:",ru:"Наш IB код:",es:"Nuestro código IB:"},
+    ibCodeValue:"E4A0YK",
+    openAmarkets:{fa:"باز کردن سایت aMarkets",en:"Open aMarkets Website",ar:"فتح موقع aMarkets",tr:"aMarkets Sitesini Aç",ru:"Открыть сайт aMarkets",es:"Abrir sitio aMarkets"},
+    nextStep:{fa:"مرحله بعد: ثبت اطلاعات",en:"Next: Submit Details",ar:"التالي: إرسال التفاصيل",tr:"Sonraki: Bilgileri Gönder",ru:"Далее: Отправить данные",es:"Siguiente: Enviar detalles"},
+    formTitle:{fa:"ثبت اطلاعات حساب aMarkets",en:"Submit aMarkets Account Details",ar:"إرسال تفاصيل حساب aMarkets",tr:"aMarkets Hesap Bilgilerini Gönderin",ru:"Отправьте данные аккаунта aMarkets",es:"Enviar detalles de cuenta aMarkets"},
+    walletLabel:{fa:"شماره کیف پول (Wallet Number)",en:"Wallet Number",ar:"رقم المحفظة",tr:"Cüzdan Numarası",ru:"Номер кошелька",es:"Número de billetera"},
+    walletPh:{fa:"شماره والت aMarkets خود را وارد کنید",en:"Enter your aMarkets wallet number",ar:"أدخل رقم محفظتك في aMarkets",tr:"aMarkets cüzdan numaranızı girin",ru:"Введите номер кошелька aMarkets",es:"Ingrese su número de billetera aMarkets"},
+    ibCodeInput:{fa:"کد IB وارد شده",en:"IB Code Entered",ar:"كود IB المدخل",tr:"Girilen IB Kodu",ru:"Введённый IB код",es:"Código IB ingresado"},
+    ibCodePh:{fa:"کد IB که در حساب وارد کردید",en:"The IB code you entered in your account",ar:"كود IB الذي أدخلته في حسابك",tr:"Hesabınıza girdiğiniz IB kodu",ru:"IB код, введённый в аккаунт",es:"El código IB que ingresó en su cuenta"},
+    submitBtn:{fa:"ارسال درخواست",en:"Submit Request",ar:"إرسال الطلب",tr:"Talep Gönder",ru:"Отправить запрос",es:"Enviar solicitud"},
+    pendingTitle:{fa:"⏳ درخواست شما ثبت شد",en:"⏳ Request Submitted",ar:"⏳ تم تسجيل طلبك",tr:"⏳ Talebiniz Kaydedildi",ru:"⏳ Заявка отправлена",es:"⏳ Solicitud registrada"},
+    pendingDesc:{fa:"درخواست شما در حال بررسی توسط ادمین است. پس از تأیید، اشتراک پریمیوم فعال خواهد شد.",en:"Your request is being reviewed by admin. Premium will be activated after approval.",ar:"طلبك قيد المراجعة. سيتم تفعيل البريميوم بعد الموافقة.",tr:"Talebiniz inceleniyor. Onay sonrası Premium aktifleştirilecek.",ru:"Заявка на рассмотрении. Премиум будет активирован после одобрения.",es:"Su solicitud está en revisión. Premium se activará tras la aprobación."},
+    activeTitle:{fa:"✅ اشتراک IB فعال است",en:"✅ IB Subscription Active",ar:"✅ اشتراك IB نشط",tr:"✅ IB Aboneliği Aktif",ru:"✅ IB подписка активна",es:"✅ Suscripción IB activa"},
+    activeDesc:{fa:"حساب aMarkets شما باید فعال باشه. اگر حسابتون غیرفعال بشه، اشتراک پریمیوم قطع خواهد شد.",en:"Your aMarkets account must remain active. If deactivated, your Premium will be revoked.",ar:"يجب أن يبقى حسابك في aMarkets نشطاً. إذا تم تعطيله، سيتم إلغاء البريميوم.",tr:"aMarkets hesabınız aktif kalmalı. Devre dışı kalırsa Premium iptal edilir.",ru:"Ваш аккаунт aMarkets должен быть активен. При деактивации Премиум будет отменён.",es:"Su cuenta aMarkets debe permanecer activa. Si se desactiva, se revocará el Premium."},
+    importantNote:{fa:"⚠ توجه: حساب شما روزانه بررسی میشه",en:"⚠ Note: Your account is checked daily",ar:"⚠ ملاحظة: يتم فحص حسابك يومياً",tr:"⚠ Not: Hesabınız günlük kontrol edilir",ru:"⚠ Внимание: Ваш аккаунт проверяется ежедневно",es:"⚠ Nota: Su cuenta se verifica diariamente"},
+    minDeposit:{fa:"حداقل واریز: ۲۰۰ دلار",en:"Minimum deposit: $200",ar:"الحد الأدنى للإيداع: 200$",tr:"Minimum depozito: 200$",ru:"Минимальный депозит: $200",es:"Depósito mínimo: $200"},
+    accountType:{fa:"نوع حساب: Standard (فارکس)",en:"Account type: Standard (Forex)",ar:"نوع الحساب: Standard (فوركس)",tr:"Hesap türü: Standard (Forex)",ru:"Тип счёта: Standard (Форекс)",es:"Tipo de cuenta: Standard (Forex)"},
+    back:{fa:"بازگشت",en:"Back",ar:"رجوع",tr:"Geri",ru:"Назад",es:"Volver"},
+  };
+  const g=(k)=>(ibTx[k]&&ibTx[k][lang])||(ibTx[k]&&ibTx[k].en)||ibTx[k]||"";
+
+  if(step==="active"){
+    return(<div className="cd" style={{padding:16,marginBottom:16,borderColor:"color-mix(in srgb,var(--G) 30%,transparent)",background:"color-mix(in srgb,var(--G) 4%,transparent)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+        <div style={{width:8,height:8,borderRadius:"50%",background:"var(--G)",animation:"pl 2s infinite"}}/>
+        <span style={{fontSize:14,fontWeight:700,color:"var(--G)"}}>{g("activeTitle")}</span>
+      </div>
+      <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.7,marginBottom:10}}>{g("activeDesc")}</div>
+      <div style={{fontSize:11,fontWeight:600,color:"var(--R)",background:"color-mix(in srgb,var(--R) 8%,transparent)",padding:"8px 12px",borderRadius:8}}>{g("importantNote")}</div>
+    </div>);
+  }
+
+  if(step==="pending"){
+    return(<div className="cd" style={{padding:20,marginBottom:16,borderColor:"color-mix(in srgb,var(--Y) 30%,transparent)",background:"color-mix(in srgb,var(--Y) 4%,transparent)",textAlign:"center"}}>
+      <div style={{fontSize:40,marginBottom:12}}>⏳</div>
+      <div style={{fontSize:16,fontWeight:700,marginBottom:8}}>{g("pendingTitle")}</div>
+      <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.7}}>{g("pendingDesc")}</div>
+      {existing&&<div style={{marginTop:12,fontSize:11,color:"var(--dm)"}}>Wallet: {existing.wallet_number}</div>}
+    </div>);
+  }
+
+  if(step==="form"){
+    return(<div className="cd" style={{padding:16,marginBottom:16}}>
+      <div onClick={()=>setStep("guide")} style={{fontSize:12,color:"var(--B)",fontWeight:600,cursor:"pointer",marginBottom:12,display:"flex",alignItems:"center",gap:4}}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        {g("back")}
+      </div>
+      <div style={{fontSize:15,fontWeight:700,marginBottom:16}}>{g("formTitle")}</div>
+      <div style={{fontSize:12,fontWeight:600,color:"var(--tx2)",marginBottom:6}}>{g("walletLabel")}</div>
+      <input className="ip" placeholder={g("walletPh")} value={walletNum} onChange={e=>setWalletNum(e.target.value)}/>
+      <div style={{fontSize:12,fontWeight:600,color:"var(--tx2)",marginBottom:6,marginTop:4}}>{g("ibCodeInput")}</div>
+      <input className="ip" placeholder={g("ibCodePh")} value={ibCode} onChange={e=>setIbCode(e.target.value)}/>
+      <div style={{padding:10,borderRadius:10,background:"color-mix(in srgb,var(--Y) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 15%,transparent)",marginBottom:12,marginTop:4}}>
+        <div style={{fontSize:11,color:"var(--Y)",fontWeight:600}}>{g("minDeposit")}</div>
+        <div style={{fontSize:11,color:"var(--Y)",fontWeight:600,marginTop:4}}>{g("accountType")}</div>
+      </div>
+      <div onClick={submitIB} className="bt" style={{background:"var(--G)",opacity:loading||!walletNum.trim()||!ibCode.trim()?.5:1}}>
+        {loading?"...":(g("submitBtn"))}
+      </div>
+    </div>);
+  }
+
+  if(step==="guide"){
+    return(<div className="cd" style={{padding:16,marginBottom:16}}>
+      <div onClick={()=>setStep("intro")} style={{fontSize:12,color:"var(--B)",fontWeight:600,cursor:"pointer",marginBottom:12,display:"flex",alignItems:"center",gap:4}}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        {g("back")}
+      </div>
+      <div style={{fontSize:15,fontWeight:700,marginBottom:14}}>{g("guideTitle")}</div>
+      {[g("step1"),g("step2"),g("step3"),g("step4"),g("step5"),g("step6")].map((s,i)=>
+        <div key={i} style={{display:"flex",gap:10,marginBottom:10,alignItems:"flex-start"}}>
+          <div style={{width:24,height:24,borderRadius:12,background:"color-mix(in srgb,var(--B) 10%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:11,fontWeight:700,color:"var(--B)"}}>{i+1}</div>
+          <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.6,paddingTop:3}}>{s}</div>
+        </div>
+      )}
+      <div style={{padding:14,borderRadius:12,background:"color-mix(in srgb,var(--G) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 20%,transparent)",marginTop:12,marginBottom:12,textAlign:"center"}}>
+        <div style={{fontSize:11,color:"var(--dm)",fontWeight:600,marginBottom:4}}>{g("ibCodeLabel")}</div>
+        <div className="m" style={{fontSize:28,fontWeight:700,color:"var(--G)",letterSpacing:2}}>{g("ibCodeValue")}</div>
+      </div>
+      <a href="https://fa.amarketsworld.com/sign-up/real-persian/?g=E4A0YK" target="_blank" rel="noopener" className="bt" style={{background:"#0088cc",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:8,textDecoration:"none"}}>
+        {g("openAmarkets")}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+      <div onClick={()=>setStep("form")} className="bt" style={{background:"var(--G)"}}>{g("nextStep")}</div>
+    </div>);
+  }
+
+  // Intro step
+  return(<div className="cd-glass cd" style={{padding:16,marginBottom:16,position:"relative",overflow:"hidden"}}>
+    <div style={{position:"absolute",top:0,right:0,background:"var(--G)",color:"#fff",fontSize:9,fontWeight:700,padding:"4px 12px 4px 16px",borderRadius:"0 0 0 12px"}}>{lang==="fa"?"رایگان":"FREE"}</div>
+    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12,marginTop:4}}>
+      <div style={{width:44,height:44,borderRadius:12,background:"linear-gradient(135deg,#00b894,#00cec9)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+        <span style={{fontSize:22}}>🏦</span>
+      </div>
+      <div>
+        <div style={{fontSize:14,fontWeight:700}}>{g("freeTitle")}</div>
+        <div style={{fontSize:11,color:"var(--tx2)",marginTop:2,lineHeight:1.5}}>{g("freeDesc")}</div>
+      </div>
+    </div>
+    <div onClick={()=>setStep("guide")} className="bt" style={{background:"linear-gradient(135deg,#00b894,#00cec9)"}}>{g("startBtn")}</div>
+  </div>);
+}
+
+/* ─── Admin IB Requests ─── */
+function AdminIBRequests({token}){
+  const{lang}=useLang();
+  const[requests,setRequests]=useState([]);
+  const[users,setUsers]=useState({});
+  const[loading,setLoading]=useState(true);
+  const[processing,setProcessing]=useState(null);
+
+  const load=useCallback(async()=>{
+    try{
+      const r=await fetch(`${SB}/rest/v1/IBRequests?order=created_at.desc`,{headers:H(token)});
+      const d=await r.json();
+      if(Array.isArray(d))setRequests(d);
+      const us=await fetch(`${SB}/rest/v1/Users?select=id,full_name,email,membership`,{headers:H(token)});
+      const usData=await us.json();
+      if(Array.isArray(usData)){const m={};usData.forEach(u=>m[u.id]=u);setUsers(m)}
+    }catch(e){}
+    setLoading(false);
+  },[token]);
+
+  useEffect(()=>{load()},[load]);
+
+  const approve=async(req)=>{
+    setProcessing(req.id);
+    try{
+      await fetch(`${SB}/rest/v1/IBRequests?id=eq.${req.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({status:"approved"})});
+      // Set premium — IB users get ongoing premium (365 days, admin checks daily)
+      const exp=new Date();exp.setDate(exp.getDate()+365);
+      await fetch(`${SB}/rest/v1/Users?id=eq.${req.user_id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({membership:"premium",premium_expires_at:exp.toISOString(),ib_active:true})});
+      load();
+    }catch(e){}
+    setProcessing(null);
+  };
+
+  const reject=async(id)=>{
+    if(!confirm(lang==="fa"?"رد شود؟":"Reject?"))return;
+    setProcessing(id);
+    try{
+      await fetch(`${SB}/rest/v1/IBRequests?id=eq.${id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({status:"rejected"})});
+      load();
+    }catch(e){}
+    setProcessing(null);
+  };
+
+  const revoke=async(req)=>{
+    if(!confirm(lang==="fa"?"غیرفعال کردن پریمیوم IB؟":"Revoke IB Premium?"))return;
+    setProcessing(req.id);
+    try{
+      await fetch(`${SB}/rest/v1/IBRequests?id=eq.${req.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({status:"revoked"})});
+      await fetch(`${SB}/rest/v1/Users?id=eq.${req.user_id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({membership:"free",ib_active:false})});
+      load();
+    }catch(e){}
+    setProcessing(null);
+  };
+
+  const statusColor=(s)=>s==="approved"?"var(--G)":s==="rejected"||s==="revoked"?"var(--R)":"var(--Y)";
+  const statusLabel=(s)=>({pending:lang==="fa"?"در انتظار":"Pending",approved:lang==="fa"?"تأیید شده":"Approved",rejected:lang==="fa"?"رد شده":"Rejected",revoked:lang==="fa"?"لغو شده":"Revoked"}[s]||s);
+  const pending=requests.filter(p=>p.status==="pending");
+  const approved=requests.filter(p=>p.status==="approved");
+  const history=requests.filter(p=>p.status!=="pending"&&p.status!=="approved");
+
+  return(<div>
+    <div style={{fontSize:14,fontWeight:700,marginBottom:14}}>{lang==="fa"?"🏦 درخواست‌های IB (aMarkets)":"🏦 IB Requests (aMarkets)"}</div>
+
+    {loading&&<div style={{textAlign:"center",padding:30}}><div className="ptr-spinner"/></div>}
+
+    {/* Pending */}
+    {pending.length>0&&<div style={{fontSize:12,fontWeight:600,color:"var(--Y)",marginBottom:8}}>{lang==="fa"?"در انتظار تأیید":"Pending"} ({pending.length})</div>}
+    {pending.map(req=>{
+      const u=users[req.user_id];
+      return<div key={req.id} className="cd" style={{padding:14,marginBottom:8,borderColor:"color-mix(in srgb,var(--Y) 25%,transparent)",background:"color-mix(in srgb,var(--Y) 3%,transparent)"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+          <div>
+            <div style={{fontSize:14,fontWeight:700}}>{u?.full_name||"Unknown"}</div>
+            <div style={{fontSize:10,color:"var(--dm)"}}>{u?.email}</div>
+          </div>
+          <span style={{fontSize:9,fontWeight:700,color:"var(--Y)",background:"color-mix(in srgb,var(--Y) 10%,transparent)",padding:"3px 8px",borderRadius:6}}>IB</span>
+        </div>
+        <div style={{fontSize:11,color:"var(--tx2)",marginBottom:4}}>Wallet: <span className="m" style={{fontWeight:600}}>{req.wallet_number}</span></div>
+        <div style={{fontSize:11,color:"var(--tx2)",marginBottom:8}}>IB Code: <span className="m" style={{fontWeight:600}}>{req.ib_code}</span></div>
+        <div style={{fontSize:10,color:"var(--dm)",marginBottom:10}}>{new Date(req.created_at).toLocaleDateString()} {new Date(req.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>
+        <div style={{display:"flex",gap:6}}>
+          <button className="bt" style={{background:"var(--G)",flex:1,padding:12,fontSize:13,opacity:processing===req.id?.5:1}} onClick={()=>approve(req)} disabled={processing===req.id}>
+            {processing===req.id?"...":(lang==="fa"?"✓ تأیید و فعال‌سازی":"✓ Approve & Activate")}
+          </button>
+          <button className="bt" style={{background:"var(--R)",flex:"0 0 auto",padding:"12px 16px",fontSize:13,opacity:processing===req.id?.5:1}} onClick={()=>reject(req.id)} disabled={processing===req.id}>
+            ✗
+          </button>
+        </div>
+      </div>
+    })}
+
+    {!loading&&pending.length===0&&<div style={{textAlign:"center",color:"var(--dm)",fontSize:12,padding:12,marginBottom:8}}>{lang==="fa"?"درخواست IB جدیدی نیست":"No pending IB requests"}</div>}
+
+    {/* Active IB users */}
+    {approved.length>0&&<>
+      <div style={{fontSize:12,fontWeight:600,color:"var(--G)",marginTop:12,marginBottom:8}}>{lang==="fa"?"فعال":"Active"} ({approved.length})</div>
+      {approved.map(req=>{
+        const u=users[req.user_id];
+        return<div key={req.id} className="cd" style={{padding:10,marginBottom:4,display:"flex",alignItems:"center",gap:10}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:12,fontWeight:600}}>{u?.full_name||"Unknown"}</div>
+            <div style={{fontSize:10,color:"var(--dm)"}}>Wallet: {req.wallet_number}</div>
+          </div>
+          <div onClick={()=>revoke(req)} style={{fontSize:9,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"5px 10px",borderRadius:6,cursor:"pointer",opacity:processing===req.id?.5:1}}>
+            {lang==="fa"?"لغو":"Revoke"}
+          </div>
+        </div>
+      })}
+    </>}
+
+    {/* History */}
+    {history.length>0&&<>
+      <div style={{fontSize:12,fontWeight:600,color:"var(--dm)",marginTop:12,marginBottom:8}}>{lang==="fa"?"تاریخچه":"History"} ({history.length})</div>
+      {history.map(req=>{
+        const u=users[req.user_id];
+        return<div key={req.id} className="cd" style={{padding:10,marginBottom:4,display:"flex",alignItems:"center",gap:10}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:12,fontWeight:600}}>{u?.full_name||"Unknown"}</div>
+            <div style={{fontSize:10,color:"var(--dm)"}}>Wallet: {req.wallet_number} · {new Date(req.created_at).toLocaleDateString()}</div>
+          </div>
+          <span style={{fontSize:9,fontWeight:700,color:statusColor(req.status),background:`color-mix(in srgb,${statusColor(req.status)} 10%,transparent)`,padding:"3px 8px",borderRadius:6}}>{statusLabel(req.status)}</span>
+        </div>
+      })}
+    </>}
+  </div>);
+}
+
 /* ─── Plans ─── */
 function Plans({userProfile,goToSupport,token}){
   const{t,lang}=useLang();
@@ -3761,6 +4039,16 @@ function Plans({userProfile,goToSupport,token}){
       <div style={{fontSize:13,color:"var(--mu)"}}>{t.unlock}</div>
     </div>
 
+    {/* ═══ Option 1: Free via aMarkets IB ═══ */}
+    <AMarketsIBFlow userProfile={userProfile} token={token} lang={lang}/>
+
+    {/* ═══ Divider ═══ */}
+    <div style={{display:"flex",alignItems:"center",gap:12,margin:"8px 0 16px"}}>
+      <div style={{flex:1,height:1,background:"var(--brd2)"}}/>
+      <span style={{fontSize:11,fontWeight:700,color:"var(--dm)",letterSpacing:1}}>{{fa:"یا پرداخت مستقیم",ar:"أو الدفع المباشر",tr:"Veya Doğrudan Ödeme",ru:"Или прямая оплата",es:"O pago directo"}[lang]||"OR PAY DIRECTLY"}</span>
+      <div style={{flex:1,height:1,background:"var(--brd2)"}}/>
+    </div>
+
     {/* Sale Banner with Countdown */}
     {disc>0&&promo&&<div className="cd" style={{marginBottom:14,padding:16,borderColor:"color-mix(in srgb,var(--R) 30%,transparent)",background:"color-mix(in srgb,var(--R) 4%,transparent)",position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",top:0,right:0,background:"var(--R)",color:"#fff",fontSize:10,fontWeight:700,padding:"4px 14px 4px 18px",borderRadius:"0 0 0 14px"}}>{disc}% OFF</div>
@@ -3774,6 +4062,7 @@ function Plans({userProfile,goToSupport,token}){
       <Countdown endDate={promo.end_date}/>
     </div>}
 
+    {/* ═══ Option 2: Direct Payment Plans ═══ */}
     {basePlans.map((p,i)=>{
       const totalDisc=Math.max(disc,gwDisc);
       const discPrice=totalDisc>0?Math.round(p.p*(1-totalDisc/100)):0;
@@ -4481,8 +4770,8 @@ function Adm({token,posts,signals,onR}){
         })}
       </div>
       <div style={{display:"flex",gap:4}}>
-        {["msg","story","support","sale","pay","report","giveaway"].map(tab=>{
-          const labels={msg:lang==="fa"?"پیام":"Message",story:lang==="fa"?"استوری":"Story",support:lang==="fa"?"پشتیبانی":"Support",sale:lang==="fa"?"تخفیف":"Sale",pay:lang==="fa"?"پرداخت":"Payment",report:lang==="fa"?"گزارش":"Report",giveaway:"🎰"};
+        {["msg","story","support","sale","pay","ib","report","giveaway"].map(tab=>{
+          const labels={msg:lang==="fa"?"پیام":"Message",story:lang==="fa"?"استوری":"Story",support:lang==="fa"?"پشتیبانی":"Support",sale:lang==="fa"?"تخفیف":"Sale",pay:lang==="fa"?"پرداخت":"Payment",ib:"IB",report:lang==="fa"?"گزارش":"Report",giveaway:"🎰"};
           return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{labels[tab]}</div>
         })}
       </div>
@@ -4642,6 +4931,7 @@ function Adm({token,posts,signals,onR}){
     {tb==="story"&&<AdminStoryManager token={token}/>}
     {tb==="sale"&&<AdminPromo token={token}/>}
     {tb==="pay"&&<AdminPayments token={token}/>}
+    {tb==="ib"&&<AdminIBRequests token={token}/>}
     {tb==="report"&&<AdminReport token={token} posts={posts} signals={signals}/>}
     {tb==="blog"&&<AdminBlog token={token} onR={onR}/>}
     {tb==="giveaway"&&<AdminGiveaway token={token}/>}
