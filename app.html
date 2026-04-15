@@ -4807,7 +4807,7 @@ RULES:
     try{
       const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=()=>rej(new Error("Read failed"));r.readAsDataURL(aiImg)});
       const mediaType=aiImg.type||"image/png";
-      const userMsg=\`تحلیل این چارت:\nجفت‌ارز/نماد: \${aiPair||"مشخص نشده"}\nتایم‌فریم: \${aiTf}\n\${aiCtx?\`توضیحات اضافی: \${aiCtx}\`:""}\n\nلطفاً:\n1. ساختار NeoWave فعلی را شناسایی کن\n2. دقیقاً بگو الان در کدام موج هستیم\n3. ۳ سناریو با سطح ابطال بده\n4. سیگنال کوتاه‌مدت و بلندمدت بده\n5. امتیاز WCI هر سناریو را محاسبه کن\`;
+      const userMsg=`تحلیل این چارت:\nجفت‌ارز/نماد: ${aiPair||"مشخص نشده"}\nتایم‌فریم: ${aiTf}\n${aiCtx?`توضیحات اضافی: ${aiCtx}`:""}\n\nلطفاً:\n1. ساختار NeoWave فعلی را شناسایی کن\n2. دقیقاً بگو الان در کدام موج هستیم\n3. ۳ سناریو با سطح ابطال بده\n4. سیگنال کوتاه‌مدت و بلندمدت بده\n5. امتیاز WCI هر سناریو را محاسبه کن`;
 
       const resp=await fetch("https://api.anthropic.com/v1/messages",{
         method:"POST",
@@ -4823,7 +4823,7 @@ RULES:
         })
       });
       const data=await resp.json();
-      const text=data.content?.map(i=>i.text||"").filter(Boolean).join("\\n")||"No response";
+      const text=data.content?.map(i=>i.text||"").filter(Boolean).join("\n")||"No response";
       setAiResult(text);
       const entry={pair:aiPair||"—",tf:aiTf,date:new Date().toISOString(),preview:text.slice(0,120)};
       const newHist=[entry,...aiHistory].slice(0,20);
