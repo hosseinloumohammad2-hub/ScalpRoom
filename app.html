@@ -4741,13 +4741,12 @@ ANALYSIS PROTOCOL:
 5. WAVE POSITION: Identify EXACTLY which wave we are in currently
 6. CHANNELING: Apply 7 channeling laws, identify channel type, slope analysis
 7. LIQUIDITY CHECK (v11): Check for EQH/EQL/FVG/PSH/PSL targets
-8. VECTOR VELOCITY (v11): Calculate ΔP/ΔT for motive wave confirmation
+8. VECTOR VELOCITY (v11): Calculate delta-P/delta-T for motive wave confirmation
 9. WCI SCORING (v11): Score each scenario: Structure(30%) + Liquidity(25%) + Time(20%) + Momentum(25%)
 
 OUTPUT FORMAT (respond in Persian/Farsi):
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 📊 تحلیل NeoWave — [PAIR] — [TIMEFRAME]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🔍 ساختار فعلی:
 [Current wave structure with NeoWave labels]
@@ -4803,22 +4802,12 @@ RULES:
 - If image quality is poor or data insufficient, say so clearly`;
 
   const runAI=async()=>{
-    if(!aiImg){return}
+    if(!aiImg)return;
     setAiLoading(true);setAiResult("");
     try{
       const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=()=>rej(new Error("Read failed"));r.readAsDataURL(aiImg)});
       const mediaType=aiImg.type||"image/png";
-      const userMsg=`تحلیل این چارت:
-جفت‌ارز/نماد: ${aiPair||"مشخص نشده"}
-تایم‌فریم: ${aiTf}
-${aiCtx?`توضیحات اضافی: ${aiCtx}`:""}
-
-لطفاً:
-1. ساختار NeoWave فعلی را شناسایی کن
-2. دقیقاً بگو الان در کدام موج هستیم
-3. ۳ سناریو با سطح ابطال بده
-4. سیگنال کوتاه‌مدت و بلندمدت بده
-5. امتیاز WCI هر سناریو را محاسبه کن`;
+      const userMsg=\`تحلیل این چارت:\nجفت‌ارز/نماد: \${aiPair||"مشخص نشده"}\nتایم‌فریم: \${aiTf}\n\${aiCtx?\`توضیحات اضافی: \${aiCtx}\`:""}\n\nلطفاً:\n1. ساختار NeoWave فعلی را شناسایی کن\n2. دقیقاً بگو الان در کدام موج هستیم\n3. ۳ سناریو با سطح ابطال بده\n4. سیگنال کوتاه‌مدت و بلندمدت بده\n5. امتیاز WCI هر سناریو را محاسبه کن\`;
 
       const resp=await fetch("https://api.anthropic.com/v1/messages",{
         method:"POST",
@@ -4834,7 +4823,7 @@ ${aiCtx?`توضیحات اضافی: ${aiCtx}`:""}
         })
       });
       const data=await resp.json();
-      const text=data.content?.map(i=>i.text||"").filter(Boolean).join("\n")||"No response";
+      const text=data.content?.map(i=>i.text||"").filter(Boolean).join("\\n")||"No response";
       setAiResult(text);
       const entry={pair:aiPair||"—",tf:aiTf,date:new Date().toISOString(),preview:text.slice(0,120)};
       const newHist=[entry,...aiHistory].slice(0,20);
@@ -4845,75 +4834,62 @@ ${aiCtx?`توضیحات اضافی: ${aiCtx}`:""}
   };
 
   return(<div>
-    <div style={{fontSize:15,fontWeight:700,marginBottom:4,display:"flex",alignItems:"center",gap:8}}>
-      <span style={{fontSize:18}}>🧠</span>
-      <span>NeoWave AI Analyst</span>
-    </div>
-    <div style={{fontSize:11,color:"var(--dm)",marginBottom:14}}>
-      {lang==="fa"?"عکس چارت بفرست، تحلیل NeoWave + سیگنال بگیر":"Upload chart image, get NeoWave analysis + signals"}
+    <div className="cd cd-glass" style={{padding:16,marginBottom:14,display:"flex",alignItems:"center",gap:12}}>
+      <div style={{width:42,height:42,borderRadius:14,background:"linear-gradient(135deg,#bf5af2,#0071e3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🧠</div>
+      <div>
+        <div style={{fontSize:15,fontWeight:700}}>NeoWave AI Analyst</div>
+        <div style={{fontSize:11,color:"var(--dm)"}}>{lang==="fa"?"عکس چارت بفرست، تحلیل NeoWave + سیگنال بگیر":"Upload chart, get NeoWave analysis + signals"}</div>
+      </div>
     </div>
 
-    {/* Image upload */}
     <div onClick={()=>document.getElementById("ai-fu").click()} style={{border:"2px dashed var(--brd2)",borderRadius:16,padding:aiPv?0:32,textAlign:"center",marginBottom:12,background:"var(--bg2)",cursor:"pointer",overflow:"hidden",position:"relative"}}>
       {aiPv?<>
-        <img src={aiPv} style={{width:"100%",maxHeight:240,objectFit:"contain",borderRadius:14}} alt=""/>
+        <img src={aiPv} style={{width:"100%",maxHeight:220,objectFit:"contain",borderRadius:14}} alt=""/>
         <div onClick={e=>{e.stopPropagation();setAiImg(null);setAiPv(null);setAiResult("")}} style={{position:"absolute",top:8,right:8,width:28,height:28,borderRadius:14,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#fff",fontSize:14,fontWeight:700}}>✕</div>
       </>:<div>
         <div style={{fontSize:32,marginBottom:6}}>📊</div>
         <div style={{fontSize:13,fontWeight:600,color:"var(--tx2)"}}>{lang==="fa"?"عکس چارت را آپلود کنید":"Upload Chart Image"}</div>
-        <div style={{fontSize:11,color:"var(--dm)",marginTop:4}}>{lang==="fa"?"PNG, JPG — تحلیل شما یا اسکرین‌شات":"PNG, JPG — Your analysis or screenshot"}</div>
+        <div style={{fontSize:11,color:"var(--dm)",marginTop:4}}>PNG, JPG</div>
       </div>}
     </div>
     <input id="ai-fu" type="file" accept="image/*" onChange={e=>{const f=e.target.files[0];if(f){setAiImg(f);setAiPv(URL.createObjectURL(f));setAiResult("")}}} style={{display:"none"}}/>
 
-    {/* Pair & Timeframe */}
     <div style={{display:"flex",gap:8,marginBottom:8}}>
-      <input className="ip" placeholder={lang==="fa"?"جفت‌ارز (مثلاً XAUUSD)":"Pair (e.g. XAUUSD)"} value={aiPair} onChange={e=>setAiPair(e.target.value)} style={{flex:1,marginBottom:0}}/>
-      <select value={aiTf} onChange={e=>setAiTf(e.target.value)} style={{width:90,marginBottom:0,background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:14,padding:"10px 12px",fontSize:13,fontWeight:600,color:"var(--tx)"}}>
+      <input className="ip" placeholder={lang==="fa"?"نماد (XAUUSD)":"Pair (XAUUSD)"} value={aiPair} onChange={e=>setAiPair(e.target.value)} style={{flex:1,marginBottom:0}}/>
+      <select value={aiTf} onChange={e=>setAiTf(e.target.value)} style={{width:80,marginBottom:0,background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:14,padding:"10px",fontSize:13,fontWeight:600,color:"var(--tx)"}}>
         {["M1","M5","M15","M30","H1","H4","D1","W1","MN"].map(tf=><option key={tf} value={tf}>{tf}</option>)}
       </select>
     </div>
 
-    {/* Extra context */}
-    <textarea placeholder={lang==="fa"?"توضیح اضافی (اختیاری) — مثلاً: فکر میکنم موج ۳ هستیم...":"Extra context (optional) — e.g. I think we're in wave 3..."} value={aiCtx} onChange={e=>setAiCtx(e.target.value)} rows={2} style={{marginBottom:10}}/>
+    <textarea placeholder={lang==="fa"?"توضیح اختیاری — مثلاً: فکر میکنم موج ۳ هستیم...":"Optional context — e.g. I think we're in wave 3..."} value={aiCtx} onChange={e=>setAiCtx(e.target.value)} rows={2} style={{marginBottom:10}}/>
 
-    {/* Run button */}
-    <button className="bt" style={{background:"linear-gradient(135deg,#bf5af2,#0071e3)",opacity:aiLoading||!aiImg?.5:1,marginBottom:16,display:"flex",alignItems:"center",justifyContent:"center",gap:8}} onClick={runAI} disabled={aiLoading||!aiImg}>
-      {aiLoading?<><div style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"storyRingSpin 1s linear infinite"}}/>{lang==="fa"?"در حال تحلیل...":"Analyzing..."}</>:<>{lang==="fa"?"🧠 تحلیل NeoWave":"🧠 NeoWave Analysis"}</>}
+    <button className="bt" style={{background:"linear-gradient(135deg,#bf5af2,#0071e3)",opacity:aiLoading||!aiImg?.5:1,marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8}} onClick={runAI} disabled={aiLoading||!aiImg}>
+      {aiLoading?<><div style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"storyRingSpin 1s linear infinite"}}/>{lang==="fa"?"در حال تحلیل...":"Analyzing..."}</>:<>{lang==="fa"?"🧠 شروع تحلیل NeoWave":"🧠 Run NeoWave Analysis"}</>}
     </button>
 
-    {/* Result */}
-    {aiResult&&<div className="cd" style={{padding:16,marginBottom:16,background:"var(--bg2)",border:"1px solid var(--brd)"}}>
+    {aiResult&&<div className="cd" style={{padding:16,marginBottom:14,background:"var(--bg2)",border:"1px solid var(--brd)"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-        <div style={{fontSize:13,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>
-          <span style={{fontSize:14}}>📋</span>
-          {lang==="fa"?"نتیجه تحلیل":"Analysis Result"}
-        </div>
-        <div onClick={()=>{navigator.clipboard?.writeText(aiResult)}} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)",background:"color-mix(in srgb,var(--B) 10%,transparent)",padding:"4px 10px",borderRadius:8}}>
-          {lang==="fa"?"کپی":"Copy"}
-        </div>
+        <div style={{fontSize:13,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>📋 {lang==="fa"?"نتیجه تحلیل":"Result"}</div>
+        <div onClick={()=>{navigator.clipboard?.writeText(aiResult)}} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)",background:"color-mix(in srgb,var(--B) 10%,transparent)",padding:"4px 10px",borderRadius:8}}>{lang==="fa"?"کپی":"Copy"}</div>
       </div>
       <div style={{fontSize:12.5,lineHeight:1.8,color:"var(--tx)",whiteSpace:"pre-wrap",fontFamily:"'Inter',system-ui,sans-serif",direction:"rtl",textAlign:"right"}}>{aiResult}</div>
     </div>}
 
-    {/* History */}
-    {aiHistory.length>0&&<div style={{marginTop:8}}>
+    {aiHistory.length>0&&<div style={{marginTop:4}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-        <div style={{fontSize:12,fontWeight:700,color:"var(--tx2)"}}>{lang==="fa"?"تاریخچه تحلیل":"Analysis History"}</div>
-        <div onClick={()=>{setAiHistory([]);try{localStorage.removeItem("fx_ai_hist")}catch(e){}}} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--R)"}}>
-          {lang==="fa"?"پاک کردن":"Clear"}
-        </div>
+        <div style={{fontSize:12,fontWeight:700,color:"var(--tx2)"}}>{lang==="fa"?"تاریخچه":"History"}</div>
+        <div onClick={()=>{setAiHistory([]);try{localStorage.removeItem("fx_ai_hist")}catch(e){}}} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--R)"}}>{lang==="fa"?"پاک":"Clear"}</div>
       </div>
       {aiHistory.map((h,i)=><div key={i} className="cd" style={{padding:10,marginBottom:4}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{width:32,height:32,borderRadius:10,background:"color-mix(in srgb,var(--purple) 10%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>🧠</div>
+          <div style={{width:30,height:30,borderRadius:10,background:"color-mix(in srgb,var(--purple) 10%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>🧠</div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{display:"flex",alignItems:"center",gap:6}}>
               <span style={{fontSize:12,fontWeight:700}}>{h.pair}</span>
-              <span style={{fontSize:10,fontWeight:600,color:"var(--B)",background:"color-mix(in srgb,var(--B) 8%,transparent)",padding:"1px 6px",borderRadius:4}}>{h.tf}</span>
+              <span style={{fontSize:9,fontWeight:600,color:"var(--B)",background:"color-mix(in srgb,var(--B) 8%,transparent)",padding:"1px 5px",borderRadius:4}}>{h.tf}</span>
             </div>
             <div style={{fontSize:10,color:"var(--dm)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",direction:"rtl"}}>{h.preview}</div>
-            <div style={{fontSize:9,color:"var(--dm)",marginTop:1}}>{new Date(h.date).toLocaleDateString()} · {new Date(h.date).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>
+            <div style={{fontSize:9,color:"var(--dm)",marginTop:1}}>{new Date(h.date).toLocaleDateString()}</div>
           </div>
         </div>
       </div>)}
@@ -4968,9 +4944,16 @@ function Adm({token,posts,signals,onR}){
         })}
       </div>
       <div style={{display:"flex",gap:4}}>
-        {["msg","story","support","sale","pay","ib","report","giveaway","ai"].map(tab=>{
-          const labels={msg:lang==="fa"?"پیام":"Message",story:lang==="fa"?"استوری":"Story",support:lang==="fa"?"پشتیبانی":"Support",sale:lang==="fa"?"تخفیف":"Sale",pay:lang==="fa"?"پرداخت":"Payment",ib:"IB",report:lang==="fa"?"گزارش":"Report",giveaway:"🎰",ai:"🧠 AI"};
+        {["msg","story","support","sale","pay"].map(tab=>{
+          const labels={msg:lang==="fa"?"پیام":"Message",story:lang==="fa"?"استوری":"Story",support:lang==="fa"?"پشتیبانی":"Support",sale:lang==="fa"?"تخفیف":"Sale",pay:lang==="fa"?"پرداخت":"Payment"};
           return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{labels[tab]}</div>
+        })}
+      </div>
+      <div style={{display:"flex",gap:4}}>
+        {["ib","report","giveaway","ai"].map(tab=>{
+          const labels={ib:"IB",report:lang==="fa"?"گزارش":"Report",giveaway:"🎰",ai:"🧠 AI"};
+          const isAI=tab==="ai";
+          return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?(isAI?"color-mix(in srgb,var(--purple) 12%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)"):"transparent",border:`1px solid ${tb===tab?(isAI?"color-mix(in srgb,var(--purple) 25%,transparent)":"color-mix(in srgb,var(--R) 25%,transparent)"):"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?(isAI?"var(--purple)":"var(--R)"):"var(--mu)"}}>{labels[tab]}</div>
         })}
       </div>
     </div>
