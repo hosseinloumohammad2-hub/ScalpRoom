@@ -1,35 +1,112 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       صفحه اصلی — انگلیسی
+       ═══════════════════════════════════════════════════════════════ -->
   <url>
     <loc>https://fxscalproom.com/</loc>
-    <lastmod>2026-04-12</lastmod>
+    <lastmod>2026-04-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fxscalproom.com/"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://fxscalproom.com/fa/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fxscalproom.com/"/>
   </url>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       صفحه اصلی — فارسی
+       ═══════════════════════════════════════════════════════════════ -->
+  <url>
+    <loc>https://fxscalproom.com/fa/</loc>
+    <lastmod>2026-04-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fxscalproom.com/"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://fxscalproom.com/fa/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fxscalproom.com/"/>
+  </url>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       درباره ما
+       ═══════════════════════════════════════════════════════════════ -->
   <url>
     <loc>https://fxscalproom.com/about</loc>
-    <lastmod>2026-04-12</lastmod>
+    <lastmod>2026-04-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fxscalproom.com/about"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://fxscalproom.com/fa/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fxscalproom.com/about"/>
   </url>
   <url>
+    <loc>https://fxscalproom.com/fa/about</loc>
+    <lastmod>2026-04-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fxscalproom.com/about"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://fxscalproom.com/fa/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fxscalproom.com/about"/>
+  </url>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       اپلیکیشن
+       ═══════════════════════════════════════════════════════════════ -->
+  <url>
     <loc>https://fxscalproom.com/app</loc>
-    <lastmod>2026-04-12</lastmod>
+    <lastmod>2026-04-17</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
   </url>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       تحلیل رایگان
+       ═══════════════════════════════════════════════════════════════ -->
   <url>
     <loc>https://fxscalproom.com/free-analysis</loc>
-    <lastmod>2026-04-12</lastmod>
+    <lastmod>2026-04-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fxscalproom.com/free-analysis"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://fxscalproom.com/fa/free-analysis"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fxscalproom.com/free-analysis"/>
   </url>
   <url>
-    <loc>https://fxscalproom.com/blog/</loc>
-    <lastmod>2026-04-12</lastmod>
+    <loc>https://fxscalproom.com/fa/free-analysis</loc>
+    <lastmod>2026-04-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fxscalproom.com/free-analysis"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://fxscalproom.com/fa/free-analysis"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fxscalproom.com/free-analysis"/>
   </url>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       بلاگ
+       ═══════════════════════════════════════════════════════════════ -->
+  <url>
+    <loc>https://fxscalproom.com/blog/</loc>
+    <lastmod>2026-04-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fxscalproom.com/blog/"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://fxscalproom.com/fa/blog/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fxscalproom.com/blog/"/>
+  </url>
+  <url>
+    <loc>https://fxscalproom.com/fa/blog/</loc>
+    <lastmod>2026-04-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fxscalproom.com/blog/"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://fxscalproom.com/fa/blog/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fxscalproom.com/blog/"/>
+  </url>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       مقالات بلاگ انگلیسی (۸ مقاله موجود)
+       ═══════════════════════════════════════════════════════════════ -->
   <url>
     <loc>https://fxscalproom.com/blog/article.html?slug=what-is-nfp-non-farm-payrolls-forex</loc>
     <lastmod>2026-04-12</lastmod>
@@ -78,4 +155,17 @@
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       مقالات فارسی — اینجا اضافه می‌شن (نمونه‌ها بعد از انتشار)
+       وقتی مقاله فارسی منتشر شد، یه URL شبیه این اضافه کن:
+
+       <url>
+         <loc>https://fxscalproom.com/fa/blog/article.html?slug=tahlil-tala</loc>
+         <lastmod>2026-04-17</lastmod>
+         <changefreq>weekly</changefreq>
+         <priority>0.8</priority>
+       </url>
+       ═══════════════════════════════════════════════════════════════ -->
+
 </urlset>
