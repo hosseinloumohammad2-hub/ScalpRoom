@@ -32,11 +32,8 @@
 <!-- ═══ CANONICAL & HREFLANG (Multi-language) ═══ -->
 <link rel="canonical" href="https://fxscalproom.com/">
 <link rel="alternate" hreflang="en" href="https://fxscalproom.com/">
-<link rel="alternate" hreflang="fa" href="https://fxscalproom.com/">
-<link rel="alternate" hreflang="ar" href="https://fxscalproom.com/">
-<link rel="alternate" hreflang="tr" href="https://fxscalproom.com/">
-<link rel="alternate" hreflang="ru" href="https://fxscalproom.com/">
-<link rel="alternate" hreflang="es" href="https://fxscalproom.com/">
+<link rel="alternate" hreflang="fa" href="https://fxscalproom.com/fa/">
+<link rel="alternate" hreflang="fa-IR" href="https://fxscalproom.com/fa/">
 <link rel="alternate" hreflang="x-default" href="https://fxscalproom.com/">
 
 <!-- Open Graph -->
@@ -1361,6 +1358,24 @@ footer{
   from{opacity:0;transform:translateY(24px)}
   to{opacity:1;transform:none}
 }
+
+/* Language switcher — دکمه تغییر زبان به فارسی */
+.lang-switch{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 12px;
+  border-radius:980px;
+  background:var(--bg-alt);
+  border:1px solid var(--line);
+  color:var(--tx);
+  font-size:12px;
+  font-weight:500;
+  transition:all .2s;
+  font-family:var(--sf);
+}
+.lang-switch:hover{background:var(--line);border-color:var(--line-2)}
+.lang-switch svg{width:12px;height:12px;opacity:.7}
 </style>
 </head>
 <body>
@@ -1379,6 +1394,10 @@ footer{
       <li><a href="#faq">FAQ</a></li>
     </ul>
     <div class="nav-right">
+      <a href="/fa/" class="lang-switch" aria-label="تغییر به فارسی" title="فارسی">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        FA
+      </a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
         <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
         <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
