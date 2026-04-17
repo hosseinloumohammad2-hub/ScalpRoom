@@ -5,7 +5,18 @@
     { "source": "/app", "destination": "/app.html" },
     { "source": "/app/:path*", "destination": "/app.html" },
     { "source": "/free-analysis", "destination": "/free-analysis.html" },
-    { "source": "/about", "destination": "/about.html" }
+    { "source": "/about", "destination": "/about.html" },
+
+    { "source": "/fa", "destination": "/fa/index.html" },
+    { "source": "/fa/", "destination": "/fa/index.html" },
+    { "source": "/fa/free-analysis", "destination": "/fa/free-analysis.html" },
+    { "source": "/fa/about", "destination": "/fa/about.html" },
+    { "source": "/fa/blog", "destination": "/fa/blog/index.html" },
+    { "source": "/fa/blog/", "destination": "/fa/blog/index.html" }
+  ],
+  "redirects": [
+    { "source": "/fa/index.html", "destination": "/fa/", "permanent": true },
+    { "source": "/fa/index", "destination": "/fa/", "permanent": true }
   ],
   "headers": [
     {
@@ -15,6 +26,12 @@
         { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+      ]
+    },
+    {
+      "source": "/fa/(.*)",
+      "headers": [
+        { "key": "Content-Language", "value": "fa-IR" }
       ]
     },
     {
