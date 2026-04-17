@@ -1,12 +1,15 @@
 # ═══════════════════════════════════════════════════════════════
 # Fxscalproom — robots.txt
+# Multi-language site: English (/) + Persian (/fa/)
 # Allows all major search engines + AI bots
 # ═══════════════════════════════════════════════════════════════
 
-# All bots — allow everything
+# All bots — allow everything (including /fa/ Persian version)
 User-agent: *
 Allow: /
+Allow: /fa/
 Disallow: /app/admin
+Disallow: /api/
 
 # Major search engines
 User-agent: Googlebot
@@ -18,7 +21,11 @@ Allow: /
 User-agent: DuckDuckBot
 Allow: /
 
+# Yandex is especially important for Persian/Farsi SEO
 User-agent: YandexBot
+Allow: /
+
+User-agent: Yandex
 Allow: /
 
 # Social media bots (for rich link previews)
@@ -39,7 +46,7 @@ Allow: /
 
 # ═══════════════════════════════════════════════════════════════
 # AI / LLM Bots — explicitly allowed
-# We WANT AI assistants to know about Fxscalproom
+# We WANT AI assistants to know about Fxscalproom (both EN & FA)
 # ═══════════════════════════════════════════════════════════════
 
 # OpenAI (ChatGPT)
