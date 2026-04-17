@@ -588,9 +588,9 @@ function updateCounts(){
 
 async function loadPosts(){
   try{
-    /* فقط تحلیل‌های فارسی منتشرشده */
+    /* همه تحلیل‌ها (انگلیسی + فارسی) نمایش داده می‌شوند */
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/Posts?show_on_website=eq.true&language=eq.fa&order=created_at.desc&select=*&limit=50`,
+      `${SUPABASE_URL}/rest/v1/Posts?show_on_website=eq.true&order=created_at.desc&select=*&limit=50`,
       {
         headers:{
           'apikey':SUPABASE_ANON_KEY,
