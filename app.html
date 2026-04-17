@@ -4355,6 +4355,10 @@ function AdminBlog({token,onR}){
   const[coverImage,setCoverImage]=useState("");
   const[coverFile,setCoverFile]=useState(null);
   const[coverPreview,setCoverPreview]=useState("");
+  const[uploadingImg,setUploadingImg]=useState(false);
+  const[pendingImgUrl,setPendingImgUrl]=useState("");
+  const[showSizePicker,setShowSizePicker]=useState(false);
+  const contentRef=useRef(null);
   const[metaTitle,setMetaTitle]=useState("");
   const[metaDesc,setMetaDesc]=useState("");
   const[metaKeywords,setMetaKeywords]=useState("");
@@ -4404,6 +4408,7 @@ function AdminBlog({token,onR}){
     setCoverImage("");setCoverFile(null);setCoverPreview("");
     setMetaTitle("");setMetaDesc("");setMetaKeywords("");
     setPublished(true);
+    setPendingImgUrl("");setShowSizePicker(false);setUploadingImg(false);
   };
 
   const startNew=()=>{
@@ -4440,6 +4445,61 @@ function AdminBlog({token,onR}){
       setCoverFile(f);
       setCoverPreview(URL.createObjectURL(f));
     }
+  };
+
+  // ─── Content image upload + size picker ───
+  const handleContentImage=async(e)=>{
+    const f=e.target.files[0];
+    if(!f)return;
+    setUploadingImg(true);
+    setMs("");
+    try{
+      const url=await api.img(f,token);
+      if(!url){
+        setMs("Image upload failed");
+        setUploadingImg(false);
+        e.target.value="";
+        return;
+      }
+      setPendingImgUrl(url);
+      setShowSizePicker(true);
+    }catch(err){
+      setMs(err.message||"Upload failed");
+    }
+    setUploadingImg(false);
+    e.target.value="";
+  };
+
+  const insertImgHtml=(size)=>{
+    if(!pendingImgUrl)return;
+    let html="";
+    if(size==="3x4"){
+      html=`\n<figure class="img-3x4"><img src="${pendingImgUrl}" alt=""></figure>\n`;
+    }else{
+      html=`\n<figure class="img-full"><img src="${pendingImgUrl}" alt=""></figure>\n`;
+    }
+    const ta=contentRef.current;
+    if(ta){
+      const start=ta.selectionStart||content.length;
+      const end=ta.selectionEnd||content.length;
+      const newContent=content.slice(0,start)+html+content.slice(end);
+      setContent(newContent);
+      setTimeout(()=>{
+        ta.focus();
+        const pos=start+html.length;
+        ta.setSelectionRange(pos,pos);
+      },0);
+    }else{
+      setContent(content+html);
+    }
+    setPendingImgUrl("");
+    setShowSizePicker(false);
+    setMs("Image inserted!");
+  };
+
+  const cancelSizePicker=()=>{
+    setPendingImgUrl("");
+    setShowSizePicker(false);
   };
 
   const save=async()=>{
@@ -4586,7 +4646,105 @@ function AdminBlog({token,onR}){
         <div style={{fontSize:11,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>
           Content (HTML — use &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;strong&gt;, etc.)
         </div>
+
+        {/* Insert image button */}
+        <div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap"}}>
+          <button
+            type="button"
+            onClick={()=>document.getElementById("articleContentImgFu").click()}
+            disabled={uploadingImg}
+            style={{
+              padding:"8px 14px",borderRadius:10,
+              background:"color-mix(in srgb,var(--B) 10%,transparent)",
+              border:"1px solid color-mix(in srgb,var(--B) 25%,transparent)",
+              color:"var(--B)",fontSize:12,fontWeight:600,
+              cursor:uploadingImg?"wait":"pointer",
+              display:"flex",alignItems:"center",gap:6,
+              opacity:uploadingImg?.6:1
+            }}
+          >
+            {uploadingImg?"⏳ Uploading...":"📷 Insert Image"}
+          </button>
+          <div style={{fontSize:11,color:"var(--mu)",alignSelf:"center"}}>
+            Upload a photo to insert into the article
+          </div>
+        </div>
+        <input
+          id="articleContentImgFu"
+          type="file"
+          accept="image/*"
+          onChange={handleContentImage}
+          style={{display:"none"}}
+        />
+
+        {/* Size picker modal */}
+        {showSizePicker&&(
+          <div className="modal-overlay" onClick={cancelSizePicker}>
+            <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:360}}>
+              <div style={{fontSize:16,fontWeight:700,marginBottom:6}}>Choose image size</div>
+              <div style={{fontSize:12,color:"var(--mu)",marginBottom:14}}>
+                How should this image appear in the article?
+              </div>
+
+              {pendingImgUrl&&(
+                <div style={{
+                  width:"100%",maxHeight:140,overflow:"hidden",
+                  borderRadius:10,marginBottom:14,background:"var(--bg2)"
+                }}>
+                  <img src={pendingImgUrl} style={{width:"100%",height:"100%",objectFit:"contain",maxHeight:140}} alt=""/>
+                </div>
+              )}
+
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+                {/* 3x4 option */}
+                <div onClick={()=>insertImgHtml("3x4")} style={{
+                  padding:14,borderRadius:12,cursor:"pointer",
+                  border:"1.5px solid var(--brd2)",
+                  background:"var(--bg2)",
+                  textAlign:"center",
+                  transition:"all .15s"
+                }}>
+                  <div style={{
+                    width:48,height:64,margin:"0 auto 8px",
+                    background:"color-mix(in srgb,var(--B) 20%,transparent)",
+                    border:"1.5px solid var(--B)",borderRadius:6
+                  }}/>
+                  <div style={{fontSize:13,fontWeight:700,color:"var(--tx)"}}>3 × 4</div>
+                  <div style={{fontSize:10,color:"var(--mu)",marginTop:2}}>Portrait</div>
+                </div>
+
+                {/* Full option */}
+                <div onClick={()=>insertImgHtml("full")} style={{
+                  padding:14,borderRadius:12,cursor:"pointer",
+                  border:"1.5px solid var(--brd2)",
+                  background:"var(--bg2)",
+                  textAlign:"center",
+                  transition:"all .15s"
+                }}>
+                  <div style={{
+                    width:72,height:48,margin:"8px auto 16px",
+                    background:"color-mix(in srgb,var(--G) 20%,transparent)",
+                    border:"1.5px solid var(--G)",borderRadius:6
+                  }}/>
+                  <div style={{fontSize:13,fontWeight:700,color:"var(--tx)"}}>Full</div>
+                  <div style={{fontSize:10,color:"var(--mu)",marginTop:2}}>Original</div>
+                </div>
+              </div>
+
+              <button
+                onClick={cancelSizePicker}
+                style={{
+                  width:"100%",padding:10,borderRadius:10,
+                  background:"transparent",border:"1px solid var(--brd2)",
+                  color:"var(--mu)",fontSize:12,fontWeight:600,cursor:"pointer"
+                }}
+              >Cancel</button>
+            </div>
+          </div>
+        )}
+
         <textarea
+          ref={contentRef}
           className="ip"
           placeholder="<p>Your article content here...</p><h2>A heading</h2><p>More text...</p>"
           value={content}
