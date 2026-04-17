@@ -4342,6 +4342,7 @@ function AdminBlog({token,onR}){
   const[loading,setLoading]=useState(false);
   const[editing,setEditing]=useState(null); // null | 'new' | article object
   const[ms,setMs]=useState("");
+  const[blogLang,setBlogLang]=useState("en"); // 'en' | 'fa'  — فیلتر زبان / زبان مقاله جدید
 
   // Form state
   const[title,setTitle]=useState("");
@@ -4363,8 +4364,10 @@ function AdminBlog({token,onR}){
   const[metaDesc,setMetaDesc]=useState("");
   const[metaKeywords,setMetaKeywords]=useState("");
   const[published,setPublished]=useState(true);
+  const[articleLang,setArticleLang]=useState("en"); // زبان مقاله در حال ویرایش
 
-  const CATEGORIES=[
+  // دسته‌بندی‌های دوزبانه
+  const CATEGORIES_EN=[
     {k:"general",l:"General"},
     {k:"fundamentals",l:"Fundamentals"},
     {k:"strategy",l:"Strategy"},
@@ -4374,6 +4377,120 @@ function AdminBlog({token,onR}){
     {k:"crypto",l:"Crypto"},
     {k:"analysis",l:"Analysis"},
   ];
+  const CATEGORIES_FA=[
+    {k:"general",l:"عمومی"},
+    {k:"fundamentals",l:"فاندامنتال"},
+    {k:"strategy",l:"استراتژی"},
+    {k:"central-banks",l:"بانک مرکزی"},
+    {k:"gold",l:"طلا"},
+    {k:"forex",l:"فارکس"},
+    {k:"crypto",l:"کریپتو"},
+    {k:"analysis",l:"تحلیل"},
+    {k:"education",l:"آموزش"},
+    {k:"news",l:"اخبار"},
+  ];
+  const CATEGORIES=articleLang==="fa"?CATEGORIES_FA:CATEGORIES_EN;
+
+  // متن‌های دوزبانه برای UI
+  const UI_TEXTS={
+    en:{
+      blogArticles:"Blog Articles",
+      newArticle:"+ New Article",
+      noArticles:'No articles yet. Click "New Article" to create your first one.',
+      loading:"Loading...",
+      editArticle:"Edit Article",
+      newArticleTitle:"New Article",
+      cancel:"← Cancel",
+      tapCover:"Tap to upload cover image (16:9 recommended)",
+      articleTitle:"Article title",
+      urlSlug:"URL slug (auto-generated)",
+      subtitle:"Subtitle (optional)",
+      excerpt:"Short excerpt (shown on blog index, ~150 chars)",
+      category:"Category",
+      readTime:"Read time:",
+      minutes:"minutes",
+      tags:"Tags (comma separated)",
+      contentLbl:"Content (HTML — use <h2>, <p>, <ul>, <strong>, etc.)",
+      insertImg:"📷 Insert Image",
+      uploadingImg:"⏳ Uploading...",
+      uploadPhoto:"Upload a photo to insert into the article",
+      chooseSize:"Choose image size",
+      sizeDesc:"How should this image appear in the article?",
+      portrait:"Portrait",
+      original:"Original",
+      contentPh:"<p>Your article content here...</p><h2>A heading</h2><p>More text...</p>",
+      seoTitle:"SEO (Optional but recommended)",
+      metaTitle:"Meta title (defaults to article title)",
+      metaDesc:"Meta description (~160 chars, shown in Google results)",
+      metaKeywords:"Meta keywords (comma separated)",
+      publishedLbl:"Published (visible on blog)",
+      saving:"Saving...",
+      publishBtn:"Publish Article",
+      saveChanges:"Save Changes",
+      confirmDel:"Delete this article? This cannot be undone.",
+      titleReq:"Title, slug, and content are required",
+      articlePub:"Article published!",
+      articleUpd:"Article updated!",
+      articleDel:"Article deleted",
+      imgFail:"Image upload failed",
+      imgInserted:"Image inserted!",
+      views:"views",
+      min:"min",
+      draft:"DRAFT",
+      langLbl:"Language",
+      en:"English",
+      fa:"فارسی",
+    },
+    fa:{
+      blogArticles:"مقالات بلاگ",
+      newArticle:"+ مقاله جدید",
+      noArticles:'هنوز مقاله‌ای نیست. روی «مقاله جدید» بزنید تا اولین مقاله رو بسازید.',
+      loading:"در حال بارگذاری...",
+      editArticle:"ویرایش مقاله",
+      newArticleTitle:"مقاله جدید",
+      cancel:"→ انصراف",
+      tapCover:"برای آپلود تصویر کاور بزنید (۱۶:۹ توصیه می‌شود)",
+      articleTitle:"عنوان مقاله",
+      urlSlug:"slug آدرس (خودکار ساخته می‌شود — فقط انگلیسی)",
+      subtitle:"زیرعنوان (اختیاری)",
+      excerpt:"چکیده کوتاه (حدود ۱۵۰ کاراکتر، روی صفحه بلاگ نمایش داده می‌شود)",
+      category:"دسته",
+      readTime:"زمان مطالعه:",
+      minutes:"دقیقه",
+      tags:"تگ‌ها (با کاما جدا کنید)",
+      contentLbl:"محتوا (HTML — از <h2>, <p>, <ul>, <strong> و غیره استفاده کنید)",
+      insertImg:"📷 درج تصویر",
+      uploadingImg:"⏳ در حال آپلود...",
+      uploadPhoto:"آپلود عکس برای درج در مقاله",
+      chooseSize:"انتخاب اندازه تصویر",
+      sizeDesc:"تصویر چگونه در مقاله نمایش داده شود؟",
+      portrait:"عمودی",
+      original:"اصلی",
+      contentPh:"<p>محتوای مقاله شما اینجا...</p><h2>یک عنوان</h2><p>متن بیشتر...</p>",
+      seoTitle:"سئو (اختیاری ولی توصیه می‌شود)",
+      metaTitle:"عنوان Meta (پیش‌فرض: عنوان مقاله)",
+      metaDesc:"توضیحات Meta (حدود ۱۶۰ کاراکتر، در نتایج گوگل نمایش داده می‌شود)",
+      metaKeywords:"کلمات کلیدی Meta (با کاما جدا کنید)",
+      publishedLbl:"منتشر شده (روی بلاگ نمایش داده شود)",
+      saving:"در حال ذخیره...",
+      publishBtn:"انتشار مقاله",
+      saveChanges:"ذخیره تغییرات",
+      confirmDel:"این مقاله حذف شود؟ قابل بازگشت نیست.",
+      titleReq:"عنوان، slug و محتوا الزامی است",
+      articlePub:"مقاله منتشر شد!",
+      articleUpd:"مقاله به‌روز شد!",
+      articleDel:"مقاله حذف شد",
+      imgFail:"آپلود تصویر ناموفق بود",
+      imgInserted:"تصویر درج شد!",
+      views:"بازدید",
+      min:"دق",
+      draft:"پیش‌نویس",
+      langLbl:"زبان",
+      en:"English",
+      fa:"فارسی",
+    }
+  };
+  const U=UI_TEXTS[blogLang]||UI_TEXTS.en;
 
   // Auto-generate slug from title
   const slugify=(s)=>s.toLowerCase()
@@ -4409,10 +4526,12 @@ function AdminBlog({token,onR}){
     setMetaTitle("");setMetaDesc("");setMetaKeywords("");
     setPublished(true);
     setPendingImgUrl("");setShowSizePicker(false);setUploadingImg(false);
+    setArticleLang(blogLang); // مقاله جدید به زبان انتخاب شده ساخته می‌شود
   };
 
   const startNew=()=>{
     resetForm();
+    setArticleLang(blogLang); // اطمینان از اینکه مقاله جدید به زبان فعلی ساخته می‌شود
     setEditing('new');
   };
 
@@ -4431,6 +4550,7 @@ function AdminBlog({token,onR}){
     setMetaDesc(a.meta_desc||"");
     setMetaKeywords(a.meta_keywords||"");
     setPublished(a.published!==false);
+    setArticleLang(a.language||"en"); // زبان مقاله رو تنظیم کن
     setEditing(a);
   };
 
@@ -4504,7 +4624,7 @@ function AdminBlog({token,onR}){
 
   const save=async()=>{
     if(!title||!content||!slug){
-      setMs("Title, slug, and content are required");
+      setMs(U.titleReq);
       return;
     }
     setLoading(true);
@@ -4515,7 +4635,7 @@ function AdminBlog({token,onR}){
       if(coverFile){
         const uploaded=await api.img(coverFile,token);
         if(uploaded)imgUrl=uploaded;
-        else{setMs("Image upload failed");setLoading(false);return}
+        else{setMs(U.imgFail);setLoading(false);return}
       }
 
       const data={
@@ -4532,14 +4652,15 @@ function AdminBlog({token,onR}){
         meta_desc:metaDesc||null,
         meta_keywords:metaKeywords||null,
         published,
+        language:articleLang||"en", // ← اضافه شد: زبان مقاله
       };
 
       if(editing==='new'){
         await api.add("Articles",data,token);
-        setMs("Article published!");
+        setMs(U.articlePub);
       }else{
         await api.patch("Articles",editing.id,data,token);
-        setMs("Article updated!");
+        setMs(U.articleUpd);
       }
 
       cancelEdit();
@@ -4551,24 +4672,47 @@ function AdminBlog({token,onR}){
   };
 
   const del=async(id)=>{
-    if(!confirm("Delete this article? This cannot be undone."))return;
+    if(!confirm(U.confirmDel))return;
     try{
       await api.del("Articles",id,token);
-      setMs("Article deleted");
+      setMs(U.articleDel);
       loadArticles();
     }catch(e){setMs(e.message)}
   };
 
   // ═══ EDIT FORM ═══
   if(editing){
+    const isRtl=articleLang==="fa";
     return(
-      <div className="fi">
+      <div className="fi" style={{direction:isRtl?"rtl":"ltr",textAlign:isRtl?"right":"left"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
           <div style={{fontSize:15,fontWeight:700}}>
-            {editing==='new'?"New Article":"Edit Article"}
+            {editing==='new'?U.newArticleTitle:U.editArticle}
+            <span style={{marginInlineStart:8,fontSize:11,padding:"3px 8px",borderRadius:6,background:articleLang==="fa"?"color-mix(in srgb,var(--G) 12%,transparent)":"color-mix(in srgb,var(--B) 12%,transparent)",color:articleLang==="fa"?"var(--G)":"var(--B)",fontWeight:700}}>
+              {articleLang==="fa"?"🇮🇷 FA":"🇬🇧 EN"}
+            </span>
           </div>
-          <div onClick={cancelEdit} style={{cursor:"pointer",color:"var(--mu)",fontSize:12,fontWeight:600}}>← Cancel</div>
+          <div onClick={cancelEdit} style={{cursor:"pointer",color:"var(--mu)",fontSize:12,fontWeight:600}}>{U.cancel}</div>
         </div>
+
+        {/* سوییچ زبان مقاله — فقط برای مقاله جدید */}
+        {editing==='new'&&<div style={{marginBottom:12}}>
+          <div style={{fontSize:11,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>{U.langLbl}</div>
+          <div style={{display:"flex",gap:6}}>
+            <div onClick={()=>setArticleLang("en")} style={{
+              flex:1,padding:"10px 14px",borderRadius:10,cursor:"pointer",textAlign:"center",
+              background:articleLang==="en"?"color-mix(in srgb,var(--B) 10%,transparent)":"transparent",
+              border:`1px solid ${articleLang==="en"?"color-mix(in srgb,var(--B) 30%,transparent)":"var(--brd)"}`,
+              fontSize:12,fontWeight:700,color:articleLang==="en"?"var(--B)":"var(--mu)"
+            }}>🇬🇧 {U.en}</div>
+            <div onClick={()=>setArticleLang("fa")} style={{
+              flex:1,padding:"10px 14px",borderRadius:10,cursor:"pointer",textAlign:"center",
+              background:articleLang==="fa"?"color-mix(in srgb,var(--G) 10%,transparent)":"transparent",
+              border:`1px solid ${articleLang==="fa"?"color-mix(in srgb,var(--G) 30%,transparent)":"var(--brd)"}`,
+              fontSize:12,fontWeight:700,color:articleLang==="fa"?"var(--G)":"var(--mu)"
+            }}>🇮🇷 {U.fa}</div>
+          </div>
+        </div>}
 
         {ms&&<div style={{
           background:ms.includes("!")?"color-mix(in srgb,var(--G) 8%,transparent)":"color-mix(in srgb,var(--R) 8%,transparent)",
@@ -4584,35 +4728,35 @@ function AdminBlog({token,onR}){
         }}>
           {coverPreview
             ? <img src={coverPreview} style={{width:"100%",maxHeight:180,objectFit:"cover",borderRadius:10}} alt=""/>
-            : <div style={{fontSize:13,color:"var(--dm)"}}>Tap to upload cover image (16:9 recommended)</div>
+            : <div style={{fontSize:13,color:"var(--dm)"}}>{U.tapCover}</div>
           }
         </div>
         <input id="articleCoverFu" type="file" accept="image/*" onChange={handleCoverFile} style={{display:"none"}}/>
 
         {/* Title */}
-        <input className="ip" placeholder="Article title" value={title} onChange={e=>setTitle(e.target.value)}/>
+        <input className="ip" placeholder={U.articleTitle} value={title} onChange={e=>setTitle(e.target.value)} style={{direction:isRtl?"rtl":"ltr",textAlign:isRtl?"right":"left"}}/>
 
-        {/* Slug */}
-        <input className="ip" placeholder="URL slug (auto-generated)" value={slug} onChange={e=>setSlug(slugify(e.target.value))}/>
-        <div style={{fontSize:11,color:"var(--dm)",marginBottom:8,marginTop:-4}}>
-          URL: /blog/article.html?slug={slug||"..."}
+        {/* Slug — همیشه انگلیسی */}
+        <input className="ip" placeholder={U.urlSlug} value={slug} onChange={e=>setSlug(slugify(e.target.value))} style={{direction:"ltr",textAlign:"left"}}/>
+        <div style={{fontSize:11,color:"var(--dm)",marginBottom:8,marginTop:-4,direction:"ltr",textAlign:isRtl?"right":"left"}}>
+          URL: {articleLang==="fa"?"/fa":""}/blog/article.html?slug={slug||"..."}
         </div>
 
         {/* Subtitle */}
-        <input className="ip" placeholder="Subtitle (optional)" value={subtitle} onChange={e=>setSubtitle(e.target.value)}/>
+        <input className="ip" placeholder={U.subtitle} value={subtitle} onChange={e=>setSubtitle(e.target.value)} style={{direction:isRtl?"rtl":"ltr",textAlign:isRtl?"right":"left"}}/>
 
         {/* Excerpt */}
         <textarea
           className="ip"
-          placeholder="Short excerpt (shown on blog index, ~150 chars)"
+          placeholder={U.excerpt}
           value={excerpt}
           onChange={e=>setExcerpt(e.target.value)}
           rows={2}
-          style={{resize:"vertical"}}
+          style={{resize:"vertical",direction:isRtl?"rtl":"ltr",textAlign:isRtl?"right":"left"}}
         />
 
         {/* Category */}
-        <div style={{fontSize:11,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>Category</div>
+        <div style={{fontSize:11,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>{U.category}</div>
         <div style={{display:"flex",gap:4,marginBottom:8,flexWrap:"wrap"}}>
           {CATEGORIES.map(c=>
             <div key={c.k} onClick={()=>setCategory(c.k)} style={{
@@ -4626,25 +4770,25 @@ function AdminBlog({token,onR}){
 
         {/* Read time */}
         <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
-          <span style={{fontSize:12,color:"var(--mu)"}}>Read time:</span>
+          <span style={{fontSize:12,color:"var(--mu)"}}>{U.readTime}</span>
           <input
             className="ip"
             type="number"
             value={readTime}
             onChange={e=>setReadTime(e.target.value)}
-            style={{width:80,marginBottom:0}}
+            style={{width:80,marginBottom:0,direction:"ltr"}}
             min="1"
             max="60"
           />
-          <span style={{fontSize:12,color:"var(--mu)"}}>minutes</span>
+          <span style={{fontSize:12,color:"var(--mu)"}}>{U.minutes}</span>
         </div>
 
         {/* Tags */}
-        <input className="ip" placeholder="Tags (comma separated)" value={tags} onChange={e=>setTags(e.target.value)}/>
+        <input className="ip" placeholder={U.tags} value={tags} onChange={e=>setTags(e.target.value)} style={{direction:isRtl?"rtl":"ltr",textAlign:isRtl?"right":"left"}}/>
 
         {/* Content (HTML) */}
         <div style={{fontSize:11,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>
-          Content (HTML — use &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;strong&gt;, etc.)
+          {U.contentLbl}
         </div>
 
         {/* Insert image button */}
@@ -4663,10 +4807,10 @@ function AdminBlog({token,onR}){
               opacity:uploadingImg?.6:1
             }}
           >
-            {uploadingImg?"⏳ Uploading...":"📷 Insert Image"}
+            {uploadingImg?U.uploadingImg:U.insertImg}
           </button>
           <div style={{fontSize:11,color:"var(--mu)",alignSelf:"center"}}>
-            Upload a photo to insert into the article
+            {U.uploadPhoto}
           </div>
         </div>
         <input
@@ -4680,10 +4824,10 @@ function AdminBlog({token,onR}){
         {/* Size picker modal */}
         {showSizePicker&&(
           <div className="modal-overlay" onClick={cancelSizePicker}>
-            <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:360}}>
-              <div style={{fontSize:16,fontWeight:700,marginBottom:6}}>Choose image size</div>
+            <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:360,direction:isRtl?"rtl":"ltr",textAlign:isRtl?"right":"left"}}>
+              <div style={{fontSize:16,fontWeight:700,marginBottom:6}}>{U.chooseSize}</div>
               <div style={{fontSize:12,color:"var(--mu)",marginBottom:14}}>
-                How should this image appear in the article?
+                {U.sizeDesc}
               </div>
 
               {pendingImgUrl&&(
@@ -4710,7 +4854,7 @@ function AdminBlog({token,onR}){
                     border:"1.5px solid var(--B)",borderRadius:6
                   }}/>
                   <div style={{fontSize:13,fontWeight:700,color:"var(--tx)"}}>3 × 4</div>
-                  <div style={{fontSize:10,color:"var(--mu)",marginTop:2}}>Portrait</div>
+                  <div style={{fontSize:10,color:"var(--mu)",marginTop:2}}>{U.portrait}</div>
                 </div>
 
                 {/* Full option */}
@@ -4727,7 +4871,7 @@ function AdminBlog({token,onR}){
                     border:"1.5px solid var(--G)",borderRadius:6
                   }}/>
                   <div style={{fontSize:13,fontWeight:700,color:"var(--tx)"}}>Full</div>
-                  <div style={{fontSize:10,color:"var(--mu)",marginTop:2}}>Original</div>
+                  <div style={{fontSize:10,color:"var(--mu)",marginTop:2}}>{U.original}</div>
                 </div>
               </div>
 
@@ -4738,7 +4882,7 @@ function AdminBlog({token,onR}){
                   background:"transparent",border:"1px solid var(--brd2)",
                   color:"var(--mu)",fontSize:12,fontWeight:600,cursor:"pointer"
                 }}
-              >Cancel</button>
+              >{t.cancel||(isRtl?"انصراف":"Cancel")}</button>
             </div>
           </div>
         )}
@@ -4746,11 +4890,11 @@ function AdminBlog({token,onR}){
         <textarea
           ref={contentRef}
           className="ip"
-          placeholder="<p>Your article content here...</p><h2>A heading</h2><p>More text...</p>"
+          placeholder={U.contentPh}
           value={content}
           onChange={e=>setContent(e.target.value)}
           rows={15}
-          style={{resize:"vertical",fontFamily:"monospace",fontSize:12}}
+          style={{resize:"vertical",fontFamily:"monospace",fontSize:12,direction:isRtl?"rtl":"ltr",textAlign:isRtl?"right":"left"}}
         />
 
         {/* SEO Section */}
@@ -4760,27 +4904,28 @@ function AdminBlog({token,onR}){
           border:"1px solid color-mix(in srgb,var(--B) 15%,transparent)",
           borderRadius:12
         }}>
-          <div style={{fontSize:12,fontWeight:700,marginBottom:8,color:"var(--B)"}}>SEO (Optional but recommended)</div>
+          <div style={{fontSize:12,fontWeight:700,marginBottom:8,color:"var(--B)"}}>{U.seoTitle}</div>
           <input
             className="ip"
-            placeholder="Meta title (defaults to article title)"
+            placeholder={U.metaTitle}
             value={metaTitle}
             onChange={e=>setMetaTitle(e.target.value)}
+            style={{direction:isRtl?"rtl":"ltr",textAlign:isRtl?"right":"left"}}
           />
           <textarea
             className="ip"
-            placeholder="Meta description (~160 chars, shown in Google results)"
+            placeholder={U.metaDesc}
             value={metaDesc}
             onChange={e=>setMetaDesc(e.target.value)}
             rows={2}
-            style={{resize:"vertical"}}
+            style={{resize:"vertical",direction:isRtl?"rtl":"ltr",textAlign:isRtl?"right":"left"}}
           />
           <input
             className="ip"
-            placeholder="Meta keywords (comma separated)"
+            placeholder={U.metaKeywords}
             value={metaKeywords}
             onChange={e=>setMetaKeywords(e.target.value)}
-            style={{marginBottom:0}}
+            style={{marginBottom:0,direction:isRtl?"rtl":"ltr",textAlign:isRtl?"right":"left"}}
           />
         </div>
 
@@ -4789,7 +4934,7 @@ function AdminBlog({token,onR}){
           padding:12,marginTop:12,marginBottom:8,cursor:"pointer",
           display:"flex",justifyContent:"space-between",alignItems:"center"
         }}>
-          <span style={{fontSize:13}}>Published (visible on blog)</span>
+          <span style={{fontSize:13}}>{U.publishedLbl}</span>
           <div style={{
             width:40,height:22,borderRadius:11,
             background:published?"var(--G)":"var(--brd2)",
@@ -4809,18 +4954,41 @@ function AdminBlog({token,onR}){
           onClick={save}
           disabled={loading}
         >
-          {loading?"Saving...":(editing==='new'?"Publish Article":"Save Changes")}
+          {loading?U.saving:(editing==='new'?U.publishBtn:U.saveChanges)}
         </button>
       </div>
     );
   }
 
   // ═══ LIST VIEW ═══
+  // فیلتر لیست بر اساس زبان انتخاب‌شده
+  const filteredArticles=articles.filter(a=>(a.language||"en")===blogLang);
+
   return(
-    <div className="fi">
+    <div className="fi" style={{direction:blogLang==="fa"?"rtl":"ltr",textAlign:blogLang==="fa"?"right":"left"}}>
+      {/* سوییچ زبان در بالای لیست */}
+      <div style={{display:"flex",gap:6,marginBottom:12,padding:4,borderRadius:12,background:"var(--bg2)",border:"1px solid var(--brd)"}}>
+        <div onClick={()=>setBlogLang("en")} style={{
+          flex:1,padding:"8px 12px",borderRadius:9,cursor:"pointer",textAlign:"center",
+          background:blogLang==="en"?"var(--card)":"transparent",
+          fontSize:12,fontWeight:700,
+          color:blogLang==="en"?"var(--B)":"var(--mu)",
+          boxShadow:blogLang==="en"?"0 1px 3px rgba(0,0,0,.1)":"none",
+          transition:"all .2s"
+        }}>🇬🇧 English ({articles.filter(a=>(a.language||"en")==="en").length})</div>
+        <div onClick={()=>setBlogLang("fa")} style={{
+          flex:1,padding:"8px 12px",borderRadius:9,cursor:"pointer",textAlign:"center",
+          background:blogLang==="fa"?"var(--card)":"transparent",
+          fontSize:12,fontWeight:700,
+          color:blogLang==="fa"?"var(--G)":"var(--mu)",
+          boxShadow:blogLang==="fa"?"0 1px 3px rgba(0,0,0,.1)":"none",
+          transition:"all .2s"
+        }}>🇮🇷 فارسی ({articles.filter(a=>(a.language||"en")==="fa").length})</div>
+      </div>
+
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
         <div style={{fontSize:13,fontWeight:600}}>
-          Blog Articles ({articles.length})
+          {U.blogArticles} ({filteredArticles.length})
         </div>
         <button
           onClick={startNew}
@@ -4829,23 +4997,23 @@ function AdminBlog({token,onR}){
             background:"var(--R)",color:"#fff",
             fontSize:12,fontWeight:600,border:"none",cursor:"pointer"
           }}
-        >+ New Article</button>
+        >{U.newArticle}</button>
       </div>
 
       {ms&&<div style={{
-        background:ms.includes("!")||ms.includes("deleted")?"color-mix(in srgb,var(--G) 8%,transparent)":"color-mix(in srgb,var(--R) 8%,transparent)",
-        border:`1px solid ${ms.includes("!")||ms.includes("deleted")?"color-mix(in srgb,var(--G) 15%,transparent)":"color-mix(in srgb,var(--R) 15%,transparent)"}`,
+        background:ms.includes("!")||ms.includes("deleted")||ms.includes("حذف")?"color-mix(in srgb,var(--G) 8%,transparent)":"color-mix(in srgb,var(--R) 8%,transparent)",
+        border:`1px solid ${ms.includes("!")||ms.includes("deleted")||ms.includes("حذف")?"color-mix(in srgb,var(--G) 15%,transparent)":"color-mix(in srgb,var(--R) 15%,transparent)"}`,
         borderRadius:10,padding:10,marginBottom:10,fontSize:13,
-        color:ms.includes("!")||ms.includes("deleted")?"var(--G)":"var(--R)"
+        color:ms.includes("!")||ms.includes("deleted")||ms.includes("حذف")?"var(--G)":"var(--R)"
       }}>{ms}</div>}
 
-      {loading&&articles.length===0&&<div style={{textAlign:"center",color:"var(--dm)",padding:40,fontSize:13}}>Loading...</div>}
+      {loading&&articles.length===0&&<div style={{textAlign:"center",color:"var(--dm)",padding:40,fontSize:13}}>{U.loading}</div>}
 
-      {!loading&&articles.length===0&&<div style={{textAlign:"center",color:"var(--dm)",padding:40,fontSize:13}}>
-        No articles yet. Click "New Article" to create your first one.
+      {!loading&&filteredArticles.length===0&&<div style={{textAlign:"center",color:"var(--dm)",padding:40,fontSize:13}}>
+        {U.noArticles}
       </div>}
 
-      {articles.map(a=>
+      {filteredArticles.map(a=>
         <div key={a.id} className="cd" style={{
           display:"flex",alignItems:"center",gap:10,padding:12,marginBottom:6
         }}>
@@ -4853,15 +5021,15 @@ function AdminBlog({token,onR}){
             ? <img src={a.cover_image} style={{width:52,height:36,borderRadius:6,objectFit:"cover"}} alt=""/>
             : <div style={{width:52,height:36,borderRadius:6,background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>📰</div>
           }
-          <div style={{flex:1,minWidth:0}}>
+          <div style={{flex:1,minWidth:0,textAlign:blogLang==="fa"?"right":"left"}}>
             <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
               {a.title}
             </div>
-            <div style={{fontSize:10,color:"var(--dm)",marginTop:2}}>
-              {a.category} · {a.read_time} min · {a.created_at?new Date(a.created_at).toLocaleDateString():""} · {a.views||0} views
+            <div style={{fontSize:10,color:"var(--dm)",marginTop:2,direction:"ltr",textAlign:blogLang==="fa"?"right":"left"}}>
+              {a.category} · {a.read_time} {U.min} · {a.created_at?new Date(a.created_at).toLocaleDateString(blogLang==="fa"?"fa-IR":"en-US"):""} · {a.views||0} {U.views}
             </div>
           </div>
-          {!a.published&&<span style={{fontSize:8,fontWeight:700,color:"var(--Y)",padding:"2px 5px",borderRadius:4,background:"color-mix(in srgb,var(--Y) 10%,transparent)"}}>DRAFT</span>}
+          {!a.published&&<span style={{fontSize:8,fontWeight:700,color:"var(--Y)",padding:"2px 5px",borderRadius:4,background:"color-mix(in srgb,var(--Y) 10%,transparent)"}}>{U.draft}</span>}
           <div onClick={()=>startEdit(a)} style={{cursor:"pointer",color:"var(--B)",padding:4}}>{IC.edit}</div>
           <div onClick={()=>del(a.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
         </div>
