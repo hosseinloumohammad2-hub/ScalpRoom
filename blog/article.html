@@ -454,7 +454,9 @@ async function loadArticle(){
       "headline":a.title,
       "description":a.meta_desc||a.excerpt||"",
       "image":a.cover_image||"",
-      "author":{"@type":"Organization","name":a.author||"Fxscalproom"},
+      "author":a.author
+        ? {"@type":"Person","name":a.author}
+        : {"@type":"Person","@id":"https://fxscalproom.com/#founder","name":"Mohammad Hosseinlou","alternateName":["Hosseinlou","محمد حسینلو"],"url":"https://fxscalproom.com/about"},
       "publisher":{
         "@type":"Organization",
         "name":"Fxscalproom",
@@ -482,7 +484,7 @@ async function loadArticle(){
         <h1>${escapeHtml(a.title)}</h1>
         ${a.subtitle?`<p class="article-subtitle">${escapeHtml(a.subtitle)}</p>`:''}
         <div class="article-meta">
-          <span class="author">${escapeHtml(a.author||'Fxscalproom')}</span>
+          <span class="author">${escapeHtml(a.author||'Mohammad Hosseinlou')}</span>
           <span>·</span>
           <span>${formatDate(a.created_at)}</span>
           <span>·</span>
