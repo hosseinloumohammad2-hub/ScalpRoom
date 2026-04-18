@@ -12,11 +12,13 @@
     { "source": "/fa/free-analysis", "destination": "/fa/free-analysis.html" },
     { "source": "/fa/about", "destination": "/fa/about.html" },
     { "source": "/fa/blog", "destination": "/fa/blog/index.html" },
-    { "source": "/fa/blog/", "destination": "/fa/blog/index.html" }
+    { "source": "/fa/blog/", "destination": "/fa/blog/index.html" },
+    { "source": "/fa/blog/article", "destination": "/fa/blog/article.html" }
   ],
   "redirects": [
     { "source": "/fa/index.html", "destination": "/fa/", "permanent": true },
-    { "source": "/fa/index", "destination": "/fa/", "permanent": true }
+    { "source": "/fa/index", "destination": "/fa/", "permanent": true },
+    { "source": "/favicon.ico", "destination": "/icon-192.png", "permanent": false }
   ],
   "headers": [
     {
