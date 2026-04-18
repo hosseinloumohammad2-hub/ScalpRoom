@@ -16,7 +16,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Preload کریتیکال: React و ReactDOM (قبل از Babel شروع به دانلود می‌کنن) -->
+<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" as="script" crossorigin>
+<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" as="script" crossorigin>
+<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" as="script" crossorigin>
+
+<!-- فونت: فقط Inter اولیه (weight های ضروری) + لود غیرقفلی DM Sans/JetBrains Mono -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@800;900&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style id="theme-style">
 /* ─── iOS 26 Liquid Glass ─── */
 :root{--bg:#f5f5f7;--bg2:#ffffff;--glass:rgba(255,255,255,.55);--glass2:rgba(255,255,255,.35);--gb:rgba(255,255,255,.72);--card:rgba(255,255,255,.78);--brd:rgba(0,0,0,.06);--brd2:rgba(0,0,0,.10);--tx:#1d1d1f;--tx2:#424245;--mu:#86868b;--dm:#aeaeb2;--R:#ff3b30;--G:#28cd41;--B:#0071e3;--Y:#ff9f0a;--purple:#bf5af2;--r:22px;--r2:16px}
@@ -139,6 +147,41 @@ select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;paddi
 </style>
 </head>
 <body>
+
+<!-- ═══ Splash Screen — قبل از React mount نمایش داده میشه ═══ -->
+<style>
+#splash{
+  position:fixed;inset:0;z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#f5f5f7;
+  transition:opacity .4s ease;
+}
+[data-theme="dark"] #splash{background:#050507}
+#splash.hide{opacity:0;pointer-events:none}
+#splash .logo{
+  font-size:32px;font-weight:700;color:#1d1d1f;letter-spacing:-.6px;
+  font-family:-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif;
+  animation:splashPulse 1.5s ease-in-out infinite;
+}
+[data-theme="dark"] #splash .logo{color:#e5e5e7}
+#splash .logo b{color:#ff3b30;font-weight:700}
+#splash .spinner{
+  width:28px;height:28px;margin-top:20px;
+  border:2px solid rgba(0,0,0,.08);
+  border-top-color:#0071e3;
+  border-radius:50%;
+  animation:splashSpin .8s linear infinite;
+}
+[data-theme="dark"] #splash .spinner{border-color:rgba(255,255,255,.08);border-top-color:#0a84ff}
+@keyframes splashSpin{to{transform:rotate(360deg)}}
+@keyframes splashPulse{0%,100%{opacity:1}50%{opacity:.6}}
+</style>
+
+<div id="splash">
+  <div class="logo">Fxscalproom<b>.</b></div>
+  <div class="spinner"></div>
+</div>
+
 <div id="root"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
@@ -6343,6 +6386,15 @@ function App(){
   );
 }
 ReactDOM.render(<App/>,document.getElementById("root"));
+
+// مخفی کردن splash screen بعد از mount شدن React
+requestAnimationFrame(()=>{
+  const splash=document.getElementById("splash");
+  if(splash){
+    splash.classList.add("hide");
+    setTimeout(()=>splash.remove(),500);
+  }
+});
 </script>
 <script>
 if('serviceWorker' in navigator){
