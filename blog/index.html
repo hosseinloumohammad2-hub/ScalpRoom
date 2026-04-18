@@ -64,7 +64,12 @@
 }
 </script>
 
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#fbfbfd" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
@@ -391,7 +396,7 @@ async function loadArticles(){
   const grid=document.getElementById('articlesGrid');
   try{
     const res=await fetch(
-      `${SUPABASE_URL}/rest/v1/Articles?published=eq.true&order=created_at.desc&select=slug,title,subtitle,excerpt,cover_image,category,read_time,created_at`,
+      `${SUPABASE_URL}/rest/v1/Articles?published=eq.true&language=eq.en&order=created_at.desc&select=slug,title,subtitle,excerpt,cover_image,category,read_time,created_at`,
       {
         headers:{
           'apikey':SUPABASE_ANON_KEY,
