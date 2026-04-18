@@ -641,7 +641,9 @@ async function loadArticle(){
       "description":pageDesc,
       "image":a.cover_image||"https://fxscalproom.com/og-image.png",
       "inLanguage":"fa-IR",
-      "author":{"@type":"Organization","name":a.author||"Fxscalproom","url":"https://fxscalproom.com/"},
+      "author":a.author
+        ? {"@type":"Person","name":a.author}
+        : {"@type":"Person","@id":"https://fxscalproom.com/#founder","name":"محمد حسینلو","alternateName":["Mohammad Hosseinlou","Hosseinlou","حسینلو"],"url":"https://fxscalproom.com/fa/about"},
       "publisher":{
         "@type":"Organization",
         "name":"Fxscalproom",
@@ -701,7 +703,7 @@ async function loadArticle(){
         <h1>${escapeHtml(a.title)}</h1>
         ${a.subtitle?`<p class="article-subtitle">${escapeHtml(a.subtitle)}</p>`:''}
         <div class="article-meta">
-          <span class="author">${escapeHtml(a.author||'فارکس اسکالپ روم')}</span>
+          <span class="author">${escapeHtml(a.author||'محمد حسینلو')}</span>
           <span class="sep">·</span>
           <span>${formatDate(a.created_at)}</span>
           <span class="sep">·</span>
