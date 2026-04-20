@@ -2746,66 +2746,6 @@ function ImageCarousel({urls,style,borderRadius}){
   </div>;
 }
 
-/* ─── AForex Trade Widget (read-only, themed, iframe-sandboxed) ─── */
-function TradeWidget({colorTheme}){
-  const iframeRef=useRef(null);
-  const isDark=colorTheme==="dark";
-  // AForex widget "color" attribute: white/dark
-  const widgetColor=isDark?"dark":"white";
-  const bg=isDark?"#0a0a0c":"#ffffff";
-  const tx=isDark?"#e5e5e7":"#1d1d1f";
-  useEffect(()=>{
-    if(!iframeRef.current)return;
-    const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
-      *{margin:0;padding:0;box-sizing:border-box}
-      html,body{background:${bg};color:${tx};font-family:-apple-system,BlinkMacSystemFont,'Inter','SF Pro Display',sans-serif;overflow:hidden}
-      body{padding:4px}
-      /* Force all links to be non-clickable */
-      a{pointer-events:none!important;cursor:default!important}
-      /* Hide scrollbars inside iframe */
-      ::-webkit-scrollbar{display:none}
-    </style></head><body>
-      <div data-role="trade_widget" size="380" width_type="%" color="${widgetColor}" partner_code="E4AOYK" symbols="BTCUSD,EURUSD,GBPUSD,WTI,XAUUSD"></div>
-      <script src="https://aforex.s3.amazonaws.com/widgets/aforex_trade_widget_new.js" type="text/javascript"></script>
-      <script>
-        // Rebrand: replace AMarkets -> Fxscalproom. in all text nodes
-        (function(){
-          var REPS=[/AMarkets/gi,/amarkets/gi,/A Markets/gi];
-          function walk(node){
-            if(!node)return;
-            if(node.nodeType===3){
-              var v=node.nodeValue,changed=false;
-              REPS.forEach(function(re){if(re.test(v)){v=v.replace(re,"Fxscalproom.");changed=true}});
-              if(changed)node.nodeValue=v;
-            } else if(node.nodeType===1){
-              if(node.tagName==="SCRIPT"||node.tagName==="STYLE")return;
-              if(node.tagName==="A"){try{node.removeAttribute("href");node.removeAttribute("target");node.style.pointerEvents="none";node.style.cursor="default"}catch(e){}}
-              for(var i=0;i<node.childNodes.length;i++)walk(node.childNodes[i]);
-            }
-          }
-          var ob=new MutationObserver(function(){walk(document.body)});
-          ob.observe(document.body,{childList:true,subtree:true,characterData:true});
-          // Periodic rebrand for first 10s
-          var n=0,iv=setInterval(function(){walk(document.body);n++;if(n>20)clearInterval(iv)},500);
-        })();
-      </script>
-    </body></html>`;
-    // Write into iframe using srcdoc (more reliable than writing)
-    iframeRef.current.srcdoc=html;
-  },[widgetColor,bg,tx]);
-  return(<div style={{position:"relative",overflow:"hidden",borderRadius:16,border:"1px solid var(--brd)",background:bg,height:440}}>
-    <iframe
-      ref={iframeRef}
-      title="trade-widget"
-      style={{width:"100%",height:"100%",border:"none",display:"block",background:bg}}
-      sandbox="allow-scripts allow-same-origin"
-      loading="lazy"
-    />
-    {/* Full-cover transparent overlay - prevents ALL interactions with the iframe */}
-    <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,zIndex:10,cursor:"default",background:"transparent"}}/>
-  </div>);
-}
-
 /* ─── Market News (TradingView headlines + Finnhub summaries) ─── */
 function TVTopStories({colorTheme}){
   const ref=useRef(null);
@@ -3001,8 +2941,6 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
     {(!posts||!posts.length)&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:13}}>{t.noAnalyses}</div>}
     {showPremPop&&<PremiumPopup onClose={()=>setShowPremPop(false)} onGoPlans={goToPlans}/>}
     <PostModal post={sel} onClose={()=>setSel(null)}/>
-    {/* ─── Trade Widget (AForex, rebranded) ─── */}
-    {online!==false&&<div style={{marginBottom:12}}><TradeWidget colorTheme={theme}/></div>}
     {/* ─── Breaking Market News ─── */}
     {online!==false&&<div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVTopStories colorTheme={theme}/></div>}
     {/* ─── Disclaimer & Copyright ─── */}
