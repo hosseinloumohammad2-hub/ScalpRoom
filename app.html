@@ -5466,6 +5466,8 @@ function Adm({token,posts,signals,onR}){
   const[msgPushTarget,setMsgPushTarget]=useState("all");
   const[editUserExp,setEditUserExp]=useState(null);
   const[expDate,setExpDate]=useState("");
+  const[manageSub,setManageSub]=useState("posts");
+  const[manageSearch,setManageSearch]=useState("");
   const[refCounts,setRefCounts]=useState({});
   const[msgTitle,setMsgTitle]=useState(""),[msgBody,setMsgBody]=useState(""),[msgTarget,setMsgTarget]=useState("all"),[allMsgs,setAllMsgs]=useState([]),[msgImgs,setMsgImgs]=useState([]),[msgPvs,setMsgPvs]=useState([]),[msgDayTrade,setMsgDayTrade]=useState(false),[msgDtCats,setMsgDtCats]=useState([]),[editMsgId,setEditMsgId]=useState(null),[editMsgTitle,setEditMsgTitle]=useState(""),[editMsgBody,setEditMsgBody]=useState(""),[editMsgTarget,setEditMsgTarget]=useState("all");  const noti=useNotifications(null,token);
   const toggleMsgDtCat=(k)=>setMsgDtCats(prev=>prev.includes(k)?prev.filter(x=>x!==k):[...prev,k]);
@@ -5587,33 +5589,86 @@ function Adm({token,posts,signals,onR}){
       </div>
       <button className="bt" style={{background:"var(--G)",opacity:ld?.5:1}} onClick={pubS} disabled={ld}>{ld?"...":t.publishSignal}</button>
     </>}
-    {tb==="manage"&&<>
-      <div style={{fontSize:13,fontWeight:600,marginBottom:8}}>{t.post}s ({(posts||[]).length})</div>
-      {(posts||[]).map(p=><div key={p.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4}}>
-        {p.image_url?<img src={p.image_url} style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/>:<div style={{width:36,height:36,borderRadius:6,background:"var(--bg)"}}/>}
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
-          <div style={{fontSize:10,color:"var(--dm)"}}>{p.category} · {p.created_at?new Date(p.created_at).toLocaleDateString()+"  ·  "+relativeTime(p.created_at,lang):""}</div>
-        </div>
-        {p.is_premium&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",padding:"2px 5px",borderRadius:4,background:"color-mix(in srgb,var(--R) 10%,transparent)"}}>PRO</span>}
-        <div onClick={()=>setEditPost(p)} style={{cursor:"pointer",color:"var(--B)",padding:4}}>{IC.edit}</div>
-        <div onClick={()=>delP(p.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
-      </div>)}
-      <div style={{fontSize:13,fontWeight:600,marginBottom:8,marginTop:16}}>{t.signal}s ({(signals||[]).length})</div>
-      {(signals||[]).map(s=><div key={s.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4}}>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <span className="m" style={{fontSize:12,fontWeight:500}}>{s.pair}</span>
-            <span style={{fontSize:10,fontWeight:600,color:s.type==="BUY"?"var(--G)":"var(--R)"}}>{s.type}</span>
-            <span style={{fontSize:9,fontWeight:600,padding:"2px 6px",borderRadius:4,background:s.status==="active"?"color-mix(in srgb,var(--B) 10%,transparent)":s.status==="tp_hit"?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)",color:s.status==="active"?"var(--B)":s.status==="tp_hit"?"var(--G)":"var(--R)"}}>{s.status?.toUpperCase().replace("_"," ")}</span>
+    {tb==="manage"&&(()=>{
+      const postsOnly=(posts||[]).filter(p=>p.category!=="daytrade");
+      const dayTradeOnly=(posts||[]).filter(p=>p.category==="daytrade");
+      const q=manageSearch.trim().toLowerCase();
+      const filterPost=(p)=>!q||(p.title||"").toLowerCase().includes(q)||(p.description||"").toLowerCase().includes(q)||(p.category||"").toLowerCase().includes(q);
+      const filterSig=(s)=>!q||(s.pair||"").toLowerCase().includes(q)||(s.type||"").toLowerCase().includes(q);
+      const subs=[
+        {k:"posts",l:lang==="fa"?"پست‌ها":"Posts",c:postsOnly.length,color:"var(--R)"},
+        {k:"signals",l:lang==="fa"?"سیگنال‌ها":"Signals",c:(signals||[]).length,color:"var(--G)"},
+        {k:"daytrade",l:lang==="fa"?"تحلیل روزانه":"Day Trade",c:dayTradeOnly.length,color:"var(--B)"}
+      ];
+      return<>
+      {/* Sub-tabs */}
+      <div style={{display:"flex",gap:6,marginBottom:10}}>
+        {subs.map(sub=>
+          <div key={sub.k} onClick={()=>setManageSub(sub.k)} style={{flex:1,padding:"10px 4px",borderRadius:10,textAlign:"center",cursor:"pointer",background:manageSub===sub.k?`color-mix(in srgb,${sub.color} 12%,transparent)`:"transparent",border:`1px solid ${manageSub===sub.k?`color-mix(in srgb,${sub.color} 28%,transparent)`:"var(--brd)"}`,fontSize:11,fontWeight:700,color:manageSub===sub.k?sub.color:"var(--mu)",display:"flex",flexDirection:"column",gap:2,alignItems:"center"}}>
+            <span>{sub.l}</span>
+            <span style={{fontSize:10,fontWeight:600,opacity:.75}}>({sub.c})</span>
           </div>
-          <div style={{fontSize:10,color:"var(--dm)",marginTop:2}}>{s.created_at?new Date(s.created_at).toLocaleDateString():""}{s.pnl&&<span className="m" style={{marginLeft:6,color:s.pnl.startsWith("-")?"var(--R)":"var(--G)"}}>{s.pnl}</span>}</div>
-        </div>
-        {s.is_premium&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",padding:"2px 5px",borderRadius:4,background:"color-mix(in srgb,var(--R) 10%,transparent)"}}>PRO</span>}
-        <div onClick={()=>setEditSig(s)} style={{cursor:"pointer",color:"var(--B)",padding:4}}>{IC.edit}</div>
-        <div onClick={()=>delS(s.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
-      </div>)}
-    </>}
+        )}
+      </div>
+      {/* Search */}
+      <div style={{position:"relative",marginBottom:10}}>
+        <input className="ip" placeholder={lang==="fa"?"جستجو...":"Search..."} value={manageSearch} onChange={e=>setManageSearch(e.target.value)} style={{paddingLeft:34,marginBottom:0}}/>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        {manageSearch&&<div onClick={()=>setManageSearch("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",cursor:"pointer",color:"var(--mu)",width:22,height:22,borderRadius:"50%",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700}}>✕</div>}
+      </div>
+
+      {/* Posts */}
+      {manageSub==="posts"&&<>
+        {postsOnly.filter(filterPost).map(p=><div key={p.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4}}>
+          {p.image_url?<img src={(p.image_url||"").split(",")[0]} style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/>:<div style={{width:36,height:36,borderRadius:6,background:"var(--bg)"}}/>}
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
+            <div style={{fontSize:10,color:"var(--dm)"}}>{p.category} · {p.created_at?new Date(p.created_at).toLocaleDateString()+"  ·  "+relativeTime(p.created_at,lang):""}</div>
+          </div>
+          {p.is_premium&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",padding:"2px 5px",borderRadius:4,background:"color-mix(in srgb,var(--R) 10%,transparent)"}}>PRO</span>}
+          <div onClick={()=>setEditPost(p)} style={{cursor:"pointer",color:"var(--B)",padding:4}}>{IC.edit}</div>
+          <div onClick={()=>delP(p.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
+        </div>)}
+        {!postsOnly.filter(filterPost).length&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:12}}>{q?(lang==="fa"?"چیزی پیدا نشد":"No results"):(lang==="fa"?"پستی نیست":"No posts")}</div>}
+      </>}
+
+      {/* Signals */}
+      {manageSub==="signals"&&<>
+        {(signals||[]).filter(filterSig).map(s=>{
+          const isBuyType=s.type==="BUY"||s.type==="BUY LIMIT";
+          return<div key={s.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4}}>
+          {s.image_url?<img src={s.image_url} style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/>:<div style={{width:36,height:36,borderRadius:6,background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--dm)",fontSize:14}}>📈</div>}
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+              <span className="m" style={{fontSize:12,fontWeight:500}}>{s.pair}</span>
+              <span style={{fontSize:10,fontWeight:600,color:isBuyType?"var(--G)":"var(--R)"}}>{s.type}</span>
+              <span style={{fontSize:9,fontWeight:600,padding:"2px 6px",borderRadius:4,background:s.status==="active"?"color-mix(in srgb,var(--B) 10%,transparent)":s.status==="tp_hit"?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)",color:s.status==="active"?"var(--B)":s.status==="tp_hit"?"var(--G)":"var(--R)"}}>{s.status?.toUpperCase().replace("_"," ")}</span>
+            </div>
+            <div style={{fontSize:10,color:"var(--dm)",marginTop:2}}>{s.created_at?new Date(s.created_at).toLocaleDateString():""}{s.pnl&&<span className="m" style={{marginLeft:6,color:s.pnl.startsWith("-")?"var(--R)":"var(--G)"}}>{s.pnl}</span>}</div>
+          </div>
+          {s.is_premium&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",padding:"2px 5px",borderRadius:4,background:"color-mix(in srgb,var(--R) 10%,transparent)"}}>PRO</span>}
+          <div onClick={()=>setEditSig(s)} style={{cursor:"pointer",color:"var(--B)",padding:4}}>{IC.edit}</div>
+          <div onClick={()=>delS(s.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
+        </div>})}
+        {!(signals||[]).filter(filterSig).length&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:12}}>{q?(lang==="fa"?"چیزی پیدا نشد":"No results"):(lang==="fa"?"سیگنالی نیست":"No signals")}</div>}
+      </>}
+
+      {/* Day Trade */}
+      {manageSub==="daytrade"&&<>
+        {dayTradeOnly.filter(filterPost).map(p=><div key={p.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4}}>
+          {p.image_url?<img src={(p.image_url||"").split(",")[0]} style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/>:<div style={{width:36,height:36,borderRadius:6,background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--dm)",fontSize:14}}>📊</div>}
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
+            <div style={{fontSize:10,color:"var(--dm)"}}>{p.dt_category||"daytrade"} · {p.created_at?new Date(p.created_at).toLocaleDateString()+"  ·  "+relativeTime(p.created_at,lang):""}</div>
+          </div>
+          {p.is_premium&&<span style={{fontSize:8,fontWeight:700,color:"var(--R)",padding:"2px 5px",borderRadius:4,background:"color-mix(in srgb,var(--R) 10%,transparent)"}}>PRO</span>}
+          <div onClick={()=>setEditPost(p)} style={{cursor:"pointer",color:"var(--B)",padding:4}}>{IC.edit}</div>
+          <div onClick={()=>delP(p.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
+        </div>)}
+        {!dayTradeOnly.filter(filterPost).length&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:12}}>{q?(lang==="fa"?"چیزی پیدا نشد":"No results"):(lang==="fa"?"تحلیل روزانه‌ای نیست":"No day trades")}</div>}
+      </>}
+    </>;
+    })()}
     {tb==="users"&&<>
       <div style={{fontSize:13,fontWeight:600,marginBottom:10}}>{t.users} ({users.length})</div>
       {users.map(u=>{
