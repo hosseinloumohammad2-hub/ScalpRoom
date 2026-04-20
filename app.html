@@ -1903,6 +1903,7 @@ async function generateShareCard(type,data){
     if(tpCount>0)calcH+=100;
     calcH+=20;calcH+=40;
     if(s.pnl)calcH+=20;
+    if(s.image_url)calcH+=500;
     calcH+=140;
   } else {
     calcH+=20;
@@ -1951,7 +1952,7 @@ async function generateShareCard(type,data){
 
   if(type==="signal"){
     const s=data;
-    const isBuy=s.type==="BUY";
+    const isBuy=s.type==="BUY"||s.type==="BUY LIMIT";
     const innerW=W-PAD*2;
 
     // ─── Card background ───
@@ -1965,12 +1966,16 @@ async function generateShareCard(type,data){
     const badgeBg=isBuy?TH.buyBg:TH.sellBg;
     const pairW=ctx.measureText(s.pair||"").width;
     const bx=PAD+pairW+16;
-    rr(bx,Y+10,80,32,16);ctx.fillStyle=badgeBg;ctx.fill();
-    rr(bx,Y+10,80,32,16);ctx.strokeStyle=badgeColor;ctx.lineWidth=1.5;ctx.stroke();
+    // Calculate badge width based on text
     ctx.font="bold 15px 'DM Sans',system-ui,sans-serif";
+    const typeTextW=ctx.measureText(s.type||"").width;
+    const badgeW=Math.max(80,typeTextW+28);
+    rr(bx,Y+10,badgeW,32,16);ctx.fillStyle=badgeBg;ctx.fill();
+    rr(bx,Y+10,badgeW,32,16);ctx.strokeStyle=badgeColor;ctx.lineWidth=1.5;ctx.stroke();
     ctx.fillStyle=badgeColor;
-    const btW=ctx.measureText(s.type).width;
-    ctx.fillText(s.type,bx+40-btW/2,Y+31);
+    ctx.textAlign="center";
+    ctx.fillText(s.type||"",bx+badgeW/2,Y+31);
+    ctx.textAlign="left";
 
     const statusLabel=s.status==="active"?"ACTIVE":s.status==="tp_hit"?"TP HIT":"SL HIT";
     const statusColor=s.status==="active"?TH.activeC:s.status==="tp_hit"?TH.tpC:TH.slC;
@@ -2032,6 +2037,30 @@ async function generateShareCard(type,data){
       ctx.fillText("Closed: "+new Date(s.closed_at).toLocaleDateString(),W-PAD,Y+14);
       ctx.textAlign="left";
       Y+=24;
+    }
+
+    // ─── Chart image (if available) ───
+    if(s.image_url){
+      Y+=10;
+      try{
+        const img=new Image();img.crossOrigin="anonymous";
+        await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=s.image_url});
+        const imgW=innerW;
+        const imgH=Math.round((img.height/img.width)*imgW);
+        // Resize canvas if needed
+        if(Y+imgH+140>c.height){
+          const newH=Y+imgH+140;
+          const tempData=ctx.getImageData(0,0,W,c.height);
+          c.height=newH;
+          ctx.fillStyle=TH.bg;ctx.fillRect(0,0,W,newH);
+          ctx.putImageData(tempData,0,0);
+        }
+        ctx.shadowColor=isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)";ctx.shadowBlur=16;ctx.shadowOffsetY=3;
+        rr(PAD,Y,imgW,imgH,14);ctx.fillStyle=TH.boxBg;ctx.fill();ctx.shadowColor="transparent";
+        ctx.save();rr(PAD,Y,imgW,imgH,14);ctx.clip();ctx.drawImage(img,PAD,Y,imgW,imgH);ctx.restore();
+        rr(PAD,Y,imgW,imgH,14);ctx.strokeStyle=TH.brd;ctx.lineWidth=1;ctx.stroke();
+        Y+=imgH+20;
+      }catch(e){}
     }
 
   } else if(type==="analysis"){
@@ -2247,7 +2276,7 @@ function PostModal({post,onClose}){
 }
 
 /* ─── Signal Edit Modal ─── */
-function SignalEditModal({sig,onClose,onSave}){
+function SignalEditModal({sig,onClose,onSave,token}){
   const{t}=useLang();
   useEffect(()=>{if(sig){setThemeColor("#2a2a2a");return()=>setThemeColor(getThemeColor())}},[sig]);
   const[status,setStatus]=useState(sig?.status||"active");
@@ -2260,8 +2289,24 @@ function SignalEditModal({sig,onClose,onSave}){
   const[sigPr,setSigPr]=useState(sig?.is_premium||false);
   const[sigTerm,setSigTerm]=useState(sig?.signal_term||"short");
   const[ePair,setEPair]=useState(sig?.pair||"");
+  const[eType,setEType]=useState(sig?.type||"BUY");
+  const[eImgUrl,setEImgUrl]=useState(sig?.image_url||"");
+  const[eImgFile,setEImgFile]=useState(null);
+  const[eImgPv,setEImgPv]=useState(sig?.image_url||null);
+  const[uploading,setUploading]=useState(false);
   if(!sig)return null;
-  const save=()=>{onSave(sig.id,{pair:ePair||sig.pair,status,pnl:pnl||null,closed_at:closedAt?new Date(closedAt).toISOString():null,take_profit:etp1||null,tp2:etp2||null,tp3:etp3||null,created_at:pubDate?new Date(pubDate).toISOString():sig.created_at,is_premium:sigPr,signal_term:sigTerm});onClose()};
+  const save=async()=>{
+    let finalImgUrl=eImgUrl;
+    if(eImgFile){
+      setUploading(true);
+      const u=await api.img(eImgFile,token);
+      setUploading(false);
+      if(!u){alert("Upload failed");return}
+      finalImgUrl=u;
+    }
+    onSave(sig.id,{pair:ePair||sig.pair,type:eType,status,pnl:pnl||null,closed_at:closedAt?new Date(closedAt).toISOString():null,take_profit:etp1||null,tp2:etp2||null,tp3:etp3||null,created_at:pubDate?new Date(pubDate).toISOString():sig.created_at,is_premium:sigPr,signal_term:sigTerm,image_url:finalImgUrl||null});
+    onClose();
+  };
   return(<div className="modal-overlay" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
       <span style={{fontSize:15,fontWeight:700}}>{t.editSignal}</span>
@@ -2270,6 +2315,12 @@ function SignalEditModal({sig,onClose,onSave}){
     <div style={{fontSize:13,color:"var(--mu)",marginBottom:12}}>{sig.pair} — {sig.type}</div>
     <div style={{fontSize:12,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>{t.pair}</div>
     <input className="ip" placeholder={t.pair} value={ePair} onChange={e=>setEPair(e.target.value)}/>
+    <div style={{fontSize:12,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>Type</div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:12}}>{["BUY","SELL","BUY LIMIT","SELL LIMIT"].map(typ=>{
+      const isBuyTy=typ==="BUY"||typ==="BUY LIMIT";
+      const isLimit=typ.includes("LIMIT");
+      return<div key={typ} onClick={()=>setEType(typ)} style={{padding:"10px 6px",borderRadius:10,textAlign:"center",cursor:"pointer",background:eType===typ?(isBuyTy?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)"):"transparent",border:`1px solid ${eType===typ?(isBuyTy?"color-mix(in srgb,var(--G) 25%,transparent)":"color-mix(in srgb,var(--R) 25%,transparent)"):"var(--brd)"}`,fontSize:isLimit?11:13,fontWeight:600,color:eType===typ?(isBuyTy?"var(--G)":"var(--R)"):"var(--mu)"}}>{typ}</div>
+    })}</div>
     <div style={{fontSize:12,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>{t.status}</div>
     <div style={{display:"flex",gap:6,marginBottom:12}}>{["active","tp_hit","sl_hit"].map(s=>
       <div key={s} onClick={()=>setStatus(s)} style={{flex:1,padding:10,borderRadius:10,textAlign:"center",cursor:"pointer",
@@ -2282,6 +2333,14 @@ function SignalEditModal({sig,onClose,onSave}){
     <input className="ip" placeholder="TP1" value={etp1} onChange={e=>setEtp1(e.target.value)}/>
     <input className="ip" placeholder="TP2 (optional)" value={etp2} onChange={e=>setEtp2(e.target.value)}/>
     <input className="ip" placeholder="TP3 (optional)" value={etp3} onChange={e=>setEtp3(e.target.value)}/>
+    <div style={{fontSize:12,fontWeight:600,marginBottom:6,color:"var(--tx2)",marginTop:8}}>Chart Image</div>
+    <div onClick={()=>document.getElementById("sigEditImgUp").click()} style={{border:"1.5px dashed var(--brd2)",borderRadius:12,padding:eImgPv?8:16,textAlign:"center",marginBottom:10,background:"var(--bg2)",cursor:"pointer",position:"relative"}}>
+      {eImgPv?<>
+        <img src={eImgPv} style={{width:"100%",maxHeight:140,objectFit:"cover",borderRadius:8}} alt=""/>
+        <div onClick={e=>{e.stopPropagation();setEImgFile(null);setEImgPv(null);setEImgUrl("")}} style={{position:"absolute",top:14,right:14,width:26,height:26,borderRadius:"50%",background:"rgba(0,0,0,.65)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,cursor:"pointer",fontWeight:700}}>✕</div>
+      </>:<div style={{fontSize:11,color:"var(--dm)"}}>Tap to add chart image</div>}
+    </div>
+    <input id="sigEditImgUp" type="file" accept="image/*" onChange={e=>{const f=e.target.files[0];if(f){setEImgFile(f);setEImgPv(URL.createObjectURL(f))}}} style={{display:"none"}}/>
     <div onClick={()=>setSigPr(!sigPr)} className="cd" style={{padding:10,marginBottom:8,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
       <span style={{fontSize:12}}>Premium</span>
       <div style={{width:36,height:20,borderRadius:10,background:sigPr?"var(--R)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:16,height:16,borderRadius:8,background:"#fff",position:"absolute",top:2,left:sigPr?18:2,transition:".2s"}}/></div>
@@ -2296,7 +2355,7 @@ function SignalEditModal({sig,onClose,onSave}){
     <input className="ip" type="datetime-local" value={pubDate} onChange={e=>setPubDate(e.target.value)}/>
     <div style={{fontSize:12,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>{t.closedAt}</div>
     <input className="ip" type="datetime-local" value={closedAt} onChange={e=>setClosedAt(e.target.value)}/>
-    <button className="bt" style={{background:"var(--B)",marginTop:8}} onClick={save}>{t.save}</button>
+    <button className="bt" style={{background:"var(--B)",marginTop:8,opacity:uploading?.5:1}} onClick={save} disabled={uploading}>{uploading?"...":t.save}</button>
   </div></div>);
 }
 
@@ -3060,6 +3119,7 @@ function Sigs({signals,userProfile,goToPlans}){
   const[filter,setFilter]=useState("all");
   const[term,setTerm]=useState("long");
   const[showPremPop,setShowPremPop]=useState(false);
+  const[zoomedImg,setZoomedImg]=useState(null);
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
   const termSigs=useMemo(()=>(signals||[]).filter(s=>(s.signal_term||"short")===term),[signals,term]);
   const filtered=useMemo(()=>{if(filter==="all")return termSigs;return termSigs.filter(s=>s.status===filter)},[termSigs,filter]);
@@ -3112,6 +3172,7 @@ function Sigs({signals,userProfile,goToPlans}){
     </div>
     {filtered.map(s=>{
       const locked=s.is_premium&&!isPremiumUser;
+      const isBuyType=s.type==="BUY"||s.type==="BUY LIMIT";
       return<div key={s.id} className="cd" style={{marginBottom:8,padding:0,position:"relative",overflow:"hidden",cursor:locked?"pointer":"default"}} onClick={()=>{if(locked)setShowPremPop(true)}}>
       {locked&&<div style={{position:"absolute",top:0,left:0,right:0,bottom:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.35)",zIndex:3,borderRadius:14}}>
         <span style={{color:"#fff",display:"flex",alignItems:"center",gap:4}}>{IC.crown}</span>
@@ -3119,13 +3180,19 @@ function Sigs({signals,userProfile,goToPlans}){
         <span style={{fontSize:11,color:"rgba(255,255,255,0.7)",marginTop:4}}>Upgrade to see details</span>
       </div>}
       <div style={{padding:16,filter:locked?"blur(8px)":"none"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,gap:8}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",flex:1,minWidth:0}}>
           <span className="m" style={{fontSize:15,fontWeight:500}}>{s.pair}</span>
-          <span style={{fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:6,background:s.type==="BUY"?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)",color:s.type==="BUY"?"var(--G)":"var(--R)"}}>{s.type}</span>
+          <span style={{fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:6,background:isBuyType?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)",color:isBuyType?"var(--G)":"var(--R)",whiteSpace:"nowrap"}}>{s.type}</span>
         </div>
-        <span style={{fontSize:9,fontWeight:700,padding:"3px 10px",borderRadius:6,background:s.status==="active"?"color-mix(in srgb,var(--B) 10%,transparent)":s.status==="tp_hit"?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)",color:s.status==="active"?"var(--B)":s.status==="tp_hit"?"var(--G)":"var(--R)"}}>{s.status==="active"?t.active:s.status==="tp_hit"?t.tpHit:t.slHit}</span>
+        <span style={{fontSize:9,fontWeight:700,padding:"3px 10px",borderRadius:6,background:s.status==="active"?"color-mix(in srgb,var(--B) 10%,transparent)":s.status==="tp_hit"?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)",color:s.status==="active"?"var(--B)":s.status==="tp_hit"?"var(--G)":"var(--R)",whiteSpace:"nowrap"}}>{s.status==="active"?t.active:s.status==="tp_hit"?t.tpHit:t.slHit}</span>
       </div>
+      {s.image_url&&!locked&&<div onClick={(e)=>{e.stopPropagation();setZoomedImg(s)}} style={{marginBottom:8,borderRadius:8,overflow:"hidden",cursor:"pointer",position:"relative",maxHeight:120,background:"var(--bg)"}}>
+        <img src={s.image_url} style={{width:"100%",maxHeight:120,objectFit:"cover",display:"block"}} alt=""/>
+        <div style={{position:"absolute",top:6,right:6,width:24,height:24,borderRadius:"50%",background:"rgba(0,0,0,0.55)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </div>
+      </div>}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
         <div style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:8,padding:10,textAlign:"center"}}>
           <div style={{fontSize:9,color:"var(--dm)",marginBottom:3,fontWeight:500}}>Entry</div>
@@ -3165,6 +3232,64 @@ function Sigs({signals,userProfile,goToPlans}){
     </div>})}
     {!filtered.length&&<div style={{textAlign:"center",color:"var(--dm)",padding:"60px 0",fontSize:13}}>{t.noSignals}</div>}
     {showPremPop&&<PremiumPopup onClose={()=>setShowPremPop(false)} onGoPlans={goToPlans}/>}
+    {zoomedImg&&<SignalImageModal sig={zoomedImg} onClose={()=>setZoomedImg(null)} t={t}/>}
+  </div>);
+}
+
+/* ─── Signal Image Zoom Modal ─── */
+function SignalImageModal({sig,onClose,t}){
+  const[scale,setScale]=useState(1);
+  const[pos,setPos]=useState({x:0,y:0});
+  const lastDist=useRef(0);
+  const lastPos=useRef({x:0,y:0});
+  const dragging=useRef(false);
+  useEffect(()=>{setThemeColor("#000");return()=>setThemeColor(getThemeColor())},[]);
+  const handleTouchStart=(e)=>{
+    if(e.touches.length===2){lastDist.current=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY)}
+    else if(e.touches.length===1&&scale>1){dragging.current=true;lastPos.current={x:e.touches[0].clientX-pos.x,y:e.touches[0].clientY-pos.y}}
+  };
+  const handleTouchMove=(e)=>{
+    if(e.touches.length===2){e.preventDefault();const dist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);const newScale=Math.min(5,Math.max(1,scale*(dist/lastDist.current)));setScale(newScale);lastDist.current=dist;if(newScale<=1)setPos({x:0,y:0})}
+    else if(e.touches.length===1&&dragging.current&&scale>1){setPos({x:e.touches[0].clientX-lastPos.current.x,y:e.touches[0].clientY-lastPos.current.y})}
+  };
+  const handleTouchEnd=()=>{dragging.current=false;if(scale<=1){setScale(1);setPos({x:0,y:0})}};
+  const isBuyType=sig.type==="BUY"||sig.type==="BUY LIMIT";
+  return(<div className="modal-overlay" style={{background:"rgba(0,0,0,0.92)",alignItems:"stretch"}} onClick={onClose}>
+    <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column",height:"100dvh",position:"relative"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px",background:"rgba(0,0,0,0.6)",backdropFilter:"blur(10px)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+          <span className="m" style={{fontSize:15,fontWeight:600,color:"#fff"}}>{sig.pair}</span>
+          <span style={{fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:6,background:isBuyType?"rgba(40,205,65,.2)":"rgba(255,59,48,.2)",color:isBuyType?"#30d158":"#ff453a"}}>{sig.type}</span>
+          <span style={{fontSize:9,fontWeight:700,padding:"3px 10px",borderRadius:6,background:sig.status==="active"?"rgba(10,132,255,.2)":sig.status==="tp_hit"?"rgba(40,205,65,.2)":"rgba(255,59,48,.2)",color:sig.status==="active"?"#0a84ff":sig.status==="tp_hit"?"#30d158":"#ff453a"}}>{sig.status==="active"?t.active:sig.status==="tp_hit"?t.tpHit:t.slHit}</span>
+        </div>
+        <div onClick={onClose} style={{cursor:"pointer",color:"#fff",width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.12)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700}}>✕</div>
+      </div>
+      <div style={{flex:1,overflow:"hidden",touchAction:"none",display:"flex",alignItems:"center",justifyContent:"center"}} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+        <img src={sig.image_url} style={{maxWidth:"100%",maxHeight:"100%",objectFit:"contain",transform:`scale(${scale}) translate(${pos.x/scale}px,${pos.y/scale}px)`,transition:dragging.current?"none":"transform 0.1s"}} alt=""/>
+      </div>
+      <div style={{padding:"12px 16px",background:"rgba(0,0,0,0.6)",backdropFilter:"blur(10px)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+        <div style={{background:"rgba(255,255,255,0.08)",borderRadius:8,padding:8,textAlign:"center"}}>
+          <div style={{fontSize:9,color:"#aeaeb2",marginBottom:2,fontWeight:500}}>Entry</div>
+          <div className="m" style={{fontSize:12,fontWeight:600,color:"#fff"}}>{sig.entry_price}</div>
+        </div>
+        <div style={{background:"rgba(255,255,255,0.08)",borderRadius:8,padding:8,textAlign:"center"}}>
+          <div style={{fontSize:9,color:"#aeaeb2",marginBottom:2,fontWeight:500}}>SL</div>
+          <div className="m" style={{fontSize:12,fontWeight:600,color:"#ff453a"}}>{sig.stop_loss}</div>
+        </div>
+        <div style={{background:"rgba(255,255,255,0.08)",borderRadius:8,padding:8,textAlign:"center",gridColumn:sig.tp2?"auto":"span 2"}}>
+          <div style={{fontSize:9,color:"#aeaeb2",marginBottom:2,fontWeight:500}}>TP1</div>
+          <div className="m" style={{fontSize:12,fontWeight:600,color:"#30d158"}}>{sig.take_profit}</div>
+        </div>
+        {sig.tp2&&<div style={{background:"rgba(255,255,255,0.08)",borderRadius:8,padding:8,textAlign:"center"}}>
+          <div style={{fontSize:9,color:"#aeaeb2",marginBottom:2,fontWeight:500}}>TP2</div>
+          <div className="m" style={{fontSize:12,fontWeight:600,color:"#30d158"}}>{sig.tp2}</div>
+        </div>}
+        {sig.tp3&&<div style={{background:"rgba(255,255,255,0.08)",borderRadius:8,padding:8,textAlign:"center",gridColumn:"span 2"}}>
+          <div style={{fontSize:9,color:"#aeaeb2",marginBottom:2,fontWeight:500}}>TP3</div>
+          <div className="m" style={{fontSize:12,fontWeight:600,color:"#30d158"}}>{sig.tp3}</div>
+        </div>}
+      </div>
+    </div>
   </div>);
 }
 
@@ -5329,6 +5454,7 @@ function Adm({token,posts,signals,onR}){
   const[ti,setTi]=useState(""),[de,setDe]=useState(""),[ca,setCa]=useState("gold"),[pr,setPr]=useState(false),[fi2,setFi]=useState(null),[pv,setPv]=useState(null);
   const[showOnWeb,setShowOnWeb]=useState(false);
   const[pa,setPa]=useState(""),[st,setSt]=useState("BUY"),[en,setEn]=useState(""),[tp1,setTp1]=useState(""),[tp2,setTp2]=useState(""),[tp3,setTp3]=useState(""),[sl,setSl]=useState(""),[sigPr,setSigPr]=useState(false),[sigTerm,setSigTerm]=useState("short");
+  const[sigImg,setSigImg]=useState(null),[sigImgPv,setSigImgPv]=useState(null);
   const[ld,setLd]=useState(false),[ms,setMs]=useState("");
   const[users,setUsers]=useState([]);
   const[editSig,setEditSig]=useState(null);
@@ -5353,7 +5479,7 @@ function Adm({token,posts,signals,onR}){
   const delMsg=async(id)=>{if(!confirm("Delete?"))return;await api.del("Messages",id,token);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const saveMsg=async(id)=>{if(!editMsgTitle||!editMsgBody)return;await api.patch("Messages",id,{title:editMsgTitle,body:editMsgBody,target:editMsgTarget},token);setEditMsgId(null);setMs("Message updated!");onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}const data={title:ti,description:de,category:ca,image_url:u,is_premium:pr,show_on_website:showOnWeb,likes:0};if(customDate&&postDate)data.created_at=new Date(postDate).toISOString();await api.add("Posts",data,token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);setCustomDate(false);setPostDate("");setShowOnWeb(false);onR();noti.notify("Fxscalproom","New analysis: "+ti);noti.sendPushToAll("Fxscalproom","New analysis: "+ti,token,postPushTarget)}catch(e){setMs(e.message)}setLd(false)};
-  const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{const data={pair:pa,type:st,entry_price:en,take_profit:tp1,tp2:tp2||null,tp3:tp3||null,stop_loss:sl,status:"active",pnl:null,closed_at:null,is_premium:sigPr,signal_term:sigTerm};if(sigCustomDate&&sigDate)data.created_at=new Date(sigDate).toISOString();await api.add("Signals",data,token);setMs(t.signalPub);setPa("");setEn("");setTp1("");setTp2("");setTp3("");setSl("");setSigPr(false);setSigTerm("short");setSigCustomDate(false);setSigDate("");onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st);noti.sendPushToAll("Fxscalproom","New signal: "+pa+" "+st,token,sigPushTarget)}catch(e){setMs(e.message)}setLd(false)};
+  const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{let imgUrl="";if(sigImg){imgUrl=await api.img(sigImg,token);if(!imgUrl){setMs(t.uploadFailed);setLd(false);return}}const data={pair:pa,type:st,entry_price:en,take_profit:tp1,tp2:tp2||null,tp3:tp3||null,stop_loss:sl,status:"active",pnl:null,closed_at:null,is_premium:sigPr,signal_term:sigTerm,image_url:imgUrl||null};if(sigCustomDate&&sigDate)data.created_at=new Date(sigDate).toISOString();await api.add("Signals",data,token);setMs(t.signalPub);setPa("");setEn("");setTp1("");setTp2("");setTp3("");setSl("");setSigPr(false);setSigTerm("short");setSigCustomDate(false);setSigDate("");setSigImg(null);setSigImgPv(null);onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st);noti.sendPushToAll("Fxscalproom","New signal: "+pa+" "+st,token,sigPushTarget)}catch(e){setMs(e.message)}setLd(false)};
   const delP=async id=>{if(!confirm("Delete?"))return;await api.del("Posts",id,token);onR()};
   const delS=async id=>{if(!confirm("Delete?"))return;await api.del("Signals",id,token);onR()};
   const setPremium=async(uid,expiry)=>{const data={membership:"premium"};if(expiry)data.premium_expires_at=new Date(expiry).toISOString();await api.patch("Users",uid,data,token);setMs(t.upgraded);setEditUserExp(null);setExpDate("");api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
@@ -5423,14 +5549,26 @@ function Adm({token,posts,signals,onR}){
       <div style={{display:"flex",gap:6,marginBottom:8}}>{[{k:"short",l:lang==="fa"?"کوتاه مدت":"Short Term"},{k:"long",l:lang==="fa"?"بلند مدت":"Long Term"}].map(tm=>
         <div key={tm.k} onClick={()=>setSigTerm(tm.k)} style={{flex:1,padding:12,borderRadius:10,textAlign:"center",cursor:"pointer",background:sigTerm===tm.k?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${sigTerm===tm.k?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:13,fontWeight:600,color:sigTerm===tm.k?"var(--R)":"var(--mu)"}}>{tm.l}</div>
       )}</div>
-      <div style={{display:"flex",gap:6,marginBottom:8}}>{["BUY","SELL"].map(typ=>
-        <div key={typ} onClick={()=>setSt(typ)} style={{flex:1,padding:12,borderRadius:10,textAlign:"center",cursor:"pointer",background:st===typ?(typ==="BUY"?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)"):"transparent",border:`1px solid ${st===typ?(typ==="BUY"?"color-mix(in srgb,var(--G) 20%,transparent)":"color-mix(in srgb,var(--R) 20%,transparent)"):"var(--brd)"}`,fontSize:14,fontWeight:600,color:st===typ?(typ==="BUY"?"var(--G)":"var(--R)"):"var(--mu)"}}>{typ}</div>
-      )}</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:8}}>{["BUY","SELL","BUY LIMIT","SELL LIMIT"].map(typ=>{
+        const isBuyType=typ==="BUY"||typ==="BUY LIMIT";
+        const isLimit=typ.includes("LIMIT");
+        return<div key={typ} onClick={()=>setSt(typ)} style={{padding:"10px 6px",borderRadius:10,textAlign:"center",cursor:"pointer",background:st===typ?(isBuyType?"color-mix(in srgb,var(--G) 10%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)"):"transparent",border:`1px solid ${st===typ?(isBuyType?"color-mix(in srgb,var(--G) 25%,transparent)":"color-mix(in srgb,var(--R) 25%,transparent)"):"var(--brd)"}`,fontSize:isLimit?11:14,fontWeight:600,color:st===typ?(isBuyType?"var(--G)":"var(--R)"):"var(--mu)"}}>{typ}</div>
+      })}</div>
       <input className="ip" placeholder={t.entry} value={en} onChange={e=>setEn(e.target.value)}/>
       <input className="ip" placeholder="TP1" value={tp1} onChange={e=>setTp1(e.target.value)}/>
       <input className="ip" placeholder="TP2 (optional)" value={tp2} onChange={e=>setTp2(e.target.value)}/>
       <input className="ip" placeholder="TP3 (optional)" value={tp3} onChange={e=>setTp3(e.target.value)}/>
       <input className="ip" placeholder={t.sl} value={sl} onChange={e=>setSl(e.target.value)}/>
+      <div onClick={()=>document.getElementById("sigImgUp").click()} style={{border:"1.5px dashed var(--brd2)",borderRadius:14,padding:sigImgPv?8:20,textAlign:"center",marginBottom:8,background:"var(--bg2)",cursor:"pointer",position:"relative"}}>
+        {sigImgPv?<>
+          <img src={sigImgPv} style={{width:"100%",maxHeight:180,objectFit:"cover",borderRadius:10}} alt=""/>
+          <div onClick={e=>{e.stopPropagation();setSigImg(null);setSigImgPv(null)}} style={{position:"absolute",top:14,right:14,width:28,height:28,borderRadius:"50%",background:"rgba(0,0,0,.65)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,cursor:"pointer",fontWeight:700}}>✕</div>
+        </>:<div style={{fontSize:12,color:"var(--dm)",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          {lang==="fa"?"عکس چارت (اختیاری)":"Chart image (optional)"}
+        </div>}
+      </div>
+      <input id="sigImgUp" type="file" accept="image/*" onChange={e=>{const f=e.target.files[0];if(f){setSigImg(f);setSigImgPv(URL.createObjectURL(f))}}} style={{display:"none"}}/>
       <div onClick={()=>setSigPr(!sigPr)} className="cd" style={{padding:12,marginBottom:8,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <span style={{fontSize:13}}>Premium Signal</span>
         <div style={{width:40,height:22,borderRadius:11,background:sigPr?"var(--R)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:sigPr?20:2,transition:".2s"}}/></div>
@@ -5627,7 +5765,7 @@ function Adm({token,posts,signals,onR}){
         </div>}
       </div>)}
     </>}
-    {editSig&&<SignalEditModal sig={editSig} onClose={()=>setEditSig(null)} onSave={saveSig}/>}
+    {editSig&&<SignalEditModal sig={editSig} onClose={()=>setEditSig(null)} onSave={saveSig} token={token}/>}
     {editPost&&<PostEditModal post={editPost} onClose={()=>setEditPost(null)} onSave={savePost}/>}
   </div>);
 }
