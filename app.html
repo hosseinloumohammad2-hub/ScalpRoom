@@ -70,6 +70,7 @@ a{color:inherit;text-decoration:none}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fi{animation:fi .2s ease}
 @keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ffPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,0.55)}50%{box-shadow:0 0 0 7px rgba(255,59,48,0)}}
 @keyframes pl{0%,100%{opacity:1}50%{opacity:.3}}
 .ld{width:6px;height:6px;border-radius:50%;background:var(--G);animation:pl 2s infinite}
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.3);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
@@ -2595,6 +2596,91 @@ function OnlineCounter({token,isAdmin}){
   return<span className="m" style={{fontSize:11,color:"var(--tx2)",fontWeight:500}}>{count} {AE.users}</span>;
 }
 
+/* ─── Next High-Impact News Event (Forex Factory) ─── */
+const FF_CACHE_KEY="fx_ff_cache_v1";
+const FF_CACHE_HOURS=6;// refresh once every 6 hours
+async function fetchFFCalendar(){
+  try{
+    const cached=localStorage.getItem(FF_CACHE_KEY);
+    if(cached){
+      const{t:tm,d}=JSON.parse(cached);
+      if(Date.now()-tm<FF_CACHE_HOURS*3600*1000&&Array.isArray(d))return d;
+    }
+  }catch(e){}
+  // Try CORS proxies (in order of preference)
+  const url="https://nfs.faireconomy.media/ff_calendar_thisweek.json";
+  const proxies=[
+    "https://api.allorigins.win/raw?url="+encodeURIComponent(url),
+    "https://corsproxy.io/?"+encodeURIComponent(url),
+    "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(url)
+  ];
+  for(const p of proxies){
+    try{
+      const r=await fetch(p,{cache:"no-store"});
+      if(!r.ok)continue;
+      const d=await r.json();
+      if(Array.isArray(d)&&d.length){
+        try{localStorage.setItem(FF_CACHE_KEY,JSON.stringify({t:Date.now(),d}))}catch(e){}
+        return d;
+      }
+    }catch(e){continue}
+  }
+  return[];
+}
+function NextRedEvent(){
+  const{lang}=useLang();
+  const[evt,setEvt]=useState(null);
+  const[loaded,setLoaded]=useState(false);
+  const[tick,setTick]=useState(0);
+  useEffect(()=>{
+    let cancelled=false;
+    (async()=>{
+      const events=await fetchFFCalendar();
+      if(cancelled)return;
+      const now=Date.now();
+      const highs=events.filter(e=>(e.impact||"").toLowerCase()==="high"&&new Date(e.date).getTime()>now).sort((a,b)=>new Date(a.date)-new Date(b.date));
+      setEvt(highs[0]||null);
+      setLoaded(true);
+    })();
+    return()=>{cancelled=true};
+  },[]);
+  useEffect(()=>{
+    if(!evt)return;
+    const i=setInterval(()=>setTick(x=>x+1),1000);
+    return()=>clearInterval(i);
+  },[evt]);
+  if(!loaded||!evt)return null;
+  const diff=Math.max(0,new Date(evt.date).getTime()-Date.now());
+  const d=Math.floor(diff/86400000);
+  const h=Math.floor((diff%86400000)/3600000);
+  const m=Math.floor((diff%3600000)/60000);
+  const s=Math.floor((diff%60000)/1000);
+  const countdown=d>0?`${d}d ${h}h ${m}m`:h>0?`${h}h ${m}m ${s}s`:`${m}m ${s}s`;
+  // Country → flag emoji
+  const flags={USD:"🇺🇸",EUR:"🇪🇺",GBP:"🇬🇧",JPY:"🇯🇵",CAD:"🇨🇦",AUD:"🇦🇺",NZD:"🇳🇿",CHF:"🇨🇭",CNY:"🇨🇳"};
+  const flag=flags[evt.country]||"🌐";
+  const label={fa:"رویداد مهم بعدی",ar:"الحدث المهم القادم",tr:"Sonraki Önemli Olay",ru:"Следующее важное событие",es:"Próximo evento importante"}[lang]||"Next high-impact news";
+  const inStr={fa:"تا",ar:"خلال",tr:"içinde",ru:"через",es:"en"}[lang]||"in";
+  // Pulse when less than 30 min
+  const urgent=diff<30*60*1000;
+  return(
+    <div style={{marginTop:12,padding:"10px 12px",borderRadius:12,background:urgent?"color-mix(in srgb,var(--R) 12%,transparent)":"color-mix(in srgb,var(--R) 6%,transparent)",border:`1px solid color-mix(in srgb,var(--R) ${urgent?"30":"18"}%,transparent)`,display:"flex",alignItems:"center",gap:10}}>
+      <div style={{display:"flex",alignItems:"center",gap:4}}>
+        <span style={{width:8,height:8,borderRadius:"50%",background:"var(--R)",display:"inline-block",animation:urgent?"ffPulse 1.2s ease-in-out infinite":"none",boxShadow:urgent?"0 0 0 0 rgba(255,59,48,0.6)":"none"}}/>
+        <span style={{fontSize:16}}>{flag}</span>
+      </div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:10,color:"var(--mu)",fontWeight:600,textTransform:"uppercase",letterSpacing:".4px",marginBottom:1}}>{label}</div>
+        <div style={{fontSize:12,fontWeight:700,color:"var(--tx)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={evt.title}>{evt.country} · {evt.title}</div>
+      </div>
+      <div className="m" style={{fontSize:11,fontWeight:700,color:"var(--R)",whiteSpace:"nowrap",textAlign:"right"}}>
+        <div style={{fontSize:9,color:"var(--mu)",fontWeight:600,marginBottom:1}}>{inStr}</div>
+        {countdown}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Iran Market Widget (fallback when API fails) ─── */
 function IranMarketWidget(){
   const{lang}=useLang();
@@ -2728,6 +2814,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
         <div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/><OnlineCounter token={token} isAdmin={userProfile?.role==="admin"}/>
         <div onClick={toggle} style={{marginLeft:"auto",cursor:"pointer",color:"var(--mu)",padding:4}}>{dark?IC.sun:IC.moon}</div>
       </div>
+      <NextRedEvent/>
     </div>}
     {/* Story Viewer Fullscreen */}
     {showStoryViewer&&visibleStories.length>0&&<StoryViewer stories={visibleStories} onClose={()=>setShowStoryViewer(false)} onSeen={markStorySeen} userId={userProfile?.id} token={token}/>}
