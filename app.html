@@ -2746,6 +2746,82 @@ function ImageCarousel({urls,style,borderRadius}){
   </div>;
 }
 
+/* ─── AForex Trade Widget (read-only, themed) ─── */
+function TradeWidget({colorTheme}){
+  const ref=useRef(null);
+  const loaded=useRef(false);
+  // AForex widget "color" attribute: white/dark. Map from our theme.
+  const widgetColor=colorTheme==="dark"?"dark":"white";
+  useEffect(()=>{
+    if(!ref.current)return;
+    // Clear previous content (in case of theme switch)
+    ref.current.innerHTML="";
+    loaded.current=false;
+    // Create the placeholder div the widget script targets
+    const placeholder=document.createElement("div");
+    placeholder.setAttribute("data-role","trade_widget");
+    placeholder.setAttribute("size","420");
+    placeholder.setAttribute("width_type","%");
+    placeholder.setAttribute("color",widgetColor);
+    placeholder.setAttribute("partner_code","E4AOYK");
+    placeholder.setAttribute("symbols","BTCUSD,EURUSD,GBPUSD,WTI,XAUUSD");
+    ref.current.appendChild(placeholder);
+    // Load the script (re-add every time so it re-initializes on theme change)
+    const s=document.createElement("script");
+    s.src="https://aforex.s3.amazonaws.com/widgets/aforex_trade_widget_new.js?v="+Date.now();
+    s.async=true;
+    s.onload=()=>{loaded.current=true};
+    ref.current.appendChild(s);
+    // Rebrand: replace "AMarkets" / "amarkets" with "Fxscalproom." via MutationObserver
+    const REPLACEMENTS=[
+      /AMarkets/gi,
+      /amarkets/gi,
+      /A Markets/gi,
+    ];
+    const rebrand=(node)=>{
+      if(node.nodeType===3){
+        let txt=node.nodeValue;
+        let changed=false;
+        for(const re of REPLACEMENTS){
+          if(re.test(txt)){txt=txt.replace(re,"Fxscalproom.");changed=true}
+        }
+        if(changed)node.nodeValue=txt;
+      } else if(node.nodeType===1){
+        // Avoid walking into scripts/styles
+        if(node.tagName==="SCRIPT"||node.tagName==="STYLE")return;
+        // Replace image alt and anchor href text too
+        if(node.tagName==="A"){
+          try{node.removeAttribute("href");node.removeAttribute("target");node.style.cursor="default"}catch(e){}
+        }
+        node.childNodes.forEach(rebrand);
+      }
+    };
+    const observer=new MutationObserver((mutations)=>{
+      for(const m of mutations){
+        m.addedNodes.forEach(n=>rebrand(n));
+        if(m.type==="characterData"&&m.target)rebrand(m.target);
+      }
+      // Also do a full pass periodically
+      if(ref.current)rebrand(ref.current);
+    });
+    observer.observe(ref.current,{childList:true,subtree:true,characterData:true});
+    // Initial rebrand after short delay
+    const iv=setInterval(()=>{if(ref.current)rebrand(ref.current)},500);
+    const stopIv=setTimeout(()=>clearInterval(iv),8000);
+    return()=>{
+      observer.disconnect();
+      clearInterval(iv);
+      clearTimeout(stopIv);
+    };
+  },[widgetColor]);
+  return(<div style={{position:"relative",overflow:"hidden",borderRadius:16,border:"1px solid var(--brd)",background:colorTheme==="dark"?"#0a0a0c":"#ffffff"}}>
+    {/* Widget container */}
+    <div ref={ref} style={{minHeight:440,pointerEvents:"none",userSelect:"none"}}/>
+    {/* Full-cover transparent overlay - prevents ALL interactions */}
+    <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,zIndex:10,cursor:"default",background:"transparent"}}/>
+  </div>);
+}
+
 /* ─── Market News (TradingView headlines + Finnhub summaries) ─── */
 function TVTopStories({colorTheme}){
   const ref=useRef(null);
@@ -2941,6 +3017,8 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
     {(!posts||!posts.length)&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:13}}>{t.noAnalyses}</div>}
     {showPremPop&&<PremiumPopup onClose={()=>setShowPremPop(false)} onGoPlans={goToPlans}/>}
     <PostModal post={sel} onClose={()=>setSel(null)}/>
+    {/* ─── Trade Widget (AForex, rebranded) ─── */}
+    {online!==false&&<div style={{marginBottom:12}}><TradeWidget colorTheme={theme}/></div>}
     {/* ─── Breaking Market News ─── */}
     {online!==false&&<div className="cd" style={{padding:0,overflow:"hidden",marginBottom:12}}><TVTopStories colorTheme={theme}/></div>}
     {/* ─── Disclaimer & Copyright ─── */}
