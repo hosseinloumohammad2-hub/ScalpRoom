@@ -4152,6 +4152,7 @@ function AMarketsIBFlow({userProfile,token,lang,onSuccess}){
   const[amEmail,setAmEmail]=useState("");
   const[loading,setLoading]=useState(false);
   const[existing,setExisting]=useState(null);
+  const[walletCopied,setWalletCopied]=useState(false);
 
   const amLogo=<svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="18" fill="#1a1a1a"/><path d="M50 18L28 72h10l4-11h16l4 11h10L50 18zm-5 35l5-14 5 14h-10z" fill="#F5851F"/><circle cx="68" cy="28" r="4" fill="#F5851F"/></svg>;
   const bannerFA="https://d1ahm5rxndao67.cloudfront.net/pictures/4457/original.png?1714031152";
@@ -4220,14 +4221,40 @@ function AMarketsIBFlow({userProfile,token,lang,onSuccess}){
   const Banner=()=><a href={isFA?bannerLinkFA:bannerLinkEN} target="_blank" rel="noopener" style={{display:"block",borderRadius:14,overflow:"hidden",marginBottom:12}}><img src={isFA?bannerFA:bannerEN} alt="AMarkets" style={{width:"100%",height:"auto",display:"block",borderRadius:14}}/></a>;
 
   if(step==="active"){
+    const copyWallet=()=>{
+      if(!existing?.wallet_number)return;
+      navigator.clipboard?.writeText(existing.wallet_number);
+      setWalletCopied(true);
+      setTimeout(()=>setWalletCopied(false),2000);
+    };
     return(<div className="cd" style={{padding:16,marginBottom:16,borderColor:"color-mix(in srgb,var(--G) 30%,transparent)",background:"color-mix(in srgb,var(--G) 4%,transparent)"}}>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}><div style={{width:8,height:8,borderRadius:"50%",background:"var(--G)",animation:"pl 2s infinite"}}/><span style={{fontSize:14,fontWeight:700,color:"var(--G)"}}>{g("activeTitle")}</span></div>
-      <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.7,marginBottom:12}}>{g("activeDesc")}</div>
-      {existing&&<div style={{padding:12,borderRadius:10,background:"var(--bg)",border:"1px solid var(--brd)",marginBottom:12}}>
-        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>{amLogo}<span style={{fontSize:12,fontWeight:600,color:"var(--G)"}}>{g("connectedVia")}</span></div>
-        <div style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid var(--brd)"}}><span style={{fontSize:11,color:"var(--dm)"}}>Wallet</span><span className="m" style={{fontSize:12,fontWeight:600}}>{existing.wallet_number}</span></div>
-        {existing.amarkets_email&&<div style={{display:"flex",justifyContent:"space-between",padding:"6px 0"}}><span style={{fontSize:11,color:"var(--dm)"}}>Email</span><span style={{fontSize:11,fontWeight:500,color:"var(--tx2)"}}>{existing.amarkets_email}</span></div>}
-      </div>}
+      <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.7,marginBottom:14}}>{g("activeDesc")}</div>
+      {existing&&<>
+        {/* Prominent Wallet Card */}
+        <div onClick={copyWallet} style={{padding:18,borderRadius:14,background:"linear-gradient(135deg,rgba(245,133,31,.08),rgba(255,107,0,.04))",border:"1.5px solid color-mix(in srgb,#F5851F 30%,transparent)",marginBottom:10,cursor:"pointer",position:"relative",overflow:"hidden"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+            {amLogo}
+            <span style={{fontSize:11,fontWeight:600,color:"#F5851F",letterSpacing:.3}}>{g("connectedVia")}</span>
+          </div>
+          <div style={{fontSize:10,fontWeight:600,color:"var(--dm)",marginBottom:4,letterSpacing:.5,textTransform:"uppercase"}}>{isFA?"شماره کیف پول آمارکتس":"AMarkets Wallet Number"}</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+            <div className="m" style={{fontSize:26,fontWeight:700,color:"#F5851F",letterSpacing:1.5,fontFamily:"'DM Mono',monospace"}}>{existing.wallet_number}</div>
+            <div style={{display:"flex",alignItems:"center",gap:4,padding:"6px 10px",borderRadius:8,background:walletCopied?"color-mix(in srgb,var(--G) 15%,transparent)":"color-mix(in srgb,#F5851F 12%,transparent)",fontSize:11,fontWeight:600,color:walletCopied?"var(--G)":"#F5851F",whiteSpace:"nowrap"}}>
+              {walletCopied?<>✓ {isFA?"کپی شد":"Copied"}</>:<>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                {isFA?"کپی":"Copy"}
+              </>}
+            </div>
+          </div>
+          {existing.amarkets_email&&<div style={{marginTop:12,paddingTop:10,borderTop:"1px solid color-mix(in srgb,#F5851F 15%,transparent)",fontSize:11,color:"var(--tx2)"}}>
+            <span style={{color:"var(--dm)",marginRight:6}}>{isFA?"ایمیل:":"Email:"}</span>{existing.amarkets_email}
+          </div>}
+          {existing.created_at&&<div style={{marginTop:6,fontSize:10,color:"var(--dm)"}}>
+            {isFA?"فعال از:":"Active since:"} {new Date(existing.created_at).toLocaleDateString()}
+          </div>}
+        </div>
+      </>}
       <div style={{fontSize:11,fontWeight:600,color:"var(--R)",background:"color-mix(in srgb,var(--R) 8%,transparent)",padding:"10px 12px",borderRadius:10,lineHeight:1.6}}>{g("activeWarn")}</div>
     </div>);
   }
@@ -5761,15 +5788,21 @@ function Adm({token,posts,signals,onR}){
   const[msgPushTarget,setMsgPushTarget]=useState("all");
   const[editUserExp,setEditUserExp]=useState(null);
   const[expDate,setExpDate]=useState("");
+  const[editUserIB,setEditUserIB]=useState(null);
+  const[ibWallet,setIbWallet]=useState("");
+  const[ibEmail,setIbEmail]=useState("");
   const[manageSub,setManageSub]=useState("posts");
   const[manageSearch,setManageSearch]=useState("");
   const[refCounts,setRefCounts]=useState({});
   const[msgTitle,setMsgTitle]=useState(""),[msgBody,setMsgBody]=useState(""),[msgTarget,setMsgTarget]=useState("all"),[allMsgs,setAllMsgs]=useState([]),[msgImgs,setMsgImgs]=useState([]),[msgPvs,setMsgPvs]=useState([]),[msgDayTrade,setMsgDayTrade]=useState(false),[msgDtCats,setMsgDtCats]=useState([]),[editMsgId,setEditMsgId]=useState(null),[editMsgTitle,setEditMsgTitle]=useState(""),[editMsgBody,setEditMsgBody]=useState(""),[editMsgTarget,setEditMsgTarget]=useState("all");  const noti=useNotifications(null,token);
   const toggleMsgDtCat=(k)=>setMsgDtCats(prev=>prev.includes(k)?prev.filter(x=>x!==k):[...prev,k]);
   const[userActivity,setUserActivity]=useState({});
+  const[ibData,setIbData]=useState({});
   useEffect(()=>{if(tb==="users"){const loadUsers=()=>{api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};loadUsers();const ui=setInterval(loadUsers,10000);fetch(`${SB}/rest/v1/Referrals?select=referrer_id,referred_id`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const counts={};d.forEach(r=>{counts[r.referrer_id]=(counts[r.referrer_id]||0)+1});setRefCounts(counts)}}).catch(()=>{});
   // Load last activity per user
   fetch(`${SB}/rest/v1/ActivityLog?order=login_date.desc&select=user_id,login_date,created_at`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const act={};d.forEach(a=>{if(!act[a.user_id])act[a.user_id]=a.created_at||a.login_date});setUserActivity(act)}}).catch(()=>{});
+  // Load latest approved IB request per user (for wallet display)
+  fetch(`${SB}/rest/v1/IBRequests?status=eq.approved&order=created_at.desc&select=user_id,wallet_number,amarkets_email,created_at`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const m={};d.forEach(r=>{if(!m[r.user_id])m[r.user_id]=r});setIbData(m)}}).catch(()=>{});
   return()=>clearInterval(ui)}},[tb,token]);
   useEffect(()=>{if(tb==="msg"){api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}},[tb,token]);
   const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrls=[];for(const img of msgImgs){const u=await api.img(img,token);if(u)imgUrls.push(u);else{setMs(t.uploadFailed);setLd(false);return}}const imgUrl=imgUrls.join(",");await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null},token);if(msgDtCats.length>0){await api.add("Posts",{title:msgTitle,description:msgBody,category:"daytrade",dt_category:msgDtCats.join(","),image_url:imgUrl||"",is_premium:msgTarget==="premium",likes:0},token)}setMs("Message sent!");noti.sendPushToAll(msgTitle,msgBody,token,msgPushTarget);setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImgs([]);setMsgPvs([]);setMsgDayTrade(false);setMsgDtCats([]);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
@@ -5780,8 +5813,32 @@ function Adm({token,posts,signals,onR}){
   const delP=async id=>{if(!confirm("Delete?"))return;await api.del("Posts",id,token);onR()};
   const delS=async id=>{if(!confirm("Delete?"))return;await api.del("Signals",id,token);onR()};
   const setPremium=async(uid,expiry)=>{const data={membership:"premium"};if(expiry)data.premium_expires_at=new Date(expiry).toISOString();await api.patch("Users",uid,data,token);setMs(t.upgraded);setEditUserExp(null);setExpDate("");api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
-  const setFree=async(uid)=>{await api.patch("Users",uid,{membership:"free",premium_expires_at:null},token);setMs(t.downgraded);api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
+  const setFree=async(uid)=>{await api.patch("Users",uid,{membership:"free",premium_expires_at:null,ib_active:false},token);setMs(t.downgraded);api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
   const updateExpiry=async(uid)=>{if(!expDate)return;await api.patch("Users",uid,{premium_expires_at:new Date(expDate).toISOString()},token);setMs("Expiry updated!");setEditUserExp(null);setExpDate("");api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
+  const setIB=async(uid)=>{
+    if(!ibWallet.trim()){setMs("Wallet number required");return}
+    try{
+      // Create/upsert an approved IBRequests record (manual admin entry)
+      await fetch(`${SB}/rest/v1/IBRequests`,{method:"POST",headers:H(token),body:JSON.stringify({user_id:uid,wallet_number:ibWallet.trim(),ib_code:"E4A0YK",amarkets_email:ibEmail.trim()||null,status:"approved"})});
+      // Set user premium + IB active, clear expires_at (IB is ongoing)
+      await api.patch("Users",uid,{membership:"premium",ib_active:true,premium_expires_at:null},token);
+      setMs("IB activated!");setEditUserIB(null);setIbWallet("");setIbEmail("");
+      api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)});
+      // Refresh IB data map
+      fetch(`${SB}/rest/v1/IBRequests?status=eq.approved&order=created_at.desc&select=user_id,wallet_number,amarkets_email,created_at`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const m={};d.forEach(r=>{if(!m[r.user_id])m[r.user_id]=r});setIbData(m)}}).catch(()=>{});
+    }catch(e){setMs("Error: "+e.message)}
+  };
+  const revokeIB=async(uid)=>{
+    if(!confirm("Revoke IB and downgrade to free?"))return;
+    try{
+      // Mark any approved IB request as revoked
+      await fetch(`${SB}/rest/v1/IBRequests?user_id=eq.${uid}&status=eq.approved`,{method:"PATCH",headers:H(token),body:JSON.stringify({status:"revoked"})});
+      await api.patch("Users",uid,{membership:"free",ib_active:false,premium_expires_at:null},token);
+      setMs("IB revoked");
+      api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)});
+      setIbData(prev=>{const n={...prev};delete n[uid];return n});
+    }catch(e){setMs("Error: "+e.message)}
+  };
   const saveSig=async(id,data)=>{await api.patch("Signals",id,data,token);onR();setMs("Signal updated!")};
   const savePost=async(id,data)=>{await api.patch("Posts",id,data,token);onR();setMs("Post updated!")};
   return(<div className="fi">
@@ -5989,8 +6046,9 @@ function Adm({token,posts,signals,onR}){
             <div style={{position:"absolute",bottom:-1,right:-1,width:10,height:10,borderRadius:"50%",background:isOnline?"var(--G)":"var(--dm)",border:"2px solid var(--card)"}}/>
           </div>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
               <span style={{fontSize:12,fontWeight:600}}>{u.full_name||"No name"}</span>
+              {u.ib_active&&<span style={{fontSize:8,fontWeight:700,padding:"2px 6px",borderRadius:4,background:"linear-gradient(135deg,#F5851F,#FF6B00)",color:"#fff",letterSpacing:.3}}>IB</span>}
               <span style={{fontSize:9,fontWeight:600,color:isOnline?"var(--G)":"var(--dm)"}}>{lastSeenText}</span>
             </div>
             <div style={{fontSize:10,color:"var(--dm)"}}>{u.email}</div>
@@ -5999,14 +6057,27 @@ function Adm({token,posts,signals,onR}){
               {(refCounts[u.id]||0)>=10&&<span style={{color:"var(--G)"}}>✅ READY</span>}
               {u.invite_code&&<span style={{color:"var(--dm)",fontSize:8,background:"var(--bg)",padding:"1px 5px",borderRadius:4}}>{u.invite_code}</span>}
             </div>
+            {u.ib_active&&ibData[u.id]&&<div style={{fontSize:9,color:"#F5851F",marginTop:2,fontWeight:600,display:"flex",alignItems:"center",gap:4}}>
+              <span>💼 Wallet: {ibData[u.id].wallet_number}</span>
+            </div>}
             {u.membership==="premium"&&exp&&<div style={{fontSize:9,color:dLeft<=7?"var(--R)":"var(--G)",marginTop:2,fontWeight:600}}>{dLeft} days left · {exp.toLocaleDateString()}</div>}
+            {u.ib_active&&!exp&&<div style={{fontSize:9,color:"var(--G)",marginTop:2,fontWeight:600}}>∞ IB Active (ongoing)</div>}
           </div>
-          {u.membership==="premium"?
+          {u.ib_active?
+            <div style={{display:"flex",gap:4}}>
+              <div onClick={()=>{setEditUserIB(editUserIB===u.id?null:u.id);setIbWallet(ibData[u.id]?.wallet_number||"");setIbEmail(ibData[u.id]?.amarkets_email||"")}} style={{cursor:"pointer",fontSize:9,fontWeight:600,color:"#F5851F",background:"color-mix(in srgb,#F5851F 12%,transparent)",padding:"4px 8px",borderRadius:6}}>💼 IB</div>
+              <div onClick={()=>revokeIB(u.id)} style={{cursor:"pointer",fontSize:9,fontWeight:600,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"4px 8px",borderRadius:6}}>✕</div>
+            </div>:
+            u.membership==="premium"?
             <div style={{display:"flex",gap:4}}>
               <div onClick={()=>{setEditUserExp(editUserExp===u.id?null:u.id);setExpDate(u.premium_expires_at?u.premium_expires_at.slice(0,16):"")}} style={{cursor:"pointer",fontSize:9,fontWeight:600,color:"var(--B)",background:"color-mix(in srgb,var(--B) 10%,transparent)",padding:"4px 8px",borderRadius:6}}>{AE.clock}</div>
+              <div onClick={()=>{setEditUserIB(editUserIB===u.id?null:u.id);setIbWallet("");setIbEmail("")}} style={{cursor:"pointer",fontSize:9,fontWeight:600,color:"#F5851F",background:"color-mix(in srgb,#F5851F 12%,transparent)",padding:"4px 8px",borderRadius:6}}>+IB</div>
               <div onClick={()=>setFree(u.id)} style={{cursor:"pointer",fontSize:9,fontWeight:600,color:"var(--G)",background:"color-mix(in srgb,var(--G) 10%,transparent)",padding:"4px 8px",borderRadius:6,display:"flex",alignItems:"center",gap:3}}>{IC.ck} PRO</div>
             </div>:
-            <div onClick={()=>{setEditUserExp(u.id);setExpDate("")}} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--mu)",background:"var(--bg)",padding:"4px 10px",borderRadius:6,border:"1px solid var(--brd)"}}>{t.setpro}</div>
+            <div style={{display:"flex",gap:4}}>
+              <div onClick={()=>{setEditUserExp(u.id);setExpDate("")}} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--mu)",background:"var(--bg)",padding:"4px 8px",borderRadius:6,border:"1px solid var(--brd)"}}>{t.setpro}</div>
+              <div onClick={()=>{setEditUserIB(u.id);setIbWallet("");setIbEmail("")}} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"#F5851F",background:"color-mix(in srgb,#F5851F 10%,transparent)",padding:"4px 8px",borderRadius:6,border:"1px solid color-mix(in srgb,#F5851F 20%,transparent)"}}>+IB</div>
+            </div>
           }
         </div>
         {editUserExp===u.id&&<div style={{marginTop:10,padding:10,background:"var(--bg)",borderRadius:10,border:"1px solid var(--brd)"}}>
@@ -6018,6 +6089,22 @@ function Adm({token,posts,signals,onR}){
           <button className="bt" style={{background:"var(--B)",marginTop:8,padding:10,fontSize:12}} onClick={()=>{if(u.membership!=="premium"){setPremium(u.id,expDate)}else{updateExpiry(u.id)}}}>
             {u.membership==="premium"?"Update Expiry":"Set PRO + Expiry"}
           </button>
+        </div>}
+        {editUserIB===u.id&&<div style={{marginTop:10,padding:12,background:"var(--bg)",borderRadius:10,border:"1px solid color-mix(in srgb,#F5851F 25%,transparent)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}>
+            <span style={{fontSize:14}}>💼</span>
+            <div style={{fontSize:12,fontWeight:700,color:"#F5851F"}}>{u.ib_active?"Update IB Details":"Activate IB (AMarkets)"}</div>
+          </div>
+          <div style={{fontSize:10,fontWeight:600,marginBottom:4,color:"var(--tx2)"}}>AMarkets Wallet Number *</div>
+          <input className="ip" placeholder="e.g. 1443946" value={ibWallet} onChange={e=>setIbWallet(e.target.value)} style={{marginBottom:6,fontWeight:600}}/>
+          <div style={{fontSize:10,fontWeight:600,marginBottom:4,color:"var(--tx2)"}}>AMarkets Email (optional)</div>
+          <input className="ip" type="email" placeholder="user@example.com" value={ibEmail} onChange={e=>setIbEmail(e.target.value)} style={{marginBottom:8}}/>
+          <div style={{display:"flex",gap:6}}>
+            <button className="bt" style={{background:"linear-gradient(135deg,#F5851F,#FF6B00)",padding:10,fontSize:12,flex:1,opacity:!ibWallet.trim()?.5:1}} onClick={()=>setIB(u.id)} disabled={!ibWallet.trim()}>
+              {u.ib_active?"Update IB":"Activate IB + Premium"}
+            </button>
+            <button className="bt" style={{background:"var(--bg2)",color:"var(--mu)",padding:10,fontSize:12,width:"auto",padding:"10px 14px",border:"1px solid var(--brd)"}} onClick={()=>{setEditUserIB(null);setIbWallet("");setIbEmail("")}}>Cancel</button>
+          </div>
         </div>}
       </div>})}
     </>}
