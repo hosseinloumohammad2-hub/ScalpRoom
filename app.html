@@ -1846,6 +1846,7 @@ function AdminRewards({token}){
 async function generateShareCard(type,data){
   const W=1080;
   const PAD=72;
+  const SCALE=2; // High-DPI rendering for crisp images when shared/downloaded
   const c=document.createElement("canvas");
   const ctx=c.getContext("2d");
   const isDark=document.documentElement.getAttribute("data-theme")==="dark";
@@ -1917,7 +1918,21 @@ async function generateShareCard(type,data){
   }
 
   const H=Math.max(800,calcH);
-  c.width=W;c.height=H;
+  c.width=W*SCALE;c.height=H*SCALE;
+  ctx.scale(SCALE,SCALE);
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality="high";
+  // Helper: resize canvas to new logical height, preserving existing pixels and scale
+  const resizeCanvas=(newLogicalH)=>{
+    const oldPhysW=c.width,oldPhysH=c.height;
+    const tempData=ctx.getImageData(0,0,oldPhysW,oldPhysH);
+    c.height=newLogicalH*SCALE;
+    ctx.scale(SCALE,SCALE); // scale is reset on size change
+    ctx.imageSmoothingEnabled=true;
+    ctx.imageSmoothingQuality="high";
+    ctx.fillStyle=TH.bg;ctx.fillRect(0,0,W,newLogicalH);
+    ctx.putImageData(tempData,0,0);
+  };
 
   // ─── Background ───
   ctx.fillStyle=TH.bg;ctx.fillRect(0,0,W,H);
@@ -2066,12 +2081,8 @@ async function generateShareCard(type,data){
           const dateH=28;
           const totalBlockH=labelH+rowH+dateH;
           // Resize canvas if needed
-          if(Y+totalBlockH+140>c.height){
-            const newH=Y+totalBlockH+140;
-            const tempData=ctx.getImageData(0,0,W,c.height);
-            c.height=newH;
-            ctx.fillStyle=TH.bg;ctx.fillRect(0,0,W,newH);
-            ctx.putImageData(tempData,0,0);
+          if(Y+totalBlockH+140>c.height/SCALE){
+            resizeCanvas(Y+totalBlockH+140);
           }
           // BEFORE label
           ctx.textAlign="center";
@@ -2114,12 +2125,8 @@ async function generateShareCard(type,data){
           await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=beforeUrl});
           const imgW=innerW;
           const imgH=Math.round((img.height/img.width)*imgW);
-          if(Y+imgH+140>c.height){
-            const newH=Y+imgH+140;
-            const tempData=ctx.getImageData(0,0,W,c.height);
-            c.height=newH;
-            ctx.fillStyle=TH.bg;ctx.fillRect(0,0,W,newH);
-            ctx.putImageData(tempData,0,0);
+          if(Y+imgH+140>c.height/SCALE){
+            resizeCanvas(Y+imgH+140);
           }
           ctx.shadowColor=isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)";ctx.shadowBlur=16;ctx.shadowOffsetY=3;
           rr(PAD,Y,imgW,imgH,14);ctx.fillStyle=TH.boxBg;ctx.fill();ctx.shadowColor="transparent";
@@ -2151,7 +2158,7 @@ async function generateShareCard(type,data){
           await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=imgUrls[0]});
           const imgW=W-PAD*2;
           const imgH=Math.round((img.height/img.width)*imgW);
-          if(Y+imgH+140>c.height){const newH=Y+imgH+140;const tempData=ctx.getImageData(0,0,W,c.height);c.height=newH;ctx.fillStyle=TH.bg;ctx.fillRect(0,0,W,newH);ctx.putImageData(tempData,0,0)}
+          if(Y+imgH+140>c.height/SCALE){resizeCanvas(Y+imgH+140)}
           ctx.shadowColor=isDark?"rgba(0,0,0,.3)":"rgba(0,0,0,.06)";ctx.shadowBlur=16;ctx.shadowOffsetY=3;
           rr(PAD,Y,imgW,imgH,14);ctx.fillStyle=TH.boxBg;ctx.fill();ctx.shadowColor="transparent";
           ctx.save();rr(PAD,Y,imgW,imgH,14);ctx.clip();ctx.drawImage(img,PAD,Y,imgW,imgH);ctx.restore();
@@ -2172,7 +2179,7 @@ async function generateShareCard(type,data){
           const h1=img1?Math.round((img1.height/img1.width)*colW):0;
           const h2=img2?Math.round((img2.height/img2.width)*colW):0;
           const rowH=Math.max(h1,h2);
-          if(Y+rowH+140>c.height){const newH=Y+rowH+140;const tempData=ctx.getImageData(0,0,W,c.height);c.height=newH;ctx.fillStyle=TH.bg;ctx.fillRect(0,0,W,newH);ctx.putImageData(tempData,0,0)}
+          if(Y+rowH+140>c.height/SCALE){resizeCanvas(Y+rowH+140)}
           // Left image
           if(img1){
             const x1=PAD,y1=Y,iw=colW,ih=h1;
@@ -2204,15 +2211,11 @@ async function generateShareCard(type,data){
 
   // ─── Watermark footer ───
   const footerH=100;
-  if(Y+footerH>c.height){
-    const newH=Y+footerH;
-    const tempData=ctx.getImageData(0,0,W,c.height);
-    c.height=newH;
-    ctx.fillStyle=TH.bg;ctx.fillRect(0,0,W,newH);
-    ctx.putImageData(tempData,0,0);
+  if(Y+footerH>c.height/SCALE){
+    resizeCanvas(Y+footerH);
   }
 
-  const wmY=c.height-55;
+  const wmY=c.height/SCALE-55;
   ctx.strokeStyle=TH.brdLight;ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(PAD,wmY-30);ctx.lineTo(W-PAD,wmY-30);ctx.stroke();
 
