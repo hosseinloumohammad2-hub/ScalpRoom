@@ -5791,6 +5791,7 @@ function Adm({token,posts,signals,onR}){
   const[editUserIB,setEditUserIB]=useState(null);
   const[ibWallet,setIbWallet]=useState("");
   const[ibEmail,setIbEmail]=useState("");
+  const[userSearch,setUserSearch]=useState("");
   const[manageSub,setManageSub]=useState("posts");
   const[manageSearch,setManageSearch]=useState("");
   const[refCounts,setRefCounts]=useState({});
@@ -6021,9 +6022,48 @@ function Adm({token,posts,signals,onR}){
       </>}
     </>;
     })()}
-    {tb==="users"&&<>
-      <div style={{fontSize:13,fontWeight:600,marginBottom:10}}>{t.users} ({users.length})</div>
-      {users.map(u=>{
+    {tb==="users"&&(()=>{
+      // Compute lastSeen timestamp for each user (for sorting)
+      const nowMs=Date.now();
+      const getLastMs=(u)=>{
+        const ls=u.last_seen?new Date(u.last_seen):userActivity[u.id]?new Date(userActivity[u.id]):null;
+        return ls?ls.getTime():0;
+      };
+      // Filter by search query (name, email, invite_code, wallet)
+      const uq=userSearch.trim().toLowerCase();
+      const filteredUsers=(users||[]).filter(u=>{
+        if(!uq)return true;
+        return (u.full_name||"").toLowerCase().includes(uq)
+          ||(u.email||"").toLowerCase().includes(uq)
+          ||(u.invite_code||"").toLowerCase().includes(uq)
+          ||(ibData[u.id]?.wallet_number||"").toLowerCase().includes(uq);
+      });
+      // Sort: online first (last seen < 5min), then by most recent activity, users with no activity last
+      const sortedUsers=[...filteredUsers].sort((a,b)=>{
+        const la=getLastMs(a),lb=getLastMs(b);
+        const aOnline=la&&(nowMs-la)<5*60*1000;
+        const bOnline=lb&&(nowMs-lb)<5*60*1000;
+        if(aOnline&&!bOnline)return -1;
+        if(!aOnline&&bOnline)return 1;
+        // Both online or both offline: most recent first
+        return lb-la;
+      });
+      const onlineCount=sortedUsers.filter(u=>{const l=getLastMs(u);return l&&(nowMs-l)<5*60*1000}).length;
+      return<>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,gap:8}}>
+        <div style={{fontSize:13,fontWeight:600}}>{t.users} ({filteredUsers.length}{uq?`/${users.length}`:""})</div>
+        {onlineCount>0&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,fontWeight:600,color:"var(--G)"}}>
+          <div style={{width:7,height:7,borderRadius:"50%",background:"var(--G)",animation:"pl 2s infinite"}}/>
+          {onlineCount} {lang==="fa"?"آنلاین":"online"}
+        </div>}
+      </div>
+      {/* Search */}
+      <div style={{position:"relative",marginBottom:10}}>
+        <input className="ip" placeholder={lang==="fa"?"جستجوی نام، ایمیل یا ولت...":"Search name, email or wallet..."} value={userSearch} onChange={e=>setUserSearch(e.target.value)} style={{paddingLeft:34,marginBottom:0}}/>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        {userSearch&&<div onClick={()=>setUserSearch("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",cursor:"pointer",color:"var(--mu)",width:22,height:22,borderRadius:"50%",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700}}>✕</div>}
+      </div>
+      {sortedUsers.map(u=>{
         const exp=u.premium_expires_at?new Date(u.premium_expires_at):null;
         const dLeft=exp?Math.max(0,Math.ceil((exp-new Date())/(1000*60*60*24))):0;
         const ls=u.last_seen?new Date(u.last_seen):userActivity[u.id]?new Date(userActivity[u.id]):null;
@@ -6107,7 +6147,7 @@ function Adm({token,posts,signals,onR}){
           </div>
         </div>}
       </div>})}
-    </>}
+    </>})()}
     {tb==="rewards"&&<AdminRewards token={token}/>}
     {tb==="support"&&<AdminSupportChat token={token}/>}
     {tb==="story"&&<AdminStoryManager token={token}/>}
