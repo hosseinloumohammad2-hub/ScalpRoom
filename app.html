@@ -1226,12 +1226,118 @@ function useNotifications(userId,token){
     }catch(e){console.error('sendPushToAll error:',e)}
   };
 
-  return{enabled,enable,notify,sendPushToAll};
+  // Send push to a specific user's subscriptions (e.g. support chat notifications)
+  const sendPushToUser=async(targetUserId,title,body,tk)=>{
+    if(!targetUserId||!tk)return;
+    try{
+      const r=await fetch(`${SB}/rest/v1/push_subscriptions?user_id=eq.${targetUserId}&select=sub_json`,{headers:H(tk)});
+      const subs=await r.json();
+      if(!Array.isArray(subs)||!subs.length)return;
+      const payload=subs.map(s=>{try{return JSON.parse(s.sub_json)}catch(e){return null}}).filter(Boolean);
+      if(!payload.length)return;
+      await fetch(`${SB}/functions/v1/send-push`,{method:'POST',headers:{Authorization:`Bearer ${tk}`,'Content-Type':'application/json',apikey:SK},body:JSON.stringify({title:title||"Fxscalproom",body:body||"",subscriptions:payload})});
+    }catch(e){console.error('sendPushToUser error:',e)}
+  };
+
+  // Send push to all admins (user → admin notification, e.g. new support message)
+  const sendPushToAdmins=async(title,body,tk)=>{
+    if(!tk)return;
+    try{
+      const ar=await fetch(`${SB}/rest/v1/Users?role=eq.admin&select=id`,{headers:H(tk)});
+      const admins=await ar.json();
+      if(!Array.isArray(admins)||!admins.length)return;
+      const adminIds=admins.map(a=>a.id);
+      const r=await fetch(`${SB}/rest/v1/push_subscriptions?user_id=in.(${adminIds.join(',')})&select=sub_json`,{headers:H(tk)});
+      const subs=await r.json();
+      if(!Array.isArray(subs)||!subs.length)return;
+      const payload=subs.map(s=>{try{return JSON.parse(s.sub_json)}catch(e){return null}}).filter(Boolean);
+      if(!payload.length)return;
+      await fetch(`${SB}/functions/v1/send-push`,{method:'POST',headers:{Authorization:`Bearer ${tk}`,'Content-Type':'application/json',apikey:SK},body:JSON.stringify({title:title||"Fxscalproom",body:body||"",subscriptions:payload})});
+    }catch(e){console.error('sendPushToAdmins error:',e)}
+  };
+
+  return{enabled,enable,notify,sendPushToAll,sendPushToUser,sendPushToAdmins};
 }
 
 /* ─── Theme Color Helper (status bar color for modals) ─── */
 function setThemeColor(color){document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.remove());const meta=document.createElement("meta");meta.name="theme-color";meta.content=color;document.head.appendChild(meta)}
 function getThemeColor(){try{return localStorage.getItem("fxtheme")==="dark"?"#050507":"#f5f5f7"}catch(e){return"#f5f5f7"}}
+
+/* ─── Active Session Hook (admin multi-device tracking) ─── */
+function useActiveSession(userId,token,isAdmin){
+  const[deviceId]=useState(()=>{
+    try{
+      let id=localStorage.getItem("fx_device_id");
+      if(!id){
+        id=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36));
+        localStorage.setItem("fx_device_id",id);
+      }
+      return id;
+    }catch(e){return Math.random().toString(36).slice(2)}
+  });
+  const[isPrimary,setIsPrimary]=useState(false);
+  // Detect device label from UA
+  const deviceLabel=useMemo(()=>{
+    const ua=navigator.userAgent||"";
+    let os="Unknown";
+    if(/iPhone|iPad|iPod/.test(ua))os="iOS";
+    else if(/Android/.test(ua))os="Android";
+    else if(/Windows/.test(ua))os="Windows";
+    else if(/Mac/.test(ua))os="Mac";
+    else if(/Linux/.test(ua))os="Linux";
+    let br="Browser";
+    if(/Edg\//.test(ua))br="Edge";
+    else if(/Chrome\//.test(ua))br="Chrome";
+    else if(/Firefox\//.test(ua))br="Firefox";
+    else if(/Safari\//.test(ua))br="Safari";
+    return `${br} · ${os}`;
+  },[]);
+  // Register session + keepalive
+  useEffect(()=>{
+    if(!isAdmin||!userId||!token)return;
+    let alive=true;
+    const register=async()=>{
+      try{
+        // Upsert this device session
+        const r=await fetch(`${SB}/rest/v1/active_sessions?on_conflict=user_id,device_id`,{
+          method:"POST",
+          headers:{...H(token),Prefer:"resolution=merge-duplicates,return=representation"},
+          body:JSON.stringify({user_id:userId,device_id:deviceId,device_label:deviceLabel,user_agent:navigator.userAgent||"",last_ping:new Date().toISOString()})
+        });
+        const d=await r.json();
+        // Check if any session is primary for this user
+        const check=await fetch(`${SB}/rest/v1/active_sessions?user_id=eq.${userId}&is_primary=eq.true&select=device_id`,{headers:H(token)});
+        const primData=await check.json();
+        if(!alive)return;
+        if(Array.isArray(primData)&&primData.length){
+          setIsPrimary(primData[0].device_id===deviceId);
+        } else {
+          // No primary exists → make this device primary automatically
+          await fetch(`${SB}/rest/v1/active_sessions?user_id=eq.${userId}&device_id=eq.${deviceId}`,{
+            method:"PATCH",headers:H(token),body:JSON.stringify({is_primary:true})
+          });
+          setIsPrimary(true);
+        }
+      }catch(e){console.error("Session register error:",e)}
+    };
+    register();
+    // Ping every 30 seconds
+    const pingInterval=setInterval(async()=>{
+      try{
+        await fetch(`${SB}/rest/v1/active_sessions?user_id=eq.${userId}&device_id=eq.${deviceId}`,{
+          method:"PATCH",headers:H(token),
+          body:JSON.stringify({last_ping:new Date().toISOString()})
+        });
+        // Refresh primary status
+        const check=await fetch(`${SB}/rest/v1/active_sessions?user_id=eq.${userId}&device_id=eq.${deviceId}&select=is_primary`,{headers:H(token)});
+        const d=await check.json();
+        if(alive&&Array.isArray(d)&&d.length)setIsPrimary(!!d[0].is_primary);
+      }catch(e){}
+    },30000);
+    return()=>{alive=false;clearInterval(pingInterval)};
+  },[userId,token,isAdmin,deviceId,deviceLabel]);
+  return{deviceId,deviceLabel,isPrimary};
+}
 
 /* ─── Toast ─── */
 function Toast({msg,onDone}){
@@ -2744,11 +2850,14 @@ async function fetchFFCalendar(){
   }catch(e){}
   return[];
 }
-function NextRedEvent(){
+function NextRedEvent({isAdmin,token,isPrimary}){
   const{lang}=useLang();
   const[evt,setEvt]=useState(null);
   const[loaded,setLoaded]=useState(false);
   const[tick,setTick]=useState(0);
+  const noti=useNotifications(null,token);
+  // Track events we've already sent a 5-min warning for (per-device, per-session)
+  const notifiedRef=useRef(new Set());
   useEffect(()=>{
     let cancelled=false;
     (async()=>{
@@ -2766,6 +2875,30 @@ function NextRedEvent(){
     const i=setInterval(()=>setTick(x=>x+1),1000);
     return()=>clearInterval(i);
   },[evt]);
+  // 5-min push notification (admin + PRIMARY device only, broadcasted to all users)
+  // Uses localStorage to persist "already notified" across reloads
+  useEffect(()=>{
+    if(!evt||!isAdmin||!isPrimary||!token)return;
+    const eventKey="fx_news_notif_"+(evt.date||"")+"_"+(evt.title||"").replace(/\s+/g,"_").slice(0,40);
+    // Check localStorage to avoid double-send after reload
+    let alreadySent=false;
+    try{alreadySent=localStorage.getItem(eventKey)==="1"}catch(e){}
+    if(alreadySent)return;
+    const diff=new Date(evt.date).getTime()-Date.now();
+    // Only send when we're in the 5-minute window (between 4.5 and 5.0 minutes before)
+    // This gives a 30-second window to account for polling interval
+    if(diff>4.5*60*1000&&diff<=5*60*1000&&!notifiedRef.current.has(eventKey)){
+      notifiedRef.current.add(eventKey);
+      try{localStorage.setItem(eventKey,"1")}catch(e){}
+      // Translated messages
+      const titleTxt={fa:"⚡ خبر مهم تا ۵ دقیقه دیگه",en:"⚡ High-impact news in 5 min",ar:"⚡ خبر مهم خلال ٥ دقائق",tr:"⚡ 5 dakika içinde önemli haber",ru:"⚡ Важные новости через 5 мин",es:"⚡ Noticia importante en 5 min"}[lang]||"⚡ High-impact news in 5 min";
+      const bodyTxt=`${evt.country} · ${evt.title}`;
+      // Send to everyone
+      noti.sendPushToAll(titleTxt,bodyTxt,token,"all");
+      // Also fire local notification for admin
+      try{noti.notify(titleTxt,bodyTxt)}catch(e){}
+    }
+  },[tick,evt,isAdmin,token,lang,noti]);
   if(!loaded||!evt)return null;
   const diff=Math.max(0,new Date(evt.date).getTime()-Date.now());
   const d=Math.floor(diff/86400000);
@@ -2889,6 +3022,8 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
   const[lastMsgRead,setLastMsgRead]=useState(()=>{try{return parseInt(localStorage.getItem("fx_mc")||"0")}catch(e){return 0}});
   const theme=dark?"dark":"light";
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
+  const isAdminHome=userProfile?.role==="admin";
+  const {isPrimary:sessionIsPrimary}=useActiveSession(userProfile?.id,token,isAdminHome);
   const visibleStories=useMemo(()=>{
     if(!stories||!stories.length)return[];
     return stories.filter(s=>s.target==="all"||(s.target==="premium"&&isPremiumUser));
@@ -2931,7 +3066,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
         <div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/><OnlineCounter token={token} isAdmin={userProfile?.role==="admin"}/>
         <div onClick={toggle} style={{marginLeft:"auto",cursor:"pointer",color:"var(--mu)",padding:4}}>{dark?IC.sun:IC.moon}</div>
       </div>
-      <NextRedEvent/>
+      <NextRedEvent isAdmin={userProfile?.role==="admin"} isPrimary={sessionIsPrimary} token={token}/>
     </div>}
     {/* Story Viewer Fullscreen */}
     {showStoryViewer&&visibleStories.length>0&&<StoryViewer stories={visibleStories} onClose={()=>setShowStoryViewer(false)} onSeen={markStorySeen} userId={userProfile?.id} token={token}/>}
@@ -5799,6 +5934,46 @@ function Adm({token,posts,signals,onR}){
   const toggleMsgDtCat=(k)=>setMsgDtCats(prev=>prev.includes(k)?prev.filter(x=>x!==k):[...prev,k]);
   const[userActivity,setUserActivity]=useState({});
   const[ibData,setIbData]=useState({});
+  const[supportUnread,setSupportUnread]=useState(0);
+  const lastSupportIdsRef=useRef(new Set());
+  const supportInitRef=useRef(false);
+  const admNoti=useNotifications(null,token);
+  // Poll support chats every 15s to detect unread messages from users
+  useEffect(()=>{
+    if(!token)return;
+    const pollSupport=async()=>{
+      try{
+        const r=await fetch(`${SB}/rest/v1/SupportChats?select=id,user_id,message,sender,created_at&order=created_at.desc&limit=200`,{headers:H(token)});
+        const d=await r.json();
+        if(!Array.isArray(d))return;
+        // Count unread: any user-sent message that has no admin reply after it
+        const byUser={};
+        // Iterate chronologically (reverse of desc)
+        d.slice().reverse().forEach(m=>{
+          if(m.sender==="admin"){byUser[m.user_id]=0}
+          else if(m.sender==="user"){byUser[m.user_id]=(byUser[m.user_id]||0)+1}
+        });
+        const unread=Object.values(byUser).reduce((a,b)=>a+b,0);
+        setSupportUnread(unread);
+        // Detect NEW user messages since last poll → fire local notification (skip on first load)
+        const userMsgs=d.filter(m=>m.sender==="user");
+        if(supportInitRef.current){
+          const newOnes=userMsgs.filter(m=>!lastSupportIdsRef.current.has(m.id));
+          // Only notify if we're not currently in the support tab
+          if(newOnes.length>0&&tb!=="support"){
+            const latest=newOnes[0];
+            try{admNoti.notify("💬 New Support Message",(latest.message||"").slice(0,80))}catch(e){}
+          }
+        } else {
+          supportInitRef.current=true;
+        }
+        lastSupportIdsRef.current=new Set(userMsgs.map(m=>m.id));
+      }catch(e){}
+    };
+    pollSupport();
+    const i=setInterval(pollSupport,15000);
+    return()=>clearInterval(i);
+  },[token,tb,admNoti]);
   useEffect(()=>{if(tb==="users"){const loadUsers=()=>{api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};loadUsers();const ui=setInterval(loadUsers,10000);fetch(`${SB}/rest/v1/Referrals?select=referrer_id,referred_id`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const counts={};d.forEach(r=>{counts[r.referrer_id]=(counts[r.referrer_id]||0)+1});setRefCounts(counts)}}).catch(()=>{});
   // Load last activity per user
   fetch(`${SB}/rest/v1/ActivityLog?order=login_date.desc&select=user_id,login_date,created_at`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const act={};d.forEach(a=>{if(!act[a.user_id])act[a.user_id]=a.created_at||a.login_date});setUserActivity(act)}}).catch(()=>{});
@@ -5853,7 +6028,12 @@ function Adm({token,posts,signals,onR}){
       <div style={{display:"flex",gap:4}}>
         {["msg","story","support","sale","pay"].map(tab=>{
           const labels={msg:lang==="fa"?"پیام":"Message",story:lang==="fa"?"استوری":"Story",support:lang==="fa"?"پشتیبانی":"Support",sale:lang==="fa"?"تخفیف":"Sale",pay:lang==="fa"?"پرداخت":"Payment"};
-          return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{labels[tab]}</div>
+          const isSupport=tab==="support";
+          const showBadge=isSupport&&supportUnread>0&&tb!=="support";
+          return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)",position:"relative"}}>
+            {labels[tab]}
+            {showBadge&&<span style={{position:"absolute",top:-4,right:-4,minWidth:16,height:16,padding:"0 4px",borderRadius:8,background:"var(--R)",color:"#fff",fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 0 2px var(--card)",animation:"pl 2s infinite"}}>{supportUnread>99?"99+":supportUnread}</span>}
+          </div>
         })}
       </div>
       <div style={{display:"flex",gap:4}}>
@@ -6149,7 +6329,7 @@ function Adm({token,posts,signals,onR}){
       </div>})}
     </>})()}
     {tb==="rewards"&&<AdminRewards token={token}/>}
-    {tb==="support"&&<AdminSupportChat token={token}/>}
+    {tb==="support"&&(()=>{if(supportUnread>0){setTimeout(()=>setSupportUnread(0),500)}return<AdminSupportChat token={token}/>})()}
     {tb==="story"&&<AdminStoryManager token={token}/>}
     {tb==="sale"&&<AdminPromo token={token}/>}
     {tb==="pay"&&<AdminPayments token={token}/>}
@@ -6255,6 +6435,7 @@ function SupportChat({userId,token,onClose}){
   const[sending,setSending]=useState(false);
   const[loading,setLoading]=useState(true);
   const endRef=useRef(null);
+  const noti=useNotifications(userId,token);
   const scrollToBottom=()=>{setTimeout(()=>{endRef.current?.scrollIntoView({behavior:"smooth"})},100)};
   const load=useCallback(async()=>{
     try{
@@ -6271,6 +6452,9 @@ function SupportChat({userId,token,onClose}){
     setTxt("");setSending(true);
     try{
       await fetch(`${SB}/rest/v1/SupportChats`,{method:"POST",headers:H(token),body:JSON.stringify({user_id:userId,sender:"user",message:m})});
+      // Notify admins about new support message
+      const teaser=m.length>80?m.slice(0,80)+"...":m;
+      noti.sendPushToAdmins("💬 New Support Message","📢 "+teaser,token);
       load();
     }catch(e){}
     setSending(false);
@@ -6354,6 +6538,7 @@ function AdminSupportChat({token}){
   const[sending,setSending]=useState(false);
   const[loading,setLoading]=useState(true);
   const endRef=useRef(null);
+  const noti=useNotifications(null,token);
   const scrollToBottom=()=>{setTimeout(()=>{endRef.current?.scrollIntoView({behavior:"smooth"})},100)};
 
   // Load all conversations (grouped by user)
@@ -6398,6 +6583,9 @@ function AdminSupportChat({token}){
     setTxt("");setSending(true);
     try{
       await fetch(`${SB}/rest/v1/SupportChats`,{method:"POST",headers:H(token),body:JSON.stringify({user_id:selUser,sender:"admin",message:m})});
+      // Notify the user
+      const teaser=m.length>80?m.slice(0,80)+"...":m;
+      noti.sendPushToUser(selUser,"💬 Support Reply","📢 "+teaser,token);
       loadMsgs();
     }catch(e){}
     setSending(false);
@@ -6767,9 +6955,98 @@ function AdminGiveaway({token}){
 }
 
 /* ─── Profile ─── */
+/* ─── Admin Sessions Manager (multi-device control) ─── */
+function AdminSessionsManager({userId,token,lang,currentDeviceId,currentDeviceLabel}){
+  const[sessions,setSessions]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[processing,setProcessing]=useState(null);
+  const load=useCallback(async()=>{
+    if(!userId||!token)return;
+    try{
+      const r=await fetch(`${SB}/rest/v1/active_sessions?user_id=eq.${userId}&order=last_ping.desc&select=*`,{headers:H(token)});
+      const d=await r.json();
+      if(Array.isArray(d))setSessions(d);
+    }catch(e){console.error("Load sessions error:",e)}
+    setLoading(false);
+  },[userId,token]);
+  useEffect(()=>{load();const i=setInterval(load,15000);return()=>clearInterval(i)},[load]);
+  const makePrimary=async(deviceId)=>{
+    setProcessing(deviceId);
+    try{
+      await fetch(`${SB}/rest/v1/active_sessions?user_id=eq.${userId}&device_id=eq.${deviceId}`,{
+        method:"PATCH",headers:H(token),body:JSON.stringify({is_primary:true})
+      });
+      load();
+    }catch(e){console.error(e)}
+    setProcessing(null);
+  };
+  const revokeSession=async(deviceId)=>{
+    if(deviceId===currentDeviceId){
+      if(!confirm(lang==="fa"?"این دستگاه فعلی شماست! مطمئنی می‌خوای حذف کنی؟":"This is your current device! Revoke anyway?"))return;
+    } else {
+      if(!confirm(lang==="fa"?"این نشست حذف بشه؟":"Revoke this session?"))return;
+    }
+    setProcessing(deviceId);
+    try{
+      await fetch(`${SB}/rest/v1/active_sessions?user_id=eq.${userId}&device_id=eq.${deviceId}`,{
+        method:"DELETE",headers:H(token)
+      });
+      load();
+    }catch(e){console.error(e)}
+    setProcessing(null);
+  };
+  const timeSincePing=(d)=>{
+    const diff=Date.now()-new Date(d).getTime();
+    const secs=Math.floor(diff/1000);
+    if(secs<60)return lang==="fa"?"همین الان":"just now";
+    const mins=Math.floor(secs/60);
+    if(mins<60)return lang==="fa"?`${mins} دقیقه پیش`:`${mins}m ago`;
+    const hrs=Math.floor(mins/60);
+    if(hrs<24)return lang==="fa"?`${hrs} ساعت پیش`:`${hrs}h ago`;
+    return lang==="fa"?`${Math.floor(hrs/24)} روز پیش`:`${Math.floor(hrs/24)}d ago`;
+  };
+  const isStale=(d)=>(Date.now()-new Date(d).getTime())>5*60*1000;
+  return(<div className="cd" style={{padding:16,marginBottom:12}}>
+    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+      <span style={{fontSize:18}}>🖥️</span>
+      <div style={{fontSize:14,fontWeight:700}}>{lang==="fa"?"نشست‌های فعال":"Active Sessions"}</div>
+    </div>
+    <div style={{fontSize:11,color:"var(--tx2)",marginBottom:14,lineHeight:1.6}}>
+      {lang==="fa"?"دستگاه‌های ادمین که الان لاگین هستند. فقط دستگاه «اصلی» می‌تونه نوتیف خودکار خبر بفرسته.":"Your logged-in admin devices. Only the PRIMARY device sends automatic news alerts."}
+    </div>
+    {loading&&<div style={{textAlign:"center",padding:20,fontSize:12,color:"var(--dm)"}}>...</div>}
+    {!loading&&sessions.length===0&&<div style={{textAlign:"center",padding:20,fontSize:12,color:"var(--dm)"}}>{lang==="fa"?"نشستی وجود ندارد":"No sessions"}</div>}
+    {sessions.map(s=>{
+      const isCurrent=s.device_id===currentDeviceId;
+      const stale=isStale(s.last_ping);
+      return<div key={s.id} style={{padding:12,marginBottom:8,borderRadius:12,background:s.is_primary?"color-mix(in srgb,var(--G) 5%,transparent)":"var(--bg)",border:`1px solid ${s.is_primary?"color-mix(in srgb,var(--G) 25%,transparent)":"var(--brd)"}`}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
+          <span style={{fontSize:13,fontWeight:700,color:"var(--tx)"}}>{s.device_label||"Unknown Device"}</span>
+          {s.is_primary&&<span style={{fontSize:8,fontWeight:700,padding:"2px 6px",borderRadius:4,background:"var(--G)",color:"#fff",letterSpacing:.5}}>{lang==="fa"?"اصلی":"PRIMARY"}</span>}
+          {isCurrent&&<span style={{fontSize:8,fontWeight:700,padding:"2px 6px",borderRadius:4,background:"var(--B)",color:"#fff",letterSpacing:.5}}>{lang==="fa"?"این دستگاه":"THIS DEVICE"}</span>}
+          {stale&&<span style={{fontSize:8,fontWeight:700,padding:"2px 6px",borderRadius:4,background:"color-mix(in srgb,var(--R) 15%,transparent)",color:"var(--R)",letterSpacing:.5}}>{lang==="fa"?"آفلاین":"OFFLINE"}</span>}
+        </div>
+        <div style={{fontSize:10,color:"var(--dm)",marginBottom:10}}>
+          {lang==="fa"?"آخرین فعالیت: ":"Last active: "}<span style={{color:stale?"var(--R)":"var(--G)",fontWeight:600}}>{timeSincePing(s.last_ping)}</span>
+        </div>
+        <div style={{display:"flex",gap:6}}>
+          {!s.is_primary&&<div onClick={()=>!processing&&makePrimary(s.device_id)} style={{flex:1,padding:"8px 10px",borderRadius:8,textAlign:"center",cursor:processing?"default":"pointer",background:"color-mix(in srgb,var(--G) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 25%,transparent)",fontSize:11,fontWeight:600,color:"var(--G)",opacity:processing===s.device_id?.5:1}}>
+            ⚡ {lang==="fa"?"اصلی کن":"Make Primary"}
+          </div>}
+          <div onClick={()=>!processing&&revokeSession(s.device_id)} style={{flex:s.is_primary?1:"none",padding:"8px 14px",borderRadius:8,textAlign:"center",cursor:processing?"default":"pointer",background:"color-mix(in srgb,var(--R) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 20%,transparent)",fontSize:11,fontWeight:600,color:"var(--R)",opacity:processing===s.device_id?.5:1}}>
+            ✕ {lang==="fa"?"حذف":"Revoke"}
+          </div>
+        </div>
+      </div>;
+    })}
+  </div>);
+}
+
 function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSupport,onSupportOpened}){
   const{t}=useLang();
   const noti=useNotifications(user?.id,token);
+  const isAdminProf=up?.role==="admin";
+  const {deviceId:sessDeviceId,deviceLabel:sessDeviceLabel}=useActiveSession(user?.id,token,isAdminProf);
   const[showLang,setShowLang]=useState(false);
   const[showChat,setShowChat]=useState(false);
   const[editingName,setEditingName]=useState(false);
@@ -6843,6 +7120,7 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
       </div>
     </div>
     <ReferralSection userId={user?.id} token={token} userProfile={up}/>
+    {isAdminProf&&<AdminSessionsManager userId={user?.id} token={token} lang={lang} currentDeviceId={sessDeviceId} currentDeviceLabel={sessDeviceLabel}/>}
     <GiveawayWheel userId={user?.id} token={token}/>
     <RewardSectionWrapper userId={user?.id} token={token} userProfile={up}/>
     <div onClick={toggle} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:14,marginBottom:6,cursor:"pointer"}}>
