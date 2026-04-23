@@ -7161,7 +7161,8 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
 function App(){
   const[tk,setTk]=useState(()=>{try{return localStorage.getItem("fx_tk")||null}catch(e){return null}});
   const[usr,setUsr]=useState(()=>{try{const u=localStorage.getItem("fx_usr");return u?JSON.parse(u):null}catch(e){return null}});
-  const[up,setUp]=useState(null),[adm,setAdm]=useState(false);
+  const[up,setUp]=useState(()=>{try{const p=localStorage.getItem("fx_up");return p?JSON.parse(p):null}catch(e){return null}});
+  const[adm,setAdm]=useState(()=>{try{const p=localStorage.getItem("fx_up");const d=p?JSON.parse(p):null;return d?.role==="admin"}catch(e){return false}});
   const[tab,setTab]=useState(0),[posts,setP]=useState([]),[sigs,setS]=useState([]),[msgs,setMsgs]=useState([]),[stories,setStories]=useState([]);
   const[openSupport,setOpenSupport]=useState(false);
   const[lang,setLangState]=useState(()=>{try{return localStorage.getItem("fxlang")||"en"}catch(e){return"en"}});
@@ -7172,7 +7173,7 @@ function App(){
   const{P,ok,lastUpdate}=usePrices();const{dark,toggle}=useTheme();const online=useOnlineStatus();
   const t=T[lang]||T.en;
   const handleAuth=(token,user,refreshToken)=>{setTk(token);setUsr(user);try{localStorage.setItem("fx_tk",token);localStorage.setItem("fx_usr",JSON.stringify(user));if(refreshToken)localStorage.setItem("fx_rt",refreshToken)}catch(e){}};
-  const handleLogout=()=>{setTk(null);setUsr(null);setAdm(false);setUp(null);setTab(0);try{localStorage.removeItem("fx_tk");localStorage.removeItem("fx_usr");localStorage.removeItem("fx_rt")}catch(e){}};
+  const handleLogout=()=>{setTk(null);setUsr(null);setAdm(false);setUp(null);setTab(0);try{localStorage.removeItem("fx_tk");localStorage.removeItem("fx_usr");localStorage.removeItem("fx_rt");localStorage.removeItem("fx_up")}catch(e){}};
   // Auto-refresh token on load and every 30 minutes — NEVER auto-logout
   const refreshSession=useCallback(async()=>{
     try{
@@ -7192,10 +7193,38 @@ function App(){
   useEffect(()=>{document.documentElement.setAttribute("lang",lang)},[]);
   useEffect(()=>{if(!showSplash)document.body.classList.add("app-ready")},[]);
   const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p)){setP(p);try{localStorage.setItem("fx_pc",String(p.length))}catch(e){}}const s=await api.get("Signals",tk);if(Array.isArray(s)){setS(s);try{localStorage.setItem("fx_sc",String(s.length))}catch(e){}}const m=await api.get("Messages",tk);if(Array.isArray(m))setMsgs(m);try{const st=await fetch(`${SB}/rest/v1/Stories?order=created_at.desc`,{headers:H(tk)});const stD=await st.json();if(Array.isArray(stD)){const now=new Date();setStories(stD.filter(x=>new Date(x.expires_at)>now))}}catch(e){}}catch(e){}},[tk]);
-  const chk=useCallback(async(u,t)=>{try{const r=await fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{headers:H(t)});const d=await r.json();if(Array.isArray(d)&&d[0]){setUp(d[0]);if(d[0].role==="admin")setAdm(true)}}catch(e){}},[]);
+  const chk=useCallback(async(u,t,retry=0)=>{
+    if(!u||!t)return;
+    try{
+      const r=await fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{headers:H(t)});
+      if(!r.ok){
+        // 401 → try to refresh token once then retry
+        if(r.status===401&&retry===0){
+          await refreshSession();
+          const freshTk=localStorage.getItem("fx_tk");
+          if(freshTk&&freshTk!==t)return chk(u,freshTk,retry+1);
+        }
+        throw new Error("HTTP "+r.status);
+      }
+      const d=await r.json();
+      if(Array.isArray(d)&&d[0]){
+        setUp(d[0]);
+        setAdm(d[0].role==="admin");
+        try{localStorage.setItem("fx_up",JSON.stringify(d[0]))}catch(e){}
+      }else if(retry<2){
+        // Empty/unexpected response → retry with backoff
+        setTimeout(()=>chk(u,t,retry+1),1500*(retry+1));
+      }
+    }catch(e){
+      // Network/parse error → retry with backoff (max 3 attempts)
+      if(retry<2)setTimeout(()=>chk(u,t,retry+1),1500*(retry+1));
+    }
+  },[refreshSession]);
   useEffect(()=>{if(tk)load()},[tk,load]);
   useEffect(()=>{if(tk&&usr)chk(usr,tk)},[tk,usr,chk]);
-  useEffect(()=>{if(tk){const i=setInterval(load,30000);return()=>clearInterval(i)}},[tk,load]);
+  useEffect(()=>{if(tk){const i=setInterval(()=>{load();if(usr)chk(usr,tk)},30000);return()=>clearInterval(i)}},[tk,usr,load,chk]);
+  // Re-fetch profile when coming back online (handles transient network drops)
+  useEffect(()=>{if(online&&tk&&usr)chk(usr,tk)},[online,tk,usr,chk]);
   const{PTR}=usePullToRefresh(load);
   useActivityTracker(usr?.id,tk);
   // Tab bar scroll: dock to bottom when scrolling down, float when scrolling up
