@@ -189,26 +189,6 @@ select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;paddi
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin></script>
 <script type="text/babel">
 const{useState,useEffect,useCallback,useRef,useMemo,createContext,useContext}=React;
-
-/* ─── Haptic Feedback (PWA Mobile) ───
-   hap() = light (10ms). hap("medium") = 20ms. hap("heavy") = 35ms.
-   hap("selection") = 8ms (tab/toggle). hap("success") = [12,40,18].
-   hap("warning") = [15,60,15]. hap("error") = [25,50,25,50,25].
-   No-ops on devices without navigator.vibrate (desktop, iOS Safari).
-   User can disable via localStorage "fx_haptic"="off".
-*/
-let _hapticOn=(()=>{try{return localStorage.getItem("fx_haptic")!=="off"}catch(e){return true}})();
-const hapSetEnabled=(on)=>{_hapticOn=!!on;try{localStorage.setItem("fx_haptic",on?"on":"off")}catch(e){}};
-const hap=(kind)=>{
-  if(!_hapticOn)return;
-  try{
-    if(!navigator.vibrate)return;
-    const P={light:10,medium:20,heavy:35,selection:8,success:[12,40,18],warning:[15,60,15],error:[25,50,25,50,25]};
-    navigator.vibrate(P[kind]||P.light);
-  }catch(e){}
-};
-if(typeof window!=="undefined"){window.hap=hap;window.hapSetEnabled=hapSetEnabled}
-
 const SB="https://fjdjqaffoeixspcmxprw.supabase.co",SK="sb_publishable_7saR41SkI4TZs8K7C9lVxQ_Up8SyaYu";
 const H=t=>({apikey:SK,Authorization:`Bearer ${t||SK}`,"Content-Type":"application/json",Prefer:"return=representation"});
 
@@ -839,7 +819,6 @@ function StoryViewer({stories,onClose,onSeen,userId,token}){
     e.stopPropagation();
     if(!s||!userId||!token)return;
     const isLiked=!liked[s.id];
-    hap(isLiked?"medium":"light");
     setLiked(prev=>({...prev,[s.id]:isLiked}));
     if(isLiked){setLikeAnim(true);setTimeout(()=>setLikeAnim(false),600)}
     clearTimeout(timerRef.current);setPaused(true);
@@ -964,7 +943,6 @@ function AdminStoryManager({token}){
 
   const delStory=async(id)=>{
     if(!confirm(lang==="fa"?"حذف شود؟":"Delete?"))return;
-    hap("warning");
     await api.del("Stories",id,token);
     loadStories();
   };
@@ -1173,7 +1151,6 @@ function useTheme(){
   },[dark]);
   const toggle=()=>{
     const next=!dark;
-    hap("medium");
     setDark(next);
     try{localStorage.setItem("fxtheme",next?"dark":"liquid")}catch(e){}
     // iOS PWA: status bar only reads theme-color on load, so reload
@@ -1423,8 +1400,8 @@ function usePullToRefresh(onRefresh){
   const[refreshing,setRefreshing]=useState(false);
   const startY=useRef(0);const el=useRef(null);
   const onTouchStart=useCallback(e=>{if(window.scrollY<=0)startY.current=e.touches[0].clientY},[]);
-  const onTouchMove=useCallback(e=>{if(startY.current>0&&!refreshing){const dy=e.touches[0].clientY-startY.current;if(dy>60&&window.scrollY<=0){if(!pulling)hap("medium");setPulling(true)}}},[refreshing,pulling]);
-  const onTouchEnd=useCallback(async()=>{if(pulling&&!refreshing){setRefreshing(true);setPulling(false);await onRefresh();hap("success");setRefreshing(false)}startY.current=0;setPulling(false)},[pulling,refreshing,onRefresh]);
+  const onTouchMove=useCallback(e=>{if(startY.current>0&&!refreshing){const dy=e.touches[0].clientY-startY.current;if(dy>60&&window.scrollY<=0)setPulling(true)}},[refreshing]);
+  const onTouchEnd=useCallback(async()=>{if(pulling&&!refreshing){setRefreshing(true);setPulling(false);await onRefresh();setRefreshing(false)}startY.current=0;setPulling(false)},[pulling,refreshing,onRefresh]);
   useEffect(()=>{const d=document;d.addEventListener("touchstart",onTouchStart,{passive:true});d.addEventListener("touchmove",onTouchMove,{passive:true});d.addEventListener("touchend",onTouchEnd);return()=>{d.removeEventListener("touchstart",onTouchStart);d.removeEventListener("touchmove",onTouchMove);d.removeEventListener("touchend",onTouchEnd)}},[onTouchStart,onTouchMove,onTouchEnd]);
   const PTR=()=>(<div className={`ptr${pulling||refreshing?" active":""}`}>{refreshing?<div className="ptr-spinner"/>:<div style={{padding:"12px 0",fontSize:11,color:"var(--dm)",fontWeight:600}}>↓ Pull to refresh</div>}</div>);
   return{PTR,refreshing};
@@ -1470,7 +1447,7 @@ function ReferralSection({userId,token,userProfile}){
     };
     loadRefs();
   },[userId,token]);
-  const copyCode=()=>{navigator.clipboard?.writeText(refCode);hap("light");setCopied(true);setTimeout(()=>setCopied(false),2000)};
+  const copyCode=()=>{navigator.clipboard?.writeText(refCode);setCopied(true);setTimeout(()=>setCopied(false),2000)};
   const shareCode=()=>{if(navigator.share){navigator.share({title:"Fxscalproom",text:`Join Fxscalproom with my invite code: ${refCode}`,url:window.location.origin})}else copyCode()};
   const applyRef=async()=>{
     const code=inputCode.trim().toUpperCase();
@@ -1659,7 +1636,7 @@ function RewardSection({userId,token,userProfile}){
     load();
   },[userId,token,userProfile]);
 
-  const copyCode=()=>{navigator.clipboard?.writeText(rewardCode);hap("light");setCopied(true);setTimeout(()=>setCopied(false),2000)};
+  const copyCode=()=>{navigator.clipboard?.writeText(rewardCode);setCopied(true);setTimeout(()=>setCopied(false),2000)};
   const shareCode=()=>{
     if(navigator.share){navigator.share({title:"Fxscalproom Rewards",text:(lang==="fa"?`با کد ${rewardCode} ثبت‌نام کن و جایزه بگیر! 💰`:`Join with code: ${rewardCode} & earn rewards! 💰`),url:window.location.origin})}
     else copyCode()
@@ -1856,13 +1833,11 @@ function AdminRewards({token}){
 
   const updateClaim=async(id,status)=>{
     await fetch(`${SB}/rest/v1/RewardClaims?id=eq.${id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({status,admin_note:note||null,reviewed_at:new Date().toISOString()})});
-    hap(status==="rejected"?"error":"success");
     setEditId(null);setNote("");load();
   };
 
   const verifyRef=async(id,verified)=>{
     await fetch(`${SB}/rest/v1/RewardReferrals?id=eq.${id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({verified,flagged:!verified})});
-    hap(verified?"success":"error");
     load();
   };
 
@@ -3898,7 +3873,7 @@ function ContactPopup({onClose,onSupport,plan,userId,token}){
   const[showCrypto,setShowCrypto]=useState(false);
   const[copied,setCopied]=useState("");
   const[payStep,setPayStep]=useState("");
-  const copyAddr=(addr,label)=>{navigator.clipboard?.writeText(addr);hap("light");setCopied(label);setTimeout(()=>setCopied(""),2000)};
+  const copyAddr=(addr,label)=>{navigator.clipboard?.writeText(addr);setCopied(label);setTimeout(()=>setCopied(""),2000)};
 
   const confirmPayment=async()=>{
     if(!plan||!userId||!token)return;
@@ -4385,7 +4360,6 @@ function AMarketsIBFlow({userProfile,token,lang,onSuccess}){
     const copyWallet=()=>{
       if(!existing?.wallet_number)return;
       navigator.clipboard?.writeText(existing.wallet_number);
-      hap("light");
       setWalletCopied(true);
       setTimeout(()=>setWalletCopied(false),2000);
     };
@@ -4463,7 +4437,6 @@ function AMarketsIBFlow({userProfile,token,lang,onSuccess}){
             let ok=false;
             try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code);ok=true}}catch(e){}
             if(!ok){try{const ta=document.createElement("textarea");ta.value=code;ta.style.position="fixed";ta.style.left="-9999px";document.body.appendChild(ta);ta.focus();ta.select();document.execCommand("copy");document.body.removeChild(ta);ok=true}catch(e){}}
-            hap("light");
             setCodeCopied(true);setTimeout(()=>setCodeCopied(false),2000);
           }} style={{display:"inline-flex",alignItems:"center",gap:4,marginTop:10,fontSize:11,color:codeCopied?"var(--G)":"var(--B)",fontWeight:600,cursor:"pointer",padding:"6px 14px",borderRadius:8,background:codeCopied?"color-mix(in srgb,var(--G) 12%,transparent)":"color-mix(in srgb,var(--B) 8%,transparent)",transition:".2s",userSelect:"none"}}>
             {codeCopied?
@@ -5770,7 +5743,7 @@ RULES:
 
   const copyPrompt=()=>{
     const full=NEOWAVE_PROMPT+"\n\n---\n\n"+buildUserMsg();
-    navigator.clipboard?.writeText(full).then(()=>{hap("light");setCopied(true);setTimeout(()=>setCopied(false),2000)});
+    navigator.clipboard?.writeText(full).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000)});
   };
 
   const saveResult=()=>{
@@ -5898,7 +5871,7 @@ RULES:
         <div className="cd" style={{padding:16,marginBottom:14,background:"var(--bg2)",border:"1px solid var(--brd)"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
             <div style={{fontSize:13,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>{"✅ "+(fa?"تحلیل ذخیره شد":"Saved")}</div>
-            <div onClick={()=>{navigator.clipboard?.writeText(aiResult);hap("light")}} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)",background:"color-mix(in srgb,var(--B) 10%,transparent)",padding:"4px 10px",borderRadius:8}}>{fa?"کپی":"Copy"}</div>
+            <div onClick={()=>{navigator.clipboard?.writeText(aiResult)}} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)",background:"color-mix(in srgb,var(--B) 10%,transparent)",padding:"4px 10px",borderRadius:8}}>{fa?"کپی":"Copy"}</div>
           </div>
           <div style={{fontSize:12.5,lineHeight:1.8,color:"var(--tx)",whiteSpace:"pre-wrap",direction:"rtl",textAlign:"right"}}>{aiResult}</div>
         </div>
@@ -5917,7 +5890,7 @@ RULES:
       {aiResult&&<div className="cd" style={{padding:16,marginBottom:14,background:"var(--bg2)",border:"1px solid var(--brd)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
           <div style={{fontSize:13,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>{"📋 "+(fa?"نتیجه":"Result")}</div>
-          <div onClick={()=>{navigator.clipboard?.writeText(aiResult);hap("light")}} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)",background:"color-mix(in srgb,var(--B) 10%,transparent)",padding:"4px 10px",borderRadius:8}}>{fa?"کپی":"Copy"}</div>
+          <div onClick={()=>{navigator.clipboard?.writeText(aiResult)}} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)",background:"color-mix(in srgb,var(--B) 10%,transparent)",padding:"4px 10px",borderRadius:8}}>{fa?"کپی":"Copy"}</div>
         </div>
         <div style={{fontSize:12.5,lineHeight:1.8,color:"var(--tx)",whiteSpace:"pre-wrap",direction:"rtl",textAlign:"right"}}>{aiResult}</div>
       </div>}
@@ -7369,7 +7342,7 @@ function App(){
   const VT=AT.filter(tab=>!tab.ao||adm);
   const st=Math.min(tab,VT.length-1);
   const cur=VT[st];
-  const goTab=i=>{if(i!==tab)hap("selection");setTab(i);clearBadge(VT[i]?.k)};
+  const goTab=i=>{setTab(i);clearBadge(VT[i]?.k)};
   const goToTabByKey=(k)=>{const idx=VT.findIndex(t=>t.k===k);if(idx>=0)goTab(idx)};
   const scr=()=>{switch(cur?.k){
     case"home":return<Home posts={posts} signals={sigs} msgs={msgs} stories={stories} go={goTab} goToPlans={()=>goToTabByKey("plans")} P={P} ok={ok} lastUpdate={lastUpdate} dark={dark} toggle={toggle} userProfile={up} token={tk} onR={load} online={online}/>;
@@ -7413,24 +7386,6 @@ function App(){
   );
 }
 ReactDOM.render(<App/>,document.getElementById("root"));
-
-/* ─── Global Haptic Event Delegation ───
-   A single capture-phase pointerdown listener gives instant haptic feedback
-   on every primary button (.bt) and tab item (.ti) without editing each onClick.
-   Skipped when the control is disabled or when the user turned haptics off. */
-(function(){
-  if(typeof window==="undefined"||!("PointerEvent" in window))return;
-  document.addEventListener("pointerdown",function(e){
-    try{
-      if(e.pointerType&&e.pointerType!=="touch")return; // mouse/pen → no buzz
-      const el=e.target&&e.target.closest?e.target.closest(".bt,.ti"):null;
-      if(!el)return;
-      if(el.getAttribute("disabled")!==null||el.classList.contains("disabled"))return;
-      // tab items get the softer "selection" feel; primary buttons get "light"
-      window.hap&&window.hap(el.classList.contains("ti")?"selection":"light");
-    }catch(err){}
-  },{capture:true,passive:true});
-})();
 
 // مخفی کردن splash screen بعد از mount شدن React
 requestAnimationFrame(()=>{
