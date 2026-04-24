@@ -216,56 +216,8 @@ const api={
   del:(t,id,tk)=>fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:"DELETE",headers:H(tk)}),
   patch:(t,id,d,tk)=>fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:"PATCH",headers:H(tk),body:JSON.stringify(d)}).then(r=>r.json()),
   getUsers:(tk)=>fetch(`${SB}/rest/v1/Users?order=created_at.desc`,{headers:H(tk)}).then(r=>r.json()),
-  img:async(f,tk)=>{
-    let fileToUpload=f;
-    try{
-      // Compress images >500KB: resize to max 1600px, JPEG quality 0.85
-      if(f&&f.type&&f.type.startsWith("image/")&&f.size>500*1024&&!/gif$/i.test(f.type)){
-        const compressed=await compressImage(f,1600,0.85);
-        if(compressed&&compressed.size<f.size)fileToUpload=compressed;
-      }
-    }catch(e){/* fallback to original */}
-    const ext=fileToUpload===f?(f.name?.split('.').pop()||'jpg'):'jpg';
-    const ct=fileToUpload===f?(f.type||"image/jpeg"):"image/jpeg";
-    const n=`${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
-    const r=await fetch(`${SB}/storage/v1/object/charts/${n}`,{method:"POST",headers:{apikey:SK,Authorization:`Bearer ${tk}`,"Content-Type":ct},body:fileToUpload});
-    if(!r.ok)return null;
-    return`${SB}/storage/v1/object/public/charts/${n}`
-  },
+  img:async(f,tk)=>{const n=`${Date.now()}_${Math.random().toString(36).slice(2,8)}.${f.name?.split('.').pop()||'jpg'}`;const r=await fetch(`${SB}/storage/v1/object/charts/${n}`,{method:"POST",headers:{apikey:SK,Authorization:`Bearer ${tk}`,"Content-Type":f.type||"image/jpeg"},body:f});if(!r.ok)return null;return`${SB}/storage/v1/object/public/charts/${n}`},
 };
-
-/* ─── Image Compression Helper ─── */
-/* Resizes images to max width/height and re-encodes as JPEG to reduce file size.
-   Returns null if compression fails (caller should fall back to original file). */
-async function compressImage(file,maxDim=1600,quality=0.85){
-  return new Promise((resolve)=>{
-    try{
-      const url=URL.createObjectURL(file);
-      const img=new Image();
-      img.onload=()=>{
-        URL.revokeObjectURL(url);
-        let{width:w,height:h}=img;
-        if(w>maxDim||h>maxDim){
-          if(w>h){h=Math.round(h*(maxDim/w));w=maxDim}
-          else{w=Math.round(w*(maxDim/h));h=maxDim}
-        }
-        const canvas=document.createElement("canvas");
-        canvas.width=w;canvas.height=h;
-        const ctx=canvas.getContext("2d");
-        // White background prevents transparency becoming black in JPEG
-        ctx.fillStyle="#fff";ctx.fillRect(0,0,w,h);
-        ctx.drawImage(img,0,0,w,h);
-        canvas.toBlob((blob)=>{
-          if(!blob){resolve(null);return}
-          const compressed=new File([blob],(file.name||"image").replace(/\.[^.]+$/,"")+".jpg",{type:"image/jpeg"});
-          resolve(compressed);
-        },"image/jpeg",quality);
-      };
-      img.onerror=()=>{URL.revokeObjectURL(url);resolve(null)};
-      img.src=url;
-    }catch(e){resolve(null)}
-  });
-}
 
 /* ─── Relative Time (multi-language) ─── */
 function relativeTime(dateStr,lang){
@@ -412,7 +364,7 @@ function usePrices(){
     }catch(e){}
   },[]);
 
-  useEffect(()=>{f();const tick=()=>{if(document.visibilityState!=="hidden")f()};const i=setInterval(tick,60000);return()=>clearInterval(i)},[f]);
+  useEffect(()=>{f();const i=setInterval(f,60000);return()=>clearInterval(i)},[f]);
   return{P,ok,lastUpdate};
 }
 
@@ -990,7 +942,7 @@ function AdminStoryManager({token}){
   };
 
   const delStory=async(id)=>{
-    if(!(await window.fxConfirm(lang==="fa"?"حذف شود؟":"Delete?")))return;
+    if(!confirm(lang==="fa"?"حذف شود؟":"Delete?"))return;
     await api.del("Stories",id,token);
     loadStories();
   };
@@ -1371,7 +1323,6 @@ function useActiveSession(userId,token,isAdmin){
     register();
     // Ping every 30 seconds
     const pingInterval=setInterval(async()=>{
-      if(document.visibilityState==="hidden")return;
       try{
         await fetch(`${SB}/rest/v1/active_sessions?user_id=eq.${userId}&device_id=eq.${deviceId}`,{
           method:"PATCH",headers:H(token),
@@ -1387,55 +1338,6 @@ function useActiveSession(userId,token,isAdmin){
   },[userId,token,isAdmin,deviceId,deviceLabel]);
   return{deviceId,deviceLabel,isPrimary};
 }
-
-/* ─── Haptic Feedback Helper ─── */
-/* Light/medium/heavy haptic feedback for key interactions.
-   Uses navigator.vibrate (Android/PWA); silently no-op on iOS Safari. */
-window.fxHaptic=function(type){
-  try{
-    if(!navigator.vibrate)return;
-    var patterns={light:10,medium:20,heavy:[30,10,30],success:[15,30,15],error:[40,20,40]};
-    navigator.vibrate(patterns[type]||patterns.light);
-  }catch(e){}
-};
-
-/* ─── Glass-styled Confirm Dialog ─── */
-/* Drop-in replacement for window.confirm that matches the app's iOS 26 glass theme.
-   Returns a Promise<boolean>. Falls back to native confirm if DOM not ready. */
-window.fxConfirm=function(message,opts){
-  opts=opts||{};
-  return new Promise(function(resolve){
-    try{
-      if(!document||!document.body){resolve(window.confirm(message));return}
-      var overlay=document.createElement("div");
-      overlay.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;animation:fi .15s ease";
-      var box=document.createElement("div");
-      var isDark=document.documentElement.getAttribute("data-theme")==="dark";
-      box.style.cssText="background:"+(isDark?"rgba(28,28,30,.92)":"rgba(255,255,255,.92)")+";backdrop-filter:blur(30px) saturate(1.8);-webkit-backdrop-filter:blur(30px) saturate(1.8);border:1px solid "+(isDark?"rgba(255,255,255,.1)":"rgba(0,0,0,.06)")+";border-radius:20px;padding:22px 20px 16px;max-width:320px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25);text-align:center;font-family:Inter,system-ui,sans-serif;color:"+(isDark?"#e5e5e7":"#1d1d1f");
-      var msgDiv=document.createElement("div");
-      msgDiv.style.cssText="font-size:15px;font-weight:600;line-height:1.5;margin-bottom:18px;white-space:pre-wrap";
-      msgDiv.textContent=message;
-      box.appendChild(msgDiv);
-      var btns=document.createElement("div");
-      btns.style.cssText="display:flex;gap:8px";
-      var cancel=document.createElement("button");
-      cancel.textContent=opts.cancelText||"لغو / Cancel";
-      cancel.style.cssText="flex:1;padding:11px 14px;border-radius:12px;background:"+(isDark?"rgba(255,255,255,.08)":"rgba(0,0,0,.05)")+";color:inherit;font-size:13px;font-weight:600;border:none;cursor:pointer;font-family:inherit";
-      var ok=document.createElement("button");
-      ok.textContent=opts.okText||"تایید / OK";
-      var danger=opts.danger!==false;
-      ok.style.cssText="flex:1;padding:11px 14px;border-radius:12px;background:"+(danger?"#ff3b30":"#0071e3")+";color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;font-family:inherit";
-      btns.appendChild(cancel);btns.appendChild(ok);box.appendChild(btns);overlay.appendChild(box);
-      var done=false;
-      function close(result){if(done)return;done=true;try{overlay.remove()}catch(e){}resolve(result)}
-      cancel.addEventListener("click",function(){close(false)});
-      ok.addEventListener("click",function(){close(true)});
-      overlay.addEventListener("click",function(e){if(e.target===overlay)close(false)});
-      document.body.appendChild(overlay);
-      setTimeout(function(){ok.focus()},50);
-    }catch(e){resolve(window.confirm(message))}
-  });
-};
 
 /* ─── Toast ─── */
 function Toast({msg,onDone}){
@@ -1499,7 +1401,7 @@ function usePullToRefresh(onRefresh){
   const startY=useRef(0);const el=useRef(null);
   const onTouchStart=useCallback(e=>{if(window.scrollY<=0)startY.current=e.touches[0].clientY},[]);
   const onTouchMove=useCallback(e=>{if(startY.current>0&&!refreshing){const dy=e.touches[0].clientY-startY.current;if(dy>60&&window.scrollY<=0)setPulling(true)}},[refreshing]);
-  const onTouchEnd=useCallback(async()=>{if(pulling&&!refreshing){setRefreshing(true);setPulling(false);window.fxHaptic&&window.fxHaptic("medium");await onRefresh();setRefreshing(false)}startY.current=0;setPulling(false)},[pulling,refreshing,onRefresh]);
+  const onTouchEnd=useCallback(async()=>{if(pulling&&!refreshing){setRefreshing(true);setPulling(false);await onRefresh();setRefreshing(false)}startY.current=0;setPulling(false)},[pulling,refreshing,onRefresh]);
   useEffect(()=>{const d=document;d.addEventListener("touchstart",onTouchStart,{passive:true});d.addEventListener("touchmove",onTouchMove,{passive:true});d.addEventListener("touchend",onTouchEnd);return()=>{d.removeEventListener("touchstart",onTouchStart);d.removeEventListener("touchmove",onTouchMove);d.removeEventListener("touchend",onTouchEnd)}},[onTouchStart,onTouchMove,onTouchEnd]);
   const PTR=()=>(<div className={`ptr${pulling||refreshing?" active":""}`}>{refreshing?<div className="ptr-spinner"/>:<div style={{padding:"12px 0",fontSize:11,color:"var(--dm)",fontWeight:600}}>↓ Pull to refresh</div>}</div>);
   return{PTR,refreshing};
@@ -1545,7 +1447,7 @@ function ReferralSection({userId,token,userProfile}){
     };
     loadRefs();
   },[userId,token]);
-  const copyCode=()=>{try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(refCode)}else{const ta=document.createElement("textarea");ta.value=refCode;ta.style.position="fixed";ta.style.left="-9999px";document.body.appendChild(ta);ta.focus();ta.select();document.execCommand("copy");document.body.removeChild(ta)}}catch(e){}setCopied(true);setTimeout(()=>setCopied(false),2000);window.fxHaptic&&window.fxHaptic("success")};
+  const copyCode=()=>{navigator.clipboard?.writeText(refCode);setCopied(true);setTimeout(()=>setCopied(false),2000)};
   const shareCode=()=>{if(navigator.share){navigator.share({title:"Fxscalproom",text:`Join Fxscalproom with my invite code: ${refCode}`,url:window.location.origin})}else copyCode()};
   const applyRef=async()=>{
     const code=inputCode.trim().toUpperCase();
@@ -1734,7 +1636,7 @@ function RewardSection({userId,token,userProfile}){
     load();
   },[userId,token,userProfile]);
 
-  const copyCode=()=>{try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(rewardCode)}else{const ta=document.createElement("textarea");ta.value=rewardCode;ta.style.position="fixed";ta.style.left="-9999px";document.body.appendChild(ta);ta.focus();ta.select();document.execCommand("copy");document.body.removeChild(ta)}}catch(e){}setCopied(true);setTimeout(()=>setCopied(false),2000);window.fxHaptic&&window.fxHaptic("success")};
+  const copyCode=()=>{navigator.clipboard?.writeText(rewardCode);setCopied(true);setTimeout(()=>setCopied(false),2000)};
   const shareCode=()=>{
     if(navigator.share){navigator.share({title:"Fxscalproom Rewards",text:(lang==="fa"?`با کد ${rewardCode} ثبت‌نام کن و جایزه بگیر! 💰`:`Join with code: ${rewardCode} & earn rewards! 💰`),url:window.location.origin})}
     else copyCode()
@@ -3162,7 +3064,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
       </div>
       <div style={{display:"flex",alignItems:"center",gap:8,marginTop:14}}>
         <div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/><OnlineCounter token={token} isAdmin={userProfile?.role==="admin"}/>
-        <div onClick={toggle} style={{marginLeft:"auto",cursor:"pointer",color:"var(--mu)",padding:4}} role="button" tabIndex={0} aria-label={dark?"Switch to light mode":"Switch to dark mode"}>{dark?IC.sun:IC.moon}</div>
+        <div onClick={toggle} style={{marginLeft:"auto",cursor:"pointer",color:"var(--mu)",padding:4}}>{dark?IC.sun:IC.moon}</div>
       </div>
       <NextRedEvent isAdmin={userProfile?.role==="admin"} isPrimary={sessionIsPrimary} token={token}/>
     </div>}
@@ -3384,7 +3286,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
   // Admin: remove day trade post
   const removeDayTrade=async(id)=>{
     if(!token||!id)return;
-    if(!(await window.fxConfirm(lang==="fa"?"حذف شود؟":"Delete?")))return;
+    if(!confirm(lang==="fa"?"حذف شود؟":"Delete?"))return;
     try{await api.del("Posts",id,token);if(onR)onR()}catch(e){}
   };
   return(<div className="fi">
@@ -3892,7 +3794,7 @@ function AdminPromo({token}){
   };
 
   const deactivate=async()=>{
-    if(!(await window.fxConfirm(lang==="fa"?"غیرفعال شود؟":"Deactivate?")))return;
+    if(!confirm(lang==="fa"?"غیرفعال شود؟":"Deactivate?"))return;
     setSaving(true);
     try{
       await fetch(`${SB}/rest/v1/PromoSales?is_active=eq.true`,{method:"PATCH",headers:H(token),body:JSON.stringify({is_active:false})});
@@ -4132,7 +4034,7 @@ function AdminPayments({token}){
   };
 
   const reject=async(id)=>{
-    if(!(await window.fxConfirm(lang==="fa"?"رد شود؟":"Reject?")))return;
+    if(!confirm(lang==="fa"?"رد شود؟":"Reject?"))return;
     setProcessing(id);
     try{
       await fetch(`${SB}/rest/v1/PaymentRequests?id=eq.${id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({status:"rejected"})});
@@ -4536,7 +4438,6 @@ function AMarketsIBFlow({userProfile,token,lang,onSuccess}){
             try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code);ok=true}}catch(e){}
             if(!ok){try{const ta=document.createElement("textarea");ta.value=code;ta.style.position="fixed";ta.style.left="-9999px";document.body.appendChild(ta);ta.focus();ta.select();document.execCommand("copy");document.body.removeChild(ta);ok=true}catch(e){}}
             setCodeCopied(true);setTimeout(()=>setCodeCopied(false),2000);
-            window.fxHaptic&&window.fxHaptic("success");
           }} style={{display:"inline-flex",alignItems:"center",gap:4,marginTop:10,fontSize:11,color:codeCopied?"var(--G)":"var(--B)",fontWeight:600,cursor:"pointer",padding:"6px 14px",borderRadius:8,background:codeCopied?"color-mix(in srgb,var(--G) 12%,transparent)":"color-mix(in srgb,var(--B) 8%,transparent)",transition:".2s",userSelect:"none"}}>
             {codeCopied?
               <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>{isFA?"کپی شد!":"Copied!"}</>:
@@ -4592,7 +4493,7 @@ function AdminIBRequests({token}){
   };
 
   const reject=async(id)=>{
-    if(!(await window.fxConfirm(lang==="fa"?"رد شود؟":"Reject?")))return;
+    if(!confirm(lang==="fa"?"رد شود؟":"Reject?"))return;
     setProcessing(id);
     try{
       await fetch(`${SB}/rest/v1/IBRequests?id=eq.${id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({status:"rejected"})});
@@ -4602,7 +4503,7 @@ function AdminIBRequests({token}){
   };
 
   const revoke=async(req)=>{
-    if(!(await window.fxConfirm(lang==="fa"?"غیرفعال کردن پریمیوم IB؟":"Revoke IB Premium?")))return;
+    if(!confirm(lang==="fa"?"غیرفعال کردن پریمیوم IB؟":"Revoke IB Premium?"))return;
     setProcessing(req.id);
     try{
       await fetch(`${SB}/rest/v1/IBRequests?id=eq.${req.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({status:"revoked"})});
@@ -5411,7 +5312,7 @@ function AdminBlog({token,onR}){
   };
 
   const del=async(id)=>{
-    if(!(await window.fxConfirm(U.confirmDel)))return;
+    if(!confirm(U.confirmDel))return;
     try{
       await api.del("Articles",id,token);
       setMs(U.articleDel);
@@ -6085,10 +5986,10 @@ function Adm({token,posts,signals,onR}){
       }catch(e){}
     };
     pollSupport();
-    const i=setInterval(()=>{if(document.visibilityState!=="hidden")pollSupport()},15000);
+    const i=setInterval(pollSupport,15000);
     return()=>clearInterval(i);
   },[token,tb,admNoti]);
-  useEffect(()=>{if(tb==="users"){const loadUsers=()=>{api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};loadUsers();const ui=setInterval(()=>{if(document.visibilityState!=="hidden")loadUsers()},10000);fetch(`${SB}/rest/v1/Referrals?select=referrer_id,referred_id`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const counts={};d.forEach(r=>{counts[r.referrer_id]=(counts[r.referrer_id]||0)+1});setRefCounts(counts)}}).catch(()=>{});
+  useEffect(()=>{if(tb==="users"){const loadUsers=()=>{api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};loadUsers();const ui=setInterval(loadUsers,10000);fetch(`${SB}/rest/v1/Referrals?select=referrer_id,referred_id`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const counts={};d.forEach(r=>{counts[r.referrer_id]=(counts[r.referrer_id]||0)+1});setRefCounts(counts)}}).catch(()=>{});
   // Load last activity per user
   fetch(`${SB}/rest/v1/ActivityLog?order=login_date.desc&select=user_id,login_date,created_at`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const act={};d.forEach(a=>{if(!act[a.user_id])act[a.user_id]=a.created_at||a.login_date});setUserActivity(act)}}).catch(()=>{});
   // Load latest approved IB request per user (for wallet display)
@@ -6096,12 +5997,12 @@ function Adm({token,posts,signals,onR}){
   return()=>clearInterval(ui)}},[tb,token]);
   useEffect(()=>{if(tb==="msg"){api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}},[tb,token]);
   const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrls=[];for(const img of msgImgs){const u=await api.img(img,token);if(u)imgUrls.push(u);else{setMs(t.uploadFailed);setLd(false);return}}const imgUrl=imgUrls.join(",");await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null},token);if(msgDtCats.length>0){await api.add("Posts",{title:msgTitle,description:msgBody,category:"daytrade",dt_category:msgDtCats.join(","),image_url:imgUrl||"",is_premium:msgTarget==="premium",likes:0},token)}setMs("Message sent!");noti.sendPushToAll(msgTitle,msgBody,token,msgPushTarget);setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImgs([]);setMsgPvs([]);setMsgDayTrade(false);setMsgDtCats([]);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
-  const delMsg=async(id)=>{if(!(await window.fxConfirm("Delete?")))return;await api.del("Messages",id,token);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
+  const delMsg=async(id)=>{if(!confirm("Delete?"))return;await api.del("Messages",id,token);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const saveMsg=async(id)=>{if(!editMsgTitle||!editMsgBody)return;await api.patch("Messages",id,{title:editMsgTitle,body:editMsgBody,target:editMsgTarget},token);setEditMsgId(null);setMs("Message updated!");onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}const data={title:ti,description:de,category:ca,image_url:u,is_premium:pr,show_on_website:showOnWeb,likes:0};if(customDate&&postDate)data.created_at=new Date(postDate).toISOString();await api.add("Posts",data,token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);setCustomDate(false);setPostDate("");setShowOnWeb(false);onR();noti.notify("Fxscalproom","New analysis: "+ti);noti.sendPushToAll("Fxscalproom","New analysis: "+ti,token,postPushTarget)}catch(e){setMs(e.message)}setLd(false)};
   const pubS=async()=>{if(!pa||!en){setMs(t.enterPair);return}setLd(true);setMs("");try{let imgUrl="";if(sigImg){imgUrl=await api.img(sigImg,token);if(!imgUrl){setMs(t.uploadFailed);setLd(false);return}}const data={pair:pa,type:st,entry_price:en,take_profit:tp1,tp2:tp2||null,tp3:tp3||null,stop_loss:sl,status:"active",pnl:null,closed_at:null,is_premium:sigPr,signal_term:sigTerm,image_url:imgUrl||null};if(sigCustomDate&&sigDate)data.created_at=new Date(sigDate).toISOString();await api.add("Signals",data,token);setMs(t.signalPub);setPa("");setEn("");setTp1("");setTp2("");setTp3("");setSl("");setSigPr(false);setSigTerm("short");setSigCustomDate(false);setSigDate("");setSigImg(null);setSigImgPv(null);onR();noti.notify("Fxscalproom","New signal: "+pa+" "+st);noti.sendPushToAll("Fxscalproom","New signal: "+pa+" "+st,token,sigPushTarget)}catch(e){setMs(e.message)}setLd(false)};
-  const delP=async id=>{if(!(await window.fxConfirm("Delete?")))return;await api.del("Posts",id,token);onR()};
-  const delS=async id=>{if(!(await window.fxConfirm("Delete?")))return;await api.del("Signals",id,token);onR()};
+  const delP=async id=>{if(!confirm("Delete?"))return;await api.del("Posts",id,token);onR()};
+  const delS=async id=>{if(!confirm("Delete?"))return;await api.del("Signals",id,token);onR()};
   const setPremium=async(uid,expiry)=>{const data={membership:"premium"};if(expiry)data.premium_expires_at=new Date(expiry).toISOString();await api.patch("Users",uid,data,token);setMs(t.upgraded);setEditUserExp(null);setExpDate("");api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
   const setFree=async(uid)=>{await api.patch("Users",uid,{membership:"free",premium_expires_at:null,ib_active:false},token);setMs(t.downgraded);api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
   const updateExpiry=async(uid)=>{if(!expDate)return;await api.patch("Users",uid,{premium_expires_at:new Date(expDate).toISOString()},token);setMs("Expiry updated!");setEditUserExp(null);setExpDate("");api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
@@ -6119,7 +6020,7 @@ function Adm({token,posts,signals,onR}){
     }catch(e){setMs("Error: "+e.message)}
   };
   const revokeIB=async(uid)=>{
-    if(!(await window.fxConfirm("Revoke IB and downgrade to free?")))return;
+    if(!confirm("Revoke IB and downgrade to free?"))return;
     try{
       // Mark any approved IB request as revoked
       await fetch(`${SB}/rest/v1/IBRequests?user_id=eq.${uid}&status=eq.approved`,{method:"PATCH",headers:H(token),body:JSON.stringify({status:"revoked"})});
@@ -6559,7 +6460,7 @@ function SupportChat({userId,token,onClose}){
     }catch(e){}
     setLoading(false);
   },[userId,token]);
-  useEffect(()=>{load();const i=setInterval(()=>{if(document.visibilityState!=="hidden")load()},5000);return()=>clearInterval(i)},[load]);
+  useEffect(()=>{load();const i=setInterval(load,5000);return()=>clearInterval(i)},[load]);
   useEffect(()=>{scrollToBottom()},[msgs.length]);
   const send=async()=>{
     const m=txt.trim();if(!m)return;
@@ -6689,7 +6590,7 @@ function AdminSupportChat({token}){
     }catch(e){}
   },[selUser,token]);
 
-  useEffect(()=>{if(selUser){loadMsgs();const tick=()=>{if(document.visibilityState!=="hidden")loadMsgs()};const i=setInterval(tick,4000);return()=>clearInterval(i)}},[selUser,loadMsgs]);
+  useEffect(()=>{if(selUser){loadMsgs();const i=setInterval(loadMsgs,4000);return()=>clearInterval(i)}},[selUser,loadMsgs]);
   useEffect(()=>{scrollToBottom()},[msgs.length]);
 
   const send=async()=>{
@@ -7096,9 +6997,9 @@ function AdminSessionsManager({userId,token,lang,currentDeviceId,currentDeviceLa
   };
   const revokeSession=async(deviceId)=>{
     if(deviceId===currentDeviceId){
-      if(!(await window.fxConfirm(lang==="fa"?"این دستگاه فعلی شماست! مطمئنی می‌خوای حذف کنی؟":"This is your current device! Revoke anyway?")))return;
+      if(!confirm(lang==="fa"?"این دستگاه فعلی شماست! مطمئنی می‌خوای حذف کنی؟":"This is your current device! Revoke anyway?"))return;
     } else {
-      if(!(await window.fxConfirm(lang==="fa"?"این نشست حذف بشه؟":"Revoke this session?")))return;
+      if(!confirm(lang==="fa"?"این نشست حذف بشه؟":"Revoke this session?"))return;
     }
     setProcessing(deviceId);
     try{
@@ -7297,7 +7198,6 @@ function PushPromptBanner({userId,token,lang}){
     try{
       const ok=await noti.enable();
       if('Notification' in window)setPermState(Notification.permission||"default");
-      if(ok){window.fxHaptic&&window.fxHaptic("success")}
       if(!ok){setBusy(false)}
     }catch(e){setBusy(false)}
   };
@@ -7399,7 +7299,7 @@ function App(){
   },[refreshSession]);
   useEffect(()=>{if(tk)load()},[tk,load]);
   useEffect(()=>{if(tk&&usr)chk(usr,tk)},[tk,usr,chk]);
-  useEffect(()=>{if(tk){const tick=()=>{if(document.visibilityState!=="hidden"){load();if(usr)chk(usr,tk)}};const i=setInterval(tick,30000);const onVis=()=>{if(document.visibilityState==="visible"){load();if(usr)chk(usr,tk)}};document.addEventListener("visibilitychange",onVis);return()=>{clearInterval(i);document.removeEventListener("visibilitychange",onVis)}}},[tk,usr,load,chk]);
+  useEffect(()=>{if(tk){const i=setInterval(()=>{load();if(usr)chk(usr,tk)},30000);return()=>clearInterval(i)}},[tk,usr,load,chk]);
   // Re-fetch profile when coming back online (handles transient network drops)
   useEffect(()=>{if(online&&tk&&usr)chk(usr,tk)},[online,tk,usr,chk]);
   const{PTR}=usePullToRefresh(load);
@@ -7442,7 +7342,7 @@ function App(){
   const VT=AT.filter(tab=>!tab.ao||adm);
   const st=Math.min(tab,VT.length-1);
   const cur=VT[st];
-  const goTab=i=>{setTab(i);clearBadge(VT[i]?.k);window.fxHaptic&&window.fxHaptic("light")};
+  const goTab=i=>{setTab(i);clearBadge(VT[i]?.k)};
   const goToTabByKey=(k)=>{const idx=VT.findIndex(t=>t.k===k);if(idx>=0)goTab(idx)};
   const scr=()=>{switch(cur?.k){
     case"home":return<Home posts={posts} signals={sigs} msgs={msgs} stories={stories} go={goTab} goToPlans={()=>goToTabByKey("plans")} P={P} ok={ok} lastUpdate={lastUpdate} dark={dark} toggle={toggle} userProfile={up} token={tk} onR={load} online={online}/>;
@@ -7472,8 +7372,8 @@ function App(){
           {tk&&usr&&<PushPromptBanner userId={usr?.id} token={tk} lang={lang}/>}
           {scr()}
         </div>
-        <div className="tb" id="fxtb" role="tablist">{VT.map((tab,i)=>
-          <div key={i} className={`ti${st===i?" ti-active":""}`} onClick={()=>goTab(i)} style={{color:st===i?"var(--B)":"var(--dm)"}} role="tab" aria-label={tab.l} aria-selected={st===i}>
+        <div className="tb" id="fxtb">{VT.map((tab,i)=>
+          <div key={i} className={`ti${st===i?" ti-active":""}`} onClick={()=>goTab(i)} style={{color:st===i?"var(--B)":"var(--dm)"}}>
             <div style={{position:"relative"}}>
               {tab.i}
               {tab.badge>0&&st!==i&&<div className="nb"/>}
@@ -7485,31 +7385,7 @@ function App(){
     </LangCtx.Provider>
   );
 }
-/* ─── Error Boundary ─── */
-/* Catches React errors to prevent the entire app from going blank. */
-class ErrorBoundary extends React.Component{
-  constructor(props){super(props);this.state={hasError:false,error:null}}
-  static getDerivedStateFromError(error){return{hasError:true,error:error}}
-  componentDidCatch(error,info){try{console.error("App error:",error,info)}catch(e){}}
-  reset=()=>{this.setState({hasError:false,error:null})}
-  reload=()=>{try{window.location.reload()}catch(e){}}
-  render(){
-    if(this.state.hasError){
-      return React.createElement("div",{style:{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 20px",textAlign:"center",fontFamily:"Inter,system-ui,sans-serif",color:"var(--tx,#1d1d1f)",background:"var(--bg,#f5f5f7)"}},
-        React.createElement("div",{style:{fontSize:48,marginBottom:12}},"⚠️"),
-        React.createElement("div",{style:{fontSize:18,fontWeight:700,marginBottom:8}},"مشکلی پیش آمد / Something went wrong"),
-        React.createElement("div",{style:{fontSize:13,color:"var(--mu,#86868b)",marginBottom:20,maxWidth:320,lineHeight:1.5}},"اپلیکیشن با خطایی مواجه شد. لطفاً دوباره امتحان کنید.\nThe app encountered an error. Please try again."),
-        React.createElement("div",{style:{display:"flex",gap:10}},
-          React.createElement("button",{onClick:this.reset,style:{padding:"10px 20px",borderRadius:10,background:"var(--B,#0071e3)",color:"#fff",fontSize:13,fontWeight:600,border:"none",cursor:"pointer"}},"تلاش مجدد / Try Again"),
-          React.createElement("button",{onClick:this.reload,style:{padding:"10px 20px",borderRadius:10,background:"rgba(0,0,0,.06)",color:"var(--tx,#1d1d1f)",fontSize:13,fontWeight:600,border:"none",cursor:"pointer"}},"بارگذاری مجدد / Reload")
-        )
-      );
-    }
-    return this.props.children;
-  }
-}
-
-ReactDOM.render(<ErrorBoundary><App/></ErrorBoundary>,document.getElementById("root"));
+ReactDOM.render(<App/>,document.getElementById("root"));
 
 // مخفی کردن splash screen بعد از mount شدن React
 requestAnimationFrame(()=>{
@@ -7519,85 +7395,6 @@ requestAnimationFrame(()=>{
     setTimeout(()=>splash.remove(),500);
   }
 });
-</script>
-<script>
-/* Auto-cleanup for createObjectURL to prevent memory leaks.
-   Wraps URL.createObjectURL to track created URLs and revoke old ones when new ones are made. */
-(function(){
-  if(typeof URL==="undefined"||!URL.createObjectURL)return;
-  var orig=URL.createObjectURL.bind(URL);
-  var tracked=[];
-  var MAX_URLS=20;
-  URL.createObjectURL=function(obj){
-    var url=orig(obj);
-    tracked.push({url:url,ts:Date.now()});
-    // Keep only last N; revoke oldest
-    while(tracked.length>MAX_URLS){
-      var old=tracked.shift();
-      try{URL.revokeObjectURL(old.url)}catch(e){}
-    }
-    // Also revoke URLs older than 5 min (likely abandoned previews)
-    var cutoff=Date.now()-5*60*1000;
-    tracked=tracked.filter(function(t){
-      if(t.ts<cutoff){try{URL.revokeObjectURL(t.url)}catch(e){}return false}
-      return true;
-    });
-    return url;
-  };
-})();
-
-/* Auto lazy-loading + error fallback for all <img> tags.
-   Uses MutationObserver so new images (added dynamically by React) get it too. */
-(function(){
-  if(!('MutationObserver' in window))return;
-  var applied=new WeakSet();
-  function enhance(img){
-    if(applied.has(img))return;
-    applied.add(img);
-    if(!img.hasAttribute('loading'))img.setAttribute('loading','lazy');
-    if(!img.hasAttribute('decoding'))img.setAttribute('decoding','async');
-    if(!img.dataset.errHandled){
-      img.dataset.errHandled='1';
-      img.addEventListener('error',function(){
-        if(img.dataset.fallbackApplied)return;
-        img.dataset.fallbackApplied='1';
-        img.style.opacity='0';
-        var parent=img.parentElement;
-        if(parent&&!parent.dataset.imgFallback){
-          parent.dataset.imgFallback='1';
-          var ph=document.createElement('div');
-          ph.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg2);color:var(--dm);font-size:24px;font-weight:600;pointer-events:none';
-          ph.textContent='📊';
-          if(getComputedStyle(parent).position==='static')parent.style.position='relative';
-          parent.appendChild(ph);
-        }
-      },{once:true});
-    }
-  }
-  function scan(root){
-    if(!root||!root.querySelectorAll)return;
-    if(root.tagName==='IMG')enhance(root);
-    var imgs=root.querySelectorAll('img');
-    for(var i=0;i<imgs.length;i++)enhance(imgs[i]);
-  }
-  // Initial scan
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',function(){scan(document.body)});
-  }else{scan(document.body)}
-  // Watch for new images added by React
-  var obs=new MutationObserver(function(muts){
-    for(var i=0;i<muts.length;i++){
-      var m=muts[i];
-      if(m.addedNodes){
-        for(var j=0;j<m.addedNodes.length;j++){
-          var n=m.addedNodes[j];
-          if(n.nodeType===1)scan(n);
-        }
-      }
-    }
-  });
-  obs.observe(document.body||document.documentElement,{childList:true,subtree:true});
-})();
 </script>
 <script>
 if('serviceWorker' in navigator){
