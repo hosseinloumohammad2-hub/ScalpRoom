@@ -2811,8 +2811,17 @@ function DailyActiveCounter({token}){
   const{val}=useAppSetting("daily_active_count",token);
   const num=parseInt(val,10);
   if(!num||isNaN(num)||num<=0)return null;
-  const label={fa:"فعال امروز",ar:"نشط اليوم",tr:"Bugün aktif",ru:"Активны сегодня",es:"Activos hoy"}[lang]||"Active today";
-  return<span style={{fontSize:11,color:"var(--tx2)",fontWeight:500,display:"flex",alignItems:"center",gap:4}}>{AE.users}<span className="m" style={{fontWeight:600}}>{num}</span><span style={{color:"var(--mu)",fontWeight:500}}>{label}</span></span>;
+  // Persian/Arabic phrasing: "<N> تریدر امروز آنلاین" — number comes first, then text
+  const labels={
+    fa:{before:"",after:"تریدر امروز آنلاین"},
+    ar:{before:"",after:"متداول متصل اليوم"},
+    tr:{before:"",after:"trader bugün online"},
+    ru:{before:"",after:"трейдеров онлайн сегодня"},
+    es:{before:"",after:"traders online hoy"},
+    en:{before:"",after:"traders online today"}
+  };
+  const L=labels[lang]||labels.en;
+  return<span style={{fontSize:11,color:"var(--tx2)",fontWeight:500,display:"flex",alignItems:"center",gap:5}}>{AE.users}<span className="m" style={{fontWeight:600}}>{num}</span><span style={{color:"var(--mu)",fontWeight:500}}>{L.after}</span></span>;
 }
 
 /* ─── Next High-Impact News Event (Forex Factory) ─── */
