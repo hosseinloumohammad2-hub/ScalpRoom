@@ -2812,34 +2812,7 @@ function DailyActiveCounter({token}){
   const num=parseInt(val,10);
   if(!num||isNaN(num)||num<=0)return null;
   const label={fa:"فعال امروز",ar:"نشط اليوم",tr:"Bugün aktif",ru:"Активны сегодня",es:"Activos hoy"}[lang]||"Active today";
-  return<span className="m" style={{fontSize:11,color:"var(--tx2)",fontWeight:500,display:"flex",alignItems:"center",gap:4}}>{AE.users} {num} <span style={{color:"var(--mu)",fontWeight:400,fontFamily:"inherit"}}>{label}</span></span>;
-}
-
-/* ─── Live Seconds (running clock under the greeting card) ─── */
-function LiveSeconds(){
-  const{lang}=useLang();
-  const[s,setS]=useState(0);
-  useEffect(()=>{
-    // Seconds since midnight (resets daily) — gives a live, ever-changing counter feel
-    const tick=()=>{
-      const d=new Date();
-      setS(d.getHours()*3600+d.getMinutes()*60+d.getSeconds());
-    };
-    tick();
-    const i=setInterval(tick,1000);
-    return()=>clearInterval(i);
-  },[]);
-  const hh=String(Math.floor(s/3600)).padStart(2,"0");
-  const mm=String(Math.floor((s%3600)/60)).padStart(2,"0");
-  const ss=String(s%60).padStart(2,"0");
-  const label={fa:"در حال فعالیت",ar:"نشط الآن",tr:"Şu an aktif",ru:"Активность",es:"En actividad"}[lang]||"Session time";
-  return<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:10,padding:"8px 12px",background:"color-mix(in srgb,var(--G) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 14%,transparent)",borderRadius:10}}>
-    <span style={{fontSize:11,color:"var(--tx2)",fontWeight:600,display:"flex",alignItems:"center",gap:6}}>
-      <span style={{display:"inline-block",width:6,height:6,borderRadius:"50%",background:"var(--G)",animation:"pl 2s infinite"}}/>
-      {label}
-    </span>
-    <span className="m" style={{fontSize:13,fontWeight:700,color:"var(--G)",letterSpacing:"-.3px"}}>{hh}:{mm}:{ss}</span>
-  </div>;
+  return<span style={{fontSize:11,color:"var(--tx2)",fontWeight:500,display:"flex",alignItems:"center",gap:4}}>{AE.users}<span className="m" style={{fontWeight:600}}>{num}</span><span style={{color:"var(--mu)",fontWeight:500}}>{label}</span></span>;
 }
 
 /* ─── Next High-Impact News Event (Forex Factory) ─── */
@@ -3103,7 +3076,6 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
         <div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/><DailyActiveCounter token={token}/><OnlineCounter token={token} isAdmin={userProfile?.role==="admin"}/>
         <div onClick={toggle} style={{marginLeft:"auto",cursor:"pointer",color:"var(--mu)",padding:4}}>{dark?IC.sun:IC.moon}</div>
       </div>
-      <LiveSeconds/>
       <NextRedEvent isAdmin={userProfile?.role==="admin"} isPrimary={sessionIsPrimary} token={token}/>
     </div>}
     {/* Story Viewer Fullscreen */}
