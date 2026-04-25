@@ -2805,6 +2805,43 @@ function OnlineCounter({token,isAdmin}){
   return<span className="m" style={{fontSize:11,color:"var(--tx2)",fontWeight:500}}>{count} {AE.users}</span>;
 }
 
+/* ─── Daily Active Counter (admin-controlled, stored in AppSettings) ─── */
+function DailyActiveCounter({token}){
+  const{lang}=useLang();
+  const{val}=useAppSetting("daily_active_count",token);
+  const num=parseInt(val,10);
+  if(!num||isNaN(num)||num<=0)return null;
+  const label={fa:"فعال امروز",ar:"نشط اليوم",tr:"Bugün aktif",ru:"Активны сегодня",es:"Activos hoy"}[lang]||"Active today";
+  return<span className="m" style={{fontSize:11,color:"var(--tx2)",fontWeight:500,display:"flex",alignItems:"center",gap:4}}>{AE.users} {num} <span style={{color:"var(--mu)",fontWeight:400,fontFamily:"inherit"}}>{label}</span></span>;
+}
+
+/* ─── Live Seconds (running clock under the greeting card) ─── */
+function LiveSeconds(){
+  const{lang}=useLang();
+  const[s,setS]=useState(0);
+  useEffect(()=>{
+    // Seconds since midnight (resets daily) — gives a live, ever-changing counter feel
+    const tick=()=>{
+      const d=new Date();
+      setS(d.getHours()*3600+d.getMinutes()*60+d.getSeconds());
+    };
+    tick();
+    const i=setInterval(tick,1000);
+    return()=>clearInterval(i);
+  },[]);
+  const hh=String(Math.floor(s/3600)).padStart(2,"0");
+  const mm=String(Math.floor((s%3600)/60)).padStart(2,"0");
+  const ss=String(s%60).padStart(2,"0");
+  const label={fa:"در حال فعالیت",ar:"نشط الآن",tr:"Şu an aktif",ru:"Активность",es:"En actividad"}[lang]||"Session time";
+  return<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:10,padding:"8px 12px",background:"color-mix(in srgb,var(--G) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 14%,transparent)",borderRadius:10}}>
+    <span style={{fontSize:11,color:"var(--tx2)",fontWeight:600,display:"flex",alignItems:"center",gap:6}}>
+      <span style={{display:"inline-block",width:6,height:6,borderRadius:"50%",background:"var(--G)",animation:"pl 2s infinite"}}/>
+      {label}
+    </span>
+    <span className="m" style={{fontSize:13,fontWeight:700,color:"var(--G)",letterSpacing:"-.3px"}}>{hh}:{mm}:{ss}</span>
+  </div>;
+}
+
 /* ─── Next High-Impact News Event (Forex Factory) ─── */
 const FF_CACHE_KEY="fx_ff_cache_v1";
 const FF_CACHE_HOURS=6;// refresh once every 6 hours
@@ -3063,9 +3100,10 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
         </div>
       </div>
       <div style={{display:"flex",alignItems:"center",gap:8,marginTop:14}}>
-        <div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/><OnlineCounter token={token} isAdmin={userProfile?.role==="admin"}/>
+        <div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/><DailyActiveCounter token={token}/><OnlineCounter token={token} isAdmin={userProfile?.role==="admin"}/>
         <div onClick={toggle} style={{marginLeft:"auto",cursor:"pointer",color:"var(--mu)",padding:4}}>{dark?IC.sun:IC.moon}</div>
       </div>
+      <LiveSeconds/>
       <NextRedEvent isAdmin={userProfile?.role==="admin"} isPrimary={sessionIsPrimary} token={token}/>
     </div>}
     {/* Story Viewer Fullscreen */}
@@ -6052,8 +6090,8 @@ function Adm({token,posts,signals,onR}){
         })}
       </div>
       <div style={{display:"flex",gap:4}}>
-        {["ib","report","giveaway","ai"].map(tab=>{
-          const labels={ib:"IB",report:lang==="fa"?"گزارش":"Report",giveaway:"🎰",ai:"🧠 AI"};
+        {["ib","report","giveaway","ai","active"].map(tab=>{
+          const labels={ib:"IB",report:lang==="fa"?"گزارش":"Report",giveaway:"🎰",ai:"🧠 AI",active:lang==="fa"?"👥 آنلاین":"👥 Active"};
           const isAI=tab==="ai";
           return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?(isAI?"color-mix(in srgb,var(--purple) 12%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)"):"transparent",border:`1px solid ${tb===tab?(isAI?"color-mix(in srgb,var(--purple) 25%,transparent)":"color-mix(in srgb,var(--R) 25%,transparent)"):"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?(isAI?"var(--purple)":"var(--R)"):"var(--mu)"}}>{labels[tab]}</div>
         })}
@@ -6353,6 +6391,7 @@ function Adm({token,posts,signals,onR}){
     {tb==="blog"&&<AdminBlog token={token} onR={onR}/>}
     {tb==="giveaway"&&<AdminGiveaway token={token}/>}
     {tb==="ai"&&<AdminAI token={token}/>}
+    {tb==="active"&&<AdminActiveCount token={token}/>}
     {tb==="msg"&&<>
       <div style={{fontSize:13,fontWeight:700,marginBottom:10}}>{lang==="fa"?"📬 ارسال پیام":"📬 Send Message"}</div>
       <input className="ip" placeholder={lang==="fa"?"عنوان پیام":"Message title"} value={msgTitle} onChange={e=>setMsgTitle(e.target.value)}/>
@@ -6967,6 +7006,56 @@ function AdminGiveaway({token}){
 
     {msg&&<div style={{marginTop:8,fontSize:11,fontWeight:600,color:"var(--G)",textAlign:"center"}}>{msg}</div>}
   </div>);
+}
+
+/* ─── Admin: Daily Active Count Manager ─── */
+function AdminActiveCount({token}){
+  const{lang}=useLang();
+  const{val,loading,update}=useAppSetting("daily_active_count",token);
+  const[input,setInput]=useState("");
+  const[msg,setMsg]=useState("");
+  const[saving,setSaving]=useState(false);
+  useEffect(()=>{if(val!==null&&val!==undefined)setInput(String(val))},[val]);
+  const save=async()=>{
+    const n=parseInt(input,10);
+    if(isNaN(n)||n<0){setMsg(lang==="fa"?"عدد نامعتبر":"Invalid number");return}
+    setSaving(true);
+    await update(String(n));
+    setSaving(false);
+    setMsg(lang==="fa"?"ذخیره شد ✓":"Saved ✓");
+    setTimeout(()=>setMsg(""),2000);
+  };
+  const clear=async()=>{
+    setSaving(true);
+    await update("0");
+    setInput("0");
+    setSaving(false);
+    setMsg(lang==="fa"?"غیرفعال شد":"Hidden");
+    setTimeout(()=>setMsg(""),2000);
+  };
+  const title=lang==="fa"?"👥 تعداد فعال امروز":"👥 Daily Active Count";
+  const desc=lang==="fa"?"این عدد برای همه کاربران در صفحه خانه نمایش داده می‌شود. هر روز یک عدد جدید وارد کنید (مثلاً ۴۰ تا ۹۲).":"This number is shown to all users on the Home screen. Enter a new value each day (e.g. 40 to 92).";
+  const labelInput=lang==="fa"?"عدد فعال امروز":"Active count for today";
+  const btnSave=lang==="fa"?"ذخیره":"Save";
+  const btnHide=lang==="fa"?"مخفی کردن":"Hide";
+  const currentLabel=lang==="fa"?"مقدار فعلی:":"Current value:";
+  return<div>
+    <div style={{fontSize:14,fontWeight:700,marginBottom:6}}>{title}</div>
+    <div style={{fontSize:11,color:"var(--mu)",marginBottom:14,lineHeight:1.6}}>{desc}</div>
+    <div className="cd" style={{padding:14,marginBottom:12}}>
+      <div style={{fontSize:11,color:"var(--tx2)",fontWeight:600,marginBottom:8}}>{currentLabel} <span className="m" style={{color:"var(--B)",fontWeight:700,fontSize:14,marginLeft:6}}>{loading?"...":(val||"—")}</span></div>
+      <label style={{fontSize:11,color:"var(--mu)",fontWeight:600,display:"block",marginBottom:6}}>{labelInput}</label>
+      <input className="ip" type="number" inputMode="numeric" min="0" max="9999" value={input} onChange={e=>setInput(e.target.value)} placeholder="65" style={{marginBottom:10}}/>
+      <div style={{display:"flex",gap:8}}>
+        <button className="bt" onClick={save} disabled={saving} style={{flex:1,background:"var(--B)",color:"#fff",fontWeight:700,fontSize:13,padding:"11px 14px",borderRadius:10,opacity:saving?.6:1}}>{saving?"...":btnSave}</button>
+        <button className="bt" onClick={clear} disabled={saving} style={{background:"var(--bg2)",color:"var(--mu)",border:"1px solid var(--brd)",fontWeight:600,fontSize:12,padding:"11px 14px",borderRadius:10,opacity:saving?.6:1}}>{btnHide}</button>
+      </div>
+      {msg&&<div style={{marginTop:10,fontSize:11,fontWeight:600,color:"var(--G)",textAlign:"center"}}>{msg}</div>}
+    </div>
+    <div style={{fontSize:10,color:"var(--mu)",lineHeight:1.6,padding:"0 4px"}}>
+      {lang==="fa"?"💡 پیشنهاد: هر روز صبح یک عدد متفاوت وارد کنید — مثلاً ۴۸، ۶۷، ۸۲، ۵۵ — تا واقعی‌تر به نظر برسد.":"💡 Tip: Enter a different number each day — e.g. 48, 67, 82, 55 — to feel more natural."}
+    </div>
+  </div>;
 }
 
 /* ─── Profile ─── */
