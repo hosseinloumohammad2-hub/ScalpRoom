@@ -3073,9 +3073,10 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
         </div>
       </div>
       <div style={{display:"flex",alignItems:"center",gap:8,marginTop:14}}>
-        <div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/><DailyActiveCounter token={token}/><OnlineCounter token={token} isAdmin={userProfile?.role==="admin"}/>
+        <div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/><OnlineCounter token={token} isAdmin={userProfile?.role==="admin"}/>
         <div onClick={toggle} style={{marginLeft:"auto",cursor:"pointer",color:"var(--mu)",padding:4}}>{dark?IC.sun:IC.moon}</div>
       </div>
+      <div style={{marginTop:8}}><DailyActiveCounter token={token}/></div>
       <NextRedEvent isAdmin={userProfile?.role==="admin"} isPrimary={sessionIsPrimary} token={token}/>
     </div>}
     {/* Story Viewer Fullscreen */}
