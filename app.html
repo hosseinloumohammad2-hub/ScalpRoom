@@ -2780,6 +2780,13 @@ function LiveClock(){
   return<span className="m" style={{fontSize:11,color:"var(--tx2)",fontWeight:500}}>{time.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</span>;
 }
 
+/* Big green live clock — used inside the live status box */
+function BigLiveClock(){
+  const[time,setTime]=useState(new Date());
+  useEffect(()=>{const i=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(i)},[]);
+  return<span className="m" style={{fontSize:14,color:"var(--G)",fontWeight:700,letterSpacing:"-.3px"}}>{time.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false})}</span>;
+}
+
 function useOnlineCount(token){
   const[count,setCount]=useState(0);
   useEffect(()=>{
@@ -3081,11 +3088,16 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
           {unreadCount>0&&<div style={{position:"absolute",top:2,right:2,width:8,height:8,borderRadius:"50%",background:"var(--R)",border:"2px solid var(--bg)"}}/>}
         </div>
       </div>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginTop:14}}>
-        <div className="ld"/><span style={{fontSize:11,color:"var(--G)",fontWeight:600}}>{t.live}</span><LiveClock/><OnlineCounter token={token} isAdmin={userProfile?.role==="admin"}/>
-        <div onClick={toggle} style={{marginLeft:"auto",cursor:"pointer",color:"var(--mu)",padding:4}}>{dark?IC.sun:IC.moon}</div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:14,padding:"10px 14px",background:"color-mix(in srgb,var(--G) 7%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 16%,transparent)",borderRadius:12,gap:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0}}>
+          <span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",background:"var(--G)",animation:"pl 2s infinite",flexShrink:0}}/>
+          <span style={{fontSize:11,color:"var(--G)",fontWeight:700,letterSpacing:"-.1px"}}>{t.live}</span>
+          <BigLiveClock/>
+          <DailyActiveCounter token={token}/>
+          <OnlineCounter token={token} isAdmin={userProfile?.role==="admin"}/>
+        </div>
+        <div onClick={toggle} style={{cursor:"pointer",color:"var(--mu)",padding:2,flexShrink:0,display:"flex",alignItems:"center"}}>{dark?IC.sun:IC.moon}</div>
       </div>
-      <div style={{marginTop:8}}><DailyActiveCounter token={token}/></div>
       <NextRedEvent isAdmin={userProfile?.role==="admin"} isPrimary={sessionIsPrimary} token={token}/>
     </div>}
     {/* Story Viewer Fullscreen */}
