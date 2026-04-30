@@ -207,6 +207,51 @@ const T={
 const LangCtx=createContext();
 function useLang(){return useContext(LangCtx)}
 
+/* ─── Smart Interval Hook ─── 
+   Pauses polling when tab is hidden to save Supabase requests, reduce
+   bandwidth, and improve performance. Resumes immediately when tab is
+   re-focused, and runs the callback once on resume to refresh stale data. */
+function useSmartInterval(callback,delay,deps=[]){
+  const savedRef=React.useRef(callback);
+  React.useEffect(()=>{savedRef.current=callback},[callback]);
+  React.useEffect(()=>{
+    if(delay==null)return;
+    let id=null;
+    const tick=()=>{try{savedRef.current()}catch(e){}};
+    const start=()=>{if(id==null)id=setInterval(tick,delay)};
+    const stop=()=>{if(id!=null){clearInterval(id);id=null}};
+    const onVis=()=>{
+      if(document.hidden){stop()}
+      else{tick();start()}
+    };
+    if(!document.hidden)start();
+    document.addEventListener("visibilitychange",onVis);
+    return()=>{stop();document.removeEventListener("visibilitychange",onVis)};
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[delay,...deps]);
+}
+
+/* ─── Shared Clock Context ─── 
+   One single setInterval drives all clock displays in the app. Pauses
+   automatically when tab is hidden. Replaces 4 separate per-second
+   intervals (LiveClock, BigLiveClock, news countdown tick, etc.) */
+const ClockCtx=React.createContext(new Date());
+function ClockProvider({children}){
+  const[time,setTime]=useState(new Date());
+  React.useEffect(()=>{
+    let id=null;
+    const tick=()=>setTime(new Date());
+    const start=()=>{if(id==null)id=setInterval(tick,1000)};
+    const stop=()=>{if(id!=null){clearInterval(id);id=null}};
+    const onVis=()=>{if(document.hidden){stop()}else{tick();start()}};
+    if(!document.hidden)start();
+    document.addEventListener("visibilitychange",onVis);
+    return()=>{stop();document.removeEventListener("visibilitychange",onVis)};
+  },[]);
+  return React.createElement(ClockCtx.Provider,{value:time},children);
+}
+function useSharedClock(){return useContext(ClockCtx)}
+
 /* ─── API ─── */
 const api={
   up:(e,p)=>fetch(`${SB}/auth/v1/signup`,{method:"POST",headers:{apikey:SK,"Content-Type":"application/json"},body:JSON.stringify({email:e,password:p})}).then(r=>r.json()),
@@ -364,7 +409,8 @@ function usePrices(){
     }catch(e){}
   },[]);
 
-  useEffect(()=>{f();const i=setInterval(f,60000);return()=>clearInterval(i)},[f]);
+  useEffect(()=>{f()},[f]);
+  useSmartInterval(()=>{f()},60000,[f]);
   return{P,ok,lastUpdate};
 }
 
@@ -487,7 +533,7 @@ function TVEconomicCalendar({colorTheme}){
 /* ─── Market Sessions ─── */
 function MarketSessions(){
   const[now,setNow]=useState(new Date());
-  useEffect(()=>{const i=setInterval(()=>setNow(new Date()),10000);return()=>clearInterval(i)},[]);
+  useSmartInterval(()=>setNow(new Date()),10000);
   const utcH=now.getUTCHours(),utcM=now.getUTCMinutes();
   const t=utcH*60+utcM;
   const day=now.getUTCDay();
@@ -2775,34 +2821,29 @@ function Auth({onAuth,lang,setLang}){
 }
 
 function LiveClock(){
-  const[time,setTime]=useState(new Date());
-  useEffect(()=>{const i=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(i)},[]);
+  const time=useSharedClock();
   return<span className="m" style={{fontSize:11,color:"var(--tx2)",fontWeight:500}}>{time.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</span>;
 }
 
 /* Big green live clock — used inside the live status box */
 function BigLiveClock(){
-  const[time,setTime]=useState(new Date());
-  useEffect(()=>{const i=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(i)},[]);
+  const time=useSharedClock();
   return<span className="m" style={{fontSize:14,color:"var(--G)",fontWeight:700,letterSpacing:"-.3px"}}>{time.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false})}</span>;
 }
 
 function useOnlineCount(token){
   const[count,setCount]=useState(0);
-  useEffect(()=>{
+  const fetchCount=React.useCallback(async()=>{
     if(!token)return;
-    const fetchCount=async()=>{
-      try{
-        const fiveMinAgo=new Date(Date.now()-5*60*1000).toISOString();
-        const r=await fetch(`${SB}/rest/v1/Users?last_seen=gte.${fiveMinAgo}&select=id`,{headers:H(token)});
-        const d=await r.json();
-        setCount(Array.isArray(d)?d.length:0);
-      }catch(e){setCount(0)}
-    };
-    fetchCount();
-    const i=setInterval(fetchCount,10000);
-    return()=>clearInterval(i);
+    try{
+      const fiveMinAgo=new Date(Date.now()-5*60*1000).toISOString();
+      const r=await fetch(`${SB}/rest/v1/Users?last_seen=gte.${fiveMinAgo}&select=id`,{headers:H(token)});
+      const d=await r.json();
+      setCount(Array.isArray(d)?d.length:0);
+    }catch(e){setCount(0)}
   },[token]);
+  useEffect(()=>{if(token)fetchCount()},[token,fetchCount]);
+  useSmartInterval(fetchCount,token?10000:null,[token,fetchCount]);
   return count;
 }
 
@@ -2898,8 +2939,14 @@ function NextRedEvent({isAdmin,token,isPrimary}){
   },[]);
   useEffect(()=>{
     if(!evt)return;
-    const i=setInterval(()=>setTick(x=>x+1),1000);
-    return()=>clearInterval(i);
+    let id=null;
+    const tick=()=>setTick(x=>x+1);
+    const start=()=>{if(id==null)id=setInterval(tick,1000)};
+    const stop=()=>{if(id!=null){clearInterval(id);id=null}};
+    const onVis=()=>{if(document.hidden){stop()}else{tick();start()}};
+    if(!document.hidden)start();
+    document.addEventListener("visibilitychange",onVis);
+    return()=>{stop();document.removeEventListener("visibilitychange",onVis)};
   },[evt]);
   // 5-min push notification (admin + PRIMARY device only, broadcasted to all users)
   // Uses localStorage to persist "already notified" across reloads
@@ -3768,7 +3815,8 @@ function usePromo(token){
       setPromo(null);
     }catch(e){setPromo(null)}
   },[token]);
-  useEffect(()=>{load();const i=setInterval(load,60000);return()=>clearInterval(i)},[load]);
+  useEffect(()=>{load()},[load]);
+  useSmartInterval(load,60000,[load]);
   return{promo,reloadPromo:load};
 }
 
@@ -3780,7 +3828,14 @@ function Countdown({endDate}){
       const diff=Math.max(0,new Date(endDate)-new Date());
       setLeft({d:Math.floor(diff/86400000),h:Math.floor((diff%86400000)/3600000),m:Math.floor((diff%3600000)/60000),s:Math.floor((diff%60000)/1000)});
     };
-    calc();const i=setInterval(calc,1000);return()=>clearInterval(i);
+    calc();
+    let i=null;
+    const start=()=>{if(i==null)i=setInterval(calc,1000)};
+    const stop=()=>{if(i!=null){clearInterval(i);i=null}};
+    const onVis=()=>{if(document.hidden){stop()}else{calc();start()}};
+    if(!document.hidden)start();
+    document.addEventListener("visibilitychange",onVis);
+    return()=>{stop();document.removeEventListener("visibilitychange",onVis)};
   },[endDate]);
   const Box=({v,l})=><div style={{textAlign:"center",flex:1}}>
     <div className="m" style={{fontSize:22,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 8%,transparent)",borderRadius:10,padding:"8px 0"}}>{String(v).padStart(2,"0")}</div>
@@ -6015,15 +6070,20 @@ function Adm({token,posts,signals,onR}){
       }catch(e){}
     };
     pollSupport();
-    const i=setInterval(pollSupport,15000);
-    return()=>clearInterval(i);
+    let i=null;
+    const start=()=>{if(i==null)i=setInterval(pollSupport,15000)};
+    const stop=()=>{if(i!=null){clearInterval(i);i=null}};
+    const onVis=()=>{if(document.hidden){stop()}else{pollSupport();start()}};
+    if(!document.hidden)start();
+    document.addEventListener("visibilitychange",onVis);
+    return()=>{stop();document.removeEventListener("visibilitychange",onVis)};
   },[token,tb,admNoti]);
-  useEffect(()=>{if(tb==="users"){const loadUsers=()=>{api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};loadUsers();const ui=setInterval(loadUsers,10000);fetch(`${SB}/rest/v1/Referrals?select=referrer_id,referred_id`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const counts={};d.forEach(r=>{counts[r.referrer_id]=(counts[r.referrer_id]||0)+1});setRefCounts(counts)}}).catch(()=>{});
+  useEffect(()=>{if(tb==="users"){const loadUsers=()=>{api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};loadUsers();let ui=null;const startUi=()=>{if(ui==null)ui=setInterval(loadUsers,10000)};const stopUi=()=>{if(ui!=null){clearInterval(ui);ui=null}};const onVisUi=()=>{if(document.hidden){stopUi()}else{loadUsers();startUi()}};if(!document.hidden)startUi();document.addEventListener("visibilitychange",onVisUi);fetch(`${SB}/rest/v1/Referrals?select=referrer_id,referred_id`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const counts={};d.forEach(r=>{counts[r.referrer_id]=(counts[r.referrer_id]||0)+1});setRefCounts(counts)}}).catch(()=>{});
   // Load last activity per user
   fetch(`${SB}/rest/v1/ActivityLog?order=login_date.desc&select=user_id,login_date,created_at`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const act={};d.forEach(a=>{if(!act[a.user_id])act[a.user_id]=a.created_at||a.login_date});setUserActivity(act)}}).catch(()=>{});
   // Load latest approved IB request per user (for wallet display)
   fetch(`${SB}/rest/v1/IBRequests?status=eq.approved&order=created_at.desc&select=user_id,wallet_number,amarkets_email,created_at`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const m={};d.forEach(r=>{if(!m[r.user_id])m[r.user_id]=r});setIbData(m)}}).catch(()=>{});
-  return()=>clearInterval(ui)}},[tb,token]);
+  return()=>{stopUi();document.removeEventListener("visibilitychange",onVisUi)}}},[tb,token]);
   useEffect(()=>{if(tb==="msg"){api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}},[tb,token]);
   const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrls=[];for(const img of msgImgs){const u=await api.img(img,token);if(u)imgUrls.push(u);else{setMs(t.uploadFailed);setLd(false);return}}const imgUrl=imgUrls.join(",");await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null},token);if(msgDtCats.length>0){await api.add("Posts",{title:msgTitle,description:msgBody,category:"daytrade",dt_category:msgDtCats.join(","),image_url:imgUrl||"",is_premium:msgTarget==="premium",likes:0},token)}setMs("Message sent!");noti.sendPushToAll(msgTitle,msgBody,token,msgPushTarget);setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImgs([]);setMsgPvs([]);setMsgDayTrade(false);setMsgDtCats([]);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
   const delMsg=async(id)=>{if(!confirm("Delete?"))return;await api.del("Messages",id,token);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
@@ -6490,7 +6550,8 @@ function SupportChat({userId,token,onClose}){
     }catch(e){}
     setLoading(false);
   },[userId,token]);
-  useEffect(()=>{load();const i=setInterval(load,5000);return()=>clearInterval(i)},[load]);
+  useEffect(()=>{load()},[load]);
+  useSmartInterval(load,5000,[load]);
   useEffect(()=>{scrollToBottom()},[msgs.length]);
   const send=async()=>{
     const m=txt.trim();if(!m)return;
@@ -6620,7 +6681,8 @@ function AdminSupportChat({token}){
     }catch(e){}
   },[selUser,token]);
 
-  useEffect(()=>{if(selUser){loadMsgs();const i=setInterval(loadMsgs,4000);return()=>clearInterval(i)}},[selUser,loadMsgs]);
+  useEffect(()=>{if(selUser)loadMsgs()},[selUser,loadMsgs]);
+  useSmartInterval(loadMsgs,selUser?4000:null,[selUser,loadMsgs]);
   useEffect(()=>{scrollToBottom()},[msgs.length]);
 
   const send=async()=>{
@@ -7064,7 +7126,8 @@ function AdminSessionsManager({userId,token,lang,currentDeviceId,currentDeviceLa
     }catch(e){console.error("Load sessions error:",e)}
     setLoading(false);
   },[userId,token]);
-  useEffect(()=>{load();const i=setInterval(load,15000);return()=>clearInterval(i)},[load]);
+  useEffect(()=>{load()},[load]);
+  useSmartInterval(load,15000,[load]);
   const makePrimary=async(deviceId)=>{
     setProcessing(deviceId);
     try{
@@ -7379,7 +7442,7 @@ function App(){
   },[refreshSession]);
   useEffect(()=>{if(tk)load()},[tk,load]);
   useEffect(()=>{if(tk&&usr)chk(usr,tk)},[tk,usr,chk]);
-  useEffect(()=>{if(tk){const i=setInterval(()=>{load();if(usr)chk(usr,tk)},30000);return()=>clearInterval(i)}},[tk,usr,load,chk]);
+  useSmartInterval(()=>{if(tk){load();if(usr)chk(usr,tk)}},tk?30000:null,[tk,usr,load,chk]);
   // Re-fetch profile when coming back online (handles transient network drops)
   useEffect(()=>{if(online&&tk&&usr)chk(usr,tk)},[online,tk,usr,chk]);
   const{PTR}=usePullToRefresh(load);
@@ -7465,7 +7528,7 @@ function App(){
     </LangCtx.Provider>
   );
 }
-ReactDOM.render(<App/>,document.getElementById("root"));
+ReactDOM.render(<ClockProvider><App/></ClockProvider>,document.getElementById("root"));
 
 // مخفی کردن splash screen بعد از mount شدن React
 requestAnimationFrame(()=>{
