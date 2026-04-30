@@ -3470,6 +3470,20 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
     </>}
 
     {section==="daytrade"&&<>
+      {/* Stats banner — total analyses count + currently showing */}
+      {dtFiltered.length>0&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,marginBottom:10,padding:"10px 14px",borderRadius:12,background:"color-mix(in srgb,var(--Y) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 18%,transparent)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <div style={{width:32,height:32,borderRadius:8,background:"color-mix(in srgb,var(--Y) 14%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>📊</div>
+          <div>
+            <div style={{fontSize:14,fontWeight:800,color:"var(--Y)",lineHeight:1.2}} className="m">{dtFiltered.length.toLocaleString(lang==="fa"?"fa-IR":"en-US")}</div>
+            <div style={{fontSize:9,color:"var(--mu)",fontWeight:600,marginTop:1}}>{lang==="fa"?"کل تحلیل‌ها":lang==="ar"?"إجمالي التحليلات":lang==="ru"?"Всего анализов":lang==="tr"?"Toplam analiz":lang==="es"?"Total análisis":"Total analyses"}</div>
+          </div>
+        </div>
+        <div style={{textAlign:"right"}}>
+          <div style={{fontSize:11,fontWeight:700,color:"var(--tx)"}} className="m">{dtFilteredVisible.length.toLocaleString(lang==="fa"?"fa-IR":"en-US")} / {dtFiltered.length.toLocaleString(lang==="fa"?"fa-IR":"en-US")}</div>
+          <div style={{fontSize:9,color:"var(--mu)",fontWeight:600,marginTop:1}}>{lang==="fa"?`در حال نمایش (${dtDaysVisible.toLocaleString("fa-IR")} روز اخیر)`:lang==="ar"?`عرض (${dtDaysVisible} يوم)`:lang==="ru"?`показано (${dtDaysVisible} дн.)`:lang==="tr"?`gösteriliyor (${dtDaysVisible} gün)`:lang==="es"?`mostrando (${dtDaysVisible} día)`:`showing (${dtDaysVisible} day${dtDaysVisible>1?"s":""})`}</div>
+        </div>
+      </div>}
       {/* Sub-category filter */}
       <div style={{display:"flex",gap:4,marginBottom:12,overflowX:"auto",paddingBottom:4}}>
         {DT_CATS.map(c=><div key={c.k} onClick={()=>setDtCat(c.k)} style={{padding:"7px 14px",borderRadius:10,cursor:"pointer",whiteSpace:"nowrap",background:dtCat===c.k?"color-mix(in srgb,var(--Y) 10%,transparent)":"transparent",border:`1px solid ${dtCat===c.k?"color-mix(in srgb,var(--Y) 25%,transparent)":"var(--brd)"}`,fontSize:12,fontWeight:600,color:dtCat===c.k?"var(--Y)":"var(--mu)"}}>{c.l}</div>)}
