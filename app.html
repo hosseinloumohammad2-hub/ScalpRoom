@@ -115,6 +115,27 @@ select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;paddi
 @keyframes splashFadeOut{from{opacity:1}to{opacity:0;pointer-events:none}}
 @keyframes splashSlideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
 @keyframes dotBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
+/* Animated candle chart icon — used in Day Trade stats banner */
+@keyframes dt-c1{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-1px) scaleY(.85)}}
+@keyframes dt-c2{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(2px) scaleY(1.15)}}
+@keyframes dt-c3{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-2px) scaleY(.75)}}
+@keyframes dt-c4{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(1px) scaleY(1.2)}}
+@keyframes dt-c5{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-1px) scaleY(.9)}}
+@keyframes dt-pulse{0%,100%{opacity:.4}50%{opacity:1}}
+.dt-icon{position:relative;width:32px;height:32px;border-radius:8px;overflow:hidden;flex-shrink:0;background:color-mix(in srgb,var(--Y) 14%,transparent);display:flex;align-items:flex-end;justify-content:center;gap:1.5px;padding:4px 4px 5px}
+.dt-icon .gl{position:absolute;left:0;right:0;height:1px;background:color-mix(in srgb,var(--Y) 25%,transparent)}
+.dt-icon .gl1{top:9px}
+.dt-icon .gl2{top:16px}
+.dt-icon .gl3{top:23px}
+.dt-icon .cd{width:3px;border-radius:1px;transform-origin:bottom center}
+.dt-icon .cd.up{background:#22c55e}
+.dt-icon .cd.dn{background:#ef4444}
+.dt-icon .cd:nth-child(4){animation:dt-c1 1.4s ease-in-out infinite}
+.dt-icon .cd:nth-child(5){animation:dt-c2 1.4s ease-in-out .12s infinite}
+.dt-icon .cd:nth-child(6){animation:dt-c3 1.4s ease-in-out .24s infinite}
+.dt-icon .cd:nth-child(7){animation:dt-c4 1.4s ease-in-out .36s infinite}
+.dt-icon .cd:nth-child(8){animation:dt-c5 1.4s ease-in-out .48s infinite}
+.dt-icon .dot{position:absolute;top:5px;right:4px;width:5px;height:5px;border-radius:50%;background:#22c55e;animation:dt-pulse 1.5s ease-in-out infinite}
 .splash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg)}
 .splash.out{animation:splashFadeOut .5s ease forwards}
 .splash-logo{font-size:42px;font-weight:700;letter-spacing:-.5px;animation:splashSlideUp .6s ease}
@@ -3473,7 +3494,17 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
       {/* Stats banner — total analyses count + currently showing */}
       {dtFiltered.length>0&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,marginBottom:10,padding:"10px 14px",borderRadius:12,background:"color-mix(in srgb,var(--Y) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 18%,transparent)"}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{width:32,height:32,borderRadius:8,background:"color-mix(in srgb,var(--Y) 14%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>📊</div>
+          <div className="dt-icon">
+            <div className="gl gl1"></div>
+            <div className="gl gl2"></div>
+            <div className="gl gl3"></div>
+            <div className="cd up" style={{height:"55%"}}></div>
+            <div className="cd dn" style={{height:"40%"}}></div>
+            <div className="cd up" style={{height:"70%"}}></div>
+            <div className="cd up" style={{height:"50%"}}></div>
+            <div className="cd dn" style={{height:"60%"}}></div>
+            <div className="dot"></div>
+          </div>
           <div>
             <div style={{fontSize:14,fontWeight:800,color:"var(--Y)",lineHeight:1.2}} className="m">{dtFiltered.length.toLocaleString(lang==="fa"?"fa-IR":"en-US")}</div>
             <div style={{fontSize:9,color:"var(--mu)",fontWeight:600,marginTop:1}}>{lang==="fa"?"کل تحلیل‌ها":lang==="ar"?"إجمالي التحليلات":lang==="ru"?"Всего анализов":lang==="tr"?"Toplam analiz":lang==="es"?"Total análisis":"Total analyses"}</div>
