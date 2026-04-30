@@ -252,6 +252,19 @@ function ClockProvider({children}){
 }
 function useSharedClock(){return useContext(ClockCtx)}
 
+/* ─── Smart Image URL — resizes via wsrv.nl free CDN (Cloudflare) ─── 
+   Reduces 600-700 KB charts to ~30-50 KB thumbnails for list views.
+   For full-size views (modal/zoom), pass the original URL unchanged. */
+function thumbUrl(url,width){
+  if(!url||typeof url!=="string")return url;
+  if(!width)return url;
+  // Skip already-proxied URLs and local assets
+  if(url.startsWith("https://wsrv.nl")||url.startsWith("data:")||!url.startsWith("http"))return url;
+  // Strip the protocol per wsrv.nl convention (it accepts both, but cleaner)
+  const clean=url.replace(/^https?:\/\//,"");
+  return`https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=${width}&q=75&output=webp`;
+}
+
 /* ─── API ─── */
 const api={
   up:(e,p)=>fetch(`${SB}/auth/v1/signup`,{method:"POST",headers:{apikey:SK,"Content-Type":"application/json"},body:JSON.stringify({email:e,password:p})}).then(r=>r.json()),
@@ -3037,16 +3050,17 @@ function IranMarketWidget(){
 }
 
 /* ─── Image Carousel (Instagram-style swipe) ─── */
-function ImageCarousel({urls,style,borderRadius}){
+function ImageCarousel({urls,style,borderRadius,thumbWidth}){
   const[idx,setIdx]=useState(0);
   const touchX=useRef(0);
   const imgs=urls.split(",").filter(Boolean);
-  if(imgs.length<=1)return<img src={imgs[0]||""} style={{...style,borderRadius:borderRadius||12}} alt=""/>;
+  const src=(u)=>thumbWidth?thumbUrl(u,thumbWidth):u;
+  if(imgs.length<=1)return<img src={src(imgs[0]||"")} loading="lazy" decoding="async" style={{...style,borderRadius:borderRadius||12}} alt=""/>;
   return<div style={{position:"relative",overflow:"hidden",borderRadius:borderRadius||12}}>
     <div style={{display:"flex",transition:"transform .3s ease",transform:`translateX(-${idx*100}%)`}}
       onTouchStart={e=>{touchX.current=e.touches[0].clientX}}
       onTouchEnd={e=>{const dx=e.changedTouches[0].clientX-touchX.current;if(dx<-40&&idx<imgs.length-1)setIdx(idx+1);if(dx>40&&idx>0)setIdx(idx-1)}}>
-      {imgs.map((u,i)=><img key={i} src={u} style={{...style,borderRadius:0,flexShrink:0,width:"100%"}} alt=""/>)}
+      {imgs.map((u,i)=><img key={i} src={src(u)} loading="lazy" decoding="async" style={{...style,borderRadius:0,flexShrink:0,width:"100%"}} alt=""/>)}
     </div>
     <div style={{position:"absolute",top:8,right:8,background:"rgba(0,0,0,.55)",borderRadius:10,padding:"3px 8px",fontSize:11,fontWeight:700,color:"#fff",letterSpacing:.5}}>{idx+1}/{imgs.length}</div>
     <div style={{display:"flex",justifyContent:"center",gap:5,paddingTop:8,paddingBottom:4}}>
@@ -3172,7 +3186,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
             <span style={{fontSize:9,color:"var(--dm)"}}>{new Date(m.created_at).toLocaleDateString()+" "+new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span>
           </div>
           <div style={{fontSize:15,fontWeight:700,marginBottom:10}}>{m.title}</div>
-          {m.image_url&&(m.image_url.includes(",")?<div style={{filter:isLocked?"blur(14px)":"none"}}><ImageCarousel urls={m.image_url} style={{width:"100%",maxHeight:300,objectFit:"cover",marginBottom:10}} borderRadius={12}/></div>:<img src={m.image_url} style={{width:"100%",borderRadius:12,marginBottom:10,filter:isLocked?"blur(14px)":"none"}} alt=""/>)}
+          {m.image_url&&(m.image_url.includes(",")?<div style={{filter:isLocked?"blur(14px)":"none"}}><ImageCarousel urls={m.image_url} style={{width:"100%",maxHeight:300,objectFit:"cover",marginBottom:10}} borderRadius={12}/></div>:<img src={m.image_url} loading="lazy" decoding="async" style={{width:"100%",borderRadius:12,marginBottom:10,filter:isLocked?"blur(14px)":"none"}} alt=""/>)}
           <div style={{fontSize:13,color:"var(--tx2)",lineHeight:1.7,whiteSpace:"pre-wrap",filter:isLocked?"blur(5px)":"none"}}>{m.body}</div>
           {!isLocked&&<TranslateBtn text={[m.title,m.body].filter(Boolean).join("\n\n")}/>}
           {isLocked&&<div onClick={()=>goToPlans()} style={{position:"absolute",top:0,left:0,right:0,bottom:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"color-mix(in srgb,var(--bg) 60%,transparent)",borderRadius:10,cursor:"pointer"}}>
@@ -3185,7 +3199,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
       :visibleMsgs.slice(0,20).map((m,i)=>{
         const isLocked=m.target==="premium"&&!isPremiumUser;
         return<div key={m.id} onClick={()=>{if(isLocked){goToPlans()}else{setOpenMsgId(m.id)}}} style={{display:"flex",alignItems:"center",gap:12,padding:"11px 14px",cursor:"pointer",borderTop:i>0?"1px solid var(--brd)":"none",transition:"background .15s"}} onMouseOver={e=>e.currentTarget.style.background="var(--bg2)"} onMouseOut={e=>e.currentTarget.style.background="transparent"}>
-          {m.image_url?<div style={{position:"relative",flexShrink:0}}><img src={(m.image_url||"").split(",")[0]} style={{width:44,height:44,borderRadius:10,objectFit:"cover",filter:isLocked?"blur(6px)":"none"}} alt=""/>{m.image_url.includes(",")&&<div style={{position:"absolute",top:2,right:2,width:16,height:16,borderRadius:8,background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#fff",fontWeight:700}}>2</div>}</div>
+          {m.image_url?<div style={{position:"relative",flexShrink:0}}><img src={thumbUrl((m.image_url||"").split(",")[0],112)} loading="lazy" decoding="async" style={{width:44,height:44,borderRadius:10,objectFit:"cover",filter:isLocked?"blur(6px)":"none"}} alt=""/>{m.image_url.includes(",")&&<div style={{position:"absolute",top:2,right:2,width:16,height:16,borderRadius:8,background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#fff",fontWeight:700}}>2</div>}</div>
           :<div style={{width:44,height:44,borderRadius:10,background:"color-mix(in srgb,var(--R) 8%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{AE.mailbox}</div>}
           <div style={{flex:1,minWidth:0}}>
             <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -3245,7 +3259,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
     {(posts||[]).filter(p=>p.category!=="daytrade").slice(0,6).map(p=>{
       const locked=p.is_premium&&!isPremiumUser;
       return<div key={p.id} onClick={()=>{if(locked){setShowPremPop(true)}else setSel(p)}} className="cd" style={{display:"flex",gap:12,marginBottom:6,alignItems:"center",padding:12,cursor:"pointer",position:"relative"}}>
-      {p.image_url?<img src={(p.image_url||"").split(",")[0]} style={{width:50,height:50,borderRadius:10,objectFit:"cover",flexShrink:0,filter:locked?"blur(6px)":"none"}} alt=""/>:<div style={{width:50,height:50,borderRadius:10,background:"var(--bg2)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"var(--dm)",flexShrink:0,fontWeight:600,filter:locked?"blur(6px)":"none"}}>{p.category?.toUpperCase()?.slice(0,4)}</div>}
+      {p.image_url?<img src={thumbUrl((p.image_url||"").split(",")[0],128)} loading="lazy" decoding="async" style={{width:50,height:50,borderRadius:10,objectFit:"cover",flexShrink:0,filter:locked?"blur(6px)":"none"}} alt=""/>:<div style={{width:50,height:50,borderRadius:10,background:"var(--bg2)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"var(--dm)",flexShrink:0,fontWeight:600,filter:locked?"blur(6px)":"none"}}>{p.category?.toUpperCase()?.slice(0,4)}</div>}
       <div style={{flex:1,minWidth:0}}>
         <div style={{fontSize:14,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
         <div style={{fontSize:12,color:"var(--dm)",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",filter:locked?"blur(5px)":"none"}}>{p.description||""}</div>
@@ -3292,6 +3306,11 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
   const[addingDT,setAddingDT]=useState(null);
   const[dtToast,setDtToast]=useState("");
   const[dtCat,setDtCat]=useState("all");
+  // Pagination: show last N days of day-trade posts. Default = today only (1 day).
+  // Each "Load more" click adds 1 more day of history.
+  const[dtDaysVisible,setDtDaysVisible]=useState(1);
+  // Reset to today only when filter or search changes
+  useEffect(()=>{setDtDaysVisible(1)},[dtCat,section]);
   const DT_CATS=[{k:"all",l:"All"},{k:"forex",l:"Forex"},{k:"crypto",l:"Crypto"},{k:"indices",l:"Indices"},{k:"stocks",l:"US Stocks"}];
   // Long-term posts = posts that are NOT daytrade category
   const longTermPosts=useMemo(()=>(posts||[]).filter(p=>p.category!=="daytrade"),[posts]);
@@ -3309,6 +3328,33 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
     list=[...list].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
     return list;
   },[dayTradePosts,dtCat,q]);
+  // Filter by visible days window: show all posts from the last N distinct days
+  // (where day = unique calendar date with at least one post)
+  const dtFilteredVisible=useMemo(()=>{
+    if(!dtFiltered.length)return[];
+    // Walk down sorted (newest-first) list and keep posts until we've covered N days
+    const seenDays=new Set();
+    const out=[];
+    for(const p of dtFiltered){
+      const d=p.created_at?new Date(p.created_at):new Date(0);
+      const dayKey=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
+      if(!seenDays.has(dayKey)){
+        if(seenDays.size>=dtDaysVisible)break;
+        seenDays.add(dayKey);
+      }
+      out.push(p);
+    }
+    return out;
+  },[dtFiltered,dtDaysVisible]);
+  // Total distinct days in the full filtered set (for "load more" button visibility)
+  const dtTotalDays=useMemo(()=>{
+    const days=new Set();
+    dtFiltered.forEach(p=>{
+      const d=p.created_at?new Date(p.created_at):new Date(0);
+      days.add(new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime());
+    });
+    return days.size;
+  },[dtFiltered]);
   // Group day trade posts by day for date separators
   const dtGrouped=useMemo(()=>{
     const groups=[];
@@ -3316,7 +3362,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
     const startOfToday=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
     let currentKey=null;
     let currentGroup=null;
-    dtFiltered.forEach(p=>{
+    dtFilteredVisible.forEach(p=>{
       const d=p.created_at?new Date(p.created_at):new Date(0);
       const dayStart=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
       const key=dayStart;
@@ -3337,7 +3383,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
       currentGroup.items.push(p);
     });
     return groups;
-  },[dtFiltered,lang]);
+  },[dtFilteredVisible,lang]);
   // Visible messages for Day Trade tab (from notifications)
   const dtMsgs=useMemo(()=>{
     if(!q)return msgs||[];
@@ -3403,7 +3449,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
     <div className="g2">{f.map(p=>{
       const locked=p.is_premium&&!isPremiumUser;
       return<div key={p.id} onClick={()=>{if(locked){setShowPremPop(true)}else setSel(p)}} className="cd" style={{padding:0,overflow:"hidden",cursor:"pointer",position:"relative"}}>
-      {p.image_url?(p.image_url.includes(",")?<div style={{filter:locked?"blur(8px)":"none",background:"#fff",padding:4}}><ImageCarousel urls={p.image_url} style={{width:"100%",height:112,objectFit:"contain",background:"#fff"}} borderRadius={0}/></div>:<img src={(p.image_url||"").split(",")[0]} style={{width:"100%",height:120,objectFit:"contain",background:"#fff",padding:4,filter:locked?"blur(8px)":"none"}} alt=""/>):<div style={{width:"100%",height:120,background:"var(--bg2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"var(--dm)",fontWeight:600,filter:locked?"blur(8px)":"none"}}>{p.category?.toUpperCase()}</div>}
+      {p.image_url?(p.image_url.includes(",")?<div style={{filter:locked?"blur(8px)":"none",background:"#fff",padding:4}}><ImageCarousel urls={p.image_url} style={{width:"100%",height:112,objectFit:"contain",background:"#fff"}} borderRadius={0} thumbWidth={480}/></div>:<img src={thumbUrl((p.image_url||"").split(",")[0],480)} loading="lazy" decoding="async" style={{width:"100%",height:120,objectFit:"contain",background:"#fff",padding:4,filter:locked?"blur(8px)":"none"}} alt=""/>):<div style={{width:"100%",height:120,background:"var(--bg2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"var(--dm)",fontWeight:600,filter:locked?"blur(8px)":"none"}}>{p.category?.toUpperCase()}</div>}
       {locked&&<div style={{position:"absolute",top:0,left:0,right:0,height:120,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.4)",borderRadius:"14px 14px 0 0"}}>
         <span style={{color:"#fff",display:"flex",alignItems:"center",gap:4}}>{IC.crown}</span>
         <span style={{fontSize:11,fontWeight:700,color:"#fff",marginTop:4}}>PREMIUM</span>
@@ -3440,7 +3486,7 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
           <div className="g2">{group.items.map(p=>{
         const locked=p.is_premium&&!isPremiumUser;
         return<div key={p.id} onClick={()=>{if(locked){setShowPremPop(true)}else setSel(p)}} className="cd" style={{padding:0,overflow:"hidden",cursor:"pointer",position:"relative"}}>
-        {p.image_url?(p.image_url.includes(",")?<div style={{filter:locked?"blur(8px)":"none"}}><ImageCarousel urls={p.image_url} style={{width:"100%",height:120,objectFit:"cover"}} borderRadius={0}/></div>:<img src={p.image_url} style={{width:"100%",height:120,objectFit:"cover",filter:locked?"blur(8px)":"none"}} alt=""/>):<div style={{width:"100%",height:120,background:"color-mix(in srgb,var(--R) 3%,var(--bg2))",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+        {p.image_url?(p.image_url.includes(",")?<div style={{filter:locked?"blur(8px)":"none"}}><ImageCarousel urls={p.image_url} style={{width:"100%",height:120,objectFit:"cover"}} borderRadius={0} thumbWidth={480}/></div>:<img src={thumbUrl(p.image_url,480)} loading="lazy" decoding="async" style={{width:"100%",height:120,objectFit:"cover",filter:locked?"blur(8px)":"none"}} alt=""/>):<div style={{width:"100%",height:120,background:"color-mix(in srgb,var(--R) 3%,var(--bg2))",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
           <svg width="60" height="70" viewBox="0 0 60 70">
             <line x1="10" y1="8" x2="10" y2="62" stroke="var(--brd2)" strokeWidth="1.5"/>
             <rect x="5" y="20" width="10" height="25" rx="2" fill="var(--G)" opacity=".8"><animate attributeName="y" values="20;15;20" dur="2s" repeatCount="indefinite"/><animate attributeName="height" values="25;35;25" dur="2s" repeatCount="indefinite"/></rect>
@@ -3492,6 +3538,11 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
       </div>})}</div>
         </div>
       ))}</div>}
+
+      {/* Load More button — shows count of older days available */}
+      {section==="daytrade"&&dtTotalDays>dtDaysVisible&&<div onClick={()=>setDtDaysVisible(d=>d+1)} style={{margin:"8px 0 20px",padding:"12px 16px",borderRadius:12,background:"color-mix(in srgb,var(--Y) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 25%,transparent)",cursor:"pointer",textAlign:"center",fontSize:12,fontWeight:700,color:"var(--Y)"}}>
+        {lang==="fa"?`نمایش روز قبل‌تر (${dtTotalDays-dtDaysVisible} روز دیگر باقی مانده)`:lang==="ar"?`عرض اليوم السابق (${dtTotalDays-dtDaysVisible} يوم متبقي)`:lang==="ru"?`Показать предыдущий день (осталось ${dtTotalDays-dtDaysVisible})`:lang==="tr"?`Önceki günü göster (${dtTotalDays-dtDaysVisible} gün kaldı)`:lang==="es"?`Ver día anterior (${dtTotalDays-dtDaysVisible} días restantes)`:`Show previous day (${dtTotalDays-dtDaysVisible} days left)`}
+      </div>}
 
       {/* Notifications section for admin to add to day trade */}
       {isAdmin&&dtMsgs.length>0&&<>
@@ -6028,6 +6079,9 @@ function Adm({token,posts,signals,onR}){
   const[userSearch,setUserSearch]=useState("");
   const[manageSub,setManageSub]=useState("posts");
   const[manageSearch,setManageSearch]=useState("");
+  // Admin pagination: render only first 30 items, expand on demand
+  const[manageVisible,setManageVisible]=useState(30);
+  useEffect(()=>{setManageVisible(30)},[manageSub,manageSearch]);
   const[refCounts,setRefCounts]=useState({});
   const[msgTitle,setMsgTitle]=useState(""),[msgBody,setMsgBody]=useState(""),[msgTarget,setMsgTarget]=useState("all"),[allMsgs,setAllMsgs]=useState([]),[msgImgs,setMsgImgs]=useState([]),[msgPvs,setMsgPvs]=useState([]),[msgDayTrade,setMsgDayTrade]=useState(false),[msgDtCats,setMsgDtCats]=useState([]),[editMsgId,setEditMsgId]=useState(null),[editMsgTitle,setEditMsgTitle]=useState(""),[editMsgBody,setEditMsgBody]=useState(""),[editMsgTarget,setEditMsgTarget]=useState("all");  const noti=useNotifications(null,token);
   const toggleMsgDtCat=(k)=>setMsgDtCats(prev=>prev.includes(k)?prev.filter(x=>x!==k):[...prev,k]);
@@ -6256,8 +6310,8 @@ function Adm({token,posts,signals,onR}){
 
       {/* Posts */}
       {manageSub==="posts"&&<>
-        {postsOnly.filter(filterPost).map(p=><div key={p.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4}}>
-          {p.image_url?<img src={(p.image_url||"").split(",")[0]} style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/>:<div style={{width:36,height:36,borderRadius:6,background:"var(--bg)"}}/>}
+        {postsOnly.filter(filterPost).slice(0,manageVisible).map(p=><div key={p.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4}}>
+          {p.image_url?<img src={thumbUrl((p.image_url||"").split(",")[0],96)} loading="lazy" decoding="async" style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/>:<div style={{width:36,height:36,borderRadius:6,background:"var(--bg)"}}/>}
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
             <div style={{fontSize:10,color:"var(--dm)"}}>{p.category} · {p.created_at?new Date(p.created_at).toLocaleDateString()+"  ·  "+relativeTime(p.created_at,lang):""}</div>
@@ -6267,14 +6321,15 @@ function Adm({token,posts,signals,onR}){
           <div onClick={()=>delP(p.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
         </div>)}
         {!postsOnly.filter(filterPost).length&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:12}}>{q?(lang==="fa"?"چیزی پیدا نشد":"No results"):(lang==="fa"?"پستی نیست":"No posts")}</div>}
+        {postsOnly.filter(filterPost).length>manageVisible&&<div onClick={()=>setManageVisible(v=>v+30)} style={{margin:"8px 0",padding:"10px",borderRadius:10,background:"color-mix(in srgb,var(--R) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 25%,transparent)",cursor:"pointer",textAlign:"center",fontSize:11,fontWeight:700,color:"var(--R)"}}>{lang==="fa"?`نمایش بیشتر (${postsOnly.filter(filterPost).length-manageVisible} مورد)`:`Load more (${postsOnly.filter(filterPost).length-manageVisible})`}</div>}
       </>}
 
       {/* Signals */}
       {manageSub==="signals"&&<>
-        {(signals||[]).filter(filterSig).map(s=>{
+        {(signals||[]).filter(filterSig).slice(0,manageVisible).map(s=>{
           const isBuyType=s.type==="BUY"||s.type==="BUY LIMIT";
           return<div key={s.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4}}>
-          {s.image_url?<img src={s.image_url} style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/>:<div style={{width:36,height:36,borderRadius:6,background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--dm)",fontSize:14}}>📈</div>}
+          {s.image_url?<img src={thumbUrl(s.image_url,96)} loading="lazy" decoding="async" style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/>:<div style={{width:36,height:36,borderRadius:6,background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--dm)",fontSize:14}}>📈</div>}
           <div style={{flex:1,minWidth:0}}>
             <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
               <span className="m" style={{fontSize:12,fontWeight:500}}>{s.pair}</span>
@@ -6288,12 +6343,13 @@ function Adm({token,posts,signals,onR}){
           <div onClick={()=>delS(s.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
         </div>})}
         {!(signals||[]).filter(filterSig).length&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:12}}>{q?(lang==="fa"?"چیزی پیدا نشد":"No results"):(lang==="fa"?"سیگنالی نیست":"No signals")}</div>}
+        {(signals||[]).filter(filterSig).length>manageVisible&&<div onClick={()=>setManageVisible(v=>v+30)} style={{margin:"8px 0",padding:"10px",borderRadius:10,background:"color-mix(in srgb,var(--G) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 25%,transparent)",cursor:"pointer",textAlign:"center",fontSize:11,fontWeight:700,color:"var(--G)"}}>{lang==="fa"?`نمایش بیشتر (${(signals||[]).filter(filterSig).length-manageVisible} مورد)`:`Load more (${(signals||[]).filter(filterSig).length-manageVisible})`}</div>}
       </>}
 
       {/* Day Trade */}
       {manageSub==="daytrade"&&<>
-        {dayTradeOnly.filter(filterPost).map(p=><div key={p.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4}}>
-          {p.image_url?<img src={(p.image_url||"").split(",")[0]} style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/>:<div style={{width:36,height:36,borderRadius:6,background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--dm)",fontSize:14}}>📊</div>}
+        {dayTradeOnly.filter(filterPost).slice(0,manageVisible).map(p=><div key={p.id} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4}}>
+          {p.image_url?<img src={thumbUrl((p.image_url||"").split(",")[0],96)} loading="lazy" decoding="async" style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} alt=""/>:<div style={{width:36,height:36,borderRadius:6,background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--dm)",fontSize:14}}>📊</div>}
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</div>
             <div style={{fontSize:10,color:"var(--dm)"}}>{p.dt_category||"daytrade"} · {p.created_at?new Date(p.created_at).toLocaleDateString()+"  ·  "+relativeTime(p.created_at,lang):""}</div>
@@ -6303,6 +6359,7 @@ function Adm({token,posts,signals,onR}){
           <div onClick={()=>delP(p.id)} style={{cursor:"pointer",color:"var(--R)",padding:4}}>{IC.del}</div>
         </div>)}
         {!dayTradeOnly.filter(filterPost).length&&<div style={{textAlign:"center",color:"var(--dm)",padding:"40px 0",fontSize:12}}>{q?(lang==="fa"?"چیزی پیدا نشد":"No results"):(lang==="fa"?"تحلیل روزانه‌ای نیست":"No day trades")}</div>}
+        {dayTradeOnly.filter(filterPost).length>manageVisible&&<div onClick={()=>setManageVisible(v=>v+30)} style={{margin:"8px 0",padding:"10px",borderRadius:10,background:"color-mix(in srgb,var(--B) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--B) 25%,transparent)",cursor:"pointer",textAlign:"center",fontSize:11,fontWeight:700,color:"var(--B)"}}>{lang==="fa"?`نمایش بیشتر (${dayTradeOnly.filter(filterPost).length-manageVisible} مورد)`:`Load more (${dayTradeOnly.filter(filterPost).length-manageVisible})`}</div>}
       </>}
     </>;
     })()}
