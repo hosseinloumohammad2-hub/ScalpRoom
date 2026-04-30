@@ -3493,19 +3493,9 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
     {section==="daytrade"&&<>
       {/* Stats banner — total analyses count + currently showing */}
       {dtFiltered.length>0&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,marginBottom:10,padding:"10px 14px",borderRadius:12,background:"color-mix(in srgb,var(--Y) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 18%,transparent)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{width:32,height:32,borderRadius:8,background:"color-mix(in srgb,var(--Y) 14%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--Y)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="20" x2="21" y2="20"/>
-              <rect x="5" y="11" width="3" height="9" fill="var(--Y)" opacity="0.85"/>
-              <rect x="10.5" y="7" width="3" height="13" fill="var(--Y)" opacity="0.85"/>
-              <rect x="16" y="13" width="3" height="7" fill="var(--Y)" opacity="0.85"/>
-            </svg>
-          </div>
-          <div>
-            <div style={{fontSize:14,fontWeight:800,color:"var(--Y)",lineHeight:1.2,direction:"ltr",textAlign:RTL_LANGS.includes(lang)?"right":"left"}} className="m">{dtFiltered.length.toLocaleString(lang==="fa"?"fa-IR":"en-US")}</div>
-            <div style={{fontSize:9,color:"var(--mu)",fontWeight:600,marginTop:1}}>{lang==="fa"?"کل تحلیل‌ها":lang==="ar"?"إجمالي التحليلات":lang==="ru"?"Всего анализов":lang==="tr"?"Toplam analiz":lang==="es"?"Total análisis":"Total analyses"}</div>
-          </div>
+        <div>
+          <div style={{fontSize:16,fontWeight:800,color:"var(--Y)",lineHeight:1.2,direction:"ltr",textAlign:RTL_LANGS.includes(lang)?"right":"left"}} className="m">{dtFiltered.length.toLocaleString(lang==="fa"?"fa-IR":"en-US")}</div>
+          <div style={{fontSize:9,color:"var(--mu)",fontWeight:600,marginTop:2}}>{lang==="fa"?"کل تحلیل‌ها":lang==="ar"?"إجمالي التحليلات":lang==="ru"?"Всего анализов":lang==="tr"?"Toplam analiz":lang==="es"?"Total análisis":"Total analyses"}</div>
         </div>
         <div style={{textAlign:RTL_LANGS.includes(lang)?"left":"right"}}>
           <div style={{fontSize:11,fontWeight:700,color:"var(--tx)",direction:"ltr",unicodeBidi:"isolate",textAlign:RTL_LANGS.includes(lang)?"left":"right"}} className="m">{dtFilteredVisible.length.toLocaleString(lang==="fa"?"fa-IR":"en-US")} / {dtFiltered.length.toLocaleString(lang==="fa"?"fa-IR":"en-US")}</div>
