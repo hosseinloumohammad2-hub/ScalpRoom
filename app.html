@@ -3506,12 +3506,12 @@ function Analysis({posts,userProfile,msgs,token,onR,goToPlans}){
             <div className="dot"></div>
           </div>
           <div>
-            <div style={{fontSize:14,fontWeight:800,color:"var(--Y)",lineHeight:1.2}} className="m">{dtFiltered.length.toLocaleString(lang==="fa"?"fa-IR":"en-US")}</div>
+            <div style={{fontSize:14,fontWeight:800,color:"var(--Y)",lineHeight:1.2,direction:"ltr",textAlign:RTL_LANGS.includes(lang)?"right":"left"}} className="m">{dtFiltered.length.toLocaleString(lang==="fa"?"fa-IR":"en-US")}</div>
             <div style={{fontSize:9,color:"var(--mu)",fontWeight:600,marginTop:1}}>{lang==="fa"?"کل تحلیل‌ها":lang==="ar"?"إجمالي التحليلات":lang==="ru"?"Всего анализов":lang==="tr"?"Toplam analiz":lang==="es"?"Total análisis":"Total analyses"}</div>
           </div>
         </div>
-        <div style={{textAlign:"right"}}>
-          <div style={{fontSize:11,fontWeight:700,color:"var(--tx)"}} className="m">{dtFilteredVisible.length.toLocaleString(lang==="fa"?"fa-IR":"en-US")} / {dtFiltered.length.toLocaleString(lang==="fa"?"fa-IR":"en-US")}</div>
+        <div style={{textAlign:RTL_LANGS.includes(lang)?"left":"right"}}>
+          <div style={{fontSize:11,fontWeight:700,color:"var(--tx)",direction:"ltr",unicodeBidi:"isolate",textAlign:RTL_LANGS.includes(lang)?"left":"right"}} className="m">{dtFilteredVisible.length.toLocaleString(lang==="fa"?"fa-IR":"en-US")} / {dtFiltered.length.toLocaleString(lang==="fa"?"fa-IR":"en-US")}</div>
           <div style={{fontSize:9,color:"var(--mu)",fontWeight:600,marginTop:1}}>{lang==="fa"?`در حال نمایش (${dtDaysVisible.toLocaleString("fa-IR")} روز اخیر)`:lang==="ar"?`عرض (${dtDaysVisible} يوم)`:lang==="ru"?`показано (${dtDaysVisible} дн.)`:lang==="tr"?`gösteriliyor (${dtDaysVisible} gün)`:lang==="es"?`mostrando (${dtDaysVisible} día)`:`showing (${dtDaysVisible} day${dtDaysVisible>1?"s":""})`}</div>
         </div>
       </div>}
