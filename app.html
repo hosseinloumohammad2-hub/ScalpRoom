@@ -4510,10 +4510,20 @@ function AMarketsIBFlow({userProfile,token,lang,onSuccess}){
     submitBtn:{fa:"ارسال درخواست تأیید",en:"Submit for Verification"},
     pendingTitle:{fa:"⏳ درخواست شما ثبت شد",en:"⏳ Request Submitted"},
     pendingDesc:{fa:"درخواست شما در حال بررسی توسط ادمین است. پس از تأیید، اشتراک پریمیوم فعال خواهد شد.",en:"Your request is being reviewed. Premium will be activated after approval."},
-    activeTitle:{fa:"✅ اشتراک پریمیوم IB فعال است",en:"✅ IB Premium Active"},
-    activeDesc:{fa:"اشتراک پریمیوم شما از طریق آمارکتس فعال است.",en:"Your Premium is active via AMarkets."},
-    activeWarn:{fa:"⚠ توجه: حساب آمارکتس شما باید فعال باشد. اگر فعالیت نداشته باشید، اشتراک پریمیوم قطع خواهد شد.",en:"⚠ Your AMarkets account must remain active. If there is no activity, your Premium will be revoked."},
-    connectedVia:{fa:"متصل از طریق آمارکتس",en:"Connected via AMarkets"},
+    activeTitle:{fa:"✅ اشتراک پریمیوم IB فعال است",ar:"✅ اشتراك IB Premium نشط",tr:"✅ IB Premium Aktif",ru:"✅ IB Premium активен",es:"✅ IB Premium Activo",en:"✅ IB Premium Active"},
+    activeDesc:{fa:"اشتراک پریمیوم شما از طریق آمارکتس فعال است.",ar:"اشتراكك المميز نشط عبر AMarkets.",tr:"Premium aboneliğiniz AMarkets üzerinden aktif.",ru:"Ваша Premium-подписка активна через AMarkets.",es:"Tu suscripción Premium está activa a través de AMarkets.",en:"Your Premium is active via AMarkets."},
+    activeWarn:{fa:"⚠ توجه مهم: برای حفظ اشتراک رایگان، حساب آمارکتس شما باید فعال بماند، حداقل ۲۰۰ دلار موجودی داشته باشد و معاملات منظم انجام دهید. در صورت عدم رعایت این شرایط، اشتراک شما به‌صورت خودکار توسط سیستم لغو خواهد شد.",ar:"⚠ ملاحظة هامة: للحفاظ على اشتراكك المجاني، يجب أن يبقى حساب AMarkets الخاص بك نشطاً وأن يحتوي على رصيد لا يقل عن 200 دولار مع تنفيذ صفقات منتظمة. في حالة عدم الالتزام بهذه الشروط، سيتم إلغاء اشتراكك تلقائياً من قبل النظام.",tr:"⚠ Önemli uyarı: Ücretsiz aboneliğinizi sürdürmek için AMarkets hesabınız aktif kalmalı, en az 200$ bakiye bulundurmalı ve düzenli işlem yapmalısınız. Bu koşullara uyulmazsa aboneliğiniz sistem tarafından otomatik olarak iptal edilecektir.",ru:"⚠ Важное уведомление: Для сохранения бесплатной подписки ваш счёт AMarkets должен оставаться активным, иметь баланс не менее 200$ и регулярную торговую активность. При несоблюдении этих условий ваша подписка будет автоматически отменена системой.",es:"⚠ Aviso importante: Para mantener tu suscripción gratuita, tu cuenta AMarkets debe permanecer activa, tener un saldo mínimo de 200$ y realizar operaciones regulares. Si no se cumplen estas condiciones, tu suscripción será cancelada automáticamente por el sistema.",en:"⚠ Important: To keep your free subscription, your AMarkets account must remain active, maintain a minimum balance of $200, and have regular trading activity. If these conditions are not met, your subscription will be automatically revoked by the system."},
+    reqTitle:{fa:"شرایط حفظ اشتراک رایگان",ar:"شروط الحفاظ على الاشتراك",tr:"Aboneliği sürdürme koşulları",ru:"Условия сохранения подписки",es:"Condiciones para mantener la suscripción",en:"Conditions to keep your subscription"},
+    reqActive:{fa:"حساب آمارکتس فعال باشد",ar:"حساب AMarkets نشط",tr:"AMarkets hesabı aktif",ru:"Счёт AMarkets активен",es:"Cuenta AMarkets activa",en:"AMarkets account active"},
+    reqBalance:{fa:"حداقل ۲۰۰ دلار موجودی",ar:"رصيد لا يقل عن 200$",tr:"Minimum 200$ bakiye",ru:"Баланс не менее 200$",es:"Saldo mínimo de 200$",en:"Minimum balance of $200"},
+    reqTrading:{fa:"معاملات منظم انجام شود",ar:"تنفيذ صفقات منتظمة",tr:"Düzenli işlem yapın",ru:"Регулярная торговля",es:"Operaciones regulares",en:"Regular trading activity"},
+    reqFooter:{fa:"در صورت عدم رعایت موارد بالا، اشتراک شما به‌صورت خودکار توسط سیستم لغو می‌شود.",ar:"في حالة عدم الالتزام بالشروط أعلاه، سيتم إلغاء اشتراكك تلقائياً من قبل النظام.",tr:"Yukarıdaki koşullara uyulmazsa aboneliğiniz sistem tarafından otomatik olarak iptal edilir.",ru:"При несоблюдении вышеуказанных условий ваша подписка будет автоматически отменена системой.",es:"Si no se cumplen las condiciones anteriores, tu suscripción será cancelada automáticamente por el sistema.",en:"If the conditions above are not met, your subscription will be automatically revoked by the system."},
+    connectedVia:{fa:"متصل از طریق آمارکتس",ar:"متصل عبر AMarkets",tr:"AMarkets üzerinden bağlı",ru:"Подключено через AMarkets",es:"Conectado vía AMarkets",en:"Connected via AMarkets"},
+    walletNumberLabel:{fa:"شماره کیف پول آمارکتس",ar:"رقم محفظة AMarkets",tr:"AMarkets Cüzdan Numarası",ru:"Номер кошелька AMarkets",es:"Número de billetera AMarkets",en:"AMarkets Wallet Number"},
+    emailLabelShort:{fa:"ایمیل:",ar:"البريد:",tr:"E-posta:",ru:"Email:",es:"Email:",en:"Email:"},
+    activeSinceLabel:{fa:"فعال از:",ar:"نشط منذ:",tr:"Aktif:",ru:"Активен с:",es:"Activo desde:",en:"Active since:"},
+    copyLabel:{fa:"کپی",ar:"نسخ",tr:"Kopyala",ru:"Копировать",es:"Copiar",en:"Copy"},
+    copiedLabel:{fa:"کپی شد",ar:"تم النسخ",tr:"Kopyalandı",ru:"Скопировано",es:"Copiado",en:"Copied"},
     minDeposit:{fa:"حداقل واریز: ۲۰۰ دلار",en:"Minimum deposit: $200"},
     accountType:{fa:"نوع حساب: Standard (فارکس)",en:"Account type: Standard (Forex)"},
     back:{fa:"بازگشت",en:"Back"},
@@ -4540,25 +4550,52 @@ function AMarketsIBFlow({userProfile,token,lang,onSuccess}){
             {amLogo}
             <span style={{fontSize:11,fontWeight:600,color:"#F5851F",letterSpacing:.3}}>{g("connectedVia")}</span>
           </div>
-          <div style={{fontSize:10,fontWeight:600,color:"var(--dm)",marginBottom:4,letterSpacing:.5,textTransform:"uppercase"}}>{isFA?"شماره کیف پول آمارکتس":"AMarkets Wallet Number"}</div>
+          <div style={{fontSize:10,fontWeight:600,color:"var(--dm)",marginBottom:4,letterSpacing:.5,textTransform:"uppercase"}}>{g("walletNumberLabel")}</div>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
             <div className="m" style={{fontSize:26,fontWeight:700,color:"#F5851F",letterSpacing:1.5,fontFamily:"'DM Mono',monospace"}}>{existing.wallet_number}</div>
             <div style={{display:"flex",alignItems:"center",gap:4,padding:"6px 10px",borderRadius:8,background:walletCopied?"color-mix(in srgb,var(--G) 15%,transparent)":"color-mix(in srgb,#F5851F 12%,transparent)",fontSize:11,fontWeight:600,color:walletCopied?"var(--G)":"#F5851F",whiteSpace:"nowrap"}}>
-              {walletCopied?<>✓ {isFA?"کپی شد":"Copied"}</>:<>
+              {walletCopied?<>✓ {g("copiedLabel")}</>:<>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                {isFA?"کپی":"Copy"}
+                {g("copyLabel")}
               </>}
             </div>
           </div>
           {existing.amarkets_email&&<div style={{marginTop:12,paddingTop:10,borderTop:"1px solid color-mix(in srgb,#F5851F 15%,transparent)",fontSize:11,color:"var(--tx2)"}}>
-            <span style={{color:"var(--dm)",marginRight:6}}>{isFA?"ایمیل:":"Email:"}</span>{existing.amarkets_email}
+            <span style={{color:"var(--dm)",marginRight:6}}>{g("emailLabelShort")}</span>{existing.amarkets_email}
           </div>}
           {existing.created_at&&<div style={{marginTop:6,fontSize:10,color:"var(--dm)"}}>
-            {isFA?"فعال از:":"Active since:"} {new Date(existing.created_at).toLocaleDateString()}
+            {g("activeSinceLabel")} {new Date(existing.created_at).toLocaleDateString()}
           </div>}
+          <div style={{marginTop:10,display:"flex",alignItems:"center",gap:6,padding:"7px 10px",borderRadius:8,background:"color-mix(in srgb,var(--R) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 22%,transparent)",fontSize:10,fontWeight:600,color:"var(--R)"}}>
+            <span>💰</span>
+            <span>{isFA?"حداقل موجودی الزامی: ":lang==="ar"?"الحد الأدنى للرصيد المطلوب: ":lang==="tr"?"Gerekli minimum bakiye: ":lang==="ru"?"Требуемый минимальный баланс: ":lang==="es"?"Saldo mínimo requerido: ":"Required minimum balance: "}</span>
+            <span className="m" style={{fontWeight:800,fontSize:12}}>$200</span>
+          </div>
         </div>
       </>}
-      <div style={{fontSize:11,fontWeight:600,color:"var(--R)",background:"color-mix(in srgb,var(--R) 8%,transparent)",padding:"10px 12px",borderRadius:10,lineHeight:1.6}}>{g("activeWarn")}</div>
+      <div style={{padding:14,borderRadius:12,background:"color-mix(in srgb,var(--R) 6%,transparent)",border:"1.5px solid color-mix(in srgb,var(--R) 25%,transparent)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+          <div style={{width:28,height:28,borderRadius:14,background:"color-mix(in srgb,var(--R) 12%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--R)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div style={{fontSize:13,fontWeight:700,color:"var(--R)"}}>{g("reqTitle")}</div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,fontSize:12,color:"var(--tx)",fontWeight:500}}>
+            <div style={{width:18,height:18,borderRadius:9,background:"color-mix(in srgb,var(--G) 15%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:10,color:"var(--G)",fontWeight:700}}>✓</div>
+            {g("reqActive")}
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:8,fontSize:12,color:"var(--tx)",fontWeight:600}}>
+            <div style={{width:18,height:18,borderRadius:9,background:"color-mix(in srgb,var(--G) 15%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:10,color:"var(--G)",fontWeight:700}}>✓</div>
+            <span className="m" style={{fontWeight:700,color:"var(--R)"}}>{g("reqBalance")}</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:8,fontSize:12,color:"var(--tx)",fontWeight:500}}>
+            <div style={{width:18,height:18,borderRadius:9,background:"color-mix(in srgb,var(--G) 15%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:10,color:"var(--G)",fontWeight:700}}>✓</div>
+            {g("reqTrading")}
+          </div>
+        </div>
+        <div style={{fontSize:11,color:"var(--R)",lineHeight:1.6,paddingTop:10,borderTop:"1px solid color-mix(in srgb,var(--R) 18%,transparent)",fontWeight:600}}>{g("reqFooter")}</div>
+      </div>
     </div>);
   }
   if(step==="pending"){
