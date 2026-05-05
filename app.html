@@ -3270,7 +3270,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
     <SignalScoreboard signals={signals}/>
     <div style={{display:"flex",gap:8,marginBottom:24}}>
       <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:13,borderRadius:12,background:"color-mix(in srgb,#0088cc 8%,transparent)",border:"1px solid color-mix(in srgb,#0088cc 15%,transparent)",color:"#0088cc",fontSize:13,fontWeight:600}}>{IC.tg} Telegram</a>
-      <a href="https://www.instagram.com/forexscalproom" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:13,borderRadius:12,background:"color-mix(in srgb,#E1306C 8%,transparent)",border:"1px solid color-mix(in srgb,#E1306C 15%,transparent)",color:"#E1306C",fontSize:13,fontWeight:600}}>{IC.ig} Instagram</a>
+      <a href="https://www.instagram.com/hoseinlou.fx" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:13,borderRadius:12,background:"color-mix(in srgb,#E1306C 8%,transparent)",border:"1px solid color-mix(in srgb,#E1306C 15%,transparent)",color:"#E1306C",fontSize:13,fontWeight:600}}>{IC.ig} Instagram</a>
     </div>
     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
       <div style={{width:3,height:14,borderRadius:2,background:"var(--R)"}}/>
@@ -3307,7 +3307,7 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
       </div>
       <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:14}}>
         <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" style={{color:"var(--dm)",display:"flex"}}>{IC.tg}</a>
-        <a href="https://www.instagram.com/forexscalproom" target="_blank" rel="noopener" style={{color:"var(--dm)",display:"flex"}}>{IC.ig}</a>
+        <a href="https://www.instagram.com/hoseinlou.fx" target="_blank" rel="noopener" style={{color:"var(--dm)",display:"flex"}}>{IC.ig}</a>
       </div>
       <div style={{fontSize:9,color:"var(--dm)",marginTop:14,letterSpacing:".3px",opacity:.7}}>© 2023–{new Date().getFullYear()} Fxscalproom. All rights reserved.</div>
     </div>
@@ -4674,7 +4674,7 @@ function AdminIBRequests({token}){
     setProcessing(req.id);
     try{
       await fetch(`${SB}/rest/v1/IBRequests?id=eq.${req.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({status:"revoked"})});
-      await fetch(`${SB}/rest/v1/Users?id=eq.${req.user_id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({membership:"free",ib_active:false})});
+      await fetch(`${SB}/rest/v1/Users?id=eq.${req.user_id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({membership:"free",ib_active:false,revoked_notice:true,revoked_at:new Date().toISOString()})});
       load();
     }catch(e){}
     setProcessing(null);
@@ -4759,6 +4759,7 @@ function Plans({userProfile,goToSupport,token}){
   const{t,lang}=useLang();
   const[showContact,setShowContact]=useState(false);
   const[selectedPlan,setSelectedPlan]=useState(null);
+  const[revNoticeHidden,setRevNoticeHidden]=useState(false);
   const{promo}=usePromo();
   const isPremium=userProfile?.membership==="premium";
   const expiresAt=userProfile?.premium_expires_at?new Date(userProfile.premium_expires_at):null;
@@ -4770,6 +4771,20 @@ function Plans({userProfile,goToSupport,token}){
   const isSemiAnnual=daysLeft>100&&daysLeft<=200;
   const isAnnual=daysLeft>200;
   const canUpgrade=isPremium&&!isAnnual&&daysLeft>0;
+  const showRevNotice=userProfile?.revoked_notice===true&&!revNoticeHidden&&userProfile?.membership!=="premium";
+  const dismissRevNotice=async()=>{
+    setRevNoticeHidden(true);
+    try{await fetch(`${SB}/rest/v1/Users?id=eq.${userProfile.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({revoked_notice:false})});}catch(e){}
+  };
+  const revNoticeText={
+    fa:{title:"⚠ اشتراک شما غیرفعال شد",body:"به دلیل عدم فعالیت یا موجودی ناکافی در حساب AMarkets شما، اشتراک پریمیومتان غیرفعال شد. برای فعال‌سازی مجدد دو راه دارید: یا حساب AMarkets خود را با حداقل ۲۰۰ دلار موجودی شارژ کرده و معامله انجام دهید، یا یکی از اشتراک‌های پولی را در همین برنامه تهیه فرمایید.",close:"متوجه شدم"},
+    ar:{title:"⚠ تم إلغاء اشتراكك",body:"نظراً لعدم النشاط أو عدم كفاية الرصيد في حساب AMarkets الخاص بك، تم إلغاء اشتراكك المميز. لإعادة التفعيل لديك خياران: إما شحن حساب AMarkets برصيد لا يقل عن 200 دولار وتنفيذ صفقات، أو شراء أحد الاشتراكات المدفوعة من داخل التطبيق.",close:"فهمت"},
+    tr:{title:"⚠ Aboneliğiniz devre dışı bırakıldı",body:"AMarkets hesabınızda yeterli bakiye veya işlem aktivitesi olmadığı için Premium aboneliğiniz devre dışı bırakıldı. Yeniden etkinleştirmek için iki seçeneğiniz var: ya AMarkets hesabınıza en az 200$ yükleyip işlem yapın, ya da uygulama içinden ücretli aboneliklerden birini satın alın.",close:"Anladım"},
+    ru:{title:"⚠ Ваша подписка отключена",body:"Из-за отсутствия активности или недостаточного баланса на вашем счёте AMarkets ваша Premium-подписка была отключена. Для возобновления у вас есть два варианта: пополнить счёт AMarkets минимум на 200$ и совершать сделки, либо приобрести одну из платных подписок прямо в приложении.",close:"Понятно"},
+    es:{title:"⚠ Tu suscripción ha sido cancelada",body:"Debido a la falta de actividad o saldo insuficiente en tu cuenta AMarkets, tu suscripción Premium ha sido cancelada. Para reactivarla tienes dos opciones: recargar tu cuenta AMarkets con un saldo mínimo de 200$ y realizar operaciones, o adquirir una de las suscripciones de pago dentro de la aplicación.",close:"Entendido"},
+    en:{title:"⚠ Your subscription has been deactivated",body:"Due to inactivity or insufficient balance in your AMarkets account, your Premium subscription has been deactivated. To reactivate, you have two options: either fund your AMarkets account with a minimum balance of $200 and start trading, or purchase one of the paid subscription plans directly within the app.",close:"Got it"}
+  };
+  const rn=revNoticeText[lang]||revNoticeText.en;
   const getUpgradePrice=()=>{
     if(isMonthly)return{from:t.month1||"1 Month",to:t.year1||"1 Year",price:"$246",save:"$54"};
     if(isQuarterly)return{from:t.month3||"3 Months",to:t.year1||"1 Year",price:"$200",save:"$100"};
@@ -4829,6 +4844,12 @@ function Plans({userProfile,goToSupport,token}){
     </div>);
   }
   return(<div className="fi">
+    {showRevNotice&&<div className="cd" style={{padding:14,marginBottom:14,borderColor:"color-mix(in srgb,var(--R) 35%,transparent)",background:"color-mix(in srgb,var(--R) 6%,transparent)",position:"relative"}}>
+      <div onClick={dismissRevNotice} style={{position:"absolute",top:8,[lang==="fa"||lang==="ar"?"left":"right"]:10,width:24,height:24,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:6,cursor:"pointer",fontSize:14,color:"var(--mu)",background:"color-mix(in srgb,var(--bg2) 60%,transparent)"}}>✕</div>
+      <div style={{fontSize:13,fontWeight:700,color:"var(--R)",marginBottom:8,paddingRight:lang==="fa"||lang==="ar"?0:24,paddingLeft:lang==="fa"||lang==="ar"?24:0}}>{rn.title}</div>
+      <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.7,marginBottom:10}}>{rn.body}</div>
+      <div onClick={dismissRevNotice} className="bt" style={{background:"var(--R)",fontSize:12,padding:"8px 14px",cursor:"pointer",display:"inline-block",width:"auto"}}>{rn.close}</div>
+    </div>}
     <div style={{textAlign:"center",marginBottom:28}}>
       <div style={{display:"inline-flex",alignItems:"center",gap:6,color:"var(--Y)",marginBottom:10}}>{IC.crown}<span style={{fontSize:12,fontWeight:700,letterSpacing:1}}>PREMIUM</span></div>
       <div style={{fontSize:22,fontWeight:700,marginBottom:6}}>{t.premium}</div>
@@ -6179,7 +6200,7 @@ function Adm({token,posts,signals,onR}){
   const delP=async id=>{if(!confirm("Delete?"))return;await api.del("Posts",id,token);onR()};
   const delS=async id=>{if(!confirm("Delete?"))return;await api.del("Signals",id,token);onR()};
   const setPremium=async(uid,expiry)=>{const data={membership:"premium"};if(expiry)data.premium_expires_at=new Date(expiry).toISOString();await api.patch("Users",uid,data,token);setMs(t.upgraded);setEditUserExp(null);setExpDate("");api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
-  const setFree=async(uid)=>{await api.patch("Users",uid,{membership:"free",premium_expires_at:null,ib_active:false},token);setMs(t.downgraded);api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
+  const setFree=async(uid)=>{await api.patch("Users",uid,{membership:"free",premium_expires_at:null,ib_active:false,revoked_notice:true,revoked_at:new Date().toISOString()},token);setMs(t.downgraded);api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
   const updateExpiry=async(uid)=>{if(!expDate)return;await api.patch("Users",uid,{premium_expires_at:new Date(expDate).toISOString()},token);setMs("Expiry updated!");setEditUserExp(null);setExpDate("");api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};
   const setIB=async(uid)=>{
     if(!ibWallet.trim()){setMs("Wallet number required");return}
@@ -6199,7 +6220,7 @@ function Adm({token,posts,signals,onR}){
     try{
       // Mark any approved IB request as revoked
       await fetch(`${SB}/rest/v1/IBRequests?user_id=eq.${uid}&status=eq.approved`,{method:"PATCH",headers:H(token),body:JSON.stringify({status:"revoked"})});
-      await api.patch("Users",uid,{membership:"free",ib_active:false,premium_expires_at:null},token);
+      await api.patch("Users",uid,{membership:"free",ib_active:false,premium_expires_at:null,revoked_notice:true,revoked_at:new Date().toISOString()},token);
       setMs("IB revoked");
       api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)});
       setIbData(prev=>{const n={...prev};delete n[uid];return n});
@@ -7398,7 +7419,7 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
     <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginBottom:6,cursor:"pointer"}}><span style={{color:"#0088cc"}}>{IC.tg}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Telegram</span></a>
-    <a href="https://www.instagram.com/forexscalproom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginBottom:6,cursor:"pointer"}}><span style={{color:"#E1306C"}}>{IC.ig}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Instagram</span></a>
+    <a href="https://www.instagram.com/hoseinlou.fx" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginBottom:6,cursor:"pointer"}}><span style={{color:"#E1306C"}}>{IC.ig}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Instagram</span></a>
     <div onClick={onOut} className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginTop:12,cursor:"pointer",background:"color-mix(in srgb,var(--R) 5%,transparent)",borderColor:"color-mix(in srgb,var(--R) 12%,transparent)"}}><span style={{fontSize:13,color:"var(--R)",fontWeight:600}}>{t.signOut}</span></div>
     {showChat&&<SupportChat userId={user?.id} token={token} onClose={()=>setShowChat(false)}/>}
   </div>);
