@@ -4835,6 +4835,7 @@ function Plans({userProfile,goToSupport,token}){
   const[showContact,setShowContact]=useState(false);
   const[selectedPlan,setSelectedPlan]=useState(null);
   const[revNoticeHidden,setRevNoticeHidden]=useState(false);
+  const[showRenewPlans,setShowRenewPlans]=useState(false);
   const{promo}=usePromo();
   const isPremium=userProfile?.membership==="premium";
   const expiresAt=userProfile?.premium_expires_at?new Date(userProfile.premium_expires_at):null;
@@ -4882,6 +4883,9 @@ function Plans({userProfile,goToSupport,token}){
     upgradeAnnual:{fa:"ارتقا به سالانه",ar:"الترقية للسنوي",tr:"Yıllığa Yükselt",ru:"Перейти на год",es:"Mejora a anual"},
     renew:{fa:"تمدید یا تمدید اشتراک",ar:"تجديد أو تمديد الاشتراك",tr:"Aboneliği yenileyin veya uzatın",ru:"Продлить подписку",es:"Renovar o extender suscripción"},
     adminAccount:{fa:"حساب ادمین",ar:"حساب المسؤول",tr:"Admin Hesabı",ru:"Аккаунт админа",es:"Cuenta admin"},
+    renewBtn:{fa:"تمدید اشتراک",ar:"تجديد الاشتراك",tr:"Aboneliği Yenile",ru:"Продлить подписку",es:"Renovar suscripción",en:"Renew Subscription"},
+    renewTitle:{fa:"انتخاب پلن تمدید",ar:"اختر خطة التجديد",tr:"Yenileme Planı Seçin",ru:"Выберите план продления",es:"Elige plan de renovación",en:"Choose Renewal Plan"},
+    renewDesc:{fa:"یکی از پلن‌های زیر را برای تمدید انتخاب کنید. زمان جدید به زمان فعلی اشتراک شما اضافه می‌شود.",ar:"اختر إحدى الخطط أدناه للتجديد. ستتم إضافة الوقت الجديد إلى اشتراكك الحالي.",tr:"Yenileme için aşağıdaki planlardan birini seçin. Yeni süre mevcut aboneliğinize eklenecektir.",ru:"Выберите один из планов ниже для продления. Новое время будет добавлено к вашей текущей подписке.",es:"Elige uno de los planes a continuación para renovar. El tiempo se sumará a tu suscripción actual.",en:"Pick a plan below to renew. The new time will be added to your current subscription."},
   };
   const pt=(k)=>(premText[k]&&premText[k][lang])||(premText[k]&&premText[k].en)||"";
   const isIBUser=userProfile?.ib_active===true;
@@ -4911,9 +4915,54 @@ function Plans({userProfile,goToSupport,token}){
         <div onClick={()=>setShowContact(true)} className="bt" style={{background:"var(--Y)",color:"#000",fontSize:13,cursor:"pointer"}}>{pt("upgradeAnnual")||"Upgrade Now"} — {upgrade.price}</div>
       </div>}
       <WhatWeCover lang={lang}/>
-      {!isAdmin&&<div className="cd" style={{padding:16,textAlign:"center",marginTop:16}}>
+      {!isAdmin&&!isIBUser&&<div className="cd" style={{padding:16,textAlign:"center",marginTop:16}}>
+        <div style={{fontSize:13,color:"var(--mu)",marginBottom:12}}>{pt("renew")||"Renew or extend your subscription"}</div>
+        <div onClick={()=>setShowRenewPlans(true)} className="bt" style={{background:"var(--B)",fontSize:13,cursor:"pointer",marginBottom:10}}>{pt("renewBtn")||"Renew Subscription"}</div>
+        <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,color:"#0088cc",fontSize:13,fontWeight:600,cursor:"pointer"}}>{IC.tg} {{fa:"تماس با پشتیبانی",ar:"اتصل بالدعم",tr:"Destek İletişim",ru:"Связаться с поддержкой",es:"Contactar soporte"}[lang]||"Contact Support"}</div>
+      </div>}
+      {!isAdmin&&isIBUser&&<div className="cd" style={{padding:16,textAlign:"center",marginTop:16}}>
         <div style={{fontSize:13,color:"var(--mu)",marginBottom:10}}>{pt("renew")||"Renew or extend your subscription"}</div>
         <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.tg} {{fa:"تماس با پشتیبانی",ar:"اتصل بالدعم",tr:"Destek İletişim",ru:"Связаться с поддержкой",es:"Contactar soporte"}[lang]||"Contact Support"}</div>
+      </div>}
+      {showRenewPlans&&<div className="modal-overlay modal-overlay-glass" onClick={()=>setShowRenewPlans(false)}>
+        <div className="modal" onClick={e=>e.stopPropagation()}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <span style={{fontSize:16,fontWeight:700}}>{pt("renewTitle")||"Choose Renewal Plan"}</span>
+            <div onClick={()=>setShowRenewPlans(false)} style={{cursor:"pointer",color:"var(--mu)"}}>{IC.x}</div>
+          </div>
+          <div style={{fontSize:12,color:"var(--mu)",lineHeight:1.7,marginBottom:14}}>{pt("renewDesc")||"Pick a plan below to renew. The new time will be added to your current subscription."}</div>
+          {disc>0&&promo&&<div className="cd" style={{marginBottom:12,padding:12,borderColor:"color-mix(in srgb,var(--R) 30%,transparent)",background:"color-mix(in srgb,var(--R) 4%,transparent)"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:18}}>{AE.fire}</span>
+              <div style={{fontSize:13,fontWeight:700,color:"var(--R)"}}>{disc}% OFF — {{fa:"حراج ویژه",ar:"تخفيضات خاصة",tr:"Özel İndirim",ru:"Распродажа",es:"Oferta especial"}[lang]||"Special Sale"}</div>
+            </div>
+          </div>}
+          {basePlans.map((p,i)=>{
+            const totalDisc=Math.max(disc,gwDisc);
+            const discPrice=totalDisc>0?Math.round(p.p*(1-totalDisc/100)):0;
+            const hasDisc=totalDisc>0;
+            return<div key={i} className="cd" style={{marginBottom:8,padding:14,borderColor:p.best?"color-mix(in srgb,var(--R) 30%,transparent)":"var(--brd)",background:p.best?"color-mix(in srgb,var(--R) 3%,transparent)":"var(--card)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div>
+                  <div style={{fontSize:14,fontWeight:600}}>{p.dur}</div>
+                  <div style={{display:"flex",gap:6,marginTop:3,flexWrap:"wrap",alignItems:"center"}}>
+                    {p.best&&<span style={{fontSize:10,fontWeight:700,color:"var(--G)"}}>{t.bestValue}</span>}
+                    {p.save&&!hasDisc&&<span style={{fontSize:10,fontWeight:600,color:"var(--Y)"}}>Save {p.save}</span>}
+                    {disc>0&&<span style={{fontSize:10,fontWeight:700,color:"var(--R)",background:"color-mix(in srgb,var(--R) 10%,transparent)",padding:"2px 6px",borderRadius:4}}>{disc}% OFF</span>}
+                    {gwDisc>0&&disc===0&&<span style={{fontSize:10,fontWeight:700,color:"var(--G)",background:"color-mix(in srgb,var(--G) 10%,transparent)",padding:"2px 6px",borderRadius:4}}>🎰 {gwDisc}% OFF</span>}
+                  </div>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{textAlign:"right"}}>
+                    {hasDisc&&<div className="m" style={{fontSize:12,color:"var(--dm)",textDecoration:"line-through",fontWeight:500}}>${p.p}</div>}
+                    <span className="m" style={{fontSize:hasDisc?20:18,fontWeight:700,color:hasDisc?"var(--G)":"var(--tx)"}}>${hasDisc?discPrice:p.p}</span>
+                  </div>
+                  <div onClick={()=>{setSelectedPlan({dur:p.dur,price:hasDisc?discPrice:p.p,days:p.days,renew:true});setShowRenewPlans(false);setShowContact(true)}} className="bt" style={{background:"var(--B)",padding:"9px 16px",width:"auto",fontSize:12,cursor:"pointer"}}>{pt("renewBtn")||"Renew"}</div>
+                </div>
+              </div>
+            </div>
+          })}
+        </div>
       </div>}
       {showContact&&<ContactPopup onClose={()=>{setShowContact(false);setSelectedPlan(null)}} onSupport={goToSupport} plan={selectedPlan} userId={userProfile?.id} token={token}/>}
     </div>);
