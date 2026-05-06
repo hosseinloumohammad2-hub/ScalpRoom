@@ -3119,7 +3119,7 @@ function TVTopStories({colorTheme}){
 }
 
 /* ─── Home ─── */
-function Home({posts,signals,msgs,stories,announcements,go,goToPlans,P,ok,lastUpdate,dark,toggle,userProfile,token,onR,online}){
+function Home({posts,signals,msgs,stories,announcements,activePoll,myVote,onVoted,go,goToPlans,P,ok,lastUpdate,dark,toggle,userProfile,token,onR,online}){
   const{t,lang}=useLang();
   const[sel,setSel]=useState(null);
   const[showMsgs,setShowMsgs]=useState(false);
@@ -3193,6 +3193,8 @@ function Home({posts,signals,msgs,stories,announcements,go,goToPlans,P,ok,lastUp
         </div>
       </div>);
     })}
+    {/* Optional Poll card (required polls are shown as a blocking modal at App level) */}
+    {activePoll&&!activePoll.is_required&&<PollHomeCard poll={activePoll} myVote={myVote} userId={userProfile?.id} token={token} onVoted={onVoted} isPremiumUser={isPremiumUser}/>}
     {/* Greeting Glass Card — iOS 26 style */}
     {firstName&&<div className="cd cd-glass" style={{marginBottom:14,padding:18}}>
       <div style={{display:"flex",alignItems:"center",gap:14}}>
@@ -6328,8 +6330,8 @@ function Adm({token,posts,signals,onR}){
         })}
       </div>
       <div style={{display:"flex",gap:4}}>
-        {["announce"].map(tab=>{
-          const labels={announce:lang==="fa"?"📢 اطلاعیه":"📢 Announcement"};
+        {["announce","poll"].map(tab=>{
+          const labels={announce:lang==="fa"?"📢 اطلاعیه":"📢 Announcement",poll:lang==="fa"?"📊 نظرسنجی":"📊 Poll"};
           return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{labels[tab]}</div>
         })}
       </div>
@@ -6633,6 +6635,7 @@ function Adm({token,posts,signals,onR}){
     {tb==="ai"&&<AdminAI token={token}/>}
     {tb==="active"&&<AdminActiveCount token={token}/>}
     {tb==="announce"&&<AdminAnnouncements token={token}/>}
+    {tb==="poll"&&<AdminPolls token={token}/>}
     {tb==="msg"&&<>
       <div style={{fontSize:13,fontWeight:700,marginBottom:10}}>{lang==="fa"?"📬 ارسال پیام":"📬 Send Message"}</div>
       <input className="ip" placeholder={lang==="fa"?"عنوان پیام":"Message title"} value={msgTitle} onChange={e=>setMsgTitle(e.target.value)}/>
@@ -7101,6 +7104,496 @@ function GiveawayWheel({userId,token}){
     </div>
   </div>);
 }
+/* ─── Poll: shared form/results UI used by both Modal and Card ─── */
+function PollForm({poll,userId,token,onSubmitted,disableClose=false,onClose}){
+  const{lang}=useLang();
+  const[selected,setSelected]=useState(null);
+  const[comment,setComment]=useState("");
+  const[submitting,setSubmitting]=useState(false);
+  const[err,setErr]=useState("");
+  const options=Array.isArray(poll.options)?poll.options:[];
+  const isRtl=lang==="fa"||lang==="ar";
+
+  const submit=async()=>{
+    if(selected===null){setErr(lang==="fa"?"یک گزینه انتخاب کن":"Pick an option");return}
+    setSubmitting(true);setErr("");
+    try{
+      const r=await fetch(`${SB}/rest/v1/PollVotes`,{
+        method:"POST",
+        headers:{...H(token),Prefer:"return=representation"},
+        body:JSON.stringify({poll_id:poll.id,user_id:userId,option_index:selected,comment:comment.trim()||null})
+      });
+      if(!r.ok){
+        const txt=await r.text();
+        if(r.status===409||txt.includes("duplicate")){
+          setErr(lang==="fa"?"قبلاً رای داده‌ای":"You have already voted");
+        }else{
+          setErr(lang==="fa"?"خطا در ثبت رای":"Error submitting vote");
+        }
+        setSubmitting(false);
+        return;
+      }
+      const d=await r.json();
+      onSubmitted&&onSubmitted(Array.isArray(d)?d[0]:{option_index:selected,comment:comment.trim()||null});
+    }catch(e){
+      setErr(lang==="fa"?"خطا در شبکه":"Network error");
+    }
+    setSubmitting(false);
+  };
+
+  return(<div>
+    <div style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:14}}>
+      <div style={{fontSize:22,flexShrink:0,lineHeight:1}}>📊</div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:11,fontWeight:600,color:"var(--B)",letterSpacing:.3,marginBottom:4}}>{lang==="fa"?"نظرسنجی":"POLL"}</div>
+        <div style={{fontSize:15,fontWeight:700,color:"var(--tx)",lineHeight:1.4}}>{poll.question}</div>
+      </div>
+      {!disableClose&&onClose&&<div onClick={onClose} style={{cursor:"pointer",color:"var(--mu)",padding:4,marginInlineStart:4}}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>}
+    </div>
+
+    <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:12}}>
+      {options.map((opt,i)=>{
+        const isSel=selected===i;
+        return(<div key={i} onClick={()=>{setSelected(i);setErr("")}} style={{
+          padding:"12px 14px",
+          borderRadius:10,
+          cursor:"pointer",
+          background:isSel?"color-mix(in srgb,var(--B) 12%,transparent)":"var(--bg2)",
+          border:`1.5px solid ${isSel?"var(--B)":"var(--brd)"}`,
+          display:"flex",alignItems:"center",gap:10,
+          transition:"all .15s ease"
+        }}>
+          <div style={{
+            width:18,height:18,borderRadius:"50%",
+            border:`2px solid ${isSel?"var(--B)":"var(--brd2)"}`,
+            background:isSel?"var(--B)":"transparent",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            flexShrink:0
+          }}>
+            {isSel&&<div style={{width:6,height:6,borderRadius:"50%",background:"#fff"}}/>}
+          </div>
+          <span style={{fontSize:13,fontWeight:isSel?700:500,color:isSel?"var(--tx)":"var(--tx2)",lineHeight:1.4,flex:1}}>{opt}</span>
+        </div>);
+      })}
+    </div>
+
+    {poll.allow_comment&&<div style={{marginBottom:12}}>
+      <div style={{fontSize:10,fontWeight:600,marginBottom:5,color:"var(--tx2)"}}>{poll.comment_label||(lang==="fa"?"نظر تو (اختیاری)":"Your comment (optional)")}</div>
+      <textarea
+        value={comment}
+        onChange={e=>setComment(e.target.value)}
+        placeholder={lang==="fa"?"اگه چیزی هست که میخوای اضافه کنی...":"Anything you'd like to add..."}
+        rows={3}
+        maxLength={500}
+        style={{resize:"vertical",direction:isRtl?"rtl":"ltr",textAlign:isRtl?"right":"left"}}
+      />
+      <div style={{fontSize:9,color:"var(--dm)",textAlign:isRtl?"left":"right",marginTop:3}}>{comment.length}/500</div>
+    </div>}
+
+    {err&&<div style={{background:"color-mix(in srgb,var(--R) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 18%,transparent)",borderRadius:8,padding:8,marginBottom:10,fontSize:11,color:"var(--R)"}}>{err}</div>}
+
+    <button className="bt" onClick={submit} disabled={submitting||selected===null} style={{background:"var(--B)",opacity:submitting||selected===null?.5:1,padding:13,fontSize:13,fontWeight:700}}>
+      {submitting?"...":(lang==="fa"?"ثبت رای":"Submit Vote")}
+    </button>
+  </div>);
+}
+
+/* ─── Required Poll Modal — full screen, blocks app ─── */
+function PollModalRequired({poll,userId,token,onSubmitted}){
+  const{lang}=useLang();
+  if(!poll||!userId)return null;
+  return(<div style={{
+    position:"fixed",inset:0,zIndex:9999,
+    background:"color-mix(in srgb,#000 70%,transparent)",
+    backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)",
+    display:"flex",alignItems:"center",justifyContent:"center",
+    padding:16,
+    overflowY:"auto"
+  }}>
+    <div className="cd" style={{
+      maxWidth:440,width:"100%",
+      padding:20,
+      maxHeight:"calc(100vh - 32px)",
+      overflowY:"auto",
+      border:"1px solid color-mix(in srgb,var(--B) 30%,transparent)",
+      boxShadow:"0 20px 60px rgba(0,0,0,.35)"
+    }}>
+      <div style={{
+        display:"inline-flex",alignItems:"center",gap:5,
+        background:"color-mix(in srgb,var(--R) 12%,transparent)",
+        color:"var(--R)",
+        padding:"4px 10px",borderRadius:6,
+        fontSize:9,fontWeight:700,letterSpacing:.5,
+        marginBottom:12
+      }}>● {lang==="fa"?"نظرسنجی اجباری":"REQUIRED"}</div>
+      <PollForm poll={poll} userId={userId} token={token} onSubmitted={onSubmitted} disableClose={true}/>
+      <div style={{fontSize:10,color:"var(--dm)",textAlign:"center",marginTop:14,lineHeight:1.5}}>
+        {lang==="fa"?"برای دسترسی به برنامه، لطفاً به این نظرسنجی پاسخ بده.":"Please answer this poll to access the app."}
+      </div>
+    </div>
+  </div>);
+}
+
+/* ─── Optional Poll Card — shown on Home, dismissible ─── */
+function PollHomeCard({poll,myVote,userId,token,onVoted,isPremiumUser}){
+  const{lang}=useLang();
+  const[dismissed,setDismissed]=useState(()=>{
+    try{const d=localStorage.getItem(`fx_poll_dismiss_${poll?.id}`);return d==="1"}catch(e){return false}
+  });
+  const[showResults,setShowResults]=useState(false);
+  const[results,setResults]=useState(null);
+  const[loadingRes,setLoadingRes]=useState(false);
+
+  if(!poll)return null;
+  const matchesUser=poll.target==="all"||(poll.target==="premium"&&isPremiumUser)||(poll.target==="free"&&!isPremiumUser);
+  if(!matchesUser)return null;
+  if(poll.is_required)return null; // required is handled by modal
+  if(dismissed&&!myVote)return null;
+
+  const dismiss=()=>{
+    setDismissed(true);
+    try{localStorage.setItem(`fx_poll_dismiss_${poll.id}`,"1")}catch(e){}
+  };
+
+  const loadResults=async()=>{
+    setLoadingRes(true);
+    try{
+      const r=await fetch(`${SB}/rest/v1/PollVotes?poll_id=eq.${poll.id}&select=option_index`,{headers:H(token)});
+      const d=await r.json();
+      if(Array.isArray(d)){
+        const counts=new Array((poll.options||[]).length).fill(0);
+        d.forEach(v=>{if(typeof v.option_index==="number"&&v.option_index>=0&&v.option_index<counts.length)counts[v.option_index]++});
+        setResults({counts,total:d.length});
+      }
+    }catch(e){}
+    setLoadingRes(false);
+  };
+
+  useEffect(()=>{if(myVote)loadResults()},[myVote,poll.id]);
+
+  // After voting → show thank you + results
+  if(myVote){
+    if(!showResults&&!results){return(<div className="cd" style={{marginBottom:10,padding:14,background:"color-mix(in srgb,var(--G) 8%,transparent)",borderColor:"color-mix(in srgb,var(--G) 22%,transparent)",position:"relative"}}>
+      <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+        <div style={{fontSize:18}}>✅</div>
+        <div style={{flex:1,paddingInlineEnd:24}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--G)"}}>{lang==="fa"?"رای شما ثبت شد":"Vote recorded"}</div>
+          <div style={{fontSize:11,color:"var(--tx2)",marginTop:3,lineHeight:1.5}}>{lang==="fa"?"ممنون از مشارکتت!":"Thanks for participating!"}</div>
+          <div onClick={()=>setShowResults(true)} style={{display:"inline-block",fontSize:10,fontWeight:600,color:"var(--B)",cursor:"pointer",marginTop:6,padding:"4px 10px",background:"color-mix(in srgb,var(--B) 10%,transparent)",borderRadius:6}}>{lang==="fa"?"مشاهده نتایج":"View results"} →</div>
+        </div>
+        <div onClick={dismiss} style={{position:"absolute",top:8,[lang==="fa"||lang==="ar"?"left":"right"]:8,cursor:"pointer",color:"var(--mu)",padding:4}}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+      </div>
+    </div>);}
+    // Results view
+    return(<div className="cd" style={{marginBottom:10,padding:14,position:"relative"}}>
+      <div style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:12,paddingInlineEnd:24}}>
+        <div style={{fontSize:16}}>📊</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:9,fontWeight:700,color:"var(--B)",letterSpacing:.3,marginBottom:2}}>{lang==="fa"?"نتایج نظرسنجی":"POLL RESULTS"}</div>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--tx)",lineHeight:1.4}}>{poll.question}</div>
+        </div>
+      </div>
+      <div onClick={dismiss} style={{position:"absolute",top:8,[lang==="fa"||lang==="ar"?"left":"right"]:8,cursor:"pointer",color:"var(--mu)",padding:4}}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+      {loadingRes||!results?<div style={{textAlign:"center",padding:20,color:"var(--dm)",fontSize:11}}>...</div>:<>
+        <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:8}}>
+          {(poll.options||[]).map((opt,i)=>{
+            const cnt=results.counts[i]||0;
+            const pct=results.total>0?Math.round((cnt/results.total)*100):0;
+            const isMine=myVote.option_index===i;
+            return(<div key={i} style={{position:"relative",padding:"9px 12px",borderRadius:8,background:"var(--bg2)",border:`1px solid ${isMine?"var(--B)":"var(--brd)"}`,overflow:"hidden"}}>
+              <div style={{position:"absolute",inset:0,width:`${pct}%`,background:isMine?"color-mix(in srgb,var(--B) 18%,transparent)":"color-mix(in srgb,var(--mu) 8%,transparent)",transition:"width .4s ease"}}/>
+              <div style={{position:"relative",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
+                <span style={{fontSize:12,fontWeight:isMine?700:500,color:"var(--tx)"}}>{isMine&&"✓ "}{opt}</span>
+                <span style={{fontSize:11,fontWeight:700,color:isMine?"var(--B)":"var(--mu)"}}>{pct}%</span>
+              </div>
+            </div>);
+          })}
+        </div>
+        <div style={{fontSize:10,color:"var(--dm)",textAlign:"center"}}>{results.total.toLocaleString(lang==="fa"?"fa-IR":"en-US")} {lang==="fa"?"رای":"votes"}</div>
+      </>}
+    </div>);
+  }
+
+  // Not voted yet → show form (optional poll)
+  return(<div className="cd" style={{marginBottom:10,padding:16,background:"color-mix(in srgb,var(--B) 6%,transparent)",borderColor:"color-mix(in srgb,var(--B) 25%,transparent)",position:"relative"}}>
+    <div onClick={dismiss} style={{position:"absolute",top:10,[lang==="fa"||lang==="ar"?"left":"right"]:10,cursor:"pointer",color:"var(--mu)",padding:4,zIndex:1}}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </div>
+    <PollForm poll={poll} userId={userId} token={token} onSubmitted={onVoted} disableClose={true}/>
+  </div>);
+}
+
+/* ─── Admin Polls Manager ─── */
+function AdminPolls({token}){
+  const{lang}=useLang();
+  const[polls,setPolls]=useState([]);
+  const[results,setResults]=useState({}); // {pollId: {counts:[], total, comments:[]}}
+  const[expanded,setExpanded]=useState(null);
+  const[loading,setLoading]=useState(false);
+  const[msg,setMsg]=useState("");
+
+  // Form state
+  const[question,setQuestion]=useState("");
+  const[options,setOptions]=useState(["",""]);
+  const[allowComment,setAllowComment]=useState(true);
+  const[commentLabel,setCommentLabel]=useState("");
+  const[target,setTarget]=useState("all");
+  const[isRequired,setIsRequired]=useState(false);
+  const[editId,setEditId]=useState(null);
+
+  const reload=async()=>{
+    try{
+      const r=await fetch(`${SB}/rest/v1/Polls?order=created_at.desc`,{headers:H(token)});
+      const d=await r.json();
+      if(Array.isArray(d))setPolls(d);
+    }catch(e){}
+  };
+  useEffect(()=>{reload()},[token]);
+
+  const loadResults=async(pollId)=>{
+    try{
+      const r=await fetch(`${SB}/rest/v1/PollVotes?poll_id=eq.${pollId}&select=option_index,comment,created_at,user_id&order=created_at.desc`,{headers:H(token)});
+      const d=await r.json();
+      if(!Array.isArray(d))return;
+      const poll=polls.find(p=>p.id===pollId);
+      const optsLen=(poll?.options||[]).length;
+      const counts=new Array(optsLen).fill(0);
+      const comments=[];
+      d.forEach(v=>{
+        if(typeof v.option_index==="number"&&v.option_index>=0&&v.option_index<optsLen)counts[v.option_index]++;
+        if(v.comment&&v.comment.trim())comments.push({comment:v.comment,option_index:v.option_index,created_at:v.created_at});
+      });
+      setResults(prev=>({...prev,[pollId]:{counts,total:d.length,comments}}));
+    }catch(e){}
+  };
+
+  const reset=()=>{
+    setQuestion("");setOptions(["",""]);setAllowComment(true);setCommentLabel("");
+    setTarget("all");setIsRequired(false);setEditId(null);
+  };
+
+  const addOption=()=>{if(options.length<10)setOptions([...options,""])};
+  const removeOption=(i)=>{if(options.length>2)setOptions(options.filter((_,idx)=>idx!==i))};
+  const updateOption=(i,val)=>{setOptions(options.map((o,idx)=>idx===i?val:o))};
+
+  const submit=async()=>{
+    if(!question.trim()){setMsg(lang==="fa"?"سوال لازم است":"Question required");return}
+    const cleanOpts=options.map(o=>o.trim()).filter(Boolean);
+    if(cleanOpts.length<2){setMsg(lang==="fa"?"حداقل ۲ گزینه":"Need at least 2 options");return}
+    setLoading(true);
+    try{
+      const data={
+        question:question.trim(),
+        options:cleanOpts,
+        allow_comment:allowComment,
+        comment_label:commentLabel.trim()||null,
+        target,
+        is_required:isRequired,
+        is_active:true
+      };
+      if(editId){
+        await fetch(`${SB}/rest/v1/Polls?id=eq.${editId}`,{method:"PATCH",headers:H(token),body:JSON.stringify(data)});
+        setMsg(lang==="fa"?"به‌روزرسانی شد!":"Updated!");
+      }else{
+        // Deactivate any existing active poll first (only ONE active at a time)
+        await fetch(`${SB}/rest/v1/Polls?is_active=eq.true`,{method:"PATCH",headers:H(token),body:JSON.stringify({is_active:false})});
+        await fetch(`${SB}/rest/v1/Polls`,{method:"POST",headers:H(token),body:JSON.stringify(data)});
+        setMsg(lang==="fa"?"نظرسنجی منتشر شد!":"Poll published!");
+      }
+      reset();
+      reload();
+    }catch(e){setMsg(e.message)}
+    setLoading(false);
+    setTimeout(()=>setMsg(""),3000);
+  };
+
+  const toggleActive=async(p)=>{
+    try{
+      // If activating one, deactivate others first
+      if(!p.is_active){
+        await fetch(`${SB}/rest/v1/Polls?is_active=eq.true`,{method:"PATCH",headers:H(token),body:JSON.stringify({is_active:false})});
+      }
+      await fetch(`${SB}/rest/v1/Polls?id=eq.${p.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({is_active:!p.is_active})});
+      reload();
+    }catch(e){}
+  };
+
+  const toggleRequired=async(p)=>{
+    try{
+      await fetch(`${SB}/rest/v1/Polls?id=eq.${p.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({is_required:!p.is_required})});
+      reload();
+    }catch(e){}
+  };
+
+  const del=async(id)=>{
+    if(!confirm(lang==="fa"?"حذف نظرسنجی و همه رای‌ها؟":"Delete poll and all votes?"))return;
+    try{
+      await fetch(`${SB}/rest/v1/Polls?id=eq.${id}`,{method:"DELETE",headers:H(token)});
+      reload();
+    }catch(e){}
+  };
+
+  const startEdit=(p)=>{
+    setEditId(p.id);
+    setQuestion(p.question||"");
+    setOptions(Array.isArray(p.options)&&p.options.length>=2?p.options:["",""]);
+    setAllowComment(!!p.allow_comment);
+    setCommentLabel(p.comment_label||"");
+    setTarget(p.target||"all");
+    setIsRequired(!!p.is_required);
+    window.scrollTo({top:0,behavior:"smooth"});
+  };
+
+  const exportCsv=(p)=>{
+    const r=results[p.id];
+    if(!r)return;
+    const lines=[`"Question","${(p.question||"").replace(/"/g,'""')}"`,"","Option,Votes,Percentage"];
+    (p.options||[]).forEach((opt,i)=>{
+      const cnt=r.counts[i]||0;
+      const pct=r.total>0?((cnt/r.total)*100).toFixed(1):"0";
+      lines.push(`"${opt.replace(/"/g,'""')}",${cnt},${pct}%`);
+    });
+    if(r.comments.length){
+      lines.push("","Comments","Option,Comment,Date");
+      r.comments.forEach(c=>{
+        const opt=(p.options||[])[c.option_index]||"";
+        lines.push(`"${opt.replace(/"/g,'""')}","${(c.comment||"").replace(/"/g,'""')}","${new Date(c.created_at).toLocaleString()}"`);
+      });
+    }
+    const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8;"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;a.download=`poll_${p.id}_results.csv`;a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return(<div>
+    <div style={{fontSize:14,fontWeight:700,marginBottom:6}}>{lang==="fa"?"📊 نظرسنجی‌ها":"📊 Polls"}</div>
+    <div style={{fontSize:11,color:"var(--dm)",marginBottom:14,lineHeight:1.6}}>{lang==="fa"?"فقط یک نظرسنجی همزمان فعال می‌شود. اگر اجباری بزنی، کاربر تا پاسخ ندهد به برنامه دسترسی ندارد.":"Only one poll active at a time. If marked required, users cannot use the app until they answer."}</div>
+
+    {msg&&<div style={{background:msg.includes("!")||msg.includes("شد")?"color-mix(in srgb,var(--G) 8%,transparent)":"color-mix(in srgb,var(--R) 8%,transparent)",border:`1px solid ${msg.includes("!")||msg.includes("شد")?"color-mix(in srgb,var(--G) 18%,transparent)":"color-mix(in srgb,var(--R) 18%,transparent)"}`,borderRadius:10,padding:10,marginBottom:10,fontSize:12,color:msg.includes("!")||msg.includes("شد")?"var(--G)":"var(--R)"}}>{msg}</div>}
+
+    {/* Form */}
+    <div className="cd" style={{padding:14,marginBottom:16}}>
+      <div style={{fontSize:12,fontWeight:700,marginBottom:10,color:"var(--tx2)"}}>{editId?(lang==="fa"?"✏️ ویرایش نظرسنجی":"✏️ Edit Poll"):(lang==="fa"?"➕ نظرسنجی جدید":"➕ New Poll")}</div>
+
+      <div style={{fontSize:10,fontWeight:600,marginBottom:4,color:"var(--tx2)"}}>{lang==="fa"?"سوال *":"Question *"}</div>
+      <textarea placeholder={lang==="fa"?"مثلاً: کدوم جفت ارز رو بیشتر دنبال می‌کنی؟":"e.g. Which pair do you trade most?"} value={question} onChange={e=>setQuestion(e.target.value)} rows={2} style={{marginBottom:10}} maxLength={300}/>
+
+      <div style={{fontSize:10,fontWeight:600,marginBottom:4,color:"var(--tx2)"}}>{lang==="fa"?"گزینه‌ها *":"Options *"} ({options.length})</div>
+      {options.map((opt,i)=>(<div key={i} style={{display:"flex",gap:6,marginBottom:6,alignItems:"center"}}>
+        <span style={{fontSize:11,fontWeight:700,color:"var(--mu)",minWidth:18,textAlign:"center"}}>{i+1}.</span>
+        <input className="ip" placeholder={lang==="fa"?`گزینه ${i+1}`:`Option ${i+1}`} value={opt} onChange={e=>updateOption(i,e.target.value)} style={{marginBottom:0,flex:1}} maxLength={150}/>
+        {options.length>2&&<div onClick={()=>removeOption(i)} style={{cursor:"pointer",padding:"6px 10px",borderRadius:6,background:"color-mix(in srgb,var(--R) 10%,transparent)",color:"var(--R)",fontSize:14,fontWeight:700,lineHeight:1}}>×</div>}
+      </div>))}
+      {options.length<10&&<div onClick={addOption} style={{cursor:"pointer",padding:8,borderRadius:8,border:"1.5px dashed var(--brd2)",textAlign:"center",fontSize:11,fontWeight:600,color:"var(--mu)",marginTop:4,marginBottom:10}}>+ {lang==="fa"?"افزودن گزینه":"Add option"}</div>}
+
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,marginTop:6,padding:"8px 10px",background:"var(--bg2)",borderRadius:8,cursor:"pointer"}} onClick={()=>setAllowComment(!allowComment)}>
+        <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${allowComment?"var(--B)":"var(--brd2)"}`,background:allowComment?"var(--B)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          {allowComment&&<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+        </div>
+        <span style={{fontSize:12,fontWeight:600,color:"var(--tx)"}}>{lang==="fa"?"اجازه نظر متنی آزاد (اختیاری)":"Allow free-text comment (optional)"}</span>
+      </div>
+
+      {allowComment&&<>
+        <div style={{fontSize:10,fontWeight:600,marginBottom:4,color:"var(--tx2)"}}>{lang==="fa"?"عنوان فیلد نظر (اختیاری)":"Comment field label (optional)"}</div>
+        <input className="ip" placeholder={lang==="fa"?"مثلاً: دلیل انتخابت چیه؟":"e.g. Why did you pick this?"} value={commentLabel} onChange={e=>setCommentLabel(e.target.value)} style={{marginBottom:10}} maxLength={100}/>
+      </>}
+
+      <div style={{fontSize:10,fontWeight:600,marginBottom:4,color:"var(--tx2)"}}>{lang==="fa"?"مخاطب":"Audience"}</div>
+      <div style={{display:"flex",gap:4,marginBottom:10}}>
+        {[{k:"all",l:lang==="fa"?"همه":"Everyone"},{k:"premium",l:lang==="fa"?"فقط Premium":"Premium only"},{k:"free",l:lang==="fa"?"فقط Free":"Free only"}].map(opt=>
+          <div key={opt.k} onClick={()=>setTarget(opt.k)} style={{flex:1,padding:9,borderRadius:8,textAlign:"center",cursor:"pointer",background:target===opt.k?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${target===opt.k?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:11,fontWeight:600,color:target===opt.k?"var(--R)":"var(--mu)"}}>{opt.l}</div>
+        )}
+      </div>
+
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:isRequired?"color-mix(in srgb,var(--R) 8%,transparent)":"var(--bg2)",borderRadius:8,border:`1px solid ${isRequired?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,marginBottom:14,cursor:"pointer"}} onClick={()=>setIsRequired(!isRequired)}>
+        <div style={{width:36,height:20,borderRadius:10,background:isRequired?"var(--R)":"var(--brd2)",position:"relative",transition:"background .2s",flexShrink:0}}>
+          <div style={{position:"absolute",top:2,left:isRequired?18:2,width:16,height:16,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 3px rgba(0,0,0,.2)"}}/>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:12,fontWeight:700,color:isRequired?"var(--R)":"var(--tx)"}}>{lang==="fa"?"اجباری":"Required"}</div>
+          <div style={{fontSize:10,color:"var(--dm)",marginTop:2,lineHeight:1.4}}>{isRequired?(lang==="fa"?"⚠️ کاربر تا پاسخ ندهد به برنامه دسترسی نخواهد داشت":"⚠️ User must answer before accessing app"):(lang==="fa"?"کاربر می‌تواند رد کند":"User can dismiss")}</div>
+        </div>
+      </div>
+
+      <div style={{display:"flex",gap:6}}>
+        <button className="bt" onClick={submit} disabled={loading} style={{background:"var(--B)",flex:1,opacity:loading?.5:1}}>{loading?"...":(editId?(lang==="fa"?"به‌روزرسانی":"Update"):(lang==="fa"?"انتشار":"Publish"))}</button>
+        {editId&&<button className="bt" onClick={reset} style={{background:"var(--bg2)",color:"var(--mu)",border:"1px solid var(--brd)",width:"auto",padding:"0 16px"}}>{lang==="fa"?"لغو":"Cancel"}</button>}
+      </div>
+    </div>
+
+    {/* List */}
+    <div style={{fontSize:12,fontWeight:700,marginBottom:8,color:"var(--tx2)"}}>{lang==="fa"?"همه نظرسنجی‌ها":"All Polls"} ({polls.length})</div>
+    {!polls.length&&<div style={{textAlign:"center",color:"var(--dm)",fontSize:12,padding:30}}>{lang==="fa"?"هنوز نظرسنجی نساختی":"No polls yet"}</div>}
+    {polls.map(p=>{
+      const isExpanded=expanded===p.id;
+      const r=results[p.id];
+      const opts=Array.isArray(p.options)?p.options:[];
+      return(<div key={p.id} className="cd" style={{padding:12,marginBottom:8,opacity:p.is_active?1:.6,borderColor:p.is_active?"color-mix(in srgb,var(--B) 25%,transparent)":"var(--brd)"}}>
+        <div style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:8}}>
+          <div style={{fontSize:16,flexShrink:0}}>📊</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:12,fontWeight:700,lineHeight:1.4,wordBreak:"break-word"}}>{p.question}</div>
+            <div style={{fontSize:10,color:"var(--dm)",marginTop:3}}>{opts.length} {lang==="fa"?"گزینه":"options"} · {new Date(p.created_at).toLocaleDateString()}</div>
+          </div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap",fontSize:9,fontWeight:600,marginBottom:8}}>
+          <span style={{padding:"3px 7px",borderRadius:4,background:"var(--bg)",color:"var(--mu)",border:"1px solid var(--brd)"}}>{p.target==="all"?(lang==="fa"?"همه":"Everyone"):p.target==="premium"?"Premium":"Free"}</span>
+          <span style={{padding:"3px 7px",borderRadius:4,background:p.is_active?"color-mix(in srgb,var(--G) 12%,transparent)":"var(--bg)",color:p.is_active?"var(--G)":"var(--dm)"}}>{p.is_active?(lang==="fa"?"● فعال":"● Active"):(lang==="fa"?"○ غیرفعال":"○ Inactive")}</span>
+          {p.is_required&&<span style={{padding:"3px 7px",borderRadius:4,background:"color-mix(in srgb,var(--R) 12%,transparent)",color:"var(--R)"}}>{lang==="fa"?"⚠ اجباری":"⚠ Required"}</span>}
+          {p.allow_comment&&<span style={{padding:"3px 7px",borderRadius:4,background:"var(--bg)",color:"var(--mu)",border:"1px solid var(--brd)"}}>💬 {lang==="fa"?"کامنت":"Comment"}</span>}
+        </div>
+
+        <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
+          <div onClick={()=>{const next=isExpanded?null:p.id;setExpanded(next);if(next&&!results[p.id])loadResults(p.id)}} style={{cursor:"pointer",fontSize:10,fontWeight:600,padding:"5px 10px",borderRadius:6,background:"color-mix(in srgb,var(--B) 10%,transparent)",color:"var(--B)"}}>{isExpanded?(lang==="fa"?"بستن":"Hide"):(lang==="fa"?"📊 نتایج":"📊 Results")}</div>
+          <div onClick={()=>toggleActive(p)} style={{cursor:"pointer",fontSize:10,fontWeight:600,padding:"5px 10px",borderRadius:6,background:p.is_active?"var(--bg2)":"color-mix(in srgb,var(--G) 12%,transparent)",color:p.is_active?"var(--mu)":"var(--G)",border:`1px solid ${p.is_active?"var(--brd)":"color-mix(in srgb,var(--G) 25%,transparent)"}`}}>{p.is_active?(lang==="fa"?"غیرفعال":"Disable"):(lang==="fa"?"فعال":"Activate")}</div>
+          <div onClick={()=>toggleRequired(p)} style={{cursor:"pointer",fontSize:10,fontWeight:600,padding:"5px 10px",borderRadius:6,background:p.is_required?"color-mix(in srgb,var(--R) 12%,transparent)":"var(--bg2)",color:p.is_required?"var(--R)":"var(--mu)",border:`1px solid ${p.is_required?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`}}>{p.is_required?(lang==="fa"?"⚠ اجباری":"⚠ Required"):(lang==="fa"?"اختیاری":"Optional")}</div>
+          <div onClick={()=>startEdit(p)} style={{cursor:"pointer",fontSize:10,fontWeight:600,padding:"5px 10px",borderRadius:6,background:"var(--bg2)",color:"var(--tx2)",border:"1px solid var(--brd)"}}>{lang==="fa"?"ویرایش":"Edit"}</div>
+          <div onClick={()=>del(p.id)} style={{cursor:"pointer",fontSize:10,fontWeight:600,padding:"5px 10px",borderRadius:6,background:"color-mix(in srgb,var(--R) 10%,transparent)",color:"var(--R)",marginInlineStart:"auto"}}>{lang==="fa"?"حذف":"Delete"}</div>
+        </div>
+
+        {isExpanded&&<div style={{marginTop:10,paddingTop:10,borderTop:"1px solid var(--brd)"}}>
+          {!r?<div style={{textAlign:"center",padding:14,color:"var(--dm)",fontSize:11}}>...</div>:<>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+              <div style={{fontSize:11,fontWeight:700,color:"var(--tx2)"}}>{lang==="fa"?"نتایج زنده":"Live Results"} · {r.total.toLocaleString(lang==="fa"?"fa-IR":"en-US")} {lang==="fa"?"رای":"votes"}</div>
+              {r.total>0&&<div onClick={()=>exportCsv(p)} style={{cursor:"pointer",fontSize:9,fontWeight:600,padding:"4px 8px",borderRadius:5,background:"var(--bg2)",color:"var(--mu)",border:"1px solid var(--brd)"}}>📥 CSV</div>}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:r.comments.length?12:0}}>
+              {opts.map((opt,i)=>{
+                const cnt=r.counts[i]||0;
+                const pct=r.total>0?Math.round((cnt/r.total)*100):0;
+                return(<div key={i} style={{position:"relative",padding:"7px 10px",borderRadius:6,background:"var(--bg2)",border:"1px solid var(--brd)",overflow:"hidden"}}>
+                  <div style={{position:"absolute",inset:0,width:`${pct}%`,background:"color-mix(in srgb,var(--B) 14%,transparent)",transition:"width .4s ease"}}/>
+                  <div style={{position:"relative",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
+                    <span style={{fontSize:11,fontWeight:600,color:"var(--tx)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{opt}</span>
+                    <span style={{fontSize:10,fontWeight:700,color:"var(--B)",flexShrink:0}}>{cnt} · {pct}%</span>
+                  </div>
+                </div>);
+              })}
+            </div>
+            {r.comments.length>0&&<>
+              <div style={{fontSize:11,fontWeight:700,color:"var(--tx2)",marginBottom:6}}>💬 {lang==="fa"?"نظرات":"Comments"} ({r.comments.length})</div>
+              <div style={{display:"flex",flexDirection:"column",gap:5,maxHeight:240,overflowY:"auto"}}>
+                {r.comments.map((c,i)=>(<div key={i} style={{padding:"7px 10px",borderRadius:6,background:"var(--bg2)",border:"1px solid var(--brd)"}}>
+                  <div style={{fontSize:9,color:"var(--dm)",marginBottom:3,fontWeight:600}}>{opts[c.option_index]||"?"} · {new Date(c.created_at).toLocaleDateString()}</div>
+                  <div style={{fontSize:11,color:"var(--tx)",lineHeight:1.5,wordBreak:"break-word",whiteSpace:"pre-wrap"}}>{c.comment}</div>
+                </div>))}
+              </div>
+            </>}
+          </>}
+        </div>}
+      </div>);
+    })}
+  </div>);
+}
+
 /* ─── Admin Announcement Banner Manager ─── */
 function AdminAnnouncements({token}){
   const{lang}=useLang();
@@ -7754,7 +8247,7 @@ function App(){
   const[usr,setUsr]=useState(()=>{try{const u=localStorage.getItem("fx_usr");return u?JSON.parse(u):null}catch(e){return null}});
   const[up,setUp]=useState(()=>{try{const p=localStorage.getItem("fx_up");return p?JSON.parse(p):null}catch(e){return null}});
   const[adm,setAdm]=useState(()=>{try{const p=localStorage.getItem("fx_up");const d=p?JSON.parse(p):null;return d?.role==="admin"}catch(e){return false}});
-  const[tab,setTab]=useState(0),[posts,setP]=useState([]),[sigs,setS]=useState([]),[msgs,setMsgs]=useState([]),[stories,setStories]=useState([]),[announcements,setAnnouncements]=useState([]);
+  const[tab,setTab]=useState(0),[posts,setP]=useState([]),[sigs,setS]=useState([]),[msgs,setMsgs]=useState([]),[stories,setStories]=useState([]),[announcements,setAnnouncements]=useState([]),[activePoll,setActivePoll]=useState(null),[myVote,setMyVote]=useState(null);
   const[openSupport,setOpenSupport]=useState(false);
   const[lang,setLangState]=useState(()=>{try{return localStorage.getItem("fxlang")||"en"}catch(e){return"en"}});
   const[showSplash,setShowSplash]=useState(()=>{try{return!sessionStorage.getItem("fx_splash")}catch(e){return true}});
@@ -7783,7 +8276,7 @@ function App(){
   const setLang=(l)=>{setLangState(l);try{localStorage.setItem("fxlang",l)}catch(e){};document.documentElement.setAttribute("lang",l)};
   useEffect(()=>{document.documentElement.setAttribute("lang",lang)},[]);
   useEffect(()=>{if(!showSplash)document.body.classList.add("app-ready")},[]);
-  const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p)){setP(p);try{localStorage.setItem("fx_pc",String(p.length))}catch(e){}}const s=await api.get("Signals",tk);if(Array.isArray(s)){setS(s);try{localStorage.setItem("fx_sc",String(s.length))}catch(e){}}const m=await api.get("Messages",tk);if(Array.isArray(m))setMsgs(m);try{const st=await fetch(`${SB}/rest/v1/Stories?order=created_at.desc`,{headers:H(tk)});const stD=await st.json();if(Array.isArray(stD)){const now=new Date();setStories(stD.filter(x=>new Date(x.expires_at)>now))}}catch(e){}try{const an=await fetch(`${SB}/rest/v1/Announcements?is_active=eq.true&order=created_at.desc`,{headers:H(tk)});const anD=await an.json();if(Array.isArray(anD))setAnnouncements(anD)}catch(e){}}catch(e){}},[tk]);
+  const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p)){setP(p);try{localStorage.setItem("fx_pc",String(p.length))}catch(e){}}const s=await api.get("Signals",tk);if(Array.isArray(s)){setS(s);try{localStorage.setItem("fx_sc",String(s.length))}catch(e){}}const m=await api.get("Messages",tk);if(Array.isArray(m))setMsgs(m);try{const st=await fetch(`${SB}/rest/v1/Stories?order=created_at.desc`,{headers:H(tk)});const stD=await st.json();if(Array.isArray(stD)){const now=new Date();setStories(stD.filter(x=>new Date(x.expires_at)>now))}}catch(e){}try{const an=await fetch(`${SB}/rest/v1/Announcements?is_active=eq.true&order=created_at.desc`,{headers:H(tk)});const anD=await an.json();if(Array.isArray(anD))setAnnouncements(anD)}catch(e){}try{const pl=await fetch(`${SB}/rest/v1/Polls?is_active=eq.true&order=created_at.desc&limit=1`,{headers:H(tk)});const plD=await pl.json();if(Array.isArray(plD)&&plD[0]){setActivePoll(plD[0]);if(usr?.id){const vt=await fetch(`${SB}/rest/v1/PollVotes?poll_id=eq.${plD[0].id}&user_id=eq.${usr.id}&select=option_index,comment`,{headers:H(tk)});const vtD=await vt.json();if(Array.isArray(vtD)&&vtD[0])setMyVote(vtD[0]);else setMyVote(null)}}else{setActivePoll(null);setMyVote(null)}}catch(e){}}catch(e){}},[tk,usr]);
   const chk=useCallback(async(u,t,retry=0)=>{
     if(!u||!t)return;
     try{
@@ -7841,6 +8334,15 @@ function App(){
   };
   const splashDone=()=>{setShowSplash(false);try{sessionStorage.setItem("fx_splash","1")}catch(e){};document.body.classList.add("app-ready")};
   const onbDone=()=>{setShowOnb(false);try{localStorage.setItem("fx_onb","1")}catch(e){}};
+  // Poll: should this user be blocked by a required poll?
+  const isPremUser=up?.membership==="premium"||up?.role==="admin";
+  const pollMatchesUser=activePoll&&(
+    activePoll.target==="all"||
+    (activePoll.target==="premium"&&isPremUser)||
+    (activePoll.target==="free"&&!isPremUser)
+  );
+  const userMustVote=activePoll&&pollMatchesUser&&activePoll.is_required&&!myVote&&up&&up.role!=="admin";
+  const onPollSubmitted=(v)=>{setMyVote(v);load()};
   if(showSplash)return<SplashScreen onDone={splashDone}/>;
   if(!tk){
     return<>{showOnb&&<Onboarding onDone={onbDone} lang={lang}/>}<Auth onAuth={handleAuth} lang={lang} setLang={setLang}/></>;
@@ -7859,7 +8361,7 @@ function App(){
   const goTab=i=>{setTab(i);clearBadge(VT[i]?.k)};
   const goToTabByKey=(k)=>{const idx=VT.findIndex(t=>t.k===k);if(idx>=0)goTab(idx)};
   const scr=()=>{switch(cur?.k){
-    case"home":return<Home posts={posts} signals={sigs} msgs={msgs} stories={stories} announcements={announcements} go={goTab} goToPlans={()=>goToTabByKey("plans")} P={P} ok={ok} lastUpdate={lastUpdate} dark={dark} toggle={toggle} userProfile={up} token={tk} onR={load} online={online}/>;
+    case"home":return<Home posts={posts} signals={sigs} msgs={msgs} stories={stories} announcements={announcements} activePoll={activePoll} myVote={myVote} onVoted={onPollSubmitted} go={goTab} goToPlans={()=>goToTabByKey("plans")} P={P} ok={ok} lastUpdate={lastUpdate} dark={dark} toggle={toggle} userProfile={up} token={tk} onR={load} online={online}/>;
     case"analysis":return<Analysis posts={posts} userProfile={up} msgs={msgs} token={tk} onR={load} goToPlans={()=>goToTabByKey("plans")}/>;
     case"signals":return<Sigs signals={sigs} userProfile={up} goToPlans={()=>goToTabByKey("plans")}/>;
     case"plans":return<Plans userProfile={up} goToSupport={()=>{goToTabByKey("profile");setOpenSupport(true)}} token={tk}/>;
@@ -7896,6 +8398,7 @@ function App(){
           </div>
         )}</div>
       </div>
+      {userMustVote&&<PollModalRequired poll={activePoll} userId={usr?.id} token={tk} onSubmitted={onPollSubmitted}/>}
     </LangCtx.Provider>
   );
 }
