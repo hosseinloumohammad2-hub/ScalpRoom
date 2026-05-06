@@ -3119,7 +3119,7 @@ function TVTopStories({colorTheme}){
 }
 
 /* ─── Home ─── */
-function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,toggle,userProfile,token,onR,online}){
+function Home({posts,signals,msgs,stories,announcements,go,goToPlans,P,ok,lastUpdate,dark,toggle,userProfile,token,onR,online}){
   const{t,lang}=useLang();
   const[sel,setSel]=useState(null);
   const[showMsgs,setShowMsgs]=useState(false);
@@ -3128,6 +3128,8 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
   const[showStoryViewer,setShowStoryViewer]=useState(false);
   const[storySeen,setStorySeen]=useState(()=>{try{return localStorage.getItem("fx_story_seen")||""}catch(e){return""}});
   const[lastMsgRead,setLastMsgRead]=useState(()=>{try{return parseInt(localStorage.getItem("fx_mc")||"0")}catch(e){return 0}});
+  const[dismissedAnn,setDismissedAnn]=useState(()=>{try{const d=localStorage.getItem("fx_dann");return d?JSON.parse(d):[]}catch(e){return[]}});
+  const dismissAnn=(id)=>{const next=[...new Set([...dismissedAnn,id])];setDismissedAnn(next);try{localStorage.setItem("fx_dann",JSON.stringify(next))}catch(e){}};
   const theme=dark?"dark":"light";
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
   const isAdminHome=userProfile?.role==="admin";
@@ -3138,6 +3140,16 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
   },[stories,isPremiumUser]);
   const latestStoryId=visibleStories.length?visibleStories[0].id:"";
   const isStorySeen=storySeen===String(latestStoryId);
+  const visibleAnnouncements=useMemo(()=>{
+    if(!announcements||!announcements.length)return[];
+    return announcements.filter(a=>{
+      if(!a.is_active)return false;
+      if(dismissedAnn.includes(a.id))return false;
+      if(a.target==="premium"&&!isPremiumUser)return false;
+      if(a.target==="free"&&isPremiumUser)return false;
+      return true;
+    });
+  },[announcements,dismissedAnn,isPremiumUser]);
   const markStorySeen=()=>{
     if(latestStoryId){setStorySeen(String(latestStoryId));try{localStorage.setItem("fx_story_seen",String(latestStoryId))}catch(e){}}
   };
@@ -3157,6 +3169,30 @@ function Home({posts,signals,msgs,stories,go,goToPlans,P,ok,lastUpdate,dark,togg
   const unreadCount=Math.max(0,visibleMsgs.length-lastMsgRead);
   const openMsgs=()=>{setShowMsgs(true);setLastMsgRead(visibleMsgs.length);try{localStorage.setItem("fx_mc",String(visibleMsgs.length))}catch(e){}};
   return(<div className="fi">
+    {/* Announcement Banner(s) — admin-controlled, dismissible */}
+    {visibleAnnouncements.map(a=>{
+      const variants={
+        info:{bg:"color-mix(in srgb,var(--B) 10%,transparent)",bd:"color-mix(in srgb,var(--B) 28%,transparent)",ic:"var(--B)",emoji:"📢"},
+        success:{bg:"color-mix(in srgb,var(--G) 10%,transparent)",bd:"color-mix(in srgb,var(--G) 28%,transparent)",ic:"var(--G)",emoji:"✅"},
+        warning:{bg:"color-mix(in srgb,var(--R) 10%,transparent)",bd:"color-mix(in srgb,var(--R) 28%,transparent)",ic:"var(--R)",emoji:"⚠️"},
+        promo:{bg:"linear-gradient(135deg,color-mix(in srgb,#F5851F 14%,transparent),color-mix(in srgb,var(--R) 10%,transparent))",bd:"color-mix(in srgb,#F5851F 35%,transparent)",ic:"#F5851F",emoji:"🎁"}
+      };
+      const v=variants[a.variant]||variants.info;
+      const isRtl=lang==="fa"||lang==="ar";
+      return(<div key={a.id} className="cd" style={{marginBottom:10,padding:"12px 14px",background:v.bg,borderColor:v.bd,position:"relative",overflow:"hidden"}}>
+        <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+          <div style={{fontSize:18,flexShrink:0,lineHeight:1}}>{v.emoji}</div>
+          <div style={{flex:1,minWidth:0,paddingInlineEnd:24}}>
+            <div style={{fontSize:13,fontWeight:700,color:"var(--tx)",lineHeight:1.35}}>{a.title}</div>
+            {a.body&&<div style={{fontSize:11.5,color:"var(--tx2)",marginTop:4,lineHeight:1.5,whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{a.body}</div>}
+            {a.link_url&&<a href={a.link_url} target={a.link_url.startsWith("http")?"_blank":"_self"} rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:4,marginTop:8,padding:"6px 12px",borderRadius:8,background:v.ic,color:"#fff",fontSize:11,fontWeight:700,textDecoration:"none"}}>{a.link_label||(lang==="fa"?"مشاهده":"View")} <span style={{fontSize:13}}>{isRtl?"←":"→"}</span></a>}
+          </div>
+          <div onClick={()=>dismissAnn(a.id)} style={{position:"absolute",top:8,[isRtl?"left":"right"]:8,cursor:"pointer",color:"var(--mu)",padding:4,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center"}} aria-label="Close">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+        </div>
+      </div>);
+    })}
     {/* Greeting Glass Card — iOS 26 style */}
     {firstName&&<div className="cd cd-glass" style={{marginBottom:14,padding:18}}>
       <div style={{display:"flex",alignItems:"center",gap:14}}>
@@ -6291,6 +6327,12 @@ function Adm({token,posts,signals,onR}){
           return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?(isAI?"color-mix(in srgb,var(--purple) 12%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)"):"transparent",border:`1px solid ${tb===tab?(isAI?"color-mix(in srgb,var(--purple) 25%,transparent)":"color-mix(in srgb,var(--R) 25%,transparent)"):"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?(isAI?"var(--purple)":"var(--R)"):"var(--mu)"}}>{labels[tab]}</div>
         })}
       </div>
+      <div style={{display:"flex",gap:4}}>
+        {["announce"].map(tab=>{
+          const labels={announce:lang==="fa"?"📢 اطلاعیه":"📢 Announcement"};
+          return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{labels[tab]}</div>
+        })}
+      </div>
     </div>
     {ms&&<div style={{background:ms.includes("!")&&!ms.includes("failed")?"color-mix(in srgb,var(--G) 8%,transparent)":"color-mix(in srgb,var(--R) 8%,transparent)",border:`1px solid ${ms.includes("!")&&!ms.includes("failed")?"color-mix(in srgb,var(--G) 15%,transparent)":"color-mix(in srgb,var(--R) 15%,transparent)"}`,borderRadius:10,padding:10,marginBottom:10,fontSize:13,color:ms.includes("!")&&!ms.includes("failed")?"var(--G)":"var(--R)"}}>{ms}</div>}
     {tb==="post"&&<>
@@ -6590,6 +6632,7 @@ function Adm({token,posts,signals,onR}){
     {tb==="giveaway"&&<AdminGiveaway token={token}/>}
     {tb==="ai"&&<AdminAI token={token}/>}
     {tb==="active"&&<AdminActiveCount token={token}/>}
+    {tb==="announce"&&<AdminAnnouncements token={token}/>}
     {tb==="msg"&&<>
       <div style={{fontSize:13,fontWeight:700,marginBottom:10}}>{lang==="fa"?"📬 ارسال پیام":"📬 Send Message"}</div>
       <input className="ip" placeholder={lang==="fa"?"عنوان پیام":"Message title"} value={msgTitle} onChange={e=>setMsgTitle(e.target.value)}/>
@@ -7056,6 +7099,187 @@ function GiveawayWheel({userId,token}){
         </div>
       }</div>}
     </div>
+  </div>);
+}
+/* ─── Admin Announcement Banner Manager ─── */
+function AdminAnnouncements({token}){
+  const{lang}=useLang();
+  const[items,setItems]=useState([]);
+  const[loading,setLoading]=useState(false);
+  const[msg,setMsg]=useState("");
+  const[title,setTitle]=useState("");
+  const[body,setBody]=useState("");
+  const[linkUrl,setLinkUrl]=useState("");
+  const[linkLabel,setLinkLabel]=useState("");
+  const[target,setTarget]=useState("all");
+  const[variant,setVariant]=useState("info");
+  const[editId,setEditId]=useState(null);
+
+  const reload=async()=>{
+    try{
+      const r=await fetch(`${SB}/rest/v1/Announcements?order=created_at.desc`,{headers:H(token)});
+      const d=await r.json();
+      if(Array.isArray(d))setItems(d);
+    }catch(e){}
+  };
+  useEffect(()=>{reload()},[token]);
+
+  const reset=()=>{setTitle("");setBody("");setLinkUrl("");setLinkLabel("");setTarget("all");setVariant("info");setEditId(null)};
+
+  const submit=async()=>{
+    if(!title.trim()){setMsg(lang==="fa"?"عنوان لازم است":"Title required");return}
+    setLoading(true);
+    try{
+      const data={
+        title:title.trim(),
+        body:body.trim()||null,
+        link_url:linkUrl.trim()||null,
+        link_label:linkLabel.trim()||null,
+        target,
+        variant,
+        is_active:true
+      };
+      if(editId){
+        await fetch(`${SB}/rest/v1/Announcements?id=eq.${editId}`,{method:"PATCH",headers:H(token),body:JSON.stringify(data)});
+        setMsg(lang==="fa"?"به‌روزرسانی شد!":"Updated!");
+      }else{
+        await fetch(`${SB}/rest/v1/Announcements`,{method:"POST",headers:H(token),body:JSON.stringify(data)});
+        setMsg(lang==="fa"?"اطلاعیه منتشر شد!":"Announcement published!");
+      }
+      reset();
+      reload();
+    }catch(e){setMsg(e.message)}
+    setLoading(false);
+    setTimeout(()=>setMsg(""),3000);
+  };
+
+  const toggleActive=async(it)=>{
+    try{
+      await fetch(`${SB}/rest/v1/Announcements?id=eq.${it.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({is_active:!it.is_active})});
+      reload();
+    }catch(e){}
+  };
+
+  const del=async(id)=>{
+    if(!confirm(lang==="fa"?"حذف شود؟":"Delete?"))return;
+    try{
+      await fetch(`${SB}/rest/v1/Announcements?id=eq.${id}`,{method:"DELETE",headers:H(token)});
+      reload();
+    }catch(e){}
+  };
+
+  const startEdit=(it)=>{
+    setEditId(it.id);
+    setTitle(it.title||"");
+    setBody(it.body||"");
+    setLinkUrl(it.link_url||"");
+    setLinkLabel(it.link_label||"");
+    setTarget(it.target||"all");
+    setVariant(it.variant||"info");
+    window.scrollTo({top:0,behavior:"smooth"});
+  };
+
+  const variantPreview={
+    info:{bg:"color-mix(in srgb,var(--B) 10%,transparent)",bd:"color-mix(in srgb,var(--B) 28%,transparent)",ic:"var(--B)",emoji:"📢",label:lang==="fa"?"اطلاع":"Info"},
+    success:{bg:"color-mix(in srgb,var(--G) 10%,transparent)",bd:"color-mix(in srgb,var(--G) 28%,transparent)",ic:"var(--G)",emoji:"✅",label:lang==="fa"?"موفقیت":"Success"},
+    warning:{bg:"color-mix(in srgb,var(--R) 10%,transparent)",bd:"color-mix(in srgb,var(--R) 28%,transparent)",ic:"var(--R)",emoji:"⚠️",label:lang==="fa"?"هشدار":"Warning"},
+    promo:{bg:"linear-gradient(135deg,color-mix(in srgb,#F5851F 14%,transparent),color-mix(in srgb,var(--R) 10%,transparent))",bd:"color-mix(in srgb,#F5851F 35%,transparent)",ic:"#F5851F",emoji:"🎁",label:lang==="fa"?"تبلیغ":"Promo"}
+  };
+
+  return(<div>
+    <div style={{fontSize:14,fontWeight:700,marginBottom:6}}>{lang==="fa"?"📢 اطلاعیه‌های صفحه اصلی":"📢 Home Page Announcements"}</div>
+    <div style={{fontSize:11,color:"var(--dm)",marginBottom:14,lineHeight:1.6}}>{lang==="fa"?"اطلاعیه‌ای که اینجا منتشر کنی، در بالای صفحه Home کاربران نمایش داده می‌شود تا زمانی که کاربر آن را با ضربدر ببندد.":"Announcements published here appear at the top of users' Home page until they dismiss them with the X button."}</div>
+
+    {msg&&<div style={{background:msg.includes("!")||msg.includes("شد")?"color-mix(in srgb,var(--G) 8%,transparent)":"color-mix(in srgb,var(--R) 8%,transparent)",border:`1px solid ${msg.includes("!")||msg.includes("شد")?"color-mix(in srgb,var(--G) 18%,transparent)":"color-mix(in srgb,var(--R) 18%,transparent)"}`,borderRadius:10,padding:10,marginBottom:10,fontSize:12,color:msg.includes("!")||msg.includes("شد")?"var(--G)":"var(--R)"}}>{msg}</div>}
+
+    {/* Form */}
+    <div className="cd" style={{padding:14,marginBottom:16}}>
+      <div style={{fontSize:12,fontWeight:700,marginBottom:10,color:"var(--tx2)"}}>{editId?(lang==="fa"?"✏️ ویرایش اطلاعیه":"✏️ Edit Announcement"):(lang==="fa"?"➕ اطلاعیه جدید":"➕ New Announcement")}</div>
+
+      <div style={{fontSize:10,fontWeight:600,marginBottom:4,color:"var(--tx2)"}}>{lang==="fa"?"عنوان *":"Title *"}</div>
+      <input className="ip" placeholder={lang==="fa"?"مثلاً: تخفیف ویژه ۳۰٪ تا پایان هفته":"e.g. 30% off until end of week"} value={title} onChange={e=>setTitle(e.target.value)} style={{marginBottom:8}} maxLength={120}/>
+
+      <div style={{fontSize:10,fontWeight:600,marginBottom:4,color:"var(--tx2)"}}>{lang==="fa"?"متن (اختیاری)":"Body (optional)"}</div>
+      <textarea placeholder={lang==="fa"?"توضیحات بیشتر...":"More details..."} value={body} onChange={e=>setBody(e.target.value)} rows={3} style={{marginBottom:8}} maxLength={500}/>
+
+      <div style={{display:"flex",gap:6,marginBottom:8}}>
+        <div style={{flex:1}}>
+          <div style={{fontSize:10,fontWeight:600,marginBottom:4,color:"var(--tx2)"}}>{lang==="fa"?"لینک (اختیاری)":"Link URL (optional)"}</div>
+          <input className="ip" placeholder="https://..." value={linkUrl} onChange={e=>setLinkUrl(e.target.value)}/>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:10,fontWeight:600,marginBottom:4,color:"var(--tx2)"}}>{lang==="fa"?"متن دکمه":"Button label"}</div>
+          <input className="ip" placeholder={lang==="fa"?"مشاهده":"View"} value={linkLabel} onChange={e=>setLinkLabel(e.target.value)} maxLength={30}/>
+        </div>
+      </div>
+
+      <div style={{fontSize:10,fontWeight:600,marginBottom:4,color:"var(--tx2)"}}>{lang==="fa"?"مخاطب":"Audience"}</div>
+      <div style={{display:"flex",gap:4,marginBottom:10}}>
+        {[{k:"all",l:lang==="fa"?"همه":"Everyone"},{k:"premium",l:lang==="fa"?"فقط Premium":"Premium only"},{k:"free",l:lang==="fa"?"فقط Free":"Free only"}].map(opt=>
+          <div key={opt.k} onClick={()=>setTarget(opt.k)} style={{flex:1,padding:9,borderRadius:8,textAlign:"center",cursor:"pointer",background:target===opt.k?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${target===opt.k?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:11,fontWeight:600,color:target===opt.k?"var(--R)":"var(--mu)"}}>{opt.l}</div>
+        )}
+      </div>
+
+      <div style={{fontSize:10,fontWeight:600,marginBottom:4,color:"var(--tx2)"}}>{lang==="fa"?"نوع / رنگ":"Style / Color"}</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4,marginBottom:14}}>
+        {Object.entries(variantPreview).map(([k,v])=>
+          <div key={k} onClick={()=>setVariant(k)} style={{padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:variant===k?v.bg:"transparent",border:`1px solid ${variant===k?v.bd:"var(--brd)"}`,fontSize:10,fontWeight:600,color:variant===k?v.ic:"var(--mu)"}}>
+            <div style={{fontSize:14,marginBottom:2}}>{v.emoji}</div>
+            {v.label}
+          </div>
+        )}
+      </div>
+
+      {/* Live preview */}
+      {title&&<>
+        <div style={{fontSize:10,fontWeight:600,marginBottom:6,color:"var(--tx2)"}}>{lang==="fa"?"پیش‌نمایش:":"Preview:"}</div>
+        <div className="cd" style={{padding:"12px 14px",background:variantPreview[variant].bg,borderColor:variantPreview[variant].bd,marginBottom:14,position:"relative"}}>
+          <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+            <div style={{fontSize:18,flexShrink:0,lineHeight:1}}>{variantPreview[variant].emoji}</div>
+            <div style={{flex:1,minWidth:0,paddingInlineEnd:24}}>
+              <div style={{fontSize:13,fontWeight:700,color:"var(--tx)",lineHeight:1.35}}>{title}</div>
+              {body&&<div style={{fontSize:11.5,color:"var(--tx2)",marginTop:4,lineHeight:1.5,whiteSpace:"pre-wrap"}}>{body}</div>}
+              {linkUrl&&<div style={{display:"inline-flex",alignItems:"center",gap:4,marginTop:8,padding:"6px 12px",borderRadius:8,background:variantPreview[variant].ic,color:"#fff",fontSize:11,fontWeight:700}}>{linkLabel||(lang==="fa"?"مشاهده":"View")} <span>{lang==="fa"||lang==="ar"?"←":"→"}</span></div>}
+            </div>
+            <div style={{position:"absolute",top:8,[lang==="fa"||lang==="ar"?"left":"right"]:8,color:"var(--mu)",padding:4}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </div>
+          </div>
+        </div>
+      </>}
+
+      <div style={{display:"flex",gap:6}}>
+        <button className="bt" onClick={submit} disabled={loading||!title.trim()} style={{background:"var(--B)",flex:1,opacity:loading||!title.trim()?.5:1}}>{loading?"...":(editId?(lang==="fa"?"به‌روزرسانی":"Update"):(lang==="fa"?"انتشار":"Publish"))}</button>
+        {editId&&<button className="bt" onClick={reset} style={{background:"var(--bg2)",color:"var(--mu)",border:"1px solid var(--brd)",width:"auto",padding:"0 16px"}}>{lang==="fa"?"لغو":"Cancel"}</button>}
+      </div>
+    </div>
+
+    {/* List */}
+    <div style={{fontSize:12,fontWeight:700,marginBottom:8,color:"var(--tx2)"}}>{lang==="fa"?"اطلاعیه‌های موجود":"All Announcements"} ({items.length})</div>
+    {!items.length&&<div style={{textAlign:"center",color:"var(--dm)",fontSize:12,padding:30}}>{lang==="fa"?"هیچ اطلاعیه‌ای منتشر نشده":"No announcements yet"}</div>}
+    {items.map(it=>{
+      const v=variantPreview[it.variant]||variantPreview.info;
+      return(<div key={it.id} className="cd" style={{padding:12,marginBottom:8,opacity:it.is_active?1:.55,borderColor:it.is_active?v.bd:"var(--brd)"}}>
+        <div style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:6}}>
+          <div style={{fontSize:16,flexShrink:0}}>{v.emoji}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:12,fontWeight:700,lineHeight:1.4}}>{it.title}</div>
+            {it.body&&<div style={{fontSize:11,color:"var(--tx2)",marginTop:3,lineHeight:1.5,whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{it.body}</div>}
+            {it.link_url&&<div style={{fontSize:10,color:v.ic,marginTop:4,fontWeight:600,wordBreak:"break-all"}}>🔗 {it.link_label||(lang==="fa"?"مشاهده":"View")}: {it.link_url}</div>}
+          </div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",fontSize:9,fontWeight:600,marginBottom:8}}>
+          <span style={{padding:"2px 6px",borderRadius:4,background:"var(--bg)",color:"var(--mu)",border:"1px solid var(--brd)"}}>{it.target==="all"?(lang==="fa"?"همه":"Everyone"):it.target==="premium"?"Premium":"Free"}</span>
+          <span style={{padding:"2px 6px",borderRadius:4,background:it.is_active?"color-mix(in srgb,var(--G) 12%,transparent)":"var(--bg)",color:it.is_active?"var(--G)":"var(--dm)"}}>{it.is_active?(lang==="fa"?"● فعال":"● Active"):(lang==="fa"?"○ غیرفعال":"○ Inactive")}</span>
+          <span style={{color:"var(--dm)",fontWeight:500}}>{new Date(it.created_at).toLocaleDateString()}</span>
+        </div>
+        <div style={{display:"flex",gap:6}}>
+          <div onClick={()=>toggleActive(it)} style={{cursor:"pointer",fontSize:10,fontWeight:600,padding:"5px 10px",borderRadius:6,background:it.is_active?"var(--bg2)":"color-mix(in srgb,var(--G) 12%,transparent)",color:it.is_active?"var(--mu)":"var(--G)",border:`1px solid ${it.is_active?"var(--brd)":"color-mix(in srgb,var(--G) 25%,transparent)"}`}}>{it.is_active?(lang==="fa"?"غیرفعال":"Disable"):(lang==="fa"?"فعال":"Activate")}</div>
+          <div onClick={()=>startEdit(it)} style={{cursor:"pointer",fontSize:10,fontWeight:600,padding:"5px 10px",borderRadius:6,background:"color-mix(in srgb,var(--B) 10%,transparent)",color:"var(--B)"}}>{lang==="fa"?"ویرایش":"Edit"}</div>
+          <div onClick={()=>del(it.id)} style={{cursor:"pointer",fontSize:10,fontWeight:600,padding:"5px 10px",borderRadius:6,background:"color-mix(in srgb,var(--R) 10%,transparent)",color:"var(--R)",marginLeft:"auto"}}>{lang==="fa"?"حذف":"Delete"}</div>
+        </div>
+      </div>);
+    })}
   </div>);
 }
 /* ─── Admin Giveaway Manager ─── */
@@ -7530,7 +7754,7 @@ function App(){
   const[usr,setUsr]=useState(()=>{try{const u=localStorage.getItem("fx_usr");return u?JSON.parse(u):null}catch(e){return null}});
   const[up,setUp]=useState(()=>{try{const p=localStorage.getItem("fx_up");return p?JSON.parse(p):null}catch(e){return null}});
   const[adm,setAdm]=useState(()=>{try{const p=localStorage.getItem("fx_up");const d=p?JSON.parse(p):null;return d?.role==="admin"}catch(e){return false}});
-  const[tab,setTab]=useState(0),[posts,setP]=useState([]),[sigs,setS]=useState([]),[msgs,setMsgs]=useState([]),[stories,setStories]=useState([]);
+  const[tab,setTab]=useState(0),[posts,setP]=useState([]),[sigs,setS]=useState([]),[msgs,setMsgs]=useState([]),[stories,setStories]=useState([]),[announcements,setAnnouncements]=useState([]);
   const[openSupport,setOpenSupport]=useState(false);
   const[lang,setLangState]=useState(()=>{try{return localStorage.getItem("fxlang")||"en"}catch(e){return"en"}});
   const[showSplash,setShowSplash]=useState(()=>{try{return!sessionStorage.getItem("fx_splash")}catch(e){return true}});
@@ -7559,7 +7783,7 @@ function App(){
   const setLang=(l)=>{setLangState(l);try{localStorage.setItem("fxlang",l)}catch(e){};document.documentElement.setAttribute("lang",l)};
   useEffect(()=>{document.documentElement.setAttribute("lang",lang)},[]);
   useEffect(()=>{if(!showSplash)document.body.classList.add("app-ready")},[]);
-  const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p)){setP(p);try{localStorage.setItem("fx_pc",String(p.length))}catch(e){}}const s=await api.get("Signals",tk);if(Array.isArray(s)){setS(s);try{localStorage.setItem("fx_sc",String(s.length))}catch(e){}}const m=await api.get("Messages",tk);if(Array.isArray(m))setMsgs(m);try{const st=await fetch(`${SB}/rest/v1/Stories?order=created_at.desc`,{headers:H(tk)});const stD=await st.json();if(Array.isArray(stD)){const now=new Date();setStories(stD.filter(x=>new Date(x.expires_at)>now))}}catch(e){}}catch(e){}},[tk]);
+  const load=useCallback(async()=>{try{const p=await api.get("Posts",tk);if(Array.isArray(p)){setP(p);try{localStorage.setItem("fx_pc",String(p.length))}catch(e){}}const s=await api.get("Signals",tk);if(Array.isArray(s)){setS(s);try{localStorage.setItem("fx_sc",String(s.length))}catch(e){}}const m=await api.get("Messages",tk);if(Array.isArray(m))setMsgs(m);try{const st=await fetch(`${SB}/rest/v1/Stories?order=created_at.desc`,{headers:H(tk)});const stD=await st.json();if(Array.isArray(stD)){const now=new Date();setStories(stD.filter(x=>new Date(x.expires_at)>now))}}catch(e){}try{const an=await fetch(`${SB}/rest/v1/Announcements?is_active=eq.true&order=created_at.desc`,{headers:H(tk)});const anD=await an.json();if(Array.isArray(anD))setAnnouncements(anD)}catch(e){}}catch(e){}},[tk]);
   const chk=useCallback(async(u,t,retry=0)=>{
     if(!u||!t)return;
     try{
@@ -7635,7 +7859,7 @@ function App(){
   const goTab=i=>{setTab(i);clearBadge(VT[i]?.k)};
   const goToTabByKey=(k)=>{const idx=VT.findIndex(t=>t.k===k);if(idx>=0)goTab(idx)};
   const scr=()=>{switch(cur?.k){
-    case"home":return<Home posts={posts} signals={sigs} msgs={msgs} stories={stories} go={goTab} goToPlans={()=>goToTabByKey("plans")} P={P} ok={ok} lastUpdate={lastUpdate} dark={dark} toggle={toggle} userProfile={up} token={tk} onR={load} online={online}/>;
+    case"home":return<Home posts={posts} signals={sigs} msgs={msgs} stories={stories} announcements={announcements} go={goTab} goToPlans={()=>goToTabByKey("plans")} P={P} ok={ok} lastUpdate={lastUpdate} dark={dark} toggle={toggle} userProfile={up} token={tk} onR={load} online={online}/>;
     case"analysis":return<Analysis posts={posts} userProfile={up} msgs={msgs} token={tk} onR={load} goToPlans={()=>goToTabByKey("plans")}/>;
     case"signals":return<Sigs signals={sigs} userProfile={up} goToPlans={()=>goToTabByKey("plans")}/>;
     case"plans":return<Plans userProfile={up} goToSupport={()=>{goToTabByKey("profile");setOpenSupport(true)}} token={tk}/>;
