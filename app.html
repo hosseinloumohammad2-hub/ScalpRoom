@@ -4909,18 +4909,14 @@ function Plans({userProfile,goToSupport,token}){
         <div style={{fontSize:11,color:"var(--dm)",marginTop:14}}>{pt("expires")||"Expires:"} {expiresAt?.toLocaleDateString()} {expiresAt?.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>
         {daysLeft<=7&&<div style={{fontSize:12,fontWeight:600,color:"var(--R)",marginTop:10,background:"color-mix(in srgb,var(--R) 8%,transparent)",padding:"8px 14px",borderRadius:8,display:"inline-block"}}>{pt("expireSoon")||"⚠ Expiring soon! Renew now"}</div>}
       </div>}
+      {!isAdmin&&!isIBUser&&<div onClick={()=>setShowRenewPlans(true)} className="bt" style={{background:"var(--B)",fontSize:14,cursor:"pointer",marginBottom:16,padding:"15px 18px"}}>{pt("renewBtn")||"Renew Subscription"}</div>}
       {!isAdmin&&canUpgrade&&upgrade&&<div className="cd" style={{padding:16,marginBottom:16,borderColor:"color-mix(in srgb,var(--Y) 25%,transparent)",background:"color-mix(in srgb,var(--Y) 3%,transparent)"}}>
         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}><span style={{fontSize:14}}>{AE.chart}</span><span style={{fontSize:14,fontWeight:700}}>{pt("upgradeAnnual")||"Upgrade to Annual"}</span></div>
         <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.6,marginBottom:12}}>You're on <b>{upgrade.from}</b> plan. Upgrade to <b>{upgrade.to}</b> for just <b>{upgrade.price}</b> more (save {upgrade.save} total!)</div>
         <div onClick={()=>setShowContact(true)} className="bt" style={{background:"var(--Y)",color:"#000",fontSize:13,cursor:"pointer"}}>{pt("upgradeAnnual")||"Upgrade Now"} — {upgrade.price}</div>
       </div>}
       <WhatWeCover lang={lang}/>
-      {!isAdmin&&!isIBUser&&<div className="cd" style={{padding:16,textAlign:"center",marginTop:16}}>
-        <div style={{fontSize:13,color:"var(--mu)",marginBottom:12}}>{pt("renew")||"Renew or extend your subscription"}</div>
-        <div onClick={()=>setShowRenewPlans(true)} className="bt" style={{background:"var(--B)",fontSize:13,cursor:"pointer",marginBottom:10}}>{pt("renewBtn")||"Renew Subscription"}</div>
-        <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,color:"#0088cc",fontSize:13,fontWeight:600,cursor:"pointer"}}>{IC.tg} {{fa:"تماس با پشتیبانی",ar:"اتصل بالدعم",tr:"Destek İletişim",ru:"Связаться с поддержкой",es:"Contactar soporte"}[lang]||"Contact Support"}</div>
-      </div>}
-      {!isAdmin&&isIBUser&&<div className="cd" style={{padding:16,textAlign:"center",marginTop:16}}>
+      {!isAdmin&&<div className="cd" style={{padding:16,textAlign:"center",marginTop:16}}>
         <div style={{fontSize:13,color:"var(--mu)",marginBottom:10}}>{pt("renew")||"Renew or extend your subscription"}</div>
         <div onClick={()=>setShowContact(true)} style={{display:"inline-flex",alignItems:"center",gap:8,color:"#0088cc",fontSize:14,fontWeight:600,cursor:"pointer"}}>{IC.tg} {{fa:"تماس با پشتیبانی",ar:"اتصل بالدعم",tr:"Destek İletişim",ru:"Связаться с поддержкой",es:"Contactar soporte"}[lang]||"Contact Support"}</div>
       </div>}
