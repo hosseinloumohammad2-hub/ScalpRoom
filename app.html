@@ -2873,7 +2873,7 @@ function Home({posts,signals,msgs,stories,announcements,activePoll,myVote,onVote
     <SignalScoreboard signals={signals}/>
     <div style={{display:"flex",gap:8,marginBottom:24}}>
       <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:13,borderRadius:12,background:"color-mix(in srgb,#0088cc 8%,transparent)",border:"1px solid color-mix(in srgb,#0088cc 15%,transparent)",color:"#0088cc",fontSize:13,fontWeight:600}}>{IC.tg} Telegram</a>
-      <a href="https://www.instagram.com/hoseinlou.fx" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:13,borderRadius:12,background:"color-mix(in srgb,#E1306C 8%,transparent)",border:"1px solid color-mix(in srgb,#E1306C 15%,transparent)",color:"#E1306C",fontSize:13,fontWeight:600}}>{IC.ig} Instagram</a>
+      <a href="https://www.instagram.com/Fxscalproom_com" target="_blank" rel="noopener" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:13,borderRadius:12,background:"color-mix(in srgb,#E1306C 8%,transparent)",border:"1px solid color-mix(in srgb,#E1306C 15%,transparent)",color:"#E1306C",fontSize:13,fontWeight:600}}>{IC.ig} Instagram</a>
     </div>
     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
       <div style={{width:3,height:14,borderRadius:2,background:"var(--R)"}}/>
@@ -2910,7 +2910,7 @@ function Home({posts,signals,msgs,stories,announcements,activePoll,myVote,onVote
       </div>
       <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:14}}>
         <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" style={{color:"var(--dm)",display:"flex"}}>{IC.tg}</a>
-        <a href="https://www.instagram.com/hoseinlou.fx" target="_blank" rel="noopener" style={{color:"var(--dm)",display:"flex"}}>{IC.ig}</a>
+        <a href="https://www.instagram.com/Fxscalproom_com" target="_blank" rel="noopener" style={{color:"var(--dm)",display:"flex"}}>{IC.ig}</a>
       </div>
       <div style={{fontSize:9,color:"var(--dm)",marginTop:14,letterSpacing:".3px",opacity:.7}}>© 2023–{new Date().getFullYear()} Fxscalproom. All rights reserved.</div>
     </div>
@@ -7144,7 +7144,7 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dm)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
     <a href="https://t.me/FxScalpRoom" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginBottom:6,cursor:"pointer"}}><span style={{color:"#0088cc"}}>{IC.tg}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Telegram</span></a>
-    <a href="https://www.instagram.com/hoseinlou.fx" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginBottom:6,cursor:"pointer"}}><span style={{color:"#E1306C"}}>{IC.ig}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Instagram</span></a>
+    <a href="https://www.instagram.com/Fxscalproom_com" target="_blank" rel="noopener" className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginBottom:6,cursor:"pointer"}}><span style={{color:"#E1306C"}}>{IC.ig}</span><span style={{flex:1,fontSize:13,fontWeight:500}}>Instagram</span></a>
     <div onClick={onOut} className="cd" style={{display:"flex",alignItems:"center",gap:12,padding:14,marginTop:12,cursor:"pointer",background:"color-mix(in srgb,var(--R) 5%,transparent)",borderColor:"color-mix(in srgb,var(--R) 12%,transparent)"}}><span style={{fontSize:13,color:"var(--R)",fontWeight:600}}>{t.signOut}</span></div>
     {showChat&&<SupportChat userId={user?.id} token={token} onClose={()=>setShowChat(false)}/>}
   </div>);
