@@ -1343,82 +1343,6 @@ function useNotifications(userId,token){
 function setThemeColor(color){document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.remove());const meta=document.createElement("meta");meta.name="theme-color";meta.content=color;document.head.appendChild(meta)}
 function getThemeColor(){try{return localStorage.getItem("fxtheme")==="dark"?"#050507":"#f5f5f7"}catch(e){return"#f5f5f7"}}
 
-/* ─── Active Session Hook (admin multi-device tracking) ─── */
-function useActiveSession(userId,token,isAdmin){
-  const[deviceId]=useState(()=>{
-    try{
-      let id=localStorage.getItem("fx_device_id");
-      if(!id){
-        id=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36));
-        localStorage.setItem("fx_device_id",id);
-      }
-      return id;
-    }catch(e){return Math.random().toString(36).slice(2)}
-  });
-  const[isPrimary,setIsPrimary]=useState(false);
-  // Detect device label from UA
-  const deviceLabel=useMemo(()=>{
-    const ua=navigator.userAgent||"";
-    let os="Unknown";
-    if(/iPhone|iPad|iPod/.test(ua))os="iOS";
-    else if(/Android/.test(ua))os="Android";
-    else if(/Windows/.test(ua))os="Windows";
-    else if(/Mac/.test(ua))os="Mac";
-    else if(/Linux/.test(ua))os="Linux";
-    let br="Browser";
-    if(/Edg\//.test(ua))br="Edge";
-    else if(/Chrome\//.test(ua))br="Chrome";
-    else if(/Firefox\//.test(ua))br="Firefox";
-    else if(/Safari\//.test(ua))br="Safari";
-    return `${br} · ${os}`;
-  },[]);
-  // Register session + keepalive
-  useEffect(()=>{
-    if(!isAdmin||!userId||!token)return;
-    let alive=true;
-    const register=async()=>{
-      try{
-        // Upsert this device session
-        const r=await fetch(`${SB}/rest/v1/active_sessions?on_conflict=user_id,device_id`,{
-          method:"POST",
-          headers:{...H(token),Prefer:"resolution=merge-duplicates,return=representation"},
-          body:JSON.stringify({user_id:userId,device_id:deviceId,device_label:deviceLabel,user_agent:navigator.userAgent||"",last_ping:new Date().toISOString()})
-        });
-        const d=await r.json();
-        // Check if any session is primary for this user
-        const check=await fetch(`${SB}/rest/v1/active_sessions?user_id=eq.${userId}&is_primary=eq.true&select=device_id`,{headers:H(token)});
-        const primData=await check.json();
-        if(!alive)return;
-        if(Array.isArray(primData)&&primData.length){
-          setIsPrimary(primData[0].device_id===deviceId);
-        } else {
-          // No primary exists → make this device primary automatically
-          await fetch(`${SB}/rest/v1/active_sessions?user_id=eq.${userId}&device_id=eq.${deviceId}`,{
-            method:"PATCH",headers:H(token),body:JSON.stringify({is_primary:true})
-          });
-          setIsPrimary(true);
-        }
-      }catch(e){console.error("Session register error:",e)}
-    };
-    register();
-    // Ping every 30 seconds
-    const pingInterval=setInterval(async()=>{
-      try{
-        await fetch(`${SB}/rest/v1/active_sessions?user_id=eq.${userId}&device_id=eq.${deviceId}`,{
-          method:"PATCH",headers:H(token),
-          body:JSON.stringify({last_ping:new Date().toISOString()})
-        });
-        // Refresh primary status
-        const check=await fetch(`${SB}/rest/v1/active_sessions?user_id=eq.${userId}&device_id=eq.${deviceId}&select=is_primary`,{headers:H(token)});
-        const d=await check.json();
-        if(alive&&Array.isArray(d)&&d.length)setIsPrimary(!!d[0].is_primary);
-      }catch(e){}
-    },30000);
-    return()=>{alive=false;clearInterval(pingInterval)};
-  },[userId,token,isAdmin,deviceId,deviceLabel]);
-  return{deviceId,deviceLabel,isPrimary};
-}
-
 /* ─── Toast ─── */
 function Toast({msg,onDone}){
   useEffect(()=>{if(msg){const t=setTimeout(onDone,2500);return()=>clearTimeout(t)}},[msg]);
@@ -1668,176 +1592,6 @@ function useActivityTracker(userId,token){
   },[userId,token]);
 }
 
-/* ─── Reward Referral Section ─── */
-function RewardSection({userId,token,userProfile}){
-  const{t,lang}=useLang();
-  const[rewardCode,setRewardCode]=useState("");
-  const[inputCode,setInputCode]=useState("");
-  const[msg,setMsg]=useState("");
-  const[copied,setCopied]=useState(false);
-  const[stats,setStats]=useState({total:0,verified:0,pending:0,flagged:0});
-  const[claims,setClaims]=useState([]);
-  const[alreadyReferred,setAlreadyReferred]=useState(false);
-  const[loading,setLoading]=useState(false);
-  const[claimLoading,setClaimLoading]=useState(false);
-
-  const TIERS=[
-    {tier:1,refs:15,amount:15,emoji:"🥉"},
-    {tier:2,refs:30,amount:50,emoji:"🥈"},
-    {tier:3,refs:50,amount:100,emoji:"🥇"},
-  ];
-
-  useEffect(()=>{
-    if(!userId||!token)return;
-    if(userProfile?.reward_code)setRewardCode(userProfile.reward_code);
-    const load=async()=>{
-      try{
-        // Load reward referrals stats
-        const rr=await fetch(`${SB}/rest/v1/RewardReferrals?referrer_id=eq.${userId}&select=id,verified,flagged`,{headers:H(token)});
-        const rrData=await rr.json();
-        if(Array.isArray(rrData)){
-          setStats({
-            total:rrData.length,
-            verified:rrData.filter(r=>r.verified).length,
-            pending:rrData.filter(r=>!r.verified&&!r.flagged).length,
-            flagged:rrData.filter(r=>r.flagged).length,
-          });
-        }
-        // Load claims
-        const cl=await fetch(`${SB}/rest/v1/RewardClaims?user_id=eq.${userId}&select=*&order=tier.asc`,{headers:H(token)});
-        const clData=await cl.json();
-        if(Array.isArray(clData))setClaims(clData);
-        // Check if already referred in reward system
-        const myRef=await fetch(`${SB}/rest/v1/RewardReferrals?referred_id=eq.${userId}&select=id`,{headers:H(token)});
-        const myRefData=await myRef.json();
-        if(Array.isArray(myRefData)&&myRefData.length>0)setAlreadyReferred(true);
-      }catch(e){}
-    };
-    load();
-  },[userId,token,userProfile]);
-
-  const copyCode=()=>{navigator.clipboard?.writeText(rewardCode);setCopied(true);setTimeout(()=>setCopied(false),2000)};
-  const shareCode=()=>{
-    if(navigator.share){navigator.share({title:"Fxscalproom Rewards",text:(lang==="fa"?`با کد ${rewardCode} ثبت‌نام کن و جایزه بگیر! 💰`:`Join with code: ${rewardCode} & earn rewards! 💰`),url:window.location.origin})}
-    else copyCode()
-  };
-
-  const applyRewardCode=async()=>{
-    const code=inputCode.trim().toUpperCase();
-    if(!code){setMsg(t.refInvalid||"Invalid code");return}
-    if(code===rewardCode){setMsg(t.refInvalid||"Invalid code");return}
-    if(alreadyReferred){setMsg(t.refAlreadyUsed||"Already used");return}
-    setLoading(true);
-    try{
-      const chk=await fetch(`${SB}/rest/v1/Users?reward_code=eq.${code}&select=id,reward_code`,{headers:H(token)});
-      const d=await chk.json();
-      if(!Array.isArray(d)||!d.length){setMsg(t.refInvalid||"Invalid code");setLoading(false);return}
-      const referrerId=d[0].id;
-      if(referrerId===userId){setMsg(t.refInvalid||"Invalid code");setLoading(false);return}
-      // Check duplicate
-      const ex=await fetch(`${SB}/rest/v1/RewardReferrals?referred_id=eq.${userId}&select=id`,{headers:H(token)});
-      const exData=await ex.json();
-      if(Array.isArray(exData)&&exData.length>0){setMsg(t.refAlreadyApplied||"Already applied!");setAlreadyReferred(true);setLoading(false);return}
-      // Check fingerprint
-      const fp=getDeviceFingerprint();
-      const fpChk=await fetch(`${SB}/rest/v1/DeviceFingerprints?fingerprint=eq.${fp}&select=user_id`,{headers:H(token)});
-      const fpData=await fpChk.json();
-      const fpOk=!Array.isArray(fpData)||fpData.length<=1;
-      const flagged=!fpOk;
-      const flagReason=flagged?"Duplicate device fingerprint":"";
-      await fetch(`${SB}/rest/v1/RewardReferrals`,{method:"POST",headers:H(token),body:JSON.stringify({
-        referrer_id:referrerId,referred_id:userId,code,fingerprint_ok:fpOk,
-        ip_address:"",flagged,flag_reason:flagReason
-      })});
-      setMsg(t.refApplied||"Code applied!");
-      setInputCode("");setAlreadyReferred(true);
-    }catch(e){setMsg(e.message)}
-    setLoading(false);
-    setTimeout(()=>setMsg(""),3000);
-  };
-
-  const claimReward=async(tier)=>{
-    const t_=TIERS.find(x=>x.tier===tier);
-    if(!t_||stats.verified<t_.refs)return;
-    if(claims.find(c=>c.tier===tier))return;
-    setClaimLoading(true);
-    try{
-      await fetch(`${SB}/rest/v1/RewardClaims`,{method:"POST",headers:H(token),body:JSON.stringify({
-        user_id:userId,tier,amount:t_.amount,required_refs:t_.refs,verified_refs:stats.verified,status:"pending"
-      })});
-      const cl=await fetch(`${SB}/rest/v1/RewardClaims?user_id=eq.${userId}&select=*&order=tier.asc`,{headers:H(token)});
-      const clData=await cl.json();
-      if(Array.isArray(clData))setClaims(clData);
-    }catch(e){}
-    setClaimLoading(false);
-  };
-
-  const statusColor=(s)=>s==="paid"?"var(--G)":s==="approved"?"var(--B)":s==="rejected"?"var(--R)":"var(--Y)";
-  const statusLabel=(s)=>({pending:lang==="fa"?"در انتظار بررسی":"Pending",approved:lang==="fa"?"تأیید شده":"Approved",paid:lang==="fa"?"پرداخت شده":"Paid",rejected:lang==="fa"?"رد شده":"Rejected"}[s]||s);
-
-  return(<div className="cd" style={{marginBottom:6}}>
-    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
-      <span style={{fontSize:20}}>{AE.money}</span>
-      <div>
-        <div style={{fontSize:14,fontWeight:700}}>{lang==="fa"?"جوایز نقدی":"Cash Rewards"}</div>
-        <div style={{fontSize:11,color:"var(--tx2)",marginTop:2}}>{lang==="fa"?"دوستات رو دعوت کن و دلار بگیر!":"Invite friends & earn cash!"}</div>
-      </div>
-    </div>
-
-    {/* Tiers */}
-    <div style={{display:"flex",gap:6,marginBottom:14}}>
-      {TIERS.map(tr=>{
-        const claim=claims.find(c=>c.tier===tr.tier);
-        const reached=stats.verified>=tr.refs;
-        const pct=Math.min(100,(stats.verified/tr.refs)*100);
-        return<div key={tr.tier} style={{flex:1,background:"var(--bg)",border:`1px solid ${reached?"color-mix(in srgb,var(--G) 30%,transparent)":"var(--brd)"}`,borderRadius:12,padding:10,textAlign:"center",position:"relative",overflow:"hidden"}}>
-          <div style={{position:"absolute",bottom:0,left:0,width:`${pct}%`,height:3,background:reached?"var(--G)":"var(--R)",borderRadius:2,transition:"width .5s"}}/>
-          <div style={{fontSize:16,marginBottom:4}}>{tr.emoji}</div>
-          <div className="m" style={{fontSize:16,fontWeight:700,color:reached?"var(--G)":"var(--tx)"}}>${tr.amount}</div>
-          <div style={{fontSize:9,color:"var(--dm)",marginTop:2}}>{stats.verified}/{tr.refs} {lang==="fa"?"نفر":"refs"}</div>
-          {claim?<div style={{fontSize:8,fontWeight:700,color:statusColor(claim.status),marginTop:6,padding:"2px 6px",borderRadius:4,background:`color-mix(in srgb,${statusColor(claim.status)} 10%,transparent)`,display:"inline-block"}}>{statusLabel(claim.status)}</div>
-          :reached?<div onClick={()=>claimReward(tr.tier)} style={{fontSize:9,fontWeight:700,color:"#fff",marginTop:6,padding:"4px 8px",borderRadius:6,background:"var(--G)",cursor:"pointer",opacity:claimLoading?.5:1}}>{lang==="fa"?"درخواست جایزه":"Claim"}</div>
-          :null}
-        </div>
-      })}
-    </div>
-
-    {/* Stats */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:4,marginBottom:14}}>
-      {[
-        {l:lang==="fa"?"کل":"Total",v:stats.total,c:"var(--tx)"},
-        {l:lang==="fa"?"تأیید":"Verified",v:stats.verified,c:"var(--G)"},
-        {l:lang==="fa"?"در انتظار":"Pending",v:stats.pending,c:"var(--Y)"},
-        {l:lang==="fa"?"مشکوک":"Flagged",v:stats.flagged,c:"var(--R)"},
-      ].map((s,i)=><div key={i} style={{background:"var(--bg)",borderRadius:8,padding:8,textAlign:"center",border:"1px solid var(--brd)"}}>
-        <div className="m" style={{fontSize:14,fontWeight:700,color:s.c}}>{s.v}</div>
-        <div style={{fontSize:8,color:"var(--dm)",fontWeight:600,marginTop:2}}>{s.l}</div>
-      </div>)}
-    </div>
-
-    {/* Reward Code */}
-    <div style={{background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:12,padding:14,marginBottom:10}}>
-      <div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginBottom:8}}>{lang==="fa"?"کد جایزه شما":"Your Reward Code"}</div>
-      <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        <div className="m" style={{flex:1,fontSize:18,fontWeight:700,letterSpacing:2,color:"var(--B)",textAlign:"center"}}>{rewardCode}</div>
-        <div onClick={copyCode} style={{padding:"8px 14px",borderRadius:8,background:"color-mix(in srgb,var(--B) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--B) 20%,transparent)",cursor:"pointer",fontSize:11,fontWeight:600,color:"var(--B)"}}>{copied?(t.copied||"Copied!"):"Copy"}</div>
-      </div>
-    </div>
-
-    <button className="bt" style={{background:"var(--B)",marginBottom:10}} onClick={shareCode}>{lang==="fa"?"اشتراک‌گذاری کد جایزه":"Share Reward Code"}</button>
-
-    {/* Apply Code */}
-    {!alreadyReferred?<div style={{display:"flex",gap:6}}>
-      <input className="ip" placeholder={lang==="fa"?"کد جایزه دارید؟":"Have a reward code?"} value={inputCode} onChange={e=>setInputCode(e.target.value)} style={{marginBottom:0,flex:1}}/>
-      <button className="bt" style={{background:"var(--G)",width:"auto",padding:"12px 18px",opacity:loading?.6:1}} onClick={applyRewardCode} disabled={loading}>{loading?"...":(t.applyCode||"Apply")}</button>
-    </div>:<div style={{padding:10,borderRadius:10,background:"color-mix(in srgb,var(--G) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 15%,transparent)",textAlign:"center"}}>
-      <span style={{fontSize:12,fontWeight:600,color:"var(--G)"}}>✓ {lang==="fa"?"کد جایزه اعمال شده":"Reward code applied"}</span>
-    </div>}
-    {msg&&<div style={{marginTop:8,fontSize:12,fontWeight:600,color:msg.includes("!")?"var(--G)":"var(--R)",textAlign:"center"}}>{msg}</div>}
-  </div>);
-}
-
-/* ─── Admin Rewards Panel ─── */
 /* ─── App Settings Hook (key-value from AppSettings table) ─── */
 function useAppSetting(key,token){
   const[val,setVal]=useState(null);
@@ -1865,167 +1619,6 @@ function useAppSetting(key,token){
     }catch(e){}
   };
   return{val,loading,update,reload:load};
-}
-
-function AdminRewards({token}){
-  const{lang}=useLang();
-  const[claims,setClaims]=useState([]);
-  const[users,setUsers]=useState({});
-  const[rewardRefs,setRewardRefs]=useState({});
-  const[flaggedList,setFlaggedList]=useState([]);
-  const[tab,setTab]=useState("claims");
-  const[note,setNote]=useState("");
-  const[editId,setEditId]=useState(null);
-
-  useEffect(()=>{
-    load();
-  },[token]);
-
-  const load=async()=>{
-    try{
-      // Load all claims
-      const cl=await fetch(`${SB}/rest/v1/RewardClaims?select=*&order=created_at.desc`,{headers:H(token)});
-      const clData=await cl.json();
-      if(Array.isArray(clData))setClaims(clData);
-      // Load users for name lookup
-      const us=await fetch(`${SB}/rest/v1/Users?select=id,full_name,email,reward_code`,{headers:H(token)});
-      const usData=await us.json();
-      if(Array.isArray(usData)){const m={};usData.forEach(u=>m[u.id]=u);setUsers(m)}
-      // Load reward referral counts per user
-      const rr=await fetch(`${SB}/rest/v1/RewardReferrals?select=referrer_id,verified,flagged`,{headers:H(token)});
-      const rrData=await rr.json();
-      if(Array.isArray(rrData)){
-        const counts={};
-        rrData.forEach(r=>{
-          if(!counts[r.referrer_id])counts[r.referrer_id]={total:0,verified:0,flagged:0};
-          counts[r.referrer_id].total++;
-          if(r.verified)counts[r.referrer_id].verified++;
-          if(r.flagged)counts[r.referrer_id].flagged++;
-        });
-        setRewardRefs(counts);
-      }
-      // Load flagged referrals
-      const fl=await fetch(`${SB}/rest/v1/RewardReferrals?flagged=eq.true&select=*&order=created_at.desc`,{headers:H(token)});
-      const flData=await fl.json();
-      if(Array.isArray(flData))setFlaggedList(flData);
-    }catch(e){}
-  };
-
-  const updateClaim=async(id,status)=>{
-    await fetch(`${SB}/rest/v1/RewardClaims?id=eq.${id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({status,admin_note:note||null,reviewed_at:new Date().toISOString()})});
-    setEditId(null);setNote("");load();
-  };
-
-  const verifyRef=async(id,verified)=>{
-    await fetch(`${SB}/rest/v1/RewardReferrals?id=eq.${id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({verified,flagged:!verified})});
-    load();
-  };
-
-  const statusColor=(s)=>s==="paid"?"var(--G)":s==="approved"?"var(--B)":s==="rejected"?"var(--R)":"var(--Y)";
-  const{val:rewardsEnabled,update:setRewardsEnabled}=useAppSetting("rewards_enabled",token);
-  const isEnabled=rewardsEnabled==="true";
-
-  return(<div>
-    {/* Enable/Disable Toggle */}
-    <div onClick={()=>setRewardsEnabled(isEnabled?"false":"true")} className="cd" style={{padding:14,marginBottom:14,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",borderColor:isEnabled?"color-mix(in srgb,var(--G) 25%,transparent)":"var(--brd)",background:isEnabled?"color-mix(in srgb,var(--G) 3%,transparent)":"var(--card)"}}>
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <span style={{fontSize:18}}>{AE.money}</span>
-        <div>
-          <div style={{fontSize:13,fontWeight:700}}>{lang==="fa"?"جوایز نقدی":"Cash Rewards"}</div>
-          <div style={{fontSize:10,color:"var(--dm)",marginTop:2}}>{isEnabled?(lang==="fa"?"فعال — در پروفایل کاربران نمایش داده میشود":"Active — visible to users in profile"):(lang==="fa"?"غیرفعال — کاربران نمیبینند":"Disabled — hidden from users")}</div>
-        </div>
-      </div>
-      <div style={{width:44,height:24,borderRadius:12,background:isEnabled?"var(--G)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:20,height:20,borderRadius:10,background:"#fff",position:"absolute",top:2,left:isEnabled?22:2,transition:".2s"}}/></div>
-    </div>
-
-    <div style={{display:"flex",gap:4,marginBottom:12}}>
-      {["claims","flagged","stats"].map(t=><div key={t} onClick={()=>setTab(t)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tab===t?"color-mix(in srgb,var(--B) 10%,transparent)":"transparent",border:`1px solid ${tab===t?"color-mix(in srgb,var(--B) 25%,transparent)":"var(--brd)"}`,fontSize:11,fontWeight:600,color:tab===t?"var(--B)":"var(--mu)"}}>{t==="claims"?(lang==="fa"?"درخواست‌ها":"Claims"):t==="flagged"?(lang==="fa"?"مشکوک":"Flagged"):(lang==="fa"?"آمار":"Stats")}</div>)}
-    </div>
-
-    {tab==="claims"&&<>
-      {claims.length===0&&<div style={{textAlign:"center",color:"var(--dm)",fontSize:13,padding:20}}>{lang==="fa"?"درخواستی نیست":"No claims yet"}</div>}
-      {claims.map(c=>{
-        const u=users[c.user_id];
-        const rc=rewardRefs[c.user_id]||{total:0,verified:0,flagged:0};
-        return<div key={c.id} className="cd" style={{padding:12,marginBottom:6}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-            <div>
-              <div style={{fontSize:13,fontWeight:700}}>{u?.full_name||"Unknown"}</div>
-              <div style={{fontSize:10,color:"var(--dm)"}}>{u?.email}</div>
-            </div>
-            <div style={{textAlign:"right"}}>
-              <div className="m" style={{fontSize:18,fontWeight:700,color:"var(--G)"}}>${c.amount}</div>
-              <div style={{fontSize:9,color:"var(--dm)"}}>Tier {c.tier}</div>
-            </div>
-          </div>
-          <div style={{display:"flex",gap:4,marginBottom:8}}>
-            <span style={{fontSize:9,padding:"3px 8px",borderRadius:6,background:"color-mix(in srgb,var(--G) 10%,transparent)",color:"var(--G)",fontWeight:600}}>✓ {rc.verified} verified</span>
-            <span style={{fontSize:9,padding:"3px 8px",borderRadius:6,background:"color-mix(in srgb,var(--Y) 10%,transparent)",color:"var(--Y)",fontWeight:600}}>⏳ {rc.total-rc.verified-rc.flagged} pending</span>
-            {rc.flagged>0&&<span style={{fontSize:9,padding:"3px 8px",borderRadius:6,background:"color-mix(in srgb,var(--R) 10%,transparent)",color:"var(--R)",fontWeight:600}}>⚠ {rc.flagged} flagged</span>}
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <span style={{fontSize:10,fontWeight:700,color:statusColor(c.status),padding:"3px 8px",borderRadius:6,background:`color-mix(in srgb,${statusColor(c.status)} 10%,transparent)`}}>{c.status.toUpperCase()}</span>
-            {c.admin_note&&<span style={{fontSize:9,color:"var(--dm)"}}>{c.admin_note}</span>}
-            <span style={{fontSize:9,color:"var(--dm)",marginLeft:"auto"}}>{new Date(c.created_at).toLocaleDateString()}</span>
-          </div>
-          {c.status==="pending"&&<>
-            {editId===c.id?<div style={{marginTop:8}}>
-              <input className="ip" placeholder={lang==="fa"?"یادداشت ادمین (اختیاری)":"Admin note (optional)"} value={note} onChange={e=>setNote(e.target.value)} style={{marginBottom:6}}/>
-              <div style={{display:"flex",gap:6}}>
-                <button className="bt" style={{background:"var(--G)",flex:1,padding:10,fontSize:12}} onClick={()=>updateClaim(c.id,"approved")}>✓ {lang==="fa"?"تأیید":"Approve"}</button>
-                <button className="bt" style={{background:"var(--B)",flex:1,padding:10,fontSize:12}} onClick={()=>updateClaim(c.id,"paid")}>💰 {lang==="fa"?"پرداخت شد":"Paid"}</button>
-                <button className="bt" style={{background:"var(--R)",flex:1,padding:10,fontSize:12}} onClick={()=>updateClaim(c.id,"rejected")}>✗ {lang==="fa"?"رد":"Reject"}</button>
-              </div>
-            </div>:<div onClick={()=>setEditId(c.id)} style={{marginTop:8,textAlign:"center",padding:8,borderRadius:8,border:"1px solid var(--brd)",cursor:"pointer",fontSize:11,fontWeight:600,color:"var(--B)"}}>
-              {lang==="fa"?"بررسی و تصمیم":"Review & Decide"}
-            </div>}
-          </>}
-          {c.status==="approved"&&<div style={{display:"flex",gap:6,marginTop:8}}>
-            <button className="bt" style={{background:"var(--B)",flex:1,padding:10,fontSize:12}} onClick={()=>updateClaim(c.id,"paid")}>💰 {lang==="fa"?"پرداخت شد":"Mark Paid"}</button>
-          </div>}
-        </div>
-      })}
-    </>}
-
-    {tab==="flagged"&&<>
-      {flaggedList.length===0&&<div style={{textAlign:"center",color:"var(--dm)",fontSize:13,padding:20}}>{lang==="fa"?"رفرال مشکوکی نیست":"No flagged referrals"}</div>}
-      {flaggedList.map(f=>{
-        const referrer=users[f.referrer_id];
-        const referred=users[f.referred_id];
-        return<div key={f.id} className="cd" style={{padding:12,marginBottom:6}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-            <div>
-              <div style={{fontSize:11,fontWeight:600}}>{referrer?.full_name||"?"} ← {referred?.full_name||"?"}</div>
-              <div style={{fontSize:9,color:"var(--dm)"}}>{referred?.email}</div>
-            </div>
-            <span style={{fontSize:9,color:"var(--R)",fontWeight:600}}>⚠ {f.flag_reason}</span>
-          </div>
-          <div style={{display:"flex",gap:6}}>
-            <button className="bt" style={{background:"var(--G)",flex:1,padding:8,fontSize:11}} onClick={()=>verifyRef(f.id,true)}>✓ {lang==="fa"?"تأیید":"Verify"}</button>
-            <button className="bt" style={{background:"var(--R)",flex:1,padding:8,fontSize:11}} onClick={()=>verifyRef(f.id,false)}>✗ {lang==="fa"?"رد":"Reject"}</button>
-          </div>
-        </div>
-      })}
-    </>}
-
-    {tab==="stats"&&<>
-      <div style={{fontSize:13,fontWeight:600,marginBottom:10}}>{lang==="fa"?"رتبه‌بندی دعوت‌کنندگان":"Top Referrers"}</div>
-      {Object.entries(rewardRefs).sort((a,b)=>b[1].verified-a[1].verified).slice(0,20).map(([uid,rc],i)=>{
-        const u=users[uid];
-        return<div key={uid} className="cd" style={{display:"flex",alignItems:"center",gap:10,padding:10,marginBottom:4}}>
-          <div style={{width:24,height:24,borderRadius:"50%",background:i<3?"color-mix(in srgb,var(--Y) 15%,transparent)":"var(--bg)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:i<3?"var(--Y)":"var(--dm)"}}>{i+1}</div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:12,fontWeight:600}}>{u?.full_name||"Unknown"}</div>
-            <div style={{fontSize:9,color:"var(--dm)"}}>{u?.email}</div>
-          </div>
-          <div style={{textAlign:"right"}}>
-            <div className="m" style={{fontSize:13,fontWeight:700,color:"var(--G)"}}>{rc.verified}<span style={{fontSize:9,color:"var(--dm)",fontWeight:400}}>/{rc.total}</span></div>
-            {rc.flagged>0&&<div style={{fontSize:8,color:"var(--R)"}}>⚠{rc.flagged}</div>}
-          </div>
-        </div>
-      })}
-    </>}
-  </div>);
 }
 
 /* ─── Share Card Generator (Admin Only) ─── */
@@ -2951,14 +2544,11 @@ async function fetchFFCalendar(){
   }catch(e){}
   return[];
 }
-function NextRedEvent({isAdmin,token,isPrimary}){
+function NextRedEvent({isAdmin,token}){
   const{lang}=useLang();
   const[evt,setEvt]=useState(null);
   const[loaded,setLoaded]=useState(false);
   const[tick,setTick]=useState(0);
-  const noti=useNotifications(null,token);
-  // Track events we've already sent a 5-min warning for (per-device, per-session)
-  const notifiedRef=useRef(new Set());
   useEffect(()=>{
     let cancelled=false;
     (async()=>{
@@ -2982,30 +2572,6 @@ function NextRedEvent({isAdmin,token,isPrimary}){
     document.addEventListener("visibilitychange",onVis);
     return()=>{stop();document.removeEventListener("visibilitychange",onVis)};
   },[evt]);
-  // 5-min push notification (admin + PRIMARY device only, broadcasted to all users)
-  // Uses localStorage to persist "already notified" across reloads
-  useEffect(()=>{
-    if(!evt||!isAdmin||!isPrimary||!token)return;
-    const eventKey="fx_news_notif_"+(evt.date||"")+"_"+(evt.title||"").replace(/\s+/g,"_").slice(0,40);
-    // Check localStorage to avoid double-send after reload
-    let alreadySent=false;
-    try{alreadySent=localStorage.getItem(eventKey)==="1"}catch(e){}
-    if(alreadySent)return;
-    const diff=new Date(evt.date).getTime()-Date.now();
-    // Only send when we're in the 5-minute window (between 4.5 and 5.0 minutes before)
-    // This gives a 30-second window to account for polling interval
-    if(diff>4.5*60*1000&&diff<=5*60*1000&&!notifiedRef.current.has(eventKey)){
-      notifiedRef.current.add(eventKey);
-      try{localStorage.setItem(eventKey,"1")}catch(e){}
-      // Translated messages
-      const titleTxt={fa:"⚡ خبر مهم تا ۵ دقیقه دیگه",en:"⚡ High-impact news in 5 min",ar:"⚡ خبر مهم خلال ٥ دقائق",tr:"⚡ 5 dakika içinde önemli haber",ru:"⚡ Важные новости через 5 мин",es:"⚡ Noticia importante en 5 min"}[lang]||"⚡ High-impact news in 5 min";
-      const bodyTxt=`${evt.country} · ${evt.title}`;
-      // Send to everyone
-      noti.sendPushToAll(titleTxt,bodyTxt,token,"all");
-      // Also fire local notification for admin
-      try{noti.notify(titleTxt,bodyTxt)}catch(e){}
-    }
-  },[tick,evt,isAdmin,token,lang,noti]);
   if(!loaded||!evt)return null;
   const diff=Math.max(0,new Date(evt.date).getTime()-Date.now());
   const d=Math.floor(diff/86400000);
@@ -3133,7 +2699,6 @@ function Home({posts,signals,msgs,stories,announcements,activePoll,myVote,onVote
   const theme=dark?"dark":"light";
   const isPremiumUser=userProfile?.membership==="premium"||userProfile?.role==="admin";
   const isAdminHome=userProfile?.role==="admin";
-  const {isPrimary:sessionIsPrimary}=useActiveSession(userProfile?.id,token,isAdminHome);
   const visibleStories=useMemo(()=>{
     if(!stories||!stories.length)return[];
     return stories.filter(s=>s.target==="all"||(s.target==="premium"&&isPremiumUser));
@@ -3215,7 +2780,7 @@ function Home({posts,signals,msgs,stories,announcements,activePoll,myVote,onVote
       <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8}}>
         <DailyActiveCounter token={token}/>
       </div>
-      <NextRedEvent isAdmin={userProfile?.role==="admin"} isPrimary={sessionIsPrimary} token={token}/>
+      <NextRedEvent isAdmin={userProfile?.role==="admin"} token={token}/>
     </div>}
     {/* Story Viewer Fullscreen */}
     {showStoryViewer&&visibleStories.length>0&&<StoryViewer stories={visibleStories} onClose={()=>setShowStoryViewer(false)} onSeen={markStorySeen} userId={userProfile?.id} token={token}/>}
@@ -5986,248 +5551,6 @@ function AdminBlog({token,onR}){
   );
 }
 
-function AdminAI({token}){
-  const{t,lang}=useLang();
-  const[aiImg,setAiImg]=useState(null);
-  const[aiPv,setAiPv]=useState(null);
-  const[aiPair,setAiPair]=useState("");
-  const[aiTf,setAiTf]=useState("H4");
-  const[aiCtx,setAiCtx]=useState("");
-  const[aiResult,setAiResult]=useState("");
-  const[aiLoading,setAiLoading]=useState(false);
-  const[aiMode,setAiMode]=useState(()=>{try{return localStorage.getItem("fx_ai_mode")||"manual"}catch(e){return"manual"}});
-  const[aiStep,setAiStep]=useState(0);
-  const[copied,setCopied]=useState(false);
-  const[aiHistory,setAiHistory]=useState(()=>{try{return JSON.parse(localStorage.getItem("fx_ai_hist")||"[]")}catch(e){return[]}});
-
-  const switchMode=(m)=>{setAiMode(m);try{localStorage.setItem("fx_ai_mode",m)}catch(e){}};
-
-  const NEOWAVE_PROMPT=`You are a world-class NeoWave analyst trained on Glenn Neely's "Mastering Elliott Waves" — ALL 12 chapters. You analyze chart images with machine-level precision.
-
-CORE IDENTITY:
-- Apply NeoWave (NOT classic Elliott Wave) rules strictly
-- Use NeoWave structure labels: :5, :3, :s3, :F3, :L3
-- Identify monowaves, polywaves, and multiplex patterns
-- Run Fibonacci price AND time ratios
-- Check ALL channeling laws (Chapter 9)
-- Validate wave psychology (Chapter 10)
-
-ANALYSIS PROTOCOL:
-1. MONOWAVE CONSTRUCTION: Identify each uninterrupted price segment, apply bar-by-bar rules (Type 1-4), neutrality rules (6 types)
-2. RETRACEMENT ANALYSIS: Apply rules a-i,x from Chapter 3, measure exact Fibonacci ratios
-3. PATTERN IDENTIFICATION: Test against all 8 pattern types (Impulse, Leading/Ending Diagonal, Zigzag, Flat, Triangle, Diametric, Symmetrical)
-4. DEGREE VALIDATION: Run 7 degree confirmation tests from Chapter 5
-5. WAVE POSITION: Identify EXACTLY which wave we are in currently
-6. CHANNELING: Apply 7 channeling laws, identify channel type, slope analysis
-7. LIQUIDITY CHECK (v11): Check for EQH/EQL/FVG/PSH/PSL targets
-8. VECTOR VELOCITY (v11): Calculate delta-P/delta-T for motive wave confirmation
-9. WCI SCORING (v11): Score each scenario: Structure(30%) + Liquidity(25%) + Time(20%) + Momentum(25%)
-
-OUTPUT FORMAT (respond in Persian/Farsi):
-📊 تحلیل NeoWave — [PAIR] — [TIMEFRAME]
-🔍 ساختار فعلی: [Current wave structure with NeoWave labels]
-📍 موقعیت فعلی موج: [Exactly which wave we are in NOW]
-━━━ سناریوها ━━━
-🥇 سناریو اول (Primary) — WCI: [score]%
-- الگو / موج فعلی / هدف بعدی / استاپ/ابطال
-🥈 سناریو دوم (Alternate) — WCI: [score]%
-🥉 سناریو سوم — WCI: [score]%
-━━━ سیگنال ━━━
-⚡ سیگنال کوتاه‌مدت: جهت / ورود / TP1 / TP2 / SL / R:R
-📈 سیگنال بلندمدت: جهت / ورود / TP1 / TP2 / TP3 / SL
-⚠️ نکات مهم
-
-RULES:
-- ALWAYS give 3 scenarios with exact invalidation levels
-- ALWAYS identify current sub-wave position precisely
-- ALWAYS provide both short-term and long-term signals
-- NEVER force a pattern — flag imperfect data
-- Use NeoWave notation, NOT classic Elliott notation
-- Respond in Persian (Farsi)`;
-
-  const buildUserMsg=()=>{
-    return `تحلیل این چارت:\nجفت‌ارز/نماد: ${aiPair||"مشخص نشده"}\nتایم‌فریم: ${aiTf}\n${aiCtx?`توضیحات: ${aiCtx}`:""}\n\nلطفاً:\n1. ساختار NeoWave فعلی را شناسایی کن\n2. دقیقاً بگو الان در کدام موج هستیم\n3. ۳ سناریو با سطح ابطال بده\n4. سیگنال کوتاه‌مدت و بلندمدت بده\n5. امتیاز WCI هر سناریو را محاسبه کن`;
-  };
-
-  const copyPrompt=()=>{
-    const full=NEOWAVE_PROMPT+"\n\n---\n\n"+buildUserMsg();
-    navigator.clipboard?.writeText(full).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000)});
-  };
-
-  const saveResult=()=>{
-    if(!aiResult.trim())return;
-    const entry={pair:aiPair||"—",tf:aiTf,date:new Date().toISOString(),preview:aiResult.slice(0,120),mode:"manual"};
-    const newHist=[entry,...aiHistory].slice(0,20);
-    setAiHistory(newHist);
-    try{localStorage.setItem("fx_ai_hist",JSON.stringify(newHist))}catch(e){}
-    setAiStep(3);
-  };
-
-  const runAPI=async()=>{
-    if(!aiImg)return;
-    setAiLoading(true);setAiResult("");
-    try{
-      const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=()=>rej(new Error("Read failed"));r.readAsDataURL(aiImg)});
-      const mediaType=aiImg.type||"image/png";
-      const resp=await fetch("/api/ai",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({system:NEOWAVE_PROMPT,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:mediaType,data:base64}},{type:"text",text:buildUserMsg()}]}]})
-      });
-      const data=await resp.json();
-      if(!resp.ok)throw new Error(data.error?.message||data.error||"API error "+resp.status);
-      const text=data.content?.map(i=>i.text||"").filter(Boolean).join("\n")||"No response";
-      setAiResult(text);
-      const entry={pair:aiPair||"—",tf:aiTf,date:new Date().toISOString(),preview:text.slice(0,120),mode:"api"};
-      const newHist=[entry,...aiHistory].slice(0,20);
-      setAiHistory(newHist);
-      try{localStorage.setItem("fx_ai_hist",JSON.stringify(newHist))}catch(e){}
-    }catch(e){setAiResult("❌ Error: "+e.message)}
-    setAiLoading(false);
-  };
-
-  const fa=lang==="fa";
-
-  return(<div>
-    <div className="cd cd-glass" style={{padding:16,marginBottom:14,display:"flex",alignItems:"center",gap:12}}>
-      <div style={{width:42,height:42,borderRadius:14,background:"linear-gradient(135deg,#bf5af2,#0071e3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🧠</div>
-      <div>
-        <div style={{fontSize:15,fontWeight:700}}>NeoWave AI Analyst</div>
-        <div style={{fontSize:11,color:"var(--dm)"}}>{fa?"تحلیل NeoWave + سیگنال کوتاه/بلندمدت":"NeoWave analysis + signals"}</div>
-      </div>
-    </div>
-
-    <div style={{display:"flex",gap:6,marginBottom:14}}>
-      <div onClick={()=>{switchMode("manual");setAiStep(0);setAiResult("")}} style={{flex:1,padding:12,borderRadius:12,textAlign:"center",cursor:"pointer",background:aiMode==="manual"?"color-mix(in srgb,var(--G) 10%,transparent)":"transparent",border:"1px solid "+(aiMode==="manual"?"color-mix(in srgb,var(--G) 25%,transparent)":"var(--brd)"),transition:".2s"}}>
-        <div style={{fontSize:16,marginBottom:4}}>💬</div>
-        <div style={{fontSize:11,fontWeight:700,color:aiMode==="manual"?"var(--G)":"var(--mu)"}}>{fa?"دستی (Claude.ai)":"Manual (Claude.ai)"}</div>
-        <div style={{fontSize:9,color:"var(--dm)",marginTop:2}}>{fa?"رایگان · بدون API":"Free · No API"}</div>
-      </div>
-      <div onClick={()=>{switchMode("api");setAiStep(0);setAiResult("")}} style={{flex:1,padding:12,borderRadius:12,textAlign:"center",cursor:"pointer",background:aiMode==="api"?"color-mix(in srgb,var(--purple) 10%,transparent)":"transparent",border:"1px solid "+(aiMode==="api"?"color-mix(in srgb,var(--purple) 25%,transparent)":"var(--brd)"),transition:".2s"}}>
-        <div style={{fontSize:16,marginBottom:4}}>⚡</div>
-        <div style={{fontSize:11,fontWeight:700,color:aiMode==="api"?"var(--purple)":"var(--mu)"}}>{fa?"اتوماتیک (API)":"Auto (API)"}</div>
-        <div style={{fontSize:9,color:"var(--dm)",marginTop:2}}>{fa?"نیاز به API Key":"Requires API Key"}</div>
-      </div>
-    </div>
-
-    <div onClick={()=>document.getElementById("ai-fu").click()} style={{border:"2px dashed var(--brd2)",borderRadius:16,padding:aiPv?0:28,textAlign:"center",marginBottom:12,background:"var(--bg2)",cursor:"pointer",overflow:"hidden",position:"relative"}}>
-      {aiPv?<React.Fragment>
-        <img src={aiPv} style={{width:"100%",maxHeight:200,objectFit:"contain",borderRadius:14}} alt=""/>
-        <div onClick={e=>{e.stopPropagation();setAiImg(null);setAiPv(null);setAiResult("");setAiStep(0)}} style={{position:"absolute",top:8,right:8,width:28,height:28,borderRadius:14,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"#fff",fontSize:14,fontWeight:700}}>✕</div>
-      </React.Fragment>:<div>
-        <div style={{fontSize:28,marginBottom:4}}>📊</div>
-        <div style={{fontSize:13,fontWeight:600,color:"var(--tx2)"}}>{fa?"عکس چارت آپلود کنید":"Upload Chart Image"}</div>
-        <div style={{fontSize:10,color:"var(--dm)",marginTop:3}}>PNG, JPG</div>
-      </div>}
-    </div>
-    <input id="ai-fu" type="file" accept="image/*" onChange={e=>{const f=e.target.files[0];if(f){setAiImg(f);setAiPv(URL.createObjectURL(f));setAiResult("");setAiStep(0)}}} style={{display:"none"}}/>
-
-    <div style={{display:"flex",gap:8,marginBottom:8}}>
-      <input className="ip" placeholder={fa?"نماد (XAUUSD)":"Pair (XAUUSD)"} value={aiPair} onChange={e=>setAiPair(e.target.value)} style={{flex:1,marginBottom:0}}/>
-      <select value={aiTf} onChange={e=>setAiTf(e.target.value)} style={{width:80,marginBottom:0,background:"var(--bg)",border:"1px solid var(--brd)",borderRadius:14,padding:"10px",fontSize:13,fontWeight:600,color:"var(--tx)"}}>
-        {["M1","M5","M15","M30","H1","H4","D1","W1","MN"].map(tf=><option key={tf} value={tf}>{tf}</option>)}
-      </select>
-    </div>
-
-    <textarea placeholder={fa?"توضیح اختیاری — مثلاً: فکر میکنم موج ۵ تموم شد...":"Optional — e.g. I think wave 5 ended..."} value={aiCtx} onChange={e=>setAiCtx(e.target.value)} rows={2} style={{marginBottom:12}}/>
-
-    {aiMode==="manual"&&<React.Fragment>
-      <div style={{display:"flex",gap:4,marginBottom:14}}>
-        {[1,2,3].map(s=><div key={s} style={{flex:1,height:4,borderRadius:2,background:aiStep>=s?"var(--G)":"var(--brd2)",transition:".3s"}}/>)}
-      </div>
-
-      {aiStep===0&&<React.Fragment>
-        <button className="bt" onClick={()=>{if(!aiImg)return;copyPrompt();setAiStep(1)}} style={{background:aiImg?"var(--G)":"var(--brd2)",color:aiImg?"#fff":"var(--mu)",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:8}} disabled={!aiImg}>
-          {"📋 "+(fa?"کپی پرامپت تحلیل":"Copy Analysis Prompt")}
-        </button>
-        <div style={{fontSize:10,color:"var(--dm)",textAlign:"center"}}>{fa?"مرحله ۱ از ۳ — اول عکس آپلود کن بعد پرامپت کپی کن":"Step 1/3 — Upload chart then copy prompt"}</div>
-      </React.Fragment>}
-
-      {aiStep===1&&<React.Fragment>
-        <div className="cd" style={{padding:14,marginBottom:10,background:"color-mix(in srgb,var(--G) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 15%,transparent)"}}>
-          <div style={{fontSize:12,fontWeight:700,color:"var(--G)",marginBottom:6}}>{"✅ "+(fa?"پرامپت کپی شد!":"Prompt copied!")}</div>
-          <div style={{fontSize:11,color:"var(--tx2)",lineHeight:1.7,direction:fa?"rtl":"ltr"}}>
-            {fa?"حالا:":"Now:"}<br/>
-            {fa?"۱. دکمه پایین رو بزن تا Claude.ai باز بشه":"1. Tap below to open Claude.ai"}<br/>
-            {fa?"۲. پرامپت رو Paste کن":"2. Paste the prompt"}<br/>
-            {fa?"۳. عکس چارت رو هم بفرست (📎)":"3. Attach chart image too (📎)"}<br/>
-            {fa?"۴. جواب رو کپی کن و برگرد":"4. Copy response & come back"}
-          </div>
-        </div>
-        <a href="https://claude.ai/new" target="_blank" rel="noopener noreferrer" style={{textDecoration:"none",display:"block"}}>
-          <button className="bt" style={{background:"linear-gradient(135deg,#bf5af2,#0071e3)",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:8,width:"100%"}}>
-            {"🔗 "+(fa?"باز کردن Claude.ai":"Open Claude.ai")}
-          </button>
-        </a>
-        <button className="bt" onClick={()=>setAiStep(2)} style={{background:"var(--G)",marginBottom:8}}>
-          {fa?"✅ جواب رو گرفتم، مرحله بعد":"✅ Got response, next step"}
-        </button>
-        <div onClick={copyPrompt} style={{textAlign:"center",fontSize:10,color:"var(--B)",fontWeight:600,cursor:"pointer",padding:4}}>
-          {fa?"🔄 کپی مجدد پرامپت":"🔄 Re-copy prompt"}
-        </div>
-      </React.Fragment>}
-
-      {aiStep===2&&<React.Fragment>
-        <div style={{fontSize:12,fontWeight:700,marginBottom:8,color:"var(--tx2)"}}>{fa?"📋 جواب Claude رو اینجا Paste کن:":"📋 Paste Claude response here:"}</div>
-        <textarea placeholder={fa?"جواب تحلیل رو اینجا بچسبون...":"Paste analysis here..."} value={aiResult} onChange={e=>setAiResult(e.target.value)} rows={8} style={{marginBottom:10,fontSize:12,lineHeight:1.7,direction:"rtl"}}/>
-        <button className="bt" onClick={saveResult} style={{background:aiResult.trim()?"var(--G)":"var(--brd2)",color:aiResult.trim()?"#fff":"var(--mu)",marginBottom:8}} disabled={!aiResult.trim()}>
-          {"💾 "+(fa?"ذخیره تحلیل":"Save Analysis")}
-        </button>
-      </React.Fragment>}
-
-      {aiStep===3&&<React.Fragment>
-        <div className="cd" style={{padding:16,marginBottom:14,background:"var(--bg2)",border:"1px solid var(--brd)"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-            <div style={{fontSize:13,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>{"✅ "+(fa?"تحلیل ذخیره شد":"Saved")}</div>
-            <div onClick={()=>{navigator.clipboard?.writeText(aiResult)}} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)",background:"color-mix(in srgb,var(--B) 10%,transparent)",padding:"4px 10px",borderRadius:8}}>{fa?"کپی":"Copy"}</div>
-          </div>
-          <div style={{fontSize:12.5,lineHeight:1.8,color:"var(--tx)",whiteSpace:"pre-wrap",direction:"rtl",textAlign:"right"}}>{aiResult}</div>
-        </div>
-        <button className="bt" onClick={()=>{setAiStep(0);setAiResult("");setAiImg(null);setAiPv(null)}} style={{background:"var(--brd2)",color:"var(--tx)",marginBottom:8}}>
-          {fa?"🔄 تحلیل جدید":"🔄 New Analysis"}
-        </button>
-      </React.Fragment>}
-    </React.Fragment>}
-
-    {aiMode==="api"&&<React.Fragment>
-      <button className="bt" style={{background:"linear-gradient(135deg,#bf5af2,#0071e3)",opacity:aiLoading||!aiImg?.5:1,marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}} onClick={runAPI} disabled={aiLoading||!aiImg}>
-        {aiLoading?<React.Fragment><div style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"storyRingSpin 1s linear infinite"}}/>{fa?"در حال تحلیل...":"Analyzing..."}</React.Fragment>:<React.Fragment>{"⚡ "+(fa?"تحلیل اتوماتیک":"Auto Analysis")}</React.Fragment>}
-      </button>
-      <div style={{fontSize:9,color:"var(--dm)",textAlign:"center",marginBottom:10}}>{fa?"نیاز به api/ai.js + API Key در Vercel":"Requires api/ai.js + API Key in Vercel"}</div>
-
-      {aiResult&&<div className="cd" style={{padding:16,marginBottom:14,background:"var(--bg2)",border:"1px solid var(--brd)"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-          <div style={{fontSize:13,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>{"📋 "+(fa?"نتیجه":"Result")}</div>
-          <div onClick={()=>{navigator.clipboard?.writeText(aiResult)}} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--B)",background:"color-mix(in srgb,var(--B) 10%,transparent)",padding:"4px 10px",borderRadius:8}}>{fa?"کپی":"Copy"}</div>
-        </div>
-        <div style={{fontSize:12.5,lineHeight:1.8,color:"var(--tx)",whiteSpace:"pre-wrap",direction:"rtl",textAlign:"right"}}>{aiResult}</div>
-      </div>}
-    </React.Fragment>}
-
-    {aiHistory.length>0&&<div style={{marginTop:8}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-        <div style={{fontSize:12,fontWeight:700,color:"var(--tx2)"}}>{fa?"تاریخچه":"History"} ({aiHistory.length})</div>
-        <div onClick={()=>{setAiHistory([]);try{localStorage.removeItem("fx_ai_hist")}catch(e){}}} style={{cursor:"pointer",fontSize:10,fontWeight:600,color:"var(--R)"}}>{fa?"پاک":"Clear"}</div>
-      </div>
-      {aiHistory.map((h,i)=><div key={i} className="cd" style={{padding:10,marginBottom:4}}>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{width:30,height:30,borderRadius:10,background:h.mode==="api"?"color-mix(in srgb,var(--purple) 10%,transparent)":"color-mix(in srgb,var(--G) 10%,transparent)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{h.mode==="api"?"⚡":"💬"}</div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{display:"flex",alignItems:"center",gap:6}}>
-              <span style={{fontSize:12,fontWeight:700}}>{h.pair}</span>
-              <span style={{fontSize:9,fontWeight:600,color:"var(--B)",background:"color-mix(in srgb,var(--B) 8%,transparent)",padding:"1px 5px",borderRadius:4}}>{h.tf}</span>
-              <span style={{fontSize:8,fontWeight:600,color:h.mode==="api"?"var(--purple)":"var(--G)",background:h.mode==="api"?"color-mix(in srgb,var(--purple) 8%,transparent)":"color-mix(in srgb,var(--G) 8%,transparent)",padding:"1px 5px",borderRadius:4}}>{h.mode==="api"?"API":"Manual"}</span>
-            </div>
-            <div style={{fontSize:10,color:"var(--dm)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",direction:"rtl"}}>{h.preview}</div>
-            <div style={{fontSize:9,color:"var(--dm)",marginTop:1}}>{new Date(h.date).toLocaleDateString()}</div>
-          </div>
-        </div>
-      </div>)}
-    </div>}
-  </div>);
-}
-
-
 function Adm({token,posts,signals,onR}){
   const{t,lang}=useLang();
   const[tb,setTb]=useState("post");
@@ -6351,8 +5674,8 @@ function Adm({token,posts,signals,onR}){
   return(<div className="fi">
     <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:14}}>
       <div style={{display:"flex",gap:4}}>
-        {["post","signal","blog","manage","users","rewards"].map(tab=>{
-          const labels={post:lang==="fa"?"پست":"Post",signal:lang==="fa"?"سیگنال":"Signal",blog:lang==="fa"?"بلاگ":"Blog",manage:lang==="fa"?"مدیریت":"Manage",users:lang==="fa"?"کاربران":"Users",rewards:lang==="fa"?"جوایز":"Rewards"};
+        {["post","signal","blog","manage","users"].map(tab=>{
+          const labels={post:lang==="fa"?"پست":"Post",signal:lang==="fa"?"سیگنال":"Signal",blog:lang==="fa"?"بلاگ":"Blog",manage:lang==="fa"?"مدیریت":"Manage",users:lang==="fa"?"کاربران":"Users"};
           return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{labels[tab]}</div>
         })}
       </div>
@@ -6368,10 +5691,9 @@ function Adm({token,posts,signals,onR}){
         })}
       </div>
       <div style={{display:"flex",gap:4}}>
-        {["ib","report","giveaway","ai","active"].map(tab=>{
-          const labels={ib:"IB",report:lang==="fa"?"گزارش":"Report",giveaway:"🎰",ai:"🧠 AI",active:lang==="fa"?"👥 آنلاین":"👥 Active"};
-          const isAI=tab==="ai";
-          return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?(isAI?"color-mix(in srgb,var(--purple) 12%,transparent)":"color-mix(in srgb,var(--R) 10%,transparent)"):"transparent",border:`1px solid ${tb===tab?(isAI?"color-mix(in srgb,var(--purple) 25%,transparent)":"color-mix(in srgb,var(--R) 25%,transparent)"):"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?(isAI?"var(--purple)":"var(--R)"):"var(--mu)"}}>{labels[tab]}</div>
+        {["ib","report","active"].map(tab=>{
+          const labels={ib:"IB",report:lang==="fa"?"گزارش":"Report",active:lang==="fa"?"👥 آنلاین":"👥 Active"};
+          return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{labels[tab]}</div>
         })}
       </div>
       <div style={{display:"flex",gap:4}}>
@@ -6668,7 +5990,6 @@ function Adm({token,posts,signals,onR}){
         </div>}
       </div>})}
     </>})()}
-    {tb==="rewards"&&<AdminRewards token={token}/>}
     {tb==="support"&&(()=>{if(supportUnread>0){setTimeout(()=>setSupportUnread(0),500)}return<AdminSupportChat token={token}/>})()}
     {tb==="story"&&<AdminStoryManager token={token}/>}
     {tb==="sale"&&<AdminPromo token={token}/>}
@@ -6676,8 +5997,6 @@ function Adm({token,posts,signals,onR}){
     {tb==="ib"&&<AdminIBRequests token={token}/>}
     {tb==="report"&&<AdminReport token={token} posts={posts} signals={signals}/>}
     {tb==="blog"&&<AdminBlog token={token} onR={onR}/>}
-    {tb==="giveaway"&&<AdminGiveaway token={token}/>}
-    {tb==="ai"&&<AdminAI token={token}/>}
     {tb==="active"&&<AdminActiveCount token={token}/>}
     {tb==="announce"&&<AdminAnnouncements token={token}/>}
     {tb==="poll"&&<AdminPolls token={token}/>}
@@ -7010,145 +6329,6 @@ function AdminSupportChat({token}){
   </div>);
 }
 
-/* ─── Reward Section Wrapper (checks if enabled) ─── */
-function RewardSectionWrapper({userId,token,userProfile}){
-  const{val,loading}=useAppSetting("rewards_enabled",token);
-  if(loading||val!=="true")return null;
-  return<RewardSection userId={userId} token={token} userProfile={userProfile}/>;
-}
-
-/* ─── Giveaway Spin Wheel (Profile) ─── */
-function GiveawayWheel({userId,token}){
-  const{t,lang}=useLang();
-  const[gw,setGw]=useState(null);
-  const[entry,setEntry]=useState(null);
-  const[spinning,setSpinning]=useState(false);
-  const[result,setResult]=useState(null);
-  const[angle,setAngle]=useState(0);
-  const[showWheel,setShowWheel]=useState(false);
-  const[refs,setRefs]=useState(0);
-
-  useEffect(()=>{
-    (async()=>{
-      try{
-        const r=await fetch(`${SB}/rest/v1/giveaways?active=eq.true&select=*&limit=1`,{headers:H(token)});
-        const d=await r.json();
-        if(Array.isArray(d)&&d.length>0){
-          const activeGw=d[0];
-          setGw(activeGw);
-          try{
-            const r2=await fetch(`${SB}/rest/v1/giveawayentries?user_id=eq.${userId}&giveaway_id=eq.${activeGw.id}&select=*&limit=1`,{headers:H(token)});
-            const d2=await r2.json();
-            if(Array.isArray(d2)&&d2.length>0)setEntry(d2[0]);
-          }catch(e){}
-        }
-      }catch(e){}
-      try{
-        const r3=await fetch(`${SB}/rest/v1/Referrals?referrer_id=eq.${userId}&select=id`,{headers:H(token)});
-        const d3=await r3.json();
-        if(Array.isArray(d3))setRefs(d3.length);
-      }catch(e){}
-    })();
-  },[userId,token]);
-
-  if(!gw)return null;
-  const prizes=[
-    {name:"1 Week Premium",name_fa:"۱ هفته اشتراک رایگان",chance:20,color:"#22c55e"},
-    {name:"50% Discount",name_fa:"تخفیف ۵۰٪",chance:30,color:"#f97316"},
-    {name:"Try Again",name_fa:"شانس بعدی",chance:50,color:"#94a3b8"}
-  ];
-  const minRef=gw.min_referrals||3;
-  const noRefRequired=gw.no_referral_required||false;
-  const canSpin=(noRefRequired||refs>=minRef)&&!entry;
-  const alreadySpun=!!entry;
-  const endsAt=gw.ends_at?new Date(gw.ends_at):null;
-  const expired=endsAt&&endsAt<new Date();
-  if(expired)return null;
-
-  const spin=async()=>{
-    if(!canSpin||spinning)return;
-    setSpinning(true);setShowWheel(true);setAngle(0);setResult(null);
-    const total=prizes.reduce((s,p)=>s+(p.chance||1),0);
-    let rnd=Math.random()*total,idx=0;
-    for(let i=0;i<prizes.length;i++){rnd-=(prizes[i].chance||1);if(rnd<=0){idx=i;break}}
-    const segA=360/prizes.length;
-    const targetAngle=360*12+(360-idx*segA-segA/2);
-    requestAnimationFrame(()=>{requestAnimationFrame(()=>{setAngle(targetAngle)})});
-    setTimeout(async()=>{
-      setResult(prizes[idx]);
-      const newEntry={user_id:userId,giveaway_id:gw.id,prize_won:prizes[idx].name,prize_index:idx};
-      try{await fetch(`${SB}/rest/v1/giveawayentries`,{method:"POST",headers:H(token),body:JSON.stringify(newEntry)})}catch(e){}
-      setEntry(newEntry);
-      setSpinning(false);
-    },10000);
-  };
-
-  const segAngle=prizes.length?360/prizes.length:60;
-  const isRealPrize=entry&&entry.prize_won!=="Try Again";
-  const timeLeft=endsAt?(()=>{const diff=endsAt-new Date();if(diff<=0)return null;const h=Math.floor(diff/3600000);const m=Math.floor((diff%3600000)/60000);return `${h}h ${m}m`})():null;
-
-  return(<div className="cd" style={{marginBottom:6,overflow:"hidden",position:"relative"}}>
-    <div style={{padding:"14px 16px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-        <span style={{display:"inline-flex"}}><svg width="36" height="36" viewBox="-2 -2 28 28" fill="none" style={{display:"inline-block",verticalAlign:"middle"}}><g><circle cx="12" cy="12" r="10" stroke="#ef4444" strokeWidth="1.5"/><path d="M12 2 L12 12" stroke="#ef4444" strokeWidth="1.2"/><path d="M12 12 L20.5 6" stroke="#f97316" strokeWidth="1.2"/><path d="M12 12 L20.5 18" stroke="#eab308" strokeWidth="1.2"/><path d="M12 12 L12 22" stroke="#22c55e" strokeWidth="1.2"/><path d="M12 12 L3.5 18" stroke="#3b82f6" strokeWidth="1.2"/><path d="M12 12 L3.5 6" stroke="#8b5cf6" strokeWidth="1.2"/><animateTransform attributeName="transform" type="rotate" values="0 12 12;360 12 12" dur="4s" repeatCount="indefinite"/></g><circle cx="12" cy="12" r="3.5" fill="#fff" stroke="#ef4444" strokeWidth="1"/><text x="12" y="13.5" textAnchor="middle" fontSize="4" fontWeight="800" fill="#ef4444">WIN</text><g><circle cx="12" cy="1" r="1.2" fill="#ef4444"/><polygon points="12,-0.5 10.5,2.5 13.5,2.5" fill="#ef4444"/></g><circle cx="4" cy="3" r="0.7" fill="#eab308"><animate attributeName="opacity" values="0;1;0" dur="1.2s" repeatCount="indefinite"/></circle><circle cx="21" cy="4" r="0.5" fill="#f97316"><animate attributeName="opacity" values="0;1;0" dur="1.5s" begin="0.3s" repeatCount="indefinite"/></circle><circle cx="3" cy="20" r="0.6" fill="#22c55e"><animate attributeName="opacity" values="0;1;0" dur="1.8s" begin="0.6s" repeatCount="indefinite"/></circle><circle cx="22" cy="19" r="0.5" fill="#3b82f6"><animate attributeName="opacity" values="0;1;0" dur="1.3s" begin="0.9s" repeatCount="indefinite"/></circle></svg></span>
-        <div style={{flex:1}}>
-          <div style={{fontSize:14,fontWeight:700}}>{gw.title||"Spin & Win"}</div>
-          {timeLeft&&<div style={{fontSize:10,color:"var(--R)",fontWeight:600,marginTop:2}}>⏳ {timeLeft} {{fa:"مانده",ar:"متبقي",tr:"kaldı",ru:"осталось",es:"restante"}[lang]||"left"}</div>}
-        </div>
-        {!alreadySpun&&!noRefRequired&&<div style={{fontSize:9,fontWeight:600,color:canSpin?"var(--G)":"var(--dm)",background:canSpin?"color-mix(in srgb,var(--G) 10%,transparent)":"var(--bg)",padding:"4px 10px",borderRadius:20,border:"1px solid "+(canSpin?"color-mix(in srgb,var(--G) 20%,transparent)":"var(--brd)")}}>{refs}/{minRef} {{fa:"دعوت",ar:"دعوة",tr:"davet",ru:"приг.",es:"inv."}[lang]||"invites"}</div>}
-      </div>
-
-      {alreadySpun&&!showWheel?<div style={{textAlign:"center",padding:"16px 0"}}>
-        <div style={{fontSize:36,marginBottom:8}}>{isRealPrize?"🎉":"😅"}</div>
-        <div style={{fontSize:14,fontWeight:700,color:isRealPrize?"var(--G)":"var(--dm)"}}>{prizes[entry.prize_index]?((lang==="fa"?prizes[entry.prize_index].name_fa:null)||prizes[entry.prize_index].name):entry.prize_won}</div>
-        {isRealPrize&&<div style={{marginTop:8,padding:"8px 16px",borderRadius:10,background:"color-mix(in srgb,var(--Y) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 20%,transparent)"}}>
-          <div style={{fontSize:11,fontWeight:600,color:"var(--Y)"}}>{{fa:"⏳ تبریک! منتظر فعال‌سازی توسط ادمین باشید",ar:"⏳ تهانينا! في انتظار تفعيل المسؤول",tr:"⏳ Tebrikler! Admin aktivasyonu bekleniyor",ru:"⏳ Поздравляем! Ожидайте активации",es:"⏳ ¡Felicidades! Esperando activación"}[lang]||"⏳ Congrats! Waiting for admin activation"}</div>
-        </div>}
-        {!isRealPrize&&<div style={{fontSize:11,color:"var(--dm)",marginTop:4}}>{{fa:"دفعه بعد شانست رو امتحان کن!",ar:"حاول حظك المرة القادمة!",tr:"Bir dahaki sefere şansını dene!",ru:"Попробуй в следующий раз!",es:"¡Inténtalo la próxima vez!"}[lang]||"Try your luck next time!"}</div>}
-      </div>
-
-      :!canSpin&&!alreadySpun&&!noRefRequired?<div style={{textAlign:"center",padding:"12px 0"}}>
-        <div style={{fontSize:12,color:"var(--dm)",marginBottom:8}}>{{fa:`${minRef-refs} دعوت دیگه نیاز داری`,ar:`تحتاج ${minRef-refs} دعوة أخرى`,tr:`${minRef-refs} davet daha gerekli`,ru:`Нужно ещё ${minRef-refs} приглашений`,es:`Necesitas ${minRef-refs} invitaciones más`}[lang]||`Need ${minRef-refs} more invites`}</div>
-        <div style={{fontSize:11,fontWeight:600,color:"var(--R)",cursor:"pointer"}}>{{fa:"→ برو به بخش دعوت",ar:"→ اذهب للإحالة",tr:"→ Davet bölümüne git",ru:"→ Перейти к приглашениям",es:"→ Ir a referidos"}[lang]||"→ Go to Referral section"}</div>
-      </div>
-
-      :<div style={{textAlign:"center"}}>{!showWheel?
-        <div onClick={spin} style={{display:"inline-flex",alignItems:"center",gap:8,padding:"12px 32px",borderRadius:50,background:"linear-gradient(135deg,#ef4444,#dc2626)",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 20px rgba(239,68,68,0.3)"}}>
-          🎡 {{fa:"بچرخون!",ar:"أدِر!",tr:"Çevir!",ru:"Крути!",es:"¡Gira!"}[lang]||"Spin!"}
-        </div>
-        :<div style={{padding:"10px 0"}}>
-          <div style={{position:"relative",width:220,height:220,margin:"0 auto"}}>
-            <div style={{position:"absolute",top:-8,left:"50%",transform:"translateX(-50%)",zIndex:5,fontSize:18}}>▼</div>
-            <svg width="220" height="220" viewBox="0 0 220 220" style={{transform:`rotate(${angle}deg)`,transition:spinning?"transform 10s cubic-bezier(0.17,0.67,0.12,0.99)":"none"}}>
-              {prizes.map((p,i)=>{
-                const a1=(i*segAngle-90)*Math.PI/180;
-                const a2=((i+1)*segAngle-90)*Math.PI/180;
-                const x1=110+100*Math.cos(a1),y1=110+100*Math.sin(a1);
-                const x2=110+100*Math.cos(a2),y2=110+100*Math.sin(a2);
-                const large=segAngle>180?1:0;
-                const mid=((i+0.5)*segAngle-90)*Math.PI/180;
-                const tx=110+60*Math.cos(mid),ty=110+60*Math.sin(mid);
-                return<g key={i}>
-                  <path d={`M110,110 L${x1},${y1} A100,100 0 ${large},1 ${x2},${y2} Z`} fill={p.color||"#ccc"} stroke="#fff" strokeWidth="2"/>
-                  <text x={tx} y={ty} textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize="9" fontWeight="700" transform={`rotate(${(i+0.5)*segAngle},${tx},${ty})`}>{(lang==="fa"&&p.name_fa)?p.name_fa.slice(0,12):p.name?.slice(0,12)}</text>
-                </g>
-              })}
-              <circle cx="110" cy="110" r="22" fill="#fff" stroke="#eee" strokeWidth="2"/>
-              <text x="110" y="114" textAnchor="middle" fontSize="16">🎰</text>
-            </svg>
-          </div>
-          {result&&<div style={{marginTop:16}}>
-            <div style={{fontSize:28,marginBottom:6}}>{result.name==="Try Again"?"😅":"🎉"}</div>
-            <div style={{fontSize:16,fontWeight:800,color:result.name==="Try Again"?"var(--dm)":"var(--G)"}}>{(lang==="fa"&&result.name_fa)?result.name_fa:result.name}</div>
-            {result.name!=="Try Again"&&<div style={{marginTop:10,padding:"8px 16px",borderRadius:10,background:"color-mix(in srgb,var(--Y) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 20%,transparent)"}}>
-              <div style={{fontSize:11,fontWeight:600,color:"var(--Y)"}}>{{fa:"⏳ تبریک! منتظر فعال‌سازی توسط ادمین باشید",ar:"⏳ تهانينا! في انتظار تفعيل المسؤول",tr:"⏳ Tebrikler! Admin aktivasyonu bekleniyor",ru:"⏳ Поздравляем! Ожидайте активации",es:"⏳ ¡Felicidades! Esperando activación"}[lang]||"⏳ Congrats! Waiting for admin activation"}</div>
-            </div>}
-          </div>}
-        </div>
-      }</div>}
-    </div>
-  </div>);
-}
 /* ─── Poll: shared form/results UI used by both Modal and Card ─── */
 function PollForm({poll,userId,token,onSubmitted,disableClose=false,onClose}){
   const{lang}=useLang();
@@ -7807,156 +6987,6 @@ function AdminAnnouncements({token}){
     })}
   </div>);
 }
-/* ─── Admin Giveaway Manager ─── */
-function AdminGiveaway({token}){
-  const{lang}=useLang();
-  const[gw,setGw]=useState(null);
-  const[loading,setLoading]=useState(true);
-  const[entries,setEntries]=useState([]);
-  const[users,setUsers]=useState({});
-  const[msg,setMsg]=useState("");
-
-  const load=async()=>{
-    try{
-      const r=await fetch(`${SB}/rest/v1/giveaways?select=*&order=created_at.desc&limit=1`,{headers:H(token)});
-      const d=await r.json();
-      if(Array.isArray(d)&&d.length>0)setGw(d[0]);
-      const r2=await fetch(`${SB}/rest/v1/giveawayentries?select=*&order=created_at.desc`,{headers:H(token)});
-      const d2=await r2.json();
-      if(Array.isArray(d2))setEntries(d2);
-      const r3=await fetch(`${SB}/rest/v1/Users?select=id,full_name,email,membership`,{headers:H(token)});
-      const d3=await r3.json();
-      if(Array.isArray(d3)){const m={};d3.forEach(u=>m[u.id]=u);setUsers(m)}
-    }catch(e){}
-    setLoading(false);
-  };
-  useEffect(()=>{load()},[token]);
-
-  const toggle=async()=>{
-    if(!gw)return;
-    const newState=!gw.active;
-    // When activating: delete all previous entries so everyone can spin again
-    if(newState){
-      await fetch(`${SB}/rest/v1/giveawayentries?giveaway_id=eq.${gw.id}`,{method:"DELETE",headers:H(token)});
-    }
-    await fetch(`${SB}/rest/v1/giveaways?id=eq.${gw.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({active:newState})});
-    setMsg(newState?"Giveaway activated! All entries reset.":"Giveaway disabled");
-    load();
-  };
-
-  const save=async(field,val)=>{
-    if(!gw)return;
-    await fetch(`${SB}/rest/v1/giveaways?id=eq.${gw.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({[field]:val})});
-    load();
-  };
-
-  const updatePrize=(idx,key,val)=>{
-    const p=[...(gw.prizes||[])];
-    p[idx]={...p[idx],[key]:val};
-    save("prizes",p);
-  };
-
-  if(loading)return<div style={{textAlign:"center",padding:20,color:"var(--dm)"}}>Loading...</div>;
-  if(!gw)return<div style={{textAlign:"center",padding:20,color:"var(--dm)"}}>No giveaway found. Run SQL first.</div>;
-
-  return(<div className="fi">
-    <div style={{fontSize:13,fontWeight:700,marginBottom:10}}>🎰 {lang==="fa"?"قرعه‌کشی":"Giveaway"}</div>
-
-    {/* Toggle */}
-    <div className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:14,marginBottom:8}}>
-      <span style={{fontSize:12,fontWeight:600}}>{gw.active?"🟢 Active":"⚫ Inactive"}</span>
-      <div onClick={toggle} style={{padding:"6px 16px",borderRadius:8,cursor:"pointer",fontSize:11,fontWeight:700,color:"#fff",background:gw.active?"#ef4444":"#22c55e"}}>{gw.active?"Disable":"Activate"}</div>
-    </div>
-
-    {/* Settings */}
-    <div className="cd" style={{padding:14,marginBottom:8}}>
-      <div style={{fontSize:11,fontWeight:600,marginBottom:8,color:"var(--tx2)"}}>Settings</div>
-      <input className="ip" placeholder="Title" value={gw.title||""} onChange={e=>save("title",e.target.value)} style={{marginBottom:6}}/>
-      <div style={{display:"flex",gap:6,marginBottom:6}}>
-        <div style={{flex:1}}>
-          <div style={{fontSize:9,color:"var(--dm)",marginBottom:3}}>Min Referrals</div>
-          <input className="ip" type="number" value={gw.min_referrals||3} onChange={e=>save("min_referrals",parseInt(e.target.value)||0)} style={{marginBottom:0}}/>
-        </div>
-        <div style={{flex:2}}>
-          <div style={{fontSize:9,color:"var(--dm)",marginBottom:3}}>Ends At</div>
-          <input className="ip" type="datetime-local" value={gw.ends_at?gw.ends_at.slice(0,16):""} onChange={e=>save("ends_at",e.target.value?new Date(e.target.value).toISOString():null)} style={{marginBottom:0}}/>
-        </div>
-      </div>
-      <div onClick={()=>save("no_referral_required",!gw.no_referral_required)} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:10,cursor:"pointer",marginBottom:0}}>
-        <span style={{fontSize:11,fontWeight:600}}>🔓 {lang==="fa"?"بدون نیاز به دعوت":"No invite required"}</span>
-        <div style={{width:36,height:20,borderRadius:10,background:gw.no_referral_required?"var(--G)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:16,height:16,borderRadius:8,background:"#fff",position:"absolute",top:2,left:gw.no_referral_required?18:2,transition:".2s"}}/></div>
-      </div>
-    </div>
-
-    {/* Story Settings */}
-    <div className="cd" style={{padding:14,marginBottom:8}}>
-      <div style={{fontSize:11,fontWeight:600,marginBottom:8,color:"var(--tx2)"}}>📸 Story Template</div>
-      <input className="ip" placeholder="Story Title (e.g. چرخ شانس)" value={gw.story_title||""} onChange={e=>save("story_title",e.target.value)} style={{marginBottom:6}}/>
-      <input className="ip" placeholder="Subtitle (e.g. ۱ هفته اشتراک رایگان بگیر)" value={gw.story_subtitle||""} onChange={e=>save("story_subtitle",e.target.value)} style={{marginBottom:6}}/>
-      <input className="ip" placeholder="Prizes text" value={gw.story_prizes_text||""} onChange={e=>save("story_prizes_text",e.target.value)} style={{marginBottom:8}}/>
-      <div onClick={()=>{
-        const prizes=(gw.prizes||[]).filter(p=>p.name!=="Try Again");
-        const html=`<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=1080,height=1920"><style>@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800;900&display=swap');*{margin:0;padding:0;box-sizing:border-box}body{width:1080px;height:1920px;overflow:hidden;font-family:'Vazirmatn',sans-serif;background:#fafafa;position:relative}.bg{position:absolute;inset:0;background:radial-gradient(ellipse at 20% 20%,rgba(239,68,68,0.06) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(239,68,68,0.04) 0%,transparent 50%),#fafafa}.dots{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(0,0,0,0.04) 1px,transparent 1px);background-size:40px 40px;animation:df 3s ease-in-out infinite alternate}@keyframes df{0%{opacity:.3}100%{opacity:.7}}.p{position:absolute;border-radius:50%;background:rgba(239,68,68,0.12)}.p1{top:15%;left:10%;width:6px;height:6px;animation:f1 6s ease-in-out infinite}.p2{top:35%;right:15%;width:8px;height:8px;animation:f2 7s ease-in-out infinite}.p3{top:60%;left:20%;width:4px;height:4px;animation:f1 5s ease-in-out infinite 1s}.p4{top:80%;right:10%;width:6px;height:6px;animation:f2 8s ease-in-out infinite 2s}.p5{top:25%;left:50%;width:10px;height:10px;background:rgba(239,68,68,0.08);animation:f1 6s ease-in-out infinite .5s}@keyframes f1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(20px,-30px) scale(1.5)}}@keyframes f2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-15px,25px) scale(1.3)}}.logo{position:absolute;top:100px;left:0;right:0;text-align:center;animation:sd .8s ease-out both}@keyframes sd{from{opacity:0;transform:translateY(-40px)}to{opacity:1;transform:translateY(0)}}.lt{font-size:52px;font-weight:900;color:#111;letter-spacing:-1px}.ld{color:#ef4444}.ls{font-size:22px;color:#888;margin-top:8px}.pc{position:absolute;top:340px;left:60px;right:60px;animation:si .6s ease-out .3s both}@keyframes si{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}.card{background:#fff;border-radius:32px;padding:60px 50px;box-shadow:0 2px 40px rgba(0,0,0,.04),0 0 0 1px rgba(0,0,0,.03);text-align:center;position:relative;overflow:hidden}.card::before{content:'';position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:120px;height:4px;border-radius:0 0 4px 4px;background:linear-gradient(90deg,#ef4444,#f97316)}.wc{width:160px;height:160px;margin:0 auto 30px;position:relative}.wh{width:160px;height:160px;border-radius:50%;border:4px solid #f1f1f1;position:relative;animation:ws 8s linear infinite}@keyframes ws{from{transform:rotate(0)}to{transform:rotate(360deg)}}.ws::before{content:'';position:absolute;width:4px;height:40%;top:5%;left:50%;transform:translateX(-50%);border-radius:4px}.s1::before{background:#ef4444;transform-origin:center bottom}.s2::before{background:#f97316;transform:translateX(-50%) rotate(45deg);transform-origin:center bottom}.s3::before{background:#eab308;transform:translateX(-50%) rotate(90deg);transform-origin:center bottom}.s4::before{background:#22c55e;transform:translateX(-50%) rotate(135deg);transform-origin:center bottom}.s5::before{background:#3b82f6;transform:translateX(-50%) rotate(180deg);transform-origin:center bottom}.s6::before{background:#8b5cf6;transform:translateX(-50%) rotate(225deg);transform-origin:center bottom}.s7::before{background:#ec4899;transform:translateX(-50%) rotate(270deg);transform-origin:center bottom}.s8::before{background:#14b8a6;transform:translateX(-50%) rotate(315deg);transform-origin:center bottom}.wcn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:60px;border-radius:50%;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center;font-size:28px;z-index:2}.badge{display:inline-block;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:20px;font-weight:800;padding:10px 30px;border-radius:50px;margin-bottom:20px;animation:bp 2s ease-in-out infinite}@keyframes bp{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}.pt{font-size:56px;font-weight:900;color:#111;line-height:1.3;margin-bottom:16px}.pt span{background:linear-gradient(135deg,#ef4444,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.ps{font-size:26px;color:#666;line-height:1.6}.pl{position:absolute;top:1000px;left:60px;right:60px;display:flex;flex-direction:column;gap:16px}.pi{background:#fff;border-radius:20px;padding:28px 32px;display:flex;align-items:center;gap:20px;box-shadow:0 1px 20px rgba(0,0,0,.03),0 0 0 1px rgba(0,0,0,.02);animation:sr .5s ease-out both}.pi:nth-child(1){animation-delay:.6s}.pi:nth-child(2){animation-delay:.8s}.pi:nth-child(3){animation-delay:1s}@keyframes sr{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}.pic{width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0}.g1{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#b45309}.g2{background:linear-gradient(135deg,#f1f5f9,#e2e8f0);color:#475569}.g3{background:linear-gradient(135deg,#fed7aa,#fdba74);color:#c2410c}.pin{flex:1;text-align:right}.pn{font-size:26px;font-weight:700;color:#111}.pd{font-size:20px;color:#888;margin-top:4px}.hs{position:absolute;top:1400px;left:60px;right:60px;animation:fi .6s ease-out 1.2s both}@keyframes fi{from{opacity:0}to{opacity:1}}.hc{background:#111;border-radius:24px;padding:40px;color:#fff;position:relative;overflow:hidden}.hc::after{content:'';position:absolute;top:-50%;right:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(239,68,68,.1) 0%,transparent 50%);animation:gr 10s linear infinite}@keyframes gr{from{transform:rotate(0)}to{transform:rotate(360deg)}}.ht{font-size:30px;font-weight:800;margin-bottom:24px;position:relative;z-index:1}.hst{position:relative;z-index:1;display:flex;flex-direction:column;gap:16px}.st{display:flex;align-items:center;gap:16px;font-size:24px;font-weight:600}.sn{width:44px;height:44px;border-radius:50%;background:rgba(239,68,68,.2);color:#ef4444;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;flex-shrink:0}.ft{position:absolute;bottom:100px;left:0;right:0;text-align:center;animation:fi .6s ease-out 1.5s both}.cta{display:inline-block;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:28px;font-weight:800;padding:20px 60px;border-radius:60px;box-shadow:0 8px 30px rgba(239,68,68,.3);animation:cp 2s ease-in-out infinite}@keyframes cp{0%,100%{box-shadow:0 8px 30px rgba(239,68,68,.3)}50%{box-shadow:0 8px 50px rgba(239,68,68,.5)}}.fu{font-size:22px;color:#aaa;margin-top:20px;font-weight:600;direction:ltr}</style></head><body><div class="bg"></div><div class="dots"></div><div class="p p1"></div><div class="p p2"></div><div class="p p3"></div><div class="p p4"></div><div class="p p5"></div><div class="logo"><div class="lt">Fxscalproom<span class="ld">.</span></div><div class="ls">Professional Trading Signals</div></div><div class="pc"><div class="card"><div class="wc"><div class="wh"><div class="ws s1"></div><div class="ws s2"></div><div class="ws s3"></div><div class="ws s4"></div><div class="ws s5"></div><div class="ws s6"></div><div class="ws s7"></div><div class="ws s8"></div></div><div class="wcn">🎰</div></div><div class="badge">🎁 GIVEAWAY</div><div class="pt">${gw.story_title||"چرخ شانس"} <span>!</span></div><div class="ps">${gw.story_subtitle||"بچرخون و جایزه ببر!"}</div></div></div><div class="pl">${prizes.slice(0,3).map((p,i)=>`<div class="pi"><div class="pic ${["g1","g2","g3"][i]}">${["👑","📊","🎯"][i]}</div><div class="pin"><div class="pn">${p.name_fa||p.name}</div><div class="pd">${p.name}</div></div></div>`).join("")}</div><div class="hs"><div class="hc"><div class="ht">⚡ شرایط شرکت</div><div class="hst"><div class="st"><div class="sn">۱</div> عضو اپ Fxscalproom بشید</div><div class="st"><div class="sn">۲</div> ${gw.min_referrals||3} نفر از دوستاتون رو دعوت کنید</div><div class="st"><div class="sn">۳</div> چرخ شانس رو بچرخونید!</div></div></div></div><div class="ft"><div class="cta">همین الان شرکت کن! 🚀</div><div class="fu">scalp-room.vercel.app</div></div></body></html>`;
-        const blob=new Blob([html],{type:"text/html"});
-        const url=URL.createObjectURL(blob);
-        const a=document.createElement("a");
-        a.href=url;a.download="giveaway-story.html";a.click();
-        URL.revokeObjectURL(url);
-        setMsg("Story downloaded!");
-      }} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"10px 16px",borderRadius:10,background:"linear-gradient(135deg,#ef4444,#dc2626)",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 15px rgba(239,68,68,0.25)"}}>
-        📸 {lang==="fa"?"ساخت و دانلود استوری":"Generate & Download Story"}
-      </div>
-    </div>
-
-    {/* Prizes */}
-    <div className="cd" style={{padding:14,marginBottom:8}}>
-      <div style={{fontSize:11,fontWeight:600,marginBottom:8,color:"var(--tx2)"}}>🎁 Prizes ({(gw.prizes||[]).length})</div>
-      {(gw.prizes||[]).map((p,i)=><div key={i} style={{display:"flex",gap:6,alignItems:"center",marginBottom:6}}>
-        <div style={{width:8,height:8,borderRadius:4,background:p.color||"#ccc",flexShrink:0}}/>
-        <input className="ip" value={p.name||""} onChange={e=>updatePrize(i,"name",e.target.value)} style={{flex:2,marginBottom:0,fontSize:10}}/>
-        <input className="ip" value={p.name_fa||""} onChange={e=>updatePrize(i,"name_fa",e.target.value)} style={{flex:2,marginBottom:0,fontSize:10}} placeholder="فارسی"/>
-        <input className="ip" type="number" value={p.chance||0} onChange={e=>updatePrize(i,"chance",parseInt(e.target.value)||0)} style={{width:50,marginBottom:0,fontSize:10}} placeholder="%"/>
-      </div>)}
-    </div>
-
-    {/* Entries */}
-    <div className="cd" style={{padding:14}}>
-      <div style={{fontSize:11,fontWeight:600,marginBottom:8,color:"var(--tx2)"}}>👥 Entries ({entries.length})</div>
-      {entries.length===0?<div style={{fontSize:11,color:"var(--dm)",textAlign:"center",padding:10}}>No entries yet</div>
-      :entries.slice(0,30).map((e,i)=>{
-        const u=users[e.user_id]||{};
-        const isWinner=e.prize_won!=="Try Again";
-        const isPremiumPrize=e.prize_won?.includes("Premium")||e.prize_won?.includes("Month")||e.prize_won?.includes("Week");
-        return<div key={i} style={{padding:"10px 0",borderBottom:"1px solid var(--brd)"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-            <div style={{flex:1}}>
-              <div style={{fontSize:12,fontWeight:700}}>{u.full_name||"User"}</div>
-              <div style={{fontSize:10,color:"var(--B)",marginTop:2}}>{u.email||"—"}</div>
-              <div style={{fontSize:9,color:"var(--dm)",marginTop:2}}>{new Date(e.created_at).toLocaleString()}</div>
-            </div>
-            <div style={{textAlign:"right"}}>
-              <div style={{fontSize:11,fontWeight:700,color:isWinner?"var(--G)":"var(--dm)"}}>{e.prize_won}</div>
-              {isWinner&&isPremiumPrize&&u.membership!=="premium"&&<div onClick={async()=>{
-                const exp=new Date();exp.setDate(exp.getDate()+7);
-                await fetch(`${SB}/rest/v1/Users?id=eq.${e.user_id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({membership:"premium",premium_expires_at:exp.toISOString()})});
-                setMsg(`${u.full_name||u.email} → Premium 7 days!`);load();
-              }} style={{marginTop:4,padding:"4px 10px",borderRadius:6,background:"var(--G)",color:"#fff",fontSize:9,fontWeight:700,cursor:"pointer",display:"inline-block"}}>✓ Activate 1 Week Premium</div>}
-              {isWinner&&isPremiumPrize&&u.membership==="premium"&&<div style={{marginTop:4,fontSize:9,fontWeight:600,color:"var(--G)"}}>✅ Already Premium</div>}
-              {isWinner&&e.prize_won?.includes("Discount")&&!(u.giveaway_discount>0)&&<div onClick={async()=>{
-                await fetch(`${SB}/rest/v1/Users?id=eq.${e.user_id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({giveaway_discount:50})});
-                setMsg(`${u.full_name||u.email} → 50% Discount activated!`);load();
-              }} style={{marginTop:4,padding:"4px 10px",borderRadius:6,background:"#f97316",color:"#fff",fontSize:9,fontWeight:700,cursor:"pointer",display:"inline-block"}}>🏷 Activate 50% Discount</div>}
-              {isWinner&&e.prize_won?.includes("Discount")&&u.giveaway_discount>0&&<div style={{marginTop:4,fontSize:9,fontWeight:600,color:"#f97316"}}>✅ 50% Discount Active</div>}
-            </div>
-          </div>
-        </div>
-      })}
-    </div>
-
-    {msg&&<div style={{marginTop:8,fontSize:11,fontWeight:600,color:"var(--G)",textAlign:"center"}}>{msg}</div>}
-  </div>);
-}
-
 /* ─── Admin: Daily Active Count Manager ─── */
 function AdminActiveCount({token}){
   const{lang}=useLang();
@@ -8008,99 +7038,11 @@ function AdminActiveCount({token}){
 }
 
 /* ─── Profile ─── */
-/* ─── Admin Sessions Manager (multi-device control) ─── */
-function AdminSessionsManager({userId,token,lang,currentDeviceId,currentDeviceLabel}){
-  const[sessions,setSessions]=useState([]);
-  const[loading,setLoading]=useState(true);
-  const[processing,setProcessing]=useState(null);
-  const load=useCallback(async()=>{
-    if(!userId||!token)return;
-    try{
-      const r=await fetch(`${SB}/rest/v1/active_sessions?user_id=eq.${userId}&order=last_ping.desc&select=*`,{headers:H(token)});
-      const d=await r.json();
-      if(Array.isArray(d))setSessions(d);
-    }catch(e){console.error("Load sessions error:",e)}
-    setLoading(false);
-  },[userId,token]);
-  useEffect(()=>{load()},[load]);
-  useSmartInterval(load,15000,[load]);
-  const makePrimary=async(deviceId)=>{
-    setProcessing(deviceId);
-    try{
-      await fetch(`${SB}/rest/v1/active_sessions?user_id=eq.${userId}&device_id=eq.${deviceId}`,{
-        method:"PATCH",headers:H(token),body:JSON.stringify({is_primary:true})
-      });
-      load();
-    }catch(e){console.error(e)}
-    setProcessing(null);
-  };
-  const revokeSession=async(deviceId)=>{
-    if(deviceId===currentDeviceId){
-      if(!confirm(lang==="fa"?"این دستگاه فعلی شماست! مطمئنی می‌خوای حذف کنی؟":"This is your current device! Revoke anyway?"))return;
-    } else {
-      if(!confirm(lang==="fa"?"این نشست حذف بشه؟":"Revoke this session?"))return;
-    }
-    setProcessing(deviceId);
-    try{
-      await fetch(`${SB}/rest/v1/active_sessions?user_id=eq.${userId}&device_id=eq.${deviceId}`,{
-        method:"DELETE",headers:H(token)
-      });
-      load();
-    }catch(e){console.error(e)}
-    setProcessing(null);
-  };
-  const timeSincePing=(d)=>{
-    const diff=Date.now()-new Date(d).getTime();
-    const secs=Math.floor(diff/1000);
-    if(secs<60)return lang==="fa"?"همین الان":"just now";
-    const mins=Math.floor(secs/60);
-    if(mins<60)return lang==="fa"?`${mins} دقیقه پیش`:`${mins}m ago`;
-    const hrs=Math.floor(mins/60);
-    if(hrs<24)return lang==="fa"?`${hrs} ساعت پیش`:`${hrs}h ago`;
-    return lang==="fa"?`${Math.floor(hrs/24)} روز پیش`:`${Math.floor(hrs/24)}d ago`;
-  };
-  const isStale=(d)=>(Date.now()-new Date(d).getTime())>5*60*1000;
-  return(<div className="cd" style={{padding:16,marginBottom:12}}>
-    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-      <span style={{fontSize:18}}>🖥️</span>
-      <div style={{fontSize:14,fontWeight:700}}>{lang==="fa"?"نشست‌های فعال":"Active Sessions"}</div>
-    </div>
-    <div style={{fontSize:11,color:"var(--tx2)",marginBottom:14,lineHeight:1.6}}>
-      {lang==="fa"?"دستگاه‌های ادمین که الان لاگین هستند. فقط دستگاه «اصلی» می‌تونه نوتیف خودکار خبر بفرسته.":"Your logged-in admin devices. Only the PRIMARY device sends automatic news alerts."}
-    </div>
-    {loading&&<div style={{textAlign:"center",padding:20,fontSize:12,color:"var(--dm)"}}>...</div>}
-    {!loading&&sessions.length===0&&<div style={{textAlign:"center",padding:20,fontSize:12,color:"var(--dm)"}}>{lang==="fa"?"نشستی وجود ندارد":"No sessions"}</div>}
-    {sessions.map(s=>{
-      const isCurrent=s.device_id===currentDeviceId;
-      const stale=isStale(s.last_ping);
-      return<div key={s.id} style={{padding:12,marginBottom:8,borderRadius:12,background:s.is_primary?"color-mix(in srgb,var(--G) 5%,transparent)":"var(--bg)",border:`1px solid ${s.is_primary?"color-mix(in srgb,var(--G) 25%,transparent)":"var(--brd)"}`}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
-          <span style={{fontSize:13,fontWeight:700,color:"var(--tx)"}}>{s.device_label||"Unknown Device"}</span>
-          {s.is_primary&&<span style={{fontSize:8,fontWeight:700,padding:"2px 6px",borderRadius:4,background:"var(--G)",color:"#fff",letterSpacing:.5}}>{lang==="fa"?"اصلی":"PRIMARY"}</span>}
-          {isCurrent&&<span style={{fontSize:8,fontWeight:700,padding:"2px 6px",borderRadius:4,background:"var(--B)",color:"#fff",letterSpacing:.5}}>{lang==="fa"?"این دستگاه":"THIS DEVICE"}</span>}
-          {stale&&<span style={{fontSize:8,fontWeight:700,padding:"2px 6px",borderRadius:4,background:"color-mix(in srgb,var(--R) 15%,transparent)",color:"var(--R)",letterSpacing:.5}}>{lang==="fa"?"آفلاین":"OFFLINE"}</span>}
-        </div>
-        <div style={{fontSize:10,color:"var(--dm)",marginBottom:10}}>
-          {lang==="fa"?"آخرین فعالیت: ":"Last active: "}<span style={{color:stale?"var(--R)":"var(--G)",fontWeight:600}}>{timeSincePing(s.last_ping)}</span>
-        </div>
-        <div style={{display:"flex",gap:6}}>
-          {!s.is_primary&&<div onClick={()=>!processing&&makePrimary(s.device_id)} style={{flex:1,padding:"8px 10px",borderRadius:8,textAlign:"center",cursor:processing?"default":"pointer",background:"color-mix(in srgb,var(--G) 10%,transparent)",border:"1px solid color-mix(in srgb,var(--G) 25%,transparent)",fontSize:11,fontWeight:600,color:"var(--G)",opacity:processing===s.device_id?.5:1}}>
-            ⚡ {lang==="fa"?"اصلی کن":"Make Primary"}
-          </div>}
-          <div onClick={()=>!processing&&revokeSession(s.device_id)} style={{flex:s.is_primary?1:"none",padding:"8px 14px",borderRadius:8,textAlign:"center",cursor:processing?"default":"pointer",background:"color-mix(in srgb,var(--R) 8%,transparent)",border:"1px solid color-mix(in srgb,var(--R) 20%,transparent)",fontSize:11,fontWeight:600,color:"var(--R)",opacity:processing===s.device_id?.5:1}}>
-            ✕ {lang==="fa"?"حذف":"Revoke"}
-          </div>
-        </div>
-      </div>;
-    })}
-  </div>);
-}
 
 function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSupport,onSupportOpened}){
   const{t}=useLang();
   const noti=useNotifications(user?.id,token);
   const isAdminProf=up?.role==="admin";
-  const {deviceId:sessDeviceId,deviceLabel:sessDeviceLabel}=useActiveSession(user?.id,token,isAdminProf);
   const[showLang,setShowLang]=useState(false);
   const[showChat,setShowChat]=useState(false);
   const[editingName,setEditingName]=useState(false);
@@ -8174,9 +7116,6 @@ function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSup
       </div>
     </div>
     <ReferralSection userId={user?.id} token={token} userProfile={up}/>
-    {isAdminProf&&<AdminSessionsManager userId={user?.id} token={token} lang={lang} currentDeviceId={sessDeviceId} currentDeviceLabel={sessDeviceLabel}/>}
-    <GiveawayWheel userId={user?.id} token={token}/>
-    <RewardSectionWrapper userId={user?.id} token={token} userProfile={up}/>
     <div onClick={toggle} className="cd" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:14,marginBottom:6,cursor:"pointer"}}>
       <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{color:"var(--mu)"}}>{dark?IC.moon:IC.sun}</span><span style={{fontSize:13,fontWeight:500}}>{dark?t.darkMode:t.lightMode}</span></div>
       <div style={{width:40,height:22,borderRadius:11,background:dark?"var(--R)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:dark?20:2,transition:".2s"}}/></div>
