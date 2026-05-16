@@ -7154,22 +7154,27 @@ function AdminFreeTrial({token}){
   const[msg,setMsg]=useState("");
   const[days,setDays]=useState("3");
   const[stats,setStats]=useState(null);
+  const[trialUsers,setTrialUsers]=useState([]);
+  const[nowTick,setNowTick]=useState(Date.now());
+  // Re-tick every 60s so the countdown timers stay fresh
+  useEffect(()=>{const i=setInterval(()=>setNowTick(Date.now()),60000);return()=>clearInterval(i)},[]);
   // Parse current config: stored as JSON string {enabled:bool,days:int}
   let cfg={enabled:false,days:3};
   try{if(val){const p=typeof val==="string"?JSON.parse(val):val;cfg={enabled:!!p.enabled,days:parseInt(p.days)||3}}}catch(e){}
   useEffect(()=>{setDays(String(cfg.days||3))},[val]);
 
-  // Load stats: how many users ever used the trial / currently on trial
+  // Load stats + the list of users who claimed the trial
   const loadStats=useCallback(async()=>{
     try{
-      const r=await fetch(`${SB}/rest/v1/Users?select=id,membership,trial_used,trial_started_at,premium_expires_at,is_trial`,{headers:H(token)});
+      const r=await fetch(`${SB}/rest/v1/Users?trial_used=eq.true&select=id,full_name,email,membership,trial_started_at,premium_expires_at,is_trial&order=trial_started_at.desc`,{headers:H(token)});
       const d=await r.json();
       if(Array.isArray(d)){
         const now=new Date();
-        const everUsed=d.filter(u=>u.trial_used===true).length;
+        const everUsed=d.length;
         const active=d.filter(u=>u.is_trial===true&&u.membership==="premium"&&u.premium_expires_at&&new Date(u.premium_expires_at)>now).length;
-        const ended=d.filter(u=>u.trial_used===true&&u.is_trial!==true).length;
+        const ended=d.filter(u=>u.is_trial!==true||!u.premium_expires_at||new Date(u.premium_expires_at)<=now).length;
         setStats({everUsed,active,ended});
+        setTrialUsers(d);
       }
     }catch(e){}
   },[token]);
@@ -7199,6 +7204,28 @@ function AdminFreeTrial({token}){
     active:lang==="fa"?"تست فعال الان":"Active trials now",
     ended:lang==="fa"?"تست تمام‌شده":"Trials ended",
     note:lang==="fa"?"💡 کاربرانی که از قبل پریمیوم هستند این گزینه را نمی‌بینند. هر کاربر فقط یک‌بار می‌تواند تست بگیرد.":"💡 Users who are already premium won't see this option. Each user can claim the trial only once.",
+    usersTitle:lang==="fa"?"👥 کاربرانی که تست گرفته‌اند":"👥 Users who claimed the trial",
+    noUsers:lang==="fa"?"هنوز کسی تست رایگان نگرفته است":"No one has claimed the trial yet",
+    activeBadge:lang==="fa"?"فعال":"Active",
+    endedBadge:lang==="fa"?"تمام شد":"Ended",
+    remaining:lang==="fa"?"باقی‌مانده":"Remaining",
+    started:lang==="fa"?"شروع:":"Started:",
+    daysShort:lang==="fa"?"روز":"d",
+    hoursShort:lang==="fa"?"ساعت":"h",
+    expired:lang==="fa"?"منقضی شده":"Expired",
+    refresh:lang==="fa"?"بروزرسانی":"Refresh",
+  };
+
+  // Format remaining time for a trial user
+  const fmtRemaining=(u)=>{
+    if(!u.premium_expires_at)return null;
+    const exp=new Date(u.premium_expires_at);
+    const diff=exp-new Date(nowTick);
+    if(diff<=0)return{txt:T.expired,expired:true};
+    const totalH=Math.floor(diff/(1000*60*60));
+    const dd=Math.floor(totalH/24);
+    const hh=totalH%24;
+    return{txt:`${dd} ${T.daysShort} ${hh} ${T.hoursShort}`,expired:false,dd};
   };
 
   return<div>
@@ -7241,6 +7268,36 @@ function AdminFreeTrial({token}){
         <div style={{flex:1}}><div className="m" style={{fontSize:24,fontWeight:700,color:"var(--G)"}}>{stats?stats.active:"—"}</div><div style={{fontSize:9,color:"var(--dm)",fontWeight:600,marginTop:2}}>{T.active}</div></div>
         <div style={{flex:1}}><div className="m" style={{fontSize:24,fontWeight:700,color:"var(--mu)"}}>{stats?stats.ended:"—"}</div><div style={{fontSize:9,color:"var(--dm)",fontWeight:600,marginTop:2}}>{T.ended}</div></div>
       </div>
+    </div>
+
+    {/* Trial users list */}
+    <div className="cd" style={{padding:16,marginBottom:12}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+        <span style={{fontSize:12,fontWeight:700,color:"var(--tx2)"}}>{T.usersTitle}</span>
+        <span onClick={loadStats} style={{fontSize:10,fontWeight:700,color:"var(--B)",cursor:"pointer",background:"color-mix(in srgb,var(--B) 10%,transparent)",padding:"4px 10px",borderRadius:6}}>↻ {T.refresh}</span>
+      </div>
+      {trialUsers.length===0
+        ?<div style={{fontSize:11,color:"var(--dm)",textAlign:"center",padding:"16px 0"}}>{T.noUsers}</div>
+        :trialUsers.map((u,i)=>{
+          const rem=fmtRemaining(u);
+          const isActive=u.is_trial===true&&u.membership==="premium"&&rem&&!rem.expired;
+          return<div key={u.id||i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,padding:"10px 0",borderTop:i>0?"1px solid var(--brd)":"none"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{u.full_name||(lang==="fa"?"بدون نام":"No name")}</div>
+              <div style={{fontSize:10,color:"var(--dm)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{u.email||"—"}</div>
+              {u.trial_started_at&&<div style={{fontSize:9,color:"var(--mu)",marginTop:2}}>{T.started} {new Date(u.trial_started_at).toLocaleDateString()} {new Date(u.trial_started_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>}
+            </div>
+            <div style={{textAlign:"right",flexShrink:0}}>
+              {isActive
+                ?<>
+                  <div style={{fontSize:9,fontWeight:700,color:"var(--G)",background:"color-mix(in srgb,var(--G) 10%,transparent)",padding:"2px 8px",borderRadius:5,display:"inline-block",marginBottom:4}}>● {T.activeBadge}</div>
+                  <div className="m" style={{fontSize:14,fontWeight:700,color:rem.dd<=1?"var(--R)":"var(--G)"}}>{rem.txt}</div>
+                  <div style={{fontSize:8,color:"var(--dm)",fontWeight:600}}>{T.remaining}</div>
+                </>
+                :<div style={{fontSize:9,fontWeight:700,color:"var(--mu)",background:"color-mix(in srgb,var(--mu) 12%,transparent)",padding:"4px 10px",borderRadius:5,display:"inline-block"}}>{T.endedBadge}</div>}
+            </div>
+          </div>;
+        })}
     </div>
 
     <div style={{fontSize:10,color:"var(--mu)",lineHeight:1.6,padding:"0 4px"}}>{T.note}</div>
