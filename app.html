@@ -4395,7 +4395,106 @@ function AdminIBRequests({token}){
 }
 
 /* ─── Plans ─── */
-function Plans({userProfile,goToSupport,token}){
+/* ─── Free Trial Card (shown on Plans page for eligible free users) ─── */
+function FreeTrialCard({userProfile,token,onActivated}){
+  const{lang}=useLang();
+  const{val,loading}=useAppSetting("free_trial",null);
+  const[busy,setBusy]=useState(false);
+  const[err,setErr]=useState("");
+  // Parse config
+  let cfg={enabled:false,days:3};
+  try{if(val){const p=typeof val==="string"?JSON.parse(val):val;cfg={enabled:!!p.enabled,days:parseInt(p.days)||3}}}catch(e){}
+
+  // Eligibility: feature ON, user is free (not premium/admin), and never used trial before
+  const isPremium=userProfile?.membership==="premium"||userProfile?.role==="admin";
+  const alreadyUsed=userProfile?.trial_used===true;
+  if(loading)return null;
+  if(!cfg.enabled)return null;       // admin hasn't enabled it
+  if(isPremium)return null;          // premium users see nothing
+  if(alreadyUsed)return null;        // one-time only
+
+  const T={
+    badge:lang==="fa"?"پیشنهاد ویژه":lang==="ar"?"عرض خاص":lang==="tr"?"Özel Teklif":lang==="ru"?"Спец. предложение":lang==="es"?"Oferta especial":"Special Offer",
+    title:lang==="fa"?`${cfg.days} روز تست رایگان پریمیوم`:lang==="ar"?`${cfg.days} أيام تجربة مجانية مميزة`:lang==="tr"?`${cfg.days} Gün Ücretsiz Premium Deneme`:lang==="ru"?`${cfg.days} дня бесплатного Premium`:lang==="es"?`${cfg.days} días de prueba Premium gratis`:`${cfg.days}-Day Free Premium Trial`,
+    desc:lang==="fa"?"به همه تحلیل‌ها، سیگنال‌ها و محتوای VIP دسترسی کامل پیدا کنید — کاملاً رایگان. بدون نیاز به کارت بانکی.":lang==="ar"?"احصل على وصول كامل لجميع التحليلات والإشارات والمحتوى VIP — مجاناً تماماً. بدون بطاقة.":lang==="tr"?"Tüm analizlere, sinyallere ve VIP içeriğe tam erişim — tamamen ücretsiz. Kart gerekmez.":lang==="ru"?"Полный доступ ко всем анализам, сигналам и VIP-контенту — совершенно бесплатно. Без карты.":lang==="es"?"Acceso completo a todos los análisis, señales y contenido VIP — totalmente gratis. Sin tarjeta.":"Get full access to all analyses, signals & VIP content — completely free. No card needed.",
+    once:lang==="fa"?"⚡ فقط یک‌بار قابل استفاده":lang==="ar"?"⚡ يمكن استخدامه مرة واحدة فقط":lang==="tr"?"⚡ Yalnızca bir kez kullanılabilir":lang==="ru"?"⚡ Можно использовать только один раз":lang==="es"?"⚡ Solo se puede usar una vez":"⚡ Can only be used once",
+    btn:lang==="fa"?"فعال‌سازی تست رایگان":lang==="ar"?"تفعيل التجربة المجانية":lang==="tr"?"Ücretsiz Denemeyi Başlat":lang==="ru"?"Активировать пробный период":lang==="es"?"Activar prueba gratis":"Start Free Trial",
+    btnBusy:lang==="fa"?"در حال فعال‌سازی...":lang==="ar"?"جارٍ التفعيل...":lang==="tr"?"Etkinleştiriliyor...":lang==="ru"?"Активация...":lang==="es"?"Activando...":"Activating...",
+    err:lang==="fa"?"خطا — دوباره تلاش کنید":lang==="ar"?"خطأ — حاول مرة أخرى":lang==="tr"?"Hata — tekrar deneyin":lang==="ru"?"Ошибка — попробуйте снова":lang==="es"?"Error — inténtalo de nuevo":"Error — please try again",
+  };
+
+  const activate=async()=>{
+    if(busy||!userProfile?.id||!token)return;
+    setBusy(true);setErr("");
+    try{
+      // Re-check server-side that the user hasn't used it (guards against stale local profile)
+      const chk=await fetch(`${SB}/rest/v1/Users?id=eq.${userProfile.id}&select=trial_used,membership`,{headers:H(token)});
+      const cd=await chk.json();
+      if(Array.isArray(cd)&&cd[0]){
+        if(cd[0].trial_used===true||cd[0].membership==="premium"){
+          setBusy(false);if(onActivated)onActivated();return;
+        }
+      }
+      const now=new Date();
+      const exp=new Date(now.getTime()+cfg.days*24*60*60*1000);
+      await fetch(`${SB}/rest/v1/Users?id=eq.${userProfile.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({
+        membership:"premium",
+        premium_expires_at:exp.toISOString(),
+        trial_used:true,
+        is_trial:true,
+        trial_started_at:now.toISOString(),
+        trial_notice:false
+      })});
+      setBusy(false);
+      if(onActivated)onActivated();
+    }catch(e){setBusy(false);setErr(T.err)}
+  };
+
+  return<div className="cd" style={{marginBottom:14,padding:0,overflow:"hidden",borderColor:"color-mix(in srgb,var(--purple,#bf5af2) 30%,transparent)",position:"relative"}}>
+    <div style={{background:"linear-gradient(135deg,color-mix(in srgb,var(--purple,#bf5af2) 14%,transparent),color-mix(in srgb,var(--B) 10%,transparent))",padding:18}}>
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}>
+        <span style={{fontSize:9,fontWeight:700,letterSpacing:.5,color:"#fff",background:"var(--purple,#bf5af2)",padding:"3px 9px",borderRadius:6}}>{T.badge}</span>
+        <span style={{fontSize:18}}>🎁</span>
+      </div>
+      <div style={{fontSize:17,fontWeight:800,marginBottom:6,letterSpacing:-.3}}>{T.title}</div>
+      <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.7,marginBottom:10}}>{T.desc}</div>
+      <div style={{fontSize:11,fontWeight:700,color:"var(--purple,#bf5af2)",marginBottom:14}}>{T.once}</div>
+      {err&&<div style={{fontSize:11,fontWeight:600,color:"var(--R)",marginBottom:8,textAlign:"center"}}>{err}</div>}
+      <div onClick={activate} className="bt" style={{background:"linear-gradient(135deg,var(--purple,#bf5af2),var(--B))",fontSize:14,cursor:busy?"default":"pointer",opacity:busy?.7:1}}>{busy?T.btnBusy:T.btn}</div>
+    </div>
+  </div>;
+}
+
+/* ─── Trial Ended Banner (shown on Plans page after trial expired) ─── */
+function TrialEndedBanner({userProfile,token,lang}){
+  const[hidden,setHidden]=useState(false);
+  // Show only when: user used a trial, trial is no longer active, user is now free, and notice not yet dismissed
+  const show=userProfile?.trial_used===true
+    &&userProfile?.is_trial!==true
+    &&userProfile?.membership!=="premium"
+    &&userProfile?.trial_notice!==true
+    &&!hidden;
+  if(!show)return null;
+
+  const T={
+    title:lang==="fa"?"⏰ تست رایگان شما به پایان رسید":lang==="ar"?"⏰ انتهت تجربتك المجانية":lang==="tr"?"⏰ Ücretsiz denemeniz sona erdi":lang==="ru"?"⏰ Ваш бесплатный период закончился":lang==="es"?"⏰ Tu prueba gratuita ha terminado":"⏰ Your free trial has ended",
+    body:lang==="fa"?"امیدواریم از دسترسی پریمیوم لذت برده باشید! برای ادامه استفاده از تحلیل‌ها، سیگنال‌ها و محتوای VIP، یکی از پلن‌های زیر را تهیه کنید.":lang==="ar"?"نأمل أن تكون قد استمتعت بالوصول المميز! لمواصلة استخدام التحليلات والإشارات والمحتوى VIP، اختر إحدى الخطط أدناه.":lang==="tr"?"Premium erişiminin tadını çıkardığınızı umuyoruz! Analizlere, sinyallere ve VIP içeriğe erişmeye devam etmek için aşağıdaki planlardan birini seçin.":lang==="ru"?"Надеемся, вам понравился доступ Premium! Чтобы продолжить пользоваться анализами, сигналами и VIP-контентом, выберите один из планов ниже.":lang==="es"?"¡Esperamos que hayas disfrutado del acceso Premium! Para seguir usando análisis, señales y contenido VIP, elige uno de los planes a continuación.":"We hope you enjoyed Premium access! To keep using analyses, signals & VIP content, pick one of the plans below.",
+    close:lang==="fa"?"متوجه شدم":lang==="ar"?"فهمت":lang==="tr"?"Anladım":lang==="ru"?"Понятно":lang==="es"?"Entendido":"Got it",
+  };
+  const dismiss=async()=>{
+    setHidden(true);
+    try{await fetch(`${SB}/rest/v1/Users?id=eq.${userProfile.id}`,{method:"PATCH",headers:H(token),body:JSON.stringify({trial_notice:true})});}catch(e){}
+  };
+  const rtl=lang==="fa"||lang==="ar";
+  return<div className="cd" style={{padding:14,marginBottom:14,borderColor:"color-mix(in srgb,var(--Y) 35%,transparent)",background:"color-mix(in srgb,var(--Y) 6%,transparent)",position:"relative"}}>
+    <div onClick={dismiss} style={{position:"absolute",top:8,[rtl?"left":"right"]:10,width:24,height:24,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:6,cursor:"pointer",fontSize:14,color:"var(--mu)",background:"color-mix(in srgb,var(--bg2) 60%,transparent)"}}>✕</div>
+    <div style={{fontSize:13,fontWeight:700,color:"var(--Y)",marginBottom:8,paddingRight:rtl?0:24,paddingLeft:rtl?24:0}}>{T.title}</div>
+    <div style={{fontSize:12,color:"var(--tx2)",lineHeight:1.7,marginBottom:10}}>{T.body}</div>
+    <div onClick={dismiss} className="bt" style={{background:"var(--Y)",color:"#000",fontSize:12,padding:"8px 14px",cursor:"pointer",display:"inline-block",width:"auto"}}>{T.close}</div>
+  </div>;
+}
+
+function Plans({userProfile,goToSupport,token,onR}){
   const{t,lang}=useLang();
   const[showContact,setShowContact]=useState(false);
   const[selectedPlan,setSelectedPlan]=useState(null);
@@ -4454,6 +4553,7 @@ function Plans({userProfile,goToSupport,token}){
   };
   const pt=(k)=>(premText[k]&&premText[k][lang])||(premText[k]&&premText[k].en)||"";
   const isIBUser=userProfile?.ib_active===true;
+  const isTrialUser=userProfile?.is_trial===true&&userProfile?.membership==="premium";
   if(isPremium&&(expiresAt||isAdmin||isIBUser)){
     return(<div className="fi">
       <div style={{textAlign:"center",marginBottom:24}}>
@@ -4465,14 +4565,16 @@ function Plans({userProfile,goToSupport,token}){
         <div style={{fontSize:12,color:"var(--dm)"}}>HosseinlouMohammad@gmail.com</div>
       </div>
       :isIBUser?<AMarketsIBFlow userProfile={userProfile} token={token} lang={lang}/>
-      :<div className="cd" style={{textAlign:"center",padding:24,marginBottom:16,borderColor:"color-mix(in srgb,var(--G) 25%,transparent)",background:"color-mix(in srgb,var(--G) 3%,transparent)"}}>
+      :<div className="cd" style={{textAlign:"center",padding:24,marginBottom:16,borderColor:isTrialUser?"color-mix(in srgb,var(--purple,#bf5af2) 30%,transparent)":"color-mix(in srgb,var(--G) 25%,transparent)",background:isTrialUser?"color-mix(in srgb,var(--purple,#bf5af2) 4%,transparent)":"color-mix(in srgb,var(--G) 3%,transparent)"}}>
+        {isTrialUser&&<div style={{display:"inline-block",fontSize:10,fontWeight:700,color:"#fff",background:"var(--purple,#bf5af2)",padding:"3px 10px",borderRadius:6,marginBottom:10}}>{{fa:"🎁 حالت تست رایگان",ar:"🎁 وضع التجربة المجانية",tr:"🎁 Ücretsiz Deneme",ru:"🎁 Пробный режим",es:"🎁 Modo de prueba",en:"🎁 Free Trial"}[lang]||"🎁 Free Trial"}</div>}
         <div style={{fontSize:12,color:"var(--mu)",marginBottom:12,fontWeight:600}}>{pt("timeLeft")||"Time Remaining"}</div>
         <div style={{display:"flex",justifyContent:"center",gap:16}}>
           <div><div className="m" style={{fontSize:36,fontWeight:700,color:daysLeft<=7?"var(--R)":"var(--G)"}}>{daysLeft}</div><div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginTop:2}}>{pt("days")||"Days"}</div></div>
           <div><div className="m" style={{fontSize:36,fontWeight:700,color:daysLeft<=7?"var(--R)":"var(--G)"}}>{hoursLeft}</div><div style={{fontSize:10,color:"var(--dm)",fontWeight:600,marginTop:2}}>{pt("hours")||"Hours"}</div></div>
         </div>
         <div style={{fontSize:11,color:"var(--dm)",marginTop:14}}>{pt("expires")||"Expires:"} {expiresAt?.toLocaleDateString()} {expiresAt?.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</div>
-        {daysLeft<=7&&<div style={{fontSize:12,fontWeight:600,color:"var(--R)",marginTop:10,background:"color-mix(in srgb,var(--R) 8%,transparent)",padding:"8px 14px",borderRadius:8,display:"inline-block"}}>{pt("expireSoon")||"⚠ Expiring soon! Renew now"}</div>}
+        {isTrialUser&&<div style={{fontSize:11,fontWeight:600,color:"var(--purple,#bf5af2)",marginTop:10,background:"color-mix(in srgb,var(--purple,#bf5af2) 8%,transparent)",padding:"8px 14px",borderRadius:8,display:"inline-block"}}>{{fa:"بعد از پایان تست، برای ادامه اشتراک تهیه کنید",ar:"بعد انتهاء التجربة، اشترك للمتابعة",tr:"Deneme bittikten sonra devam etmek için abone olun",ru:"После окончания пробного периода оформите подписку",es:"Después de la prueba, suscríbete para continuar",en:"After the trial ends, subscribe to continue"}[lang]||"After the trial ends, subscribe to continue"}</div>}
+        {!isTrialUser&&daysLeft<=7&&<div style={{fontSize:12,fontWeight:600,color:"var(--R)",marginTop:10,background:"color-mix(in srgb,var(--R) 8%,transparent)",padding:"8px 14px",borderRadius:8,display:"inline-block"}}>{pt("expireSoon")||"⚠ Expiring soon! Renew now"}</div>}
       </div>}
       {!isAdmin&&!isIBUser&&<div onClick={()=>setShowRenewPlans(true)} className="bt" style={{background:"var(--B)",fontSize:14,cursor:"pointer",marginBottom:16,padding:"15px 18px"}}>{pt("renewBtn")||"Renew Subscription"}</div>}
       {!isAdmin&&canUpgrade&&upgrade&&<div className="cd" style={{padding:16,marginBottom:16,borderColor:"color-mix(in srgb,var(--Y) 25%,transparent)",background:"color-mix(in srgb,var(--Y) 3%,transparent)"}}>
@@ -4540,6 +4642,12 @@ function Plans({userProfile,goToSupport,token}){
       <div style={{fontSize:22,fontWeight:700,marginBottom:6}}>{t.premium}</div>
       <div style={{fontSize:13,color:"var(--mu)"}}>{t.unlock}</div>
     </div>
+
+    {/* ═══ Trial ended notice ═══ */}
+    <TrialEndedBanner userProfile={userProfile} token={token} lang={lang}/>
+
+    {/* ═══ Free Trial offer (one-time, admin-controlled) ═══ */}
+    <FreeTrialCard userProfile={userProfile} token={token} onActivated={()=>{if(onR)onR()}}/>
 
     {/* ═══ Option 1: Free via aMarkets IB ═══ */}
     <AMarketsIBFlow userProfile={userProfile} token={token} lang={lang}/>
@@ -5697,8 +5805,8 @@ function Adm({token,posts,signals,onR}){
         })}
       </div>
       <div style={{display:"flex",gap:4}}>
-        {["announce","poll"].map(tab=>{
-          const labels={announce:lang==="fa"?"📢 اطلاعیه":"📢 Announcement",poll:lang==="fa"?"📊 نظرسنجی":"📊 Poll"};
+        {["announce","poll","trial"].map(tab=>{
+          const labels={announce:lang==="fa"?"📢 اطلاعیه":"📢 Announcement",poll:lang==="fa"?"📊 نظرسنجی":"📊 Poll",trial:lang==="fa"?"🎁 تست رایگان":"🎁 Free Trial"};
           return<div key={tab} onClick={()=>setTb(tab)} style={{flex:1,padding:8,borderRadius:8,textAlign:"center",cursor:"pointer",background:tb===tab?"color-mix(in srgb,var(--R) 10%,transparent)":"transparent",border:`1px solid ${tb===tab?"color-mix(in srgb,var(--R) 25%,transparent)":"var(--brd)"}`,fontSize:9,fontWeight:600,color:tb===tab?"var(--R)":"var(--mu)"}}>{labels[tab]}</div>
         })}
       </div>
@@ -6000,6 +6108,7 @@ function Adm({token,posts,signals,onR}){
     {tb==="active"&&<AdminActiveCount token={token}/>}
     {tb==="announce"&&<AdminAnnouncements token={token}/>}
     {tb==="poll"&&<AdminPolls token={token}/>}
+    {tb==="trial"&&<AdminFreeTrial token={token}/>}
     {tb==="msg"&&<>
       <div style={{fontSize:13,fontWeight:700,marginBottom:10}}>{lang==="fa"?"📬 ارسال پیام":"📬 Send Message"}</div>
       <input className="ip" placeholder={lang==="fa"?"عنوان پیام":"Message title"} value={msgTitle} onChange={e=>setMsgTitle(e.target.value)}/>
@@ -7037,6 +7146,107 @@ function AdminActiveCount({token}){
   </div>;
 }
 
+/* ─── Admin: Free Trial Manager ─── */
+function AdminFreeTrial({token}){
+  const{lang}=useLang();
+  const{val,loading,update}=useAppSetting("free_trial",token);
+  const[saving,setSaving]=useState(false);
+  const[msg,setMsg]=useState("");
+  const[days,setDays]=useState("3");
+  const[stats,setStats]=useState(null);
+  // Parse current config: stored as JSON string {enabled:bool,days:int}
+  let cfg={enabled:false,days:3};
+  try{if(val){const p=typeof val==="string"?JSON.parse(val):val;cfg={enabled:!!p.enabled,days:parseInt(p.days)||3}}}catch(e){}
+  useEffect(()=>{setDays(String(cfg.days||3))},[val]);
+
+  // Load stats: how many users ever used the trial / currently on trial
+  const loadStats=useCallback(async()=>{
+    try{
+      const r=await fetch(`${SB}/rest/v1/Users?select=id,membership,trial_used,trial_started_at,premium_expires_at,is_trial`,{headers:H(token)});
+      const d=await r.json();
+      if(Array.isArray(d)){
+        const now=new Date();
+        const everUsed=d.filter(u=>u.trial_used===true).length;
+        const active=d.filter(u=>u.is_trial===true&&u.membership==="premium"&&u.premium_expires_at&&new Date(u.premium_expires_at)>now).length;
+        const ended=d.filter(u=>u.trial_used===true&&u.is_trial!==true).length;
+        setStats({everUsed,active,ended});
+      }
+    }catch(e){}
+  },[token]);
+  useEffect(()=>{loadStats()},[loadStats]);
+
+  const saveConfig=async(enabled)=>{
+    const d=parseInt(days)||3;
+    if(d<1||d>30){setMsg(lang==="fa"?"مدت باید بین ۱ تا ۳۰ روز باشد":"Days must be 1-30");setTimeout(()=>setMsg(""),3000);return}
+    setSaving(true);
+    await update(JSON.stringify({enabled,days:d}));
+    setSaving(false);
+    setMsg(enabled?(lang==="fa"?"تست رایگان فعال شد ✓":"Free trial enabled ✓"):(lang==="fa"?"تست رایگان غیرفعال شد":"Free trial disabled"));
+    setTimeout(()=>setMsg(""),3000);
+  };
+
+  const T={
+    title:lang==="fa"?"🎁 مدیریت تست رایگان":"🎁 Free Trial Manager",
+    desc:lang==="fa"?"وقتی فعال باشد، کاربران رایگان می‌توانند در صفحه پلن‌ها یک‌بار اشتراک آزمایشی دریافت کنند. بعد از پایان مدت، خودکار به حالت رایگان برمی‌گردند.":"When enabled, free users can claim a one-time trial subscription on the Plans page. After the period ends, they automatically return to free.",
+    statusOn:lang==="fa"?"فعال":"ENABLED",
+    statusOff:lang==="fa"?"غیرفعال":"DISABLED",
+    daysLabel:lang==="fa"?"مدت تست (روز)":"Trial duration (days)",
+    enable:lang==="fa"?"فعال‌سازی تست رایگان":"Enable Free Trial",
+    disable:lang==="fa"?"غیرفعال کردن":"Disable Free Trial",
+    saveDays:lang==="fa"?"ذخیره مدت":"Save duration",
+    statsTitle:lang==="fa"?"آمار":"Statistics",
+    everUsed:lang==="fa"?"کل استفاده‌کنندگان":"Total claimed",
+    active:lang==="fa"?"تست فعال الان":"Active trials now",
+    ended:lang==="fa"?"تست تمام‌شده":"Trials ended",
+    note:lang==="fa"?"💡 کاربرانی که از قبل پریمیوم هستند این گزینه را نمی‌بینند. هر کاربر فقط یک‌بار می‌تواند تست بگیرد.":"💡 Users who are already premium won't see this option. Each user can claim the trial only once.",
+  };
+
+  return<div>
+    <div style={{fontSize:14,fontWeight:700,marginBottom:6}}>{T.title}</div>
+    <div style={{fontSize:11,color:"var(--mu)",marginBottom:14,lineHeight:1.6}}>{T.desc}</div>
+
+    {/* Status card */}
+    <div className="cd" style={{padding:16,marginBottom:12,borderColor:cfg.enabled?"color-mix(in srgb,var(--G) 25%,transparent)":"var(--brd)",background:cfg.enabled?"color-mix(in srgb,var(--G) 3%,transparent)":"var(--card)"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          <div style={{width:8,height:8,borderRadius:"50%",background:cfg.enabled?"var(--G)":"var(--dm)",animation:cfg.enabled?"pl 2s infinite":"none"}}/>
+          <span style={{fontSize:13,fontWeight:700,color:cfg.enabled?"var(--G)":"var(--mu)"}}>{loading?"...":(cfg.enabled?T.statusOn:T.statusOff)}</span>
+        </div>
+        <span className="m" style={{fontSize:22,fontWeight:700,color:"var(--B)"}}>{cfg.days} {lang==="fa"?"روز":"days"}</span>
+      </div>
+
+      <label style={{fontSize:11,color:"var(--tx2)",fontWeight:600,display:"block",marginBottom:6}}>{T.daysLabel}</label>
+      <div style={{display:"flex",gap:6,marginBottom:8}}>
+        {["1","3","5","7","14"].map(v=><div key={v} onClick={()=>setDays(v)} style={{flex:1,padding:9,borderRadius:10,textAlign:"center",cursor:"pointer",fontSize:13,fontWeight:700,
+          background:days===v?"color-mix(in srgb,var(--B) 10%,transparent)":"transparent",
+          border:`1px solid ${days===v?"color-mix(in srgb,var(--B) 25%,transparent)":"var(--brd)"}`,
+          color:days===v?"var(--B)":"var(--mu)"}}>{v}</div>)}
+      </div>
+      <input className="ip" type="number" inputMode="numeric" min="1" max="30" value={days} onChange={e=>setDays(e.target.value)} placeholder="3" style={{marginBottom:10}}/>
+
+      {cfg.enabled&&<div onClick={()=>!saving&&saveConfig(true)} className="bt" style={{background:"var(--B)",fontSize:13,marginBottom:8,opacity:saving?.6:1,cursor:"pointer"}}>{saving?"...":T.saveDays}</div>}
+
+      {cfg.enabled
+        ?<div onClick={()=>!saving&&saveConfig(false)} className="bt" style={{background:"var(--R)",fontSize:13,opacity:saving?.6:1,cursor:"pointer"}}>{saving?"...":T.disable}</div>
+        :<div onClick={()=>!saving&&saveConfig(true)} className="bt" style={{background:"var(--G)",fontSize:13,opacity:saving?.6:1,cursor:"pointer"}}>{saving?"...":T.enable}</div>}
+
+      {msg&&<div style={{marginTop:10,padding:9,borderRadius:9,fontSize:12,fontWeight:600,textAlign:"center",background:msg.includes("✓")?"color-mix(in srgb,var(--G) 8%,transparent)":"color-mix(in srgb,var(--R) 8%,transparent)",color:msg.includes("✓")?"var(--G)":"var(--R)"}}>{msg}</div>}
+    </div>
+
+    {/* Stats */}
+    <div className="cd" style={{padding:16,marginBottom:12}}>
+      <div style={{fontSize:12,fontWeight:700,color:"var(--tx2)",marginBottom:12}}>{T.statsTitle}</div>
+      <div style={{display:"flex",gap:8,textAlign:"center"}}>
+        <div style={{flex:1}}><div className="m" style={{fontSize:24,fontWeight:700,color:"var(--B)"}}>{stats?stats.everUsed:"—"}</div><div style={{fontSize:9,color:"var(--dm)",fontWeight:600,marginTop:2}}>{T.everUsed}</div></div>
+        <div style={{flex:1}}><div className="m" style={{fontSize:24,fontWeight:700,color:"var(--G)"}}>{stats?stats.active:"—"}</div><div style={{fontSize:9,color:"var(--dm)",fontWeight:600,marginTop:2}}>{T.active}</div></div>
+        <div style={{flex:1}}><div className="m" style={{fontSize:24,fontWeight:700,color:"var(--mu)"}}>{stats?stats.ended:"—"}</div><div style={{fontSize:9,color:"var(--dm)",fontWeight:600,marginTop:2}}>{T.ended}</div></div>
+      </div>
+    </div>
+
+    <div style={{fontSize:10,color:"var(--mu)",lineHeight:1.6,padding:"0 4px"}}>{T.note}</div>
+  </div>;
+}
+
 /* ─── Profile ─── */
 
 function Prof({user,up,onOut,dark,toggle,lang,setLang,token,onNameChange,openSupport,onSupportOpened}){
@@ -7263,9 +7473,23 @@ function App(){
       }
       const d=await r.json();
       if(Array.isArray(d)&&d[0]){
-        setUp(d[0]);
-        setAdm(d[0].role==="admin");
-        try{localStorage.setItem("fx_up",JSON.stringify(d[0]))}catch(e){}
+        let prof=d[0];
+        // ─── Auto-expire free trial: if user is on a trial whose end date has passed,
+        //     downgrade them to free client-side and keep trial_notice=false so they
+        //     see the "trial ended" message. (No cron/edge-function needed.)
+        if(prof.is_trial===true&&prof.membership==="premium"&&prof.premium_expires_at){
+          const exp=new Date(prof.premium_expires_at);
+          if(exp<=new Date()){
+            const downgrade={membership:"free",premium_expires_at:null,is_trial:false,trial_notice:false};
+            try{
+              await fetch(`${SB}/rest/v1/Users?id=eq.${u.id}`,{method:"PATCH",headers:H(t),body:JSON.stringify(downgrade)});
+            }catch(e){}
+            prof={...prof,...downgrade};
+          }
+        }
+        setUp(prof);
+        setAdm(prof.role==="admin");
+        try{localStorage.setItem("fx_up",JSON.stringify(prof))}catch(e){}
       }else if(retry<2){
         // Empty/unexpected response → retry with backoff
         setTimeout(()=>chk(u,t,retry+1),1500*(retry+1));
@@ -7335,7 +7559,7 @@ function App(){
     case"home":return<Home posts={posts} signals={sigs} msgs={msgs} stories={stories} announcements={announcements} activePoll={activePoll} myVote={myVote} onVoted={onPollSubmitted} go={goTab} goToPlans={()=>goToTabByKey("plans")} P={P} ok={ok} lastUpdate={lastUpdate} dark={dark} toggle={toggle} userProfile={up} token={tk} onR={load} online={online}/>;
     case"analysis":return<Analysis posts={posts} userProfile={up} msgs={msgs} token={tk} onR={load} goToPlans={()=>goToTabByKey("plans")}/>;
     case"signals":return<Sigs signals={sigs} userProfile={up} goToPlans={()=>goToTabByKey("plans")}/>;
-    case"plans":return<Plans userProfile={up} goToSupport={()=>{goToTabByKey("profile");setOpenSupport(true)}} token={tk}/>;
+    case"plans":return<Plans userProfile={up} goToSupport={()=>{goToTabByKey("profile");setOpenSupport(true)}} token={tk} onR={()=>{if(usr&&tk)chk(usr,tk)}}/>;
     case"admin":return<Adm token={tk} posts={posts} signals={sigs} onR={load}/>;
     case"profile":return<Prof user={usr} up={up} onOut={handleLogout} dark={dark} toggle={toggle} lang={lang} setLang={setLang} token={tk} onNameChange={(name)=>{setUp(prev=>prev?{...prev,full_name:name}:prev)}} openSupport={openSupport} onSupportOpened={()=>setOpenSupport(false)}/>;
     default:return null;
