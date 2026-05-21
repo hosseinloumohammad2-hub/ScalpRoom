@@ -4775,15 +4775,14 @@ function AdminReport({token,posts,signals}){
     const dk=theme==="dark";
     const imgPosts=filteredPosts.filter(p=>p.image_url);
     const imgs=imgPosts.map(p=>(p.image_url||"").split(",")[0]).filter(Boolean);
-    // Show ALL images. Columns scale up for large sets so each thumbnail stays usable.
+    // Paginate: 100 images per page in a clean 10×10 grid
+    const PER_PAGE=100;
+    const COLS=10;
     const totalImgs=imgs.length;
-    const cols=totalImgs<=4?2:totalImgs<=9?3:totalImgs<=16?4:totalImgs<=25?5:totalImgs<=36?6:totalImgs<=49?7:totalImgs<=64?8:totalImgs<=81?9:totalImgs<=100?10:totalImgs<=144?12:totalImgs<=225?15:totalImgs<=400?20:totalImgs<=625?25:totalImgs<=900?30:totalImgs<=1600?40:50;
-    const rows=Math.ceil(totalImgs/cols);
-    // Dynamic canvas height: base 1920 for header/stats/footer + ~thumbnail_size per row.
-    // Thumbnail size shrinks gracefully as cols grow (936px usable width / cols).
-    const thumbPx=Math.floor(936/cols);
-    const gridH=rows*(thumbPx+8); // +8 for gap
-    const bodyH=Math.max(1920,600+gridH+200); // 600 for header/stats, 200 for footer
+    const totalPages=Math.max(1,Math.ceil(totalImgs/PER_PAGE));
+    // Slice images into pages
+    const pages=[];
+    for(let i=0;i<totalPages;i++)pages.push(imgs.slice(i*PER_PAGE,(i+1)*PER_PAGE));
 
     const fromStr=new Date(fromDate).toLocaleDateString("en",{month:"short",day:"numeric"});
     const toStr=new Date(toDate).toLocaleDateString("en",{month:"short",day:"numeric",year:"numeric"});
@@ -4824,38 +4823,17 @@ function AdminReport({token,posts,signals}){
     }
     statsHtml=statItems.map((s,i)=>`<div class="stat-box" style="animation-delay:${.8+i*.15}s"><div class="stat-val" style="color:${s.c}">${s.v}</div><div class="stat-lbl">${s.l}</div></div>`).join("");
 
-    const gridImgs=imgs.map((url,i)=>`<div class="img-cell" style="animation-delay:${1.5+Math.min(i,60)*.03}s"><img src="${url}" crossorigin="anonymous" loading="lazy"/></div>`).join("");
+    // Build one .page block per chunk of 100 images.
+    // First page has full header + stats; subsequent pages have a compact header with "Page N of M".
+    // Last page also shows the footer.
+    const renderPage=(pageImgs,pageIdx)=>{
+      const isFirst=pageIdx===0;
+      const isLast=pageIdx===totalPages-1;
+      const gridImgs=pageImgs.map((url,i)=>`<div class="img-cell" style="animation-delay:${.5+Math.min(i,40)*.02}s"><img src="${url}" crossorigin="anonymous" loading="lazy"/></div>`).join("");
+      const pageLabel=lang==="fa"?`صفحه ${pageIdx+1} از ${totalPages}`:`Page ${pageIdx+1} of ${totalPages}`;
 
-    return`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{width:1080px;height:${bodyH}px;background:${C.bg};font-family:-apple-system,'SF Pro Display',system-ui,sans-serif;overflow:hidden;position:relative}
-body::before{content:'';position:absolute;top:-120px;right:-80px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,${C.glow1},transparent);pointer-events:none;animation:orbFloat 8s ease-in-out infinite}
-body::after{content:'';position:absolute;bottom:-80px;left:-60px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,${C.glow2},transparent);pointer-events:none;animation:orbFloat 10s ease-in-out 2s infinite reverse}
-@keyframes orbFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-40px)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes lineGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-@keyframes statPop{0%{opacity:0;transform:scale(0) rotate(-10deg)}60%{transform:scale(1.15) rotate(2deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
-@keyframes imgReveal{from{opacity:0;transform:scale(.7) rotate(-2deg)}to{opacity:1;transform:scale(1) rotate(0)}}
-@keyframes countUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes shimmer{0%{background-position:-300% 0}100%{background-position:300% 0}}
-@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
-@keyframes borderGlow{0%,100%{border-color:${C.cardBrd}}50%{border-color:${dk?"rgba(255,255,255,.15)":"rgba(0,0,0,.12)"}}}
-.accent{height:4px;border-radius:2px;background:linear-gradient(90deg,${C.R},${C.Y},transparent);transform-origin:left;animation:lineGrow .8s ease both}
-.logo-wrap{animation:fadeUp .6s ease .2s both}
-.period{font-size:16px;color:${C.dm};margin:20px 0 8px;animation:fadeUp .5s ease .3s both}
-.title{font-size:${dayDiff===0?56:50}px;font-weight:800;color:${C.tx};letter-spacing:-1.5px;line-height:1.05;margin-bottom:32px;animation:fadeUp .6s ease .4s both}
-.stats-row{display:grid;grid-template-columns:repeat(${statItems.length},1fr);gap:12px;margin-bottom:32px}
-.stat-box{text-align:center;padding:16px 8px;border-radius:16px;background:${C.cardBg};border:1px solid ${C.cardBrd};animation:statPop .5s ease both;animation-fill-mode:both}
-.stat-val{font-family:'SF Mono',monospace;font-size:${hasSigs?28:40}px;font-weight:700}
-.stat-lbl{font-size:11px;color:${C.mu};margin-top:6px;font-weight:600}
-.grid{flex:1;display:grid;grid-template-columns:repeat(${cols},1fr);gap:8px;align-content:start;margin-bottom:20px}
-.img-cell{border-radius:10px;overflow:hidden;aspect-ratio:1;background:${C.bg2};border:1px solid ${C.brd};animation:imgReveal .35s ease both;animation-fill-mode:both}
-.img-cell img{width:100%;height:100%;object-fit:cover;display:block}
-.footer{text-align:center;padding-top:20px;border-top:1px solid ${C.brd};animation:fadeUp .5s ease 2s both}
-.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:${C.G};animation:pulse 2s infinite;margin-right:6px;vertical-align:middle}
-</style></head><body>
-<div style="padding:72px 72px 50px;height:100%;display:flex;flex-direction:column">
+      // First-page header (full)
+      const fullHeader=`
   <div class="accent"></div>
   <div class="logo-wrap">
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
@@ -4868,15 +4846,68 @@ body::after{content:'';position:absolute;bottom:-80px;left:-60px;width:500px;hei
       </div>
     </div>
   </div>
-  <div class="period"><span class="live-dot"></span>${fromStr} — ${toStr}</div>
+  <div class="period"><span class="live-dot"></span>${fromStr} — ${toStr}${totalPages>1?` · ${pageLabel}`:""}</div>
   <div class="title">${periodTitle}</div>
-  <div class="stats-row">${statsHtml}</div>
-  ${imgs.length>0?`<div class="grid">${gridImgs}</div>`:`<div style="flex:1;display:flex;align-items:center;justify-content:center"><div style="text-align:center;animation:fadeUp .6s ease .8s both"><div style="font-size:64px;margin-bottom:16px">📊</div><div style="font-size:20px;color:${C.dm}">No analyses</div></div></div>`}
+  <div class="stats-row">${statsHtml}</div>`;
+
+      // Compact header for pages 2+ (saves vertical space so all 100 thumbs fit nicely)
+      const compactHeader=`
+  <div class="accent"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin:18px 0 24px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:40px;height:40px;border-radius:10px;background:#000;border:1px solid ${dk?"rgba(255,255,255,.1)":"rgba(0,0,0,.1)"};display:flex;align-items:center;justify-content:center">
+        <span style="color:#fff;font-size:14px;font-weight:700">Fx</span><span style="color:#ff453a;font-size:14px;font-weight:700">.</span>
+      </div>
+      <div>
+        <div style="font-size:20px;font-weight:700;color:${C.tx};letter-spacing:-.3px">${periodTitle}</div>
+        <div style="font-size:11px;color:${C.dm};margin-top:2px">${fromStr} — ${toStr}</div>
+      </div>
+    </div>
+    <div style="font-size:13px;font-weight:700;color:${C.mu};padding:6px 14px;border-radius:20px;background:${C.cardBg};border:1px solid ${C.cardBrd}">${pageLabel}</div>
+  </div>`;
+
+      const footer=isLast?`
   <div class="footer">
     <div style="font-size:18px;font-weight:700;color:${C.footTx}">Fxscalproom<span style="color:${C.footDot}">.</span></div>
     <div style="font-size:11px;color:${C.footSub};margin-top:4px">t.me/FxScalpRoom · fxscalproom.com</div>
-  </div>
-</div>
+  </div>`:`
+  <div style="text-align:center;padding-top:20px;font-size:11px;color:${C.footSub};font-weight:600">${pageLabel}</div>`;
+
+      return`<div class="page"><div style="padding:${isFirst?"72px 72px 50px":"56px 72px 50px"};height:100%;display:flex;flex-direction:column">
+        ${isFirst?fullHeader:compactHeader}
+        ${pageImgs.length>0?`<div class="grid">${gridImgs}</div>`:`<div style="flex:1;display:flex;align-items:center;justify-content:center"><div style="text-align:center"><div style="font-size:64px;margin-bottom:16px">📊</div><div style="font-size:20px;color:${C.dm}">No analyses</div></div></div>`}
+        ${footer}
+      </div></div>`;
+    };
+
+    const pagesHtml=pages.map((pg,i)=>renderPage(pg,i)).join("");
+
+    return`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:${C.bg};font-family:-apple-system,'SF Pro Display',system-ui,sans-serif}
+.page{width:1080px;height:1920px;background:${C.bg};position:relative;overflow:hidden;page-break-after:always}
+.page::before{content:'';position:absolute;top:-120px;right:-80px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,${C.glow1},transparent);pointer-events:none}
+.page::after{content:'';position:absolute;bottom:-80px;left:-60px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,${C.glow2},transparent);pointer-events:none}
+@keyframes fadeUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+@keyframes lineGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes statPop{0%{opacity:0;transform:scale(0) rotate(-10deg)}60%{transform:scale(1.15) rotate(2deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes imgReveal{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+.accent{height:4px;border-radius:2px;background:linear-gradient(90deg,${C.R},${C.Y},transparent);transform-origin:left;animation:lineGrow .8s ease both}
+.logo-wrap{animation:fadeUp .6s ease .2s both;position:relative;z-index:1}
+.period{font-size:16px;color:${C.dm};margin:20px 0 8px;animation:fadeUp .5s ease .3s both;position:relative;z-index:1}
+.title{font-size:${dayDiff===0?56:50}px;font-weight:800;color:${C.tx};letter-spacing:-1.5px;line-height:1.05;margin-bottom:32px;animation:fadeUp .6s ease .4s both;position:relative;z-index:1}
+.stats-row{display:grid;grid-template-columns:repeat(${statItems.length},1fr);gap:12px;margin-bottom:32px;position:relative;z-index:1}
+.stat-box{text-align:center;padding:16px 8px;border-radius:16px;background:${C.cardBg};border:1px solid ${C.cardBrd};animation:statPop .5s ease both;animation-fill-mode:both}
+.stat-val{font-family:'SF Mono',monospace;font-size:${hasSigs?28:40}px;font-weight:700}
+.stat-lbl{font-size:11px;color:${C.mu};margin-top:6px;font-weight:600}
+.grid{flex:1;display:grid;grid-template-columns:repeat(${COLS},1fr);gap:8px;align-content:start;margin-bottom:20px;position:relative;z-index:1}
+.img-cell{border-radius:10px;overflow:hidden;aspect-ratio:1;background:${C.bg2};border:1px solid ${C.brd};animation:imgReveal .35s ease both;animation-fill-mode:both}
+.img-cell img{width:100%;height:100%;object-fit:cover;display:block}
+.footer{text-align:center;padding-top:20px;border-top:1px solid ${C.brd};animation:fadeUp .5s ease 1.5s both;position:relative;z-index:1}
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:${C.G};animation:pulse 2s infinite;margin-right:6px;vertical-align:middle}
+</style></head><body>
+${pagesHtml||`<div class="page"><div style="padding:72px;display:flex;align-items:center;justify-content:center;height:100%"><div style="text-align:center"><div style="font-size:64px;margin-bottom:16px">📊</div><div style="font-size:20px;color:${C.dm}">No analyses</div></div></div></div>`}
 </body></html>`;
   };
 
