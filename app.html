@@ -212,6 +212,9 @@ select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;paddi
 const{useState,useEffect,useCallback,useRef,useMemo,createContext,useContext}=React;
 const SB="https://fjdjqaffoeixspcmxprw.supabase.co",SK="sb_publishable_7saR41SkI4TZs8K7C9lVxQ_Up8SyaYu";
 const H=t=>({apikey:SK,Authorization:`Bearer ${t||SK}`,"Content-Type":"application/json",Prefer:"return=representation"});
+/* Header variant for GET/list requests — bypasses Supabase's default 1000-row cap.
+   Range: 0-99999 lets us fetch up to 100,000 rows per request. */
+const HR=t=>({apikey:SK,Authorization:`Bearer ${t||SK}`,"Content-Type":"application/json",Range:"0-99999"});
 
 /* ─── i18n ─── */
 const LANGS={en:"English",ar:"العربية",fa:"فارسی",tr:"Türkçe",ru:"Русский",es:"Español"};
@@ -290,11 +293,11 @@ function thumbUrl(url,width){
 const api={
   up:(e,p)=>fetch(`${SB}/auth/v1/signup`,{method:"POST",headers:{apikey:SK,"Content-Type":"application/json"},body:JSON.stringify({email:e,password:p})}).then(r=>r.json()),
   in:(e,p)=>fetch(`${SB}/auth/v1/token?grant_type=password`,{method:"POST",headers:{apikey:SK,"Content-Type":"application/json"},body:JSON.stringify({email:e,password:p})}).then(r=>r.json()),
-  get:(t,tk,q="")=>fetch(`${SB}/rest/v1/${t}?order=created_at.desc${q}`,{headers:H(tk)}).then(r=>r.json()),
+  get:(t,tk,q="")=>fetch(`${SB}/rest/v1/${t}?order=created_at.desc${q}`,{headers:HR(tk)}).then(r=>r.json()),
   add:(t,d,tk)=>fetch(`${SB}/rest/v1/${t}`,{method:"POST",headers:H(tk),body:JSON.stringify(d)}).then(r=>r.json()),
   del:(t,id,tk)=>fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:"DELETE",headers:H(tk)}),
   patch:(t,id,d,tk)=>fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:"PATCH",headers:H(tk),body:JSON.stringify(d)}).then(r=>r.json()),
-  getUsers:(tk)=>fetch(`${SB}/rest/v1/Users?order=created_at.desc`,{headers:H(tk)}).then(r=>r.json()),
+  getUsers:(tk)=>fetch(`${SB}/rest/v1/Users?order=created_at.desc`,{headers:HR(tk)}).then(r=>r.json()),
   img:async(f,tk)=>{const n=`${Date.now()}_${Math.random().toString(36).slice(2,8)}.${f.name?.split('.').pop()||'jpg'}`;const r=await fetch(`${SB}/storage/v1/object/charts/${n}`,{method:"POST",headers:{apikey:SK,Authorization:`Bearer ${tk}`,"Content-Type":f.type||"image/jpeg"},body:f});if(!r.ok)return null;return`${SB}/storage/v1/object/public/charts/${n}`},
 };
 
@@ -991,7 +994,7 @@ function AdminStoryManager({token}){
 
   const loadStories=useCallback(async()=>{
     try{
-      const r=await fetch(`${SB}/rest/v1/Stories?order=created_at.desc`,{headers:H(token)});
+      const r=await fetch(`${SB}/rest/v1/Stories?order=created_at.desc`,{headers:HR(token)});
       const d=await r.json();
       if(Array.isArray(d))setStories(d);
     }catch(e){}
@@ -1293,7 +1296,7 @@ function useNotifications(userId,token){
         const pu=await ur.json();
         if(Array.isArray(pu)&&pu.length>0){url+=`&user_id=in.(${pu.map(u=>u.id).join(',')})`}else return;
       }
-      const r=await fetch(url,{headers:H(adminTk)});
+      const r=await fetch(url,{headers:HR(adminTk)});
       const subs=await r.json();
       if(!Array.isArray(subs)||!subs.length){console.log('No push subs found');return}
       const payload=subs.map(s=>{try{return JSON.parse(s.sub_json)}catch(e){return null}}).filter(Boolean);
@@ -3778,10 +3781,10 @@ function AdminPayments({token}){
 
   const load=useCallback(async()=>{
     try{
-      const r=await fetch(`${SB}/rest/v1/PaymentRequests?order=created_at.desc`,{headers:H(token)});
+      const r=await fetch(`${SB}/rest/v1/PaymentRequests?order=created_at.desc`,{headers:HR(token)});
       const d=await r.json();
       if(Array.isArray(d))setPayments(d);
-      const us=await fetch(`${SB}/rest/v1/Users?select=id,full_name,email,membership`,{headers:H(token)});
+      const us=await fetch(`${SB}/rest/v1/Users?select=id,full_name,email,membership`,{headers:HR(token)});
       const usData=await us.json();
       if(Array.isArray(usData)){const m={};usData.forEach(u=>m[u.id]=u);setUsers(m)}
     }catch(e){}
@@ -4275,10 +4278,10 @@ function AdminIBRequests({token}){
 
   const load=useCallback(async()=>{
     try{
-      const r=await fetch(`${SB}/rest/v1/IBRequests?order=created_at.desc`,{headers:H(token)});
+      const r=await fetch(`${SB}/rest/v1/IBRequests?order=created_at.desc`,{headers:HR(token)});
       const d=await r.json();
       if(Array.isArray(d))setRequests(d);
-      const us=await fetch(`${SB}/rest/v1/Users?select=id,full_name,email,membership`,{headers:H(token)});
+      const us=await fetch(`${SB}/rest/v1/Users?select=id,full_name,email,membership`,{headers:HR(token)});
       const usData=await us.json();
       if(Array.isArray(usData)){const m={};usData.forEach(u=>m[u.id]=u);setUsers(m)}
     }catch(e){}
@@ -5131,7 +5134,7 @@ function AdminBlog({token,onR}){
   const loadArticles=async()=>{
     setLoading(true);
     try{
-      const r=await fetch(`${SB}/rest/v1/Articles?order=created_at.desc&select=*`,{headers:H(token)});
+      const r=await fetch(`${SB}/rest/v1/Articles?order=created_at.desc&select=*`,{headers:HR(token)});
       const d=await r.json();
       if(Array.isArray(d))setArticles(d);
     }catch(e){console.error(e)}
@@ -5736,11 +5739,11 @@ function Adm({token,posts,signals,onR}){
     document.addEventListener("visibilitychange",onVis);
     return()=>{stop();document.removeEventListener("visibilitychange",onVis)};
   },[token,tb,admNoti]);
-  useEffect(()=>{if(tb==="users"){const loadUsers=()=>{api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};loadUsers();let ui=null;const startUi=()=>{if(ui==null)ui=setInterval(loadUsers,10000)};const stopUi=()=>{if(ui!=null){clearInterval(ui);ui=null}};const onVisUi=()=>{if(document.hidden){stopUi()}else{loadUsers();startUi()}};if(!document.hidden)startUi();document.addEventListener("visibilitychange",onVisUi);fetch(`${SB}/rest/v1/Referrals?select=referrer_id,referred_id`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const counts={};d.forEach(r=>{counts[r.referrer_id]=(counts[r.referrer_id]||0)+1});setRefCounts(counts)}}).catch(()=>{});
+  useEffect(()=>{if(tb==="users"){const loadUsers=()=>{api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)})};loadUsers();let ui=null;const startUi=()=>{if(ui==null)ui=setInterval(loadUsers,10000)};const stopUi=()=>{if(ui!=null){clearInterval(ui);ui=null}};const onVisUi=()=>{if(document.hidden){stopUi()}else{loadUsers();startUi()}};if(!document.hidden)startUi();document.addEventListener("visibilitychange",onVisUi);fetch(`${SB}/rest/v1/Referrals?select=referrer_id,referred_id`,{headers:HR(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const counts={};d.forEach(r=>{counts[r.referrer_id]=(counts[r.referrer_id]||0)+1});setRefCounts(counts)}}).catch(()=>{});
   // Load last activity per user
-  fetch(`${SB}/rest/v1/ActivityLog?order=login_date.desc&select=user_id,login_date,created_at`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const act={};d.forEach(a=>{if(!act[a.user_id])act[a.user_id]=a.created_at||a.login_date});setUserActivity(act)}}).catch(()=>{});
+  fetch(`${SB}/rest/v1/ActivityLog?order=login_date.desc&select=user_id,login_date,created_at`,{headers:HR(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const act={};d.forEach(a=>{if(!act[a.user_id])act[a.user_id]=a.created_at||a.login_date});setUserActivity(act)}}).catch(()=>{});
   // Load latest approved IB request per user (for wallet display)
-  fetch(`${SB}/rest/v1/IBRequests?status=eq.approved&order=created_at.desc&select=user_id,wallet_number,amarkets_email,created_at`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const m={};d.forEach(r=>{if(!m[r.user_id])m[r.user_id]=r});setIbData(m)}}).catch(()=>{});
+  fetch(`${SB}/rest/v1/IBRequests?status=eq.approved&order=created_at.desc&select=user_id,wallet_number,amarkets_email,created_at`,{headers:HR(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const m={};d.forEach(r=>{if(!m[r.user_id])m[r.user_id]=r});setIbData(m)}}).catch(()=>{});
   return()=>{stopUi();document.removeEventListener("visibilitychange",onVisUi)}}},[tb,token]);
   useEffect(()=>{if(tb==="msg"){api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}},[tb,token]);
   const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrls=[];for(const img of msgImgs){const u=await api.img(img,token);if(u)imgUrls.push(u);else{setMs(t.uploadFailed);setLd(false);return}}const imgUrl=imgUrls.join(",");await api.add("Messages",{title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null},token);if(msgDtCats.length>0){await api.add("Posts",{title:msgTitle,description:msgBody,category:"daytrade",dt_category:msgDtCats.join(","),image_url:imgUrl||"",is_premium:msgTarget==="premium",likes:0},token)}setMs("Message sent!");noti.sendPushToAll(msgTitle,msgBody,token,msgPushTarget);setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImgs([]);setMsgPvs([]);setMsgDayTrade(false);setMsgDtCats([]);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
@@ -5763,7 +5766,7 @@ function Adm({token,posts,signals,onR}){
       setMs("IB activated!");setEditUserIB(null);setIbWallet("");setIbEmail("");
       api.getUsers(token).then(d=>{if(Array.isArray(d))setUsers(d)});
       // Refresh IB data map
-      fetch(`${SB}/rest/v1/IBRequests?status=eq.approved&order=created_at.desc&select=user_id,wallet_number,amarkets_email,created_at`,{headers:H(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const m={};d.forEach(r=>{if(!m[r.user_id])m[r.user_id]=r});setIbData(m)}}).catch(()=>{});
+      fetch(`${SB}/rest/v1/IBRequests?status=eq.approved&order=created_at.desc&select=user_id,wallet_number,amarkets_email,created_at`,{headers:HR(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const m={};d.forEach(r=>{if(!m[r.user_id])m[r.user_id]=r});setIbData(m)}}).catch(()=>{});
     }catch(e){setMs("Error: "+e.message)}
   };
   const revokeIB=async(uid)=>{
@@ -6316,7 +6319,7 @@ function AdminSupportChat({token}){
   // Load all conversations (grouped by user)
   const loadConvos=useCallback(async()=>{
     try{
-      const r=await fetch(`${SB}/rest/v1/SupportChats?select=user_id,message,sender,created_at&order=created_at.desc`,{headers:H(token)});
+      const r=await fetch(`${SB}/rest/v1/SupportChats?select=user_id,message,sender,created_at&order=created_at.desc`,{headers:HR(token)});
       const d=await r.json();
       if(Array.isArray(d)){
         const byUser={};
@@ -6328,7 +6331,7 @@ function AdminSupportChat({token}){
         });
         setConvos(Object.values(byUser).sort((a,b)=>new Date(b.lastTime)-new Date(a.lastTime)));
       }
-      const us=await fetch(`${SB}/rest/v1/Users?select=id,full_name,email,membership`,{headers:H(token)});
+      const us=await fetch(`${SB}/rest/v1/Users?select=id,full_name,email,membership`,{headers:HR(token)});
       const usData=await us.json();
       if(Array.isArray(usData)){const m={};usData.forEach(u=>m[u.id]=u);setUsers(m)}
     }catch(e){}
@@ -6670,7 +6673,7 @@ function AdminPolls({token}){
 
   const reload=async()=>{
     try{
-      const r=await fetch(`${SB}/rest/v1/Polls?order=created_at.desc`,{headers:H(token)});
+      const r=await fetch(`${SB}/rest/v1/Polls?order=created_at.desc`,{headers:HR(token)});
       const d=await r.json();
       if(Array.isArray(d))setPolls(d);
     }catch(e){}
@@ -6931,7 +6934,7 @@ function AdminAnnouncements({token}){
 
   const reload=async()=>{
     try{
-      const r=await fetch(`${SB}/rest/v1/Announcements?order=created_at.desc`,{headers:H(token)});
+      const r=await fetch(`${SB}/rest/v1/Announcements?order=created_at.desc`,{headers:HR(token)});
       const d=await r.json();
       if(Array.isArray(d))setItems(d);
     }catch(e){}
