@@ -4775,10 +4775,16 @@ function AdminReport({token,posts,signals}){
     const dk=theme==="dark";
     const imgPosts=filteredPosts.filter(p=>p.image_url);
     const imgs=imgPosts.map(p=>(p.image_url||"").split(",")[0]).filter(Boolean);
-    // Smart columns: fit ALL images in the grid area
-    const maxGridCells=100;
-    const totalImgs=Math.min(imgs.length,maxGridCells);
-    const cols=totalImgs<=4?2:totalImgs<=9?3:totalImgs<=16?4:totalImgs<=25?5:totalImgs<=36?6:totalImgs<=49?7:totalImgs<=64?8:totalImgs<=81?9:10;
+    // Show ALL images. Columns scale up for large sets so each thumbnail stays usable.
+    const totalImgs=imgs.length;
+    const cols=totalImgs<=4?2:totalImgs<=9?3:totalImgs<=16?4:totalImgs<=25?5:totalImgs<=36?6:totalImgs<=49?7:totalImgs<=64?8:totalImgs<=81?9:totalImgs<=100?10:totalImgs<=144?12:totalImgs<=225?15:totalImgs<=400?20:totalImgs<=625?25:totalImgs<=900?30:totalImgs<=1600?40:50;
+    const rows=Math.ceil(totalImgs/cols);
+    // Dynamic canvas height: base 1920 for header/stats/footer + ~thumbnail_size per row.
+    // Thumbnail size shrinks gracefully as cols grow (936px usable width / cols).
+    const thumbPx=Math.floor(936/cols);
+    const gridH=rows*(thumbPx+8); // +8 for gap
+    const bodyH=Math.max(1920,600+gridH+200); // 600 for header/stats, 200 for footer
+
     const fromStr=new Date(fromDate).toLocaleDateString("en",{month:"short",day:"numeric"});
     const toStr=new Date(toDate).toLocaleDateString("en",{month:"short",day:"numeric",year:"numeric"});
 
@@ -4818,11 +4824,11 @@ function AdminReport({token,posts,signals}){
     }
     statsHtml=statItems.map((s,i)=>`<div class="stat-box" style="animation-delay:${.8+i*.15}s"><div class="stat-val" style="color:${s.c}">${s.v}</div><div class="stat-lbl">${s.l}</div></div>`).join("");
 
-    const gridImgs=imgs.slice(0,cols*Math.ceil(totalImgs/cols)).map((url,i)=>`<div class="img-cell" style="animation-delay:${1.5+i*.03}s"><img src="${url}" crossorigin="anonymous"/></div>`).join("");
+    const gridImgs=imgs.map((url,i)=>`<div class="img-cell" style="animation-delay:${1.5+Math.min(i,60)*.03}s"><img src="${url}" crossorigin="anonymous" loading="lazy"/></div>`).join("");
 
     return`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{width:1080px;height:1920px;background:${C.bg};font-family:-apple-system,'SF Pro Display',system-ui,sans-serif;overflow:hidden;position:relative}
+body{width:1080px;height:${bodyH}px;background:${C.bg};font-family:-apple-system,'SF Pro Display',system-ui,sans-serif;overflow:hidden;position:relative}
 body::before{content:'';position:absolute;top:-120px;right:-80px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,${C.glow1},transparent);pointer-events:none;animation:orbFloat 8s ease-in-out infinite}
 body::after{content:'';position:absolute;bottom:-80px;left:-60px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,${C.glow2},transparent);pointer-events:none;animation:orbFloat 10s ease-in-out 2s infinite reverse}
 @keyframes orbFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-40px)}}
