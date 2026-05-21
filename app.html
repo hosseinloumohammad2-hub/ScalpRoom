@@ -208,7 +208,8 @@ select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;paddi
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script type="text/babel">
 const{useState,useEffect,useCallback,useRef,useMemo,createContext,useContext}=React;
 const SB="https://fjdjqaffoeixspcmxprw.supabase.co",SK="sb_publishable_7saR41SkI4TZs8K7C9lVxQ_Up8SyaYu";
@@ -4755,6 +4756,7 @@ function AdminReport({token,posts,signals}){
   const[fromDate,setFromDate]=useState(()=>{const d=new Date();d.setDate(d.getDate()-7);return d.toISOString().slice(0,10)});
   const[toDate,setToDate]=useState(()=>new Date().toISOString().slice(0,10));
   const[generating,setGenerating]=useState(false);
+  const[genStatus,setGenStatus]=useState("");
   const[showSigs,setShowSigs]=useState(true);
   const[previewHtml,setPreviewHtml]=useState(null);
 
@@ -4928,63 +4930,178 @@ ${pagesHtml||`<div class="page"><div style="padding:72px;display:flex;align-item
   const preview=()=>{setPreviewHtml(generateHtml(reportTheme))};
 
   const generatePdf=async()=>{
-    if(!window.html2pdf){alert(lang==="fa"?"کتابخانه PDF لود نشده. اتصال اینترنت را چک کنید و دوباره امتحان کنید.":"PDF library not loaded. Check your connection and try again.");return}
+    if(!window.html2canvas||!window.jspdf){alert(lang==="fa"?"کتابخانه PDF لود نشده. اتصال اینترنت را چک کنید و دوباره امتحان کنید.":"PDF library not loaded. Check your connection and try again.");return}
     setGenerating(true);
+    setGenStatus(lang==="fa"?"در حال آماده‌سازی...":"Preparing...");
     try{
-      // Build the HTML report
-      const html=generateHtml(reportTheme);
-      // Render it inside a hidden iframe-like container so html2pdf can capture each .page
-      const container=document.createElement("div");
-      container.style.cssText="position:fixed;left:-99999px;top:0;width:1080px;background:#000";
-      container.innerHTML=html;
-      // We only want the body content (pages); strip the outer html/head wrappers
-      const bodyMatch=html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-      if(bodyMatch)container.innerHTML=bodyMatch[1];
-      // Inject the report's style tag into the document head so .page/.grid/.img-cell classes work
-      const styleMatch=html.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
-      let injectedStyle=null;
-      if(styleMatch){
-        injectedStyle=document.createElement("style");
-        injectedStyle.setAttribute("data-report-pdf","1");
-        injectedStyle.textContent=styleMatch[1];
-        document.head.appendChild(injectedStyle);
-      }
-      document.body.appendChild(container);
+      const imgPosts=filteredPosts.filter(p=>p.image_url);
+      const allImgs=imgPosts.map(p=>(p.image_url||"").split(",")[0]).filter(Boolean);
+      if(allImgs.length===0){alert(lang==="fa"?"تحلیلی برای گزارش وجود ندارد":"No analyses to report");setGenerating(false);setGenStatus("");return}
 
-      // Wait for all images inside the container to load (so PDF capture sees them)
-      const imgEls=Array.from(container.querySelectorAll("img"));
-      await Promise.all(imgEls.map(img=>{
-        if(img.complete&&img.naturalHeight!==0)return Promise.resolve();
-        return new Promise(res=>{
-          const done=()=>res();
-          img.addEventListener("load",done,{once:true});
-          img.addEventListener("error",done,{once:true});
-          // Safety timeout per image
-          setTimeout(done,8000);
-        });
-      }));
+      const PER_PAGE=100;
+      const totalPages=Math.ceil(allImgs.length/PER_PAGE);
+      const dk=reportTheme==="dark";
+      const bg=dk?"#0a0a0c":"#f5f5f7";
+      const bg2=dk?"#1c1c1e":"#ffffff";
+      const tx=dk?"#ffffff":"#1d1d1f";
+      const mu=dk?"#71717a":"#86868b";
+      const dm=dk?"#52525b":"#aeaeb2";
+      const brd=dk?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)";
+      const R="#ff453a",G="#30d158",B="#0a84ff",Y="#ffd60a";
 
-      // Configure html2pdf: each .page becomes one PDF page (1080×1920 px → portrait)
-      const fname=`fxscalproom_report_${fromDate}_${toDate}.pdf`;
-      const opt={
-        margin:0,
-        filename:fname,
-        image:{type:"jpeg",quality:.92},
-        html2canvas:{scale:1.5,useCORS:true,allowTaint:true,backgroundColor:reportTheme==="dark"?"#0a0a0c":"#f5f5f7",logging:false},
-        jsPDF:{unit:"px",format:[1080,1920],orientation:"portrait",hotfixes:["px_scaling"]},
-        pagebreak:{mode:["css"],before:".page:not(:first-child)"}
+      // Title
+      const dayDiff=Math.round((new Date(toDate)-new Date(fromDate))/(1000*60*60*24));
+      let periodTitle="Performance Report";
+      if(dayDiff===0)periodTitle=lang==="fa"?"گزارش امروز":"Today's Report";
+      else if(dayDiff<=1)periodTitle=lang==="fa"?"گزارش روزانه":"Daily Report";
+      else if(dayDiff<=7)periodTitle=lang==="fa"?"گزارش هفتگی":"Weekly Report";
+      else if(dayDiff<=14)periodTitle=lang==="fa"?"گزارش دو هفته":"Bi-Weekly Report";
+      else if(dayDiff<=31)periodTitle=lang==="fa"?"گزارش ماهانه":"Monthly Report";
+      else if(dayDiff<=93)periodTitle=lang==="fa"?"گزارش فصلی":"Quarterly Report";
+      else periodTitle=lang==="fa"?"گزارش عملکرد":"Performance Report";
+      const fromStr=new Date(fromDate).toLocaleDateString("en",{month:"short",day:"numeric"});
+      const toStr=new Date(toDate).toLocaleDateString("en",{month:"short",day:"numeric",year:"numeric"});
+
+      // Proxy image URLs through wsrv.nl. This solves CORS (wsrv sends Access-Control-Allow-Origin:*)
+      // AND shrinks each chart to ~120px so memory stays manageable for 1000+ images.
+      const proxify=(url)=>{
+        if(!url||typeof url!=="string")return url;
+        if(url.startsWith("data:"))return url;
+        if(url.startsWith("https://wsrv.nl"))return`${url}&_pdf=1`;
+        const clean=url.replace(/^https?:\/\//,"");
+        return`https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=240&h=240&fit=cover&q=80&output=jpg`;
       };
 
-      await window.html2pdf().set(opt).from(container).save();
+      // Build one page DOM (1080×1920) and capture it.
+      // Single styled container reused across pages — much faster than rebuilding.
+      const makePageDom=(pageIdx,pageImgs)=>{
+        const isFirst=pageIdx===0;
+        const isLast=pageIdx===totalPages-1;
+        const pageLabel=lang==="fa"?`صفحه ${pageIdx+1} از ${totalPages}`:`Page ${pageIdx+1} of ${totalPages}`;
+        const wrap=document.createElement("div");
+        wrap.style.cssText=`width:1080px;height:1920px;background:${bg};font-family:-apple-system,'SF Pro Display',system-ui,sans-serif;position:relative;overflow:hidden;color:${tx};box-sizing:border-box;padding:${isFirst?"72px":"56px"} 72px 50px;display:flex;flex-direction:column`;
 
-      // Cleanup
-      document.body.removeChild(container);
-      if(injectedStyle)document.head.removeChild(injectedStyle);
+        // Header
+        const headerHtml=isFirst?`
+          <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,${R},${Y},transparent);margin-bottom:24px"></div>
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div style="width:52px;height:52px;border-radius:14px;background:#000;border:1px solid ${dk?"rgba(255,255,255,.1)":"rgba(0,0,0,.1)"};display:flex;align-items:center;justify-content:center">
+              <span style="color:#fff;font-size:18px;font-weight:700">Fx</span><span style="color:#ff453a;font-size:18px;font-weight:700">.</span>
+            </div>
+            <div>
+              <div style="font-size:30px;font-weight:700;color:${tx};letter-spacing:-.5px">Fxscalproom<span style="color:${R}">.</span></div>
+              <div style="font-size:11px;color:${dm};letter-spacing:1.5px;margin-top:2px">PROFESSIONAL TRADING SIGNALS</div>
+            </div>
+          </div>
+          <div style="font-size:16px;color:${dm};margin:20px 0 8px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${G};margin-right:6px;vertical-align:middle"></span>${fromStr} — ${toStr}${totalPages>1?` · ${pageLabel}`:""}</div>
+          <div style="font-size:${dayDiff===0?56:50}px;font-weight:800;color:${tx};letter-spacing:-1.5px;line-height:1.05;margin-bottom:32px">${periodTitle}</div>
+          <div style="display:grid;grid-template-columns:repeat(${hasSigs?5:1},1fr);gap:12px;margin-bottom:32px">
+            <div style="text-align:center;padding:16px 8px;border-radius:16px;background:${dk?"rgba(255,255,255,.04)":"rgba(0,0,0,.03)"};border:1px solid ${brd}"><div style="font-family:'SF Mono',monospace;font-size:${hasSigs?28:40}px;font-weight:700;color:${B}">${filteredPosts.length}</div><div style="font-size:11px;color:${mu};margin-top:6px;font-weight:600">${lang==="fa"?"تحلیل":"Analyses"}</div></div>
+            ${hasSigs?`
+            <div style="text-align:center;padding:16px 8px;border-radius:16px;background:${dk?"rgba(255,255,255,.04)":"rgba(0,0,0,.03)"};border:1px solid ${brd}"><div style="font-family:'SF Mono',monospace;font-size:28px;font-weight:700;color:${G}">${filteredSigs.length}</div><div style="font-size:11px;color:${mu};margin-top:6px;font-weight:600">${lang==="fa"?"سیگنال":"Signals"}</div></div>
+            <div style="text-align:center;padding:16px 8px;border-radius:16px;background:${dk?"rgba(255,255,255,.04)":"rgba(0,0,0,.03)"};border:1px solid ${brd}"><div style="font-family:'SF Mono',monospace;font-size:28px;font-weight:700;color:${winRate>=60?G:Y}">${winRate}%</div><div style="font-size:11px;color:${mu};margin-top:6px;font-weight:600">Win Rate</div></div>
+            <div style="text-align:center;padding:16px 8px;border-radius:16px;background:${dk?"rgba(255,255,255,.04)":"rgba(0,0,0,.03)"};border:1px solid ${brd}"><div style="font-family:'SF Mono',monospace;font-size:28px;font-weight:700;color:${G}">${tpHit}</div><div style="font-size:11px;color:${mu};margin-top:6px;font-weight:600">TP Hit</div></div>
+            <div style="text-align:center;padding:16px 8px;border-radius:16px;background:${dk?"rgba(255,255,255,.04)":"rgba(0,0,0,.03)"};border:1px solid ${brd}"><div style="font-family:'SF Mono',monospace;font-size:28px;font-weight:700;color:${R}">${slHit}</div><div style="font-size:11px;color:${mu};margin-top:6px;font-weight:600">SL Hit</div></div>
+            `:""}
+          </div>
+        `:`
+          <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,${R},${Y},transparent)"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin:18px 0 24px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:40px;height:40px;border-radius:10px;background:#000;border:1px solid ${dk?"rgba(255,255,255,.1)":"rgba(0,0,0,.1)"};display:flex;align-items:center;justify-content:center">
+                <span style="color:#fff;font-size:14px;font-weight:700">Fx</span><span style="color:#ff453a;font-size:14px;font-weight:700">.</span>
+              </div>
+              <div>
+                <div style="font-size:20px;font-weight:700;color:${tx};letter-spacing:-.3px">${periodTitle}</div>
+                <div style="font-size:11px;color:${dm};margin-top:2px">${fromStr} — ${toStr}</div>
+              </div>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:${mu};padding:6px 14px;border-radius:20px;background:${dk?"rgba(255,255,255,.04)":"rgba(0,0,0,.03)"};border:1px solid ${brd}">${pageLabel}</div>
+          </div>
+        `;
+
+        // 10×10 grid of images
+        const cellsHtml=pageImgs.map(url=>`<div style="border-radius:10px;overflow:hidden;aspect-ratio:1;background:${bg2};border:1px solid ${brd}"><img src="${proxify(url)}" crossorigin="anonymous" style="width:100%;height:100%;object-fit:cover;display:block"/></div>`).join("");
+        const gridHtml=`<div style="flex:1;display:grid;grid-template-columns:repeat(10,1fr);grid-auto-rows:1fr;gap:8px;align-content:start;margin-bottom:20px">${cellsHtml}</div>`;
+
+        // Footer
+        const footerHtml=isLast?`
+          <div style="text-align:center;padding-top:20px;border-top:1px solid ${brd}">
+            <div style="font-size:18px;font-weight:700;color:${dk?"rgba(255,255,255,.2)":"rgba(0,0,0,.15)"}">Fxscalproom<span style="color:${dk?"rgba(255,69,58,.3)":"rgba(255,59,48,.25)"}">.</span></div>
+            <div style="font-size:11px;color:${dk?"rgba(255,255,255,.12)":"rgba(0,0,0,.1)"};margin-top:4px">t.me/FxScalpRoom · fxscalproom.com</div>
+          </div>
+        `:`<div style="text-align:center;padding-top:20px;font-size:11px;color:${dk?"rgba(255,255,255,.12)":"rgba(0,0,0,.1)"};font-weight:600">${pageLabel}</div>`;
+
+        wrap.innerHTML=headerHtml+gridHtml+footerHtml;
+        return wrap;
+      };
+
+      // Hidden render area
+      const stage=document.createElement("div");
+      stage.style.cssText="position:fixed;left:0;top:0;z-index:-1;opacity:0;pointer-events:none";
+      document.body.appendChild(stage);
+
+      const{jsPDF}=window.jspdf;
+      const pdf=new jsPDF({unit:"px",format:[1080,1920],orientation:"portrait",hotfixes:["px_scaling"],compress:true});
+
+      for(let p=0;p<totalPages;p++){
+        setGenStatus(lang==="fa"?`صفحه ${p+1} از ${totalPages}...`:`Page ${p+1} of ${totalPages}...`);
+        const pageImgs=allImgs.slice(p*PER_PAGE,(p+1)*PER_PAGE);
+        const pageDom=makePageDom(p,pageImgs);
+        stage.innerHTML="";
+        stage.appendChild(pageDom);
+
+        // Wait for all images on this page to load
+        const imgs=Array.from(pageDom.querySelectorAll("img"));
+        await Promise.all(imgs.map(img=>{
+          if(img.complete&&img.naturalHeight!==0)return Promise.resolve();
+          return new Promise(res=>{
+            const done=()=>res();
+            img.addEventListener("load",done,{once:true});
+            img.addEventListener("error",done,{once:true});
+            setTimeout(done,10000);
+          });
+        }));
+        // Small extra delay for layout settle
+        await new Promise(r=>setTimeout(r,150));
+
+        // Capture page → canvas
+        const canvas=await window.html2canvas(pageDom,{
+          width:1080,height:1920,scale:1,useCORS:true,allowTaint:false,backgroundColor:bg,logging:false,imageTimeout:15000
+        });
+        const imgData=canvas.toDataURL("image/jpeg",.88);
+        if(p>0)pdf.addPage([1080,1920],"portrait");
+        pdf.addImage(imgData,"JPEG",0,0,1080,1920,undefined,"FAST");
+      }
+
+      setGenStatus(lang==="fa"?"در حال ذخیره...":"Saving...");
+      const fname=`fxscalproom_report_${fromDate}_${toDate}.pdf`;
+      const pdfBlob=pdf.output("blob");
+      // Try Web Share first (best on iOS — opens native share sheet)
+      if(navigator.share&&navigator.canShare){
+        try{
+          const file=new File([pdfBlob],fname,{type:"application/pdf"});
+          if(navigator.canShare({files:[file]})){
+            await navigator.share({files:[file],title:"Fxscalproom Report"});
+            document.body.removeChild(stage);
+            setGenerating(false);setGenStatus("");
+            return;
+          }
+        }catch(e){/* fall through to download */}
+      }
+      const a=document.createElement("a");
+      a.href=URL.createObjectURL(pdfBlob);
+      a.download=fname;
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+
+      document.body.removeChild(stage);
     }catch(e){
       console.error("PDF generation failed:",e);
       alert(lang==="fa"?`خطا در تولید PDF: ${e.message||e}`:`PDF generation failed: ${e.message||e}`);
     }
     setGenerating(false);
+    setGenStatus("");
   };
 
   return(<div>
@@ -5044,7 +5161,7 @@ ${pagesHtml||`<div class="page"><div style="padding:72px;display:flex;align-item
       </button>
     </div>
     <button className="bt" style={{background:"var(--G)",opacity:generating?.5:1,width:"100%",marginBottom:8}} onClick={generatePdf} disabled={generating}>
-      {generating?(lang==="fa"?"در حال تولید PDF...":"Generating PDF..."):(lang==="fa"?"📄 دانلود PDF":"📄 Download PDF")}
+      {generating?(genStatus||(lang==="fa"?"در حال تولید PDF...":"Generating PDF...")):(lang==="fa"?"📄 دانلود PDF":"📄 Download PDF")}
     </button>
     <div style={{padding:10,borderRadius:10,background:"color-mix(in srgb,var(--Y) 6%,transparent)",border:"1px solid color-mix(in srgb,var(--Y) 12%,transparent)",marginBottom:12}}>
       <div style={{fontSize:11,color:"var(--Y)",fontWeight:600,marginBottom:4}}>💡 {lang==="fa"?"نکته برای استوری ویدیویی:":"Tip for video stories:"}</div>
