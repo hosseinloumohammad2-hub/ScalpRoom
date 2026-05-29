@@ -5924,7 +5924,7 @@ function Adm({token,posts,signals,onR}){
   const[manageVisible,setManageVisible]=useState(30);
   useEffect(()=>{setManageVisible(30)},[manageSub,manageSearch]);
   const[refCounts,setRefCounts]=useState({});
-  const[msgTitle,setMsgTitle]=useState(""),[msgBody,setMsgBody]=useState(""),[msgTarget,setMsgTarget]=useState("all"),[allMsgs,setAllMsgs]=useState([]),[msgImgs,setMsgImgs]=useState([]),[msgPvs,setMsgPvs]=useState([]),[msgDayTrade,setMsgDayTrade]=useState(false),[msgDtCats,setMsgDtCats]=useState([]),[editMsgId,setEditMsgId]=useState(null),[editMsgTitle,setEditMsgTitle]=useState(""),[editMsgBody,setEditMsgBody]=useState(""),[editMsgTarget,setEditMsgTarget]=useState("all"),[msgCustomDate,setMsgCustomDate]=useState(false),[msgDate,setMsgDate]=useState("");  const noti=useNotifications(null,token);
+  const[msgTitle,setMsgTitle]=useState(""),[msgBody,setMsgBody]=useState(""),[msgTarget,setMsgTarget]=useState("all"),[allMsgs,setAllMsgs]=useState([]),[msgImgs,setMsgImgs]=useState([]),[msgPvs,setMsgPvs]=useState([]),[msgDayTrade,setMsgDayTrade]=useState(false),[msgDtCats,setMsgDtCats]=useState([]),[editMsgId,setEditMsgId]=useState(null),[editMsgTitle,setEditMsgTitle]=useState(""),[editMsgBody,setEditMsgBody]=useState(""),[editMsgTarget,setEditMsgTarget]=useState("all"),[msgHoursAgo,setMsgHoursAgo]=useState(null);  const noti=useNotifications(null,token);
   const toggleMsgDtCat=(k)=>setMsgDtCats(prev=>prev.includes(k)?prev.filter(x=>x!==k):[...prev,k]);
   const[userActivity,setUserActivity]=useState({});
   const[ibData,setIbData]=useState({});
@@ -5980,7 +5980,7 @@ function Adm({token,posts,signals,onR}){
   fetch(`${SB}/rest/v1/IBRequests?status=eq.approved&order=created_at.desc&select=user_id,wallet_number,amarkets_email,created_at`,{headers:HR(token)}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){const m={};d.forEach(r=>{if(!m[r.user_id])m[r.user_id]=r});setIbData(m)}}).catch(()=>{});
   return()=>{stopUi();document.removeEventListener("visibilitychange",onVisUi)}}},[tb,token]);
   useEffect(()=>{if(tb==="msg"){api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}},[tb,token]);
-  const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrls=[];for(const img of msgImgs){const u=await api.img(img,token);if(u)imgUrls.push(u);else{setMs(t.uploadFailed);setLd(false);return}}const imgUrl=imgUrls.join(",");const customIso=(msgCustomDate&&msgDate)?new Date(msgDate).toISOString():null;const msgData={title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null};if(customIso)msgData.created_at=customIso;await api.add("Messages",msgData,token);if(msgDtCats.length>0){const postData={title:msgTitle,description:msgBody,category:"daytrade",dt_category:msgDtCats.join(","),image_url:imgUrl||"",is_premium:msgTarget==="premium",likes:0};if(customIso)postData.created_at=customIso;await api.add("Posts",postData,token)}setMs("Message sent!");noti.sendPushToAll(msgTitle,msgBody,token,msgPushTarget);setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImgs([]);setMsgPvs([]);setMsgDayTrade(false);setMsgDtCats([]);setMsgCustomDate(false);setMsgDate("");onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
+  const pubMsg=async()=>{if(!msgTitle||!msgBody){setMs("Fill title and body");return}setLd(true);try{let imgUrls=[];for(const img of msgImgs){const u=await api.img(img,token);if(u)imgUrls.push(u);else{setMs(t.uploadFailed);setLd(false);return}}const imgUrl=imgUrls.join(",");const customIso=msgHoursAgo?new Date(Date.now()-msgHoursAgo*3600000).toISOString():new Date().toISOString();const msgData={title:msgTitle,body:msgBody,target:msgTarget,image_url:imgUrl||null,created_at:customIso};await api.add("Messages",msgData,token);if(msgDtCats.length>0){const postData={title:msgTitle,description:msgBody,category:"daytrade",dt_category:msgDtCats.join(","),image_url:imgUrl||"",is_premium:msgTarget==="premium",likes:0,created_at:customIso};await api.add("Posts",postData,token)}setMs("Message sent!");noti.sendPushToAll(msgTitle,msgBody,token,msgPushTarget);setMsgTitle("");setMsgBody("");setMsgTarget("all");setMsgImgs([]);setMsgPvs([]);setMsgDayTrade(false);setMsgDtCats([]);setMsgHoursAgo(null);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})}catch(e){setMs(e.message)}setLd(false)};
   const delMsg=async(id)=>{if(!confirm("Delete?"))return;await api.del("Messages",id,token);onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const saveMsg=async(id)=>{if(!editMsgTitle||!editMsgBody)return;await api.patch("Messages",id,{title:editMsgTitle,body:editMsgBody,target:editMsgTarget},token);setEditMsgId(null);setMs("Message updated!");onR();api.get("Messages",token).then(d=>{if(Array.isArray(d))setAllMsgs(d)})};
   const pub=async()=>{if(!ti){setMs(t.enterTitle);return}setLd(true);setMs("");try{let u="";if(fi2){u=await api.img(fi2,token);if(!u){setMs(t.uploadFailed);setLd(false);return}}const data={title:ti,description:de,category:ca,image_url:u,is_premium:pr,show_on_website:showOnWeb,likes:0};if(customDate&&postDate)data.created_at=new Date(postDate).toISOString();await api.add("Posts",data,token);setMs(t.published);setTi("");setDe("");setFi(null);setPv(null);setCustomDate(false);setPostDate("");setShowOnWeb(false);onR();noti.notify("Fxscalproom","New analysis: "+ti);noti.sendPushToAll("Fxscalproom","New analysis: "+ti,token,postPushTarget)}catch(e){setMs(e.message)}setLd(false)};
@@ -6398,14 +6398,23 @@ function Adm({token,posts,signals,onR}){
           </div>
         )}
       </div>
-      <div onClick={()=>setMsgCustomDate(!msgCustomDate)} className="cd" style={{padding:12,marginBottom:8,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <span style={{fontSize:13}}>{lang==="fa"?"ساعت/تاریخ دلخواه":"Custom Time"}</span>
-        <div style={{width:40,height:22,borderRadius:11,background:msgCustomDate?"var(--B)":"var(--brd2)",position:"relative",transition:".2s"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff",position:"absolute",top:2,left:msgCustomDate?20:2,transition:".2s"}}/></div>
+      <div className="cd" style={{padding:12,marginBottom:8}}>
+        <div style={{fontSize:13,fontWeight:600,marginBottom:8}}>{lang==="fa"?"⏰ زمان انتشار":"⏰ Publish Time"}</div>
+        <div style={{display:"flex",gap:6}}>
+          {[{h:1,fa:"۱ ساعت پیش",en:"1h ago"},{h:2,fa:"۲ ساعت پیش",en:"2h ago"},{h:3,fa:"۳ ساعت پیش",en:"3h ago"}].map(o=>{
+            const sel=msgHoursAgo===o.h;
+            return<div key={o.h} onClick={()=>setMsgHoursAgo(sel?null:o.h)} style={{flex:1,padding:9,borderRadius:8,textAlign:"center",cursor:"pointer",fontSize:11,fontWeight:700,
+              background:sel?"color-mix(in srgb,var(--B) 12%,transparent)":"transparent",
+              border:`1px solid ${sel?"color-mix(in srgb,var(--B) 30%,transparent)":"var(--brd)"}`,
+              color:sel?"var(--B)":"var(--mu)"
+            }}>{sel?"✓ ":""}{lang==="fa"?o.fa:o.en}</div>
+          })}
+        </div>
+        <div style={{fontSize:10,color:"var(--dm)",marginTop:6,textAlign:"center"}}>{msgHoursAgo?(lang==="fa"?"دوباره بزن تا لغو بشه":"Tap again to clear"):(lang==="fa"?"انتخاب نشده — زمان حال":"None selected — current time")}</div>
       </div>
-      {msgCustomDate&&<input className="ip" type="datetime-local" value={msgDate} onChange={e=>setMsgDate(e.target.value)}/>}
       <button className="bt" style={{background:"var(--B)",opacity:ld?.5:1}} onClick={pubMsg} disabled={ld}>{ld?"...":(lang==="fa"?"ارسال پیام":"Send Message")}</button>
       <div style={{fontSize:13,fontWeight:600,marginTop:16,marginBottom:8}}>{lang==="fa"?"پیام‌های قبلی":"Previous Messages"} ({allMsgs.length})</div>
-      {allMsgs.map(m=><div key={m.id} className="cd" style={{padding:10,marginBottom:4}}>
+      {[...allMsgs].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).map(m=><div key={m.id} className="cd" style={{padding:10,marginBottom:4}}>
         {editMsgId===m.id?<div>
           <input className="ip" value={editMsgTitle} onChange={e=>setEditMsgTitle(e.target.value)} placeholder={lang==="fa"?"عنوان":"Title"}/>
           <textarea value={editMsgBody} onChange={e=>setEditMsgBody(e.target.value)} rows={3} placeholder={lang==="fa"?"متن":"Body"}/>
