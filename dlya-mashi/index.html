@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="tr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Rusça Öğreniyorum 🇷🇺</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Caveat:wght@600;700&display=swap');
+
+:root{
+  --bg:#0f1117; --bg2:#171a24; --card:#1d2130; --card2:#262b3d;
+  --ink:#f3f4f8; --mut:#9aa3bd; --dim:#616a85;
+  --acc:#ff4d6d; --acc2:#ffc24b; --ok:#3ddc97; --ru:#6c8cff;
+  --line:rgba(255,255,255,.08); --glow:0 10px 44px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Manrope',system-ui,sans-serif;
+  background:radial-gradient(1200px 600px at 85% -12%,#23284a 0%,transparent 55%),
+             radial-gradient(900px 520px at -12% 112%,#3a1830 0%,transparent 52%),
+             var(--bg);
+  color:var(--ink);min-height:100vh;overflow-x:hidden;
+}
+.wrap{max-width:780px;margin:0 auto;padding:16px 16px 120px}
+
+/* Maria banner */
+.maria{position:relative;overflow:hidden;border-radius:24px;margin-bottom:20px;
+  background:linear-gradient(135deg,#ff4d6d 0%,#b13a6e 48%,#6c8cff 120%);
+  padding:24px 22px;box-shadow:var(--glow)}
+.maria::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(420px 200px at 90% -30%,rgba(255,255,255,.28),transparent 60%)}
+.maria .hearts{position:absolute;right:14px;top:10px;font-size:30px;opacity:.55;transform:rotate(12deg)}
+.maria .small{position:relative;color:rgba(255,255,255,.85);font-weight:700;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px}
+.maria h2{position:relative;color:#fff;font-size:24px;font-weight:800;line-height:1.32;margin-bottom:10px}
+.maria h2 .nm{font-family:'Caveat',cursive;font-size:38px;font-weight:700;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.25)}
+.maria p{position:relative;color:rgba(255,255,255,.95);font-size:14.5px;line-height:1.6;font-weight:500}
+.maria .sign{position:relative;margin-top:12px;font-family:'Caveat',cursive;font-size:24px;color:#fff;font-weight:700}
+
+/* Header */
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .dot{width:13px;height:13px;border-radius:50%;background:var(--acc);box-shadow:0 0 16px var(--acc)}
+.brand h1{font-size:18px;font-weight:800}
+.brand small{display:block;color:var(--mut);font-weight:500;font-size:11.5px;margin-top:2px}
+.streak{background:linear-gradient(135deg,var(--acc2),var(--acc));color:#1a1020;font-weight:800;
+  padding:7px 13px;border-radius:14px;font-size:13px;display:flex;align-items:center;gap:6px;box-shadow:var(--glow)}
+
+/* Stat strip */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 10px;text-align:center}
+.stat b{font-size:21px;font-weight:800;display:block;background:linear-gradient(135deg,#fff,var(--mut));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.stat span{font-size:11.5px;color:var(--mut)}
+
+/* Tabs */
+.tabs{display:flex;gap:7px;background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:6px;margin-bottom:18px;position:sticky;top:10px;z-index:40;backdrop-filter:blur(8px)}
+.tab{flex:1;border:0;background:transparent;color:var(--mut);font-family:inherit;font-weight:700;font-size:13px;
+  padding:11px 4px;border-radius:11px;cursor:pointer;transition:.18s;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tab svg{width:19px;height:19px}
+.tab.on{background:linear-gradient(135deg,var(--card2),var(--card));color:var(--ink);box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.tab.on svg{stroke:var(--acc)}
+
+.view{display:none;animation:fade .3s ease}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.search{width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;color:var(--ink);
+  font-family:inherit;font-size:15px;padding:14px 16px;margin-bottom:16px;outline:none}
+.search:focus{border-color:var(--ru)}
+.search::placeholder{color:var(--dim)}
+.cats{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.cat{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 15px;cursor:pointer;
+  transition:.18s;position:relative;overflow:hidden}
+.cat:active{transform:scale(.97)}
+.cat::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,var(--acc) 0%,transparent 60%);opacity:0;transition:.2s}
+.cat:hover::after{opacity:.07}
+.cat .ic{font-size:24px;margin-bottom:9px}
+.cat h3{font-size:14px;font-weight:700;line-height:1.4;margin-bottom:5px}
+.cat .n{font-size:11.5px;color:var(--mut);font-weight:600}
+.cat .bar{height:4px;background:var(--bg2);border-radius:4px;margin-top:9px;overflow:hidden}
+.cat .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),var(--ru));border-radius:4px;transition:.4s}
+
+.back{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);color:var(--ink);
+  font-family:inherit;font-weight:700;font-size:14px;padding:11px 16px;border-radius:13px;cursor:pointer;margin-bottom:14px}
+.word{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px 17px;margin-bottom:10px;
+  display:flex;align-items:center;gap:12px}
+.word .ru{font-size:19px;font-weight:700;color:var(--ru);flex:1}
+.word .meta{flex:1.2;text-align:right}
+.word .tr{font-size:14px;color:var(--acc2);font-weight:600;margin-bottom:3px}
+.word .fa{font-size:14px;color:var(--ink)}
+.spk{background:var(--bg2);border:1px solid var(--line);border-radius:50%;width:40px;height:40px;flex-shrink:0;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.spk:active{transform:scale(.88);background:var(--ru)}
+.spk svg{width:19px;height:19px;stroke:var(--mut)}
+
+.fc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;color:var(--mut);font-size:13px;font-weight:600}
+.flash{perspective:1400px;height:340px;margin-bottom:18px}
+.fc-inner{position:relative;width:100%;height:100%;transition:transform .55s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d;cursor:pointer}
+.fc-inner.flip{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:26px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:26px;text-align:center;box-shadow:var(--glow)}
+.fc-front{background:linear-gradient(150deg,var(--card2),var(--card));border:1px solid var(--line)}
+.fc-back{background:linear-gradient(150deg,#2c1f3f,#1d2540);border:1px solid var(--line);transform:rotateY(180deg)}
+.fc-front .big{font-size:42px;font-weight:800;color:var(--ru);margin-bottom:14px;line-height:1.2}
+.fc-front .hint{color:var(--dim);font-size:13px}
+.fc-back .tr{font-size:24px;color:var(--acc2);font-weight:700;margin-bottom:14px}
+.fc-back .fa{font-size:27px;font-weight:800;margin-bottom:10px}
+.fc-back .ru2{font-size:17px;color:var(--ru)}
+.fc-spk{margin-top:18px;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:30px;
+  padding:9px 18px;color:var(--ink);font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:7px}
+.srs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.srs button{border:0;font-family:inherit;font-weight:800;font-size:14px;padding:15px 6px;border-radius:15px;cursor:pointer;color:#11151f;transition:.15s;display:flex;flex-direction:column;gap:3px;align-items:center}
+.srs button small{font-size:10.5px;opacity:.7;font-weight:600}
+.srs button:active{transform:scale(.95)}
+.s-bad{background:linear-gradient(135deg,#ff8a8a,var(--acc))}
+.s-ok{background:linear-gradient(135deg,#ffd591,var(--acc2))}
+.s-good{background:linear-gradient(135deg,#7bedb6,var(--ok))}
+.fc-pick{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:16px}
+.fc-pick button{background:var(--card);border:1px solid var(--line);color:var(--mut);font-family:inherit;font-weight:600;
+  font-size:12.5px;padding:8px 13px;border-radius:11px;cursor:pointer}
+.fc-pick button.on{background:var(--ru);color:#fff;border-color:var(--ru)}
+
+.q-card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:26px 20px;text-align:center;margin-bottom:16px;box-shadow:var(--glow)}
+.q-card .ask{font-size:13px;color:var(--mut);margin-bottom:12px}
+.q-card .word-ru{font-size:38px;font-weight:800;color:var(--ru);margin-bottom:6px}
+.q-card .word-tr{font-size:16px;color:var(--acc2);font-weight:600}
+.opts{display:grid;gap:11px}
+.opt{background:var(--card);border:1.5px solid var(--line);color:var(--ink);font-family:inherit;font-weight:700;
+  font-size:16px;padding:16px;border-radius:15px;cursor:pointer;transition:.15s;text-align:center}
+.opt:active{transform:scale(.98)}
+.opt.correct{background:rgba(61,220,151,.18);border-color:var(--ok);color:var(--ok)}
+.opt.wrong{background:rgba(255,77,109,.18);border-color:var(--acc);color:var(--acc)}
+.opt:disabled{cursor:default}
+.q-next{width:100%;margin-top:16px;background:linear-gradient(135deg,var(--ru),#8aa6ff);border:0;color:#fff;
+  font-family:inherit;font-weight:800;font-size:16px;padding:16px;border-radius:16px;cursor:pointer;opacity:0;pointer-events:none;transition:.2s}
+.q-next.show{opacity:1;pointer-events:auto}
+.q-score{display:flex;justify-content:center;gap:24px;margin-bottom:16px}
+.q-score div{text-align:center}
+.q-score b{font-size:22px;font-weight:800;display:block}
+.q-score span{font-size:11px;color:var(--mut)}
+.empty{text-align:center;color:var(--dim);padding:50px 20px;font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Banner for Maria (Russian) -->
+  <div class="maria">
+    <div class="hearts">💕</div>
+    <div class="small">только для тебя 🇷🇺</div>
+    <h2>Я сделал целое приложение, чтобы выучить русский и наконец-то нормально болтать с тобой, <span class="nm">Мария</span> 😄</h2>
+    <p>Так что если я вдруг скажу что-то с жутким акцентом — знай, я очень старался. Готовься: скоро буду говорить по-русски лучше, чем заказываю кофе по-турецки ☕️😎</p>
+    <div class="sign">— твой прилежный ученик</div>
+  </div>
+
+  <!-- Header -->
+  <div class="top">
+    <div class="brand">
+      <span class="dot"></span>
+      <div>
+        <h1>Rusça Öğreniyorum</h1>
+        <small>597 günlük kelime ve cümle · Türkçe + okunuş</small>
+      </div>
+    </div>
+    <div class="streak">🔥 <span id="streak">0</span></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b id="st-learned">0</b><span>öğrenildi</span></div>
+    <div class="stat"><b id="st-total">597</b><span>toplam kelime</span></div>
+    <div class="stat"><b id="st-due">0</b><span>tekrar</span></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-v="browse">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Konular
+    </button>
+    <button class="tab" data-v="flash">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>
+      Kartlar
+    </button>
+    <button class="tab" data-v="quiz">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Test
+    </button>
+  </div>
+
+  <!-- BROWSE -->
+  <div class="view on" id="v-browse">
+    <input class="search" id="search" placeholder="Ara… (Türkçe, Rusça veya okunuş)">
+    <div class="cats" id="cats"></div>
+    <div id="wordlist" style="display:none"></div>
+  </div>
+
+  <!-- FLASH -->
+  <div class="view" id="v-flash">
+    <div class="fc-pick" id="fc-pick"></div>
+    <div class="fc-top"><span id="fc-cat">Tüm kelimeler</span><span id="fc-prog">0 / 0</span></div>
+    <div class="flash"><div class="fc-inner" id="fc-inner">
+      <div class="fc-face fc-front">
+        <div class="big" id="fc-ru">—</div>
+        <div class="hint">anlamı için dokun</div>
+      </div>
+      <div class="fc-face fc-back">
+        <div class="tr" id="fc-tr"></div>
+        <div class="fa" id="fc-fa"></div>
+        <div class="ru2" id="fc-ru2"></div>
+        <button class="fc-spk" id="fc-spk">🔊 Rusça dinle</button>
+      </div>
+    </div></div>
+    <div class="srs">
+      <button class="s-bad" data-q="0">Tekrar<small>~1 dakika</small></button>
+      <button class="s-ok" data-q="1">Zordu<small>~10 dakika</small></button>
+      <button class="s-good" data-q="2">Biliyorum<small>yarın</small></button>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="view" id="v-quiz">
+    <div class="q-score">
+      <div><b id="q-correct" style="color:var(--ok)">0</b><span>doğru</span></div>
+      <div><b id="q-wrong" style="color:var(--acc)">0</b><span>yanlış</span></div>
+      <div><b id="q-pct">0%</b><span>başarı</span></div>
+    </div>
+    <div class="q-card">
+      <div class="ask">Bu kelimenin anlamı ne?</div>
+      <div class="word-ru" id="q-ru">—</div>
+      <div class="word-tr" id="q-tr"></div>
+    </div>
+    <div class="opts" id="q-opts"></div>
+    <button class="q-next" id="q-next">Sonraki soru →</button>
+  </div>
+</div>
+
+<script>
+const VOCAB_DATA = {"categories": [{"name": "Temel ve Selamlaşma", "words": [{"ru": "привет", "tr": "priviét", "fa": "selam (samimi)"}, {"ru": "здравствуйте", "tr": "zdrastvúyte", "fa": "merhaba (resmi)"}, {"ru": "доброе утро", "tr": "dóbroye útra", "fa": "günaydın"}, {"ru": "добрый день", "tr": "dóbriy den", "fa": "iyi günler"}, {"ru": "добрый вечер", "tr": "dóbriy véçer", "fa": "iyi akşamlar"}, {"ru": "спокойной ночи", "tr": "spakóynoy nóçi", "fa": "iyi geceler"}, {"ru": "пока", "tr": "paká", "fa": "hoşça kal (samimi)"}, {"ru": "до свидания", "tr": "da svidániya", "fa": "hoşça kalın"}, {"ru": "до встречи", "tr": "da vstréçi", "fa": "görüşmek üzere"}, {"ru": "увидимся", "tr": "uvídimsya", "fa": "görüşürüz"}, {"ru": "как дела", "tr": "kak dilá", "fa": "nasılsın / ne haber"}, {"ru": "как ты", "tr": "kak tı", "fa": "nasılsın (samimi)"}, {"ru": "всё хорошо", "tr": "fsyo haraşó", "fa": "her şey yolunda"}, {"ru": "нормально", "tr": "narmálna", "fa": "fena değil / normal"}, {"ru": "отлично", "tr": "atlíçna", "fa": "harika / mükemmel"}, {"ru": "так себе", "tr": "tak sibé", "fa": "şöyle böyle"}, {"ru": "да", "tr": "da", "fa": "evet"}, {"ru": "нет", "tr": "nyet", "fa": "hayır"}, {"ru": "спасибо", "tr": "spasíba", "fa": "teşekkürler"}, {"ru": "большое спасибо", "tr": "balşóye spasíba", "fa": "çok teşekkürler"}, {"ru": "пожалуйста", "tr": "pajálsta", "fa": "lütfen / rica ederim"}, {"ru": "извини", "tr": "izviní", "fa": "özür dilerim (samimi)"}, {"ru": "извините", "tr": "izviníte", "fa": "özür dilerim (resmi)"}, {"ru": "прости", "tr": "prastí", "fa": "affet (samimi)"}, {"ru": "ничего", "tr": "niçevó", "fa": "önemli değil / bir şey değil"}, {"ru": "не за что", "tr": " né za şta", "fa": "rica ederim / lafı olmaz"}, {"ru": "добро пожаловать", "tr": "dabró pajálavat", "fa": "hoş geldiniz"}, {"ru": "рад познакомиться", "tr": "rad paznakómitsa", "fa": "tanıştığıma memnun oldum"}, {"ru": "меня зовут", "tr": "minyá zavút", "fa": "benim adım..."}, {"ru": "как тебя зовут", "tr": "kak tibyá zavút", "fa": "adın ne"}, {"ru": "приятно", "tr": "priyátna", "fa": "memnun oldum / hoş"}]}, {"name": "Zamirler ve Soru Kelimeleri", "words": [{"ru": "я", "tr": "ya", "fa": "ben"}, {"ru": "ты", "tr": "tı", "fa": "sen"}, {"ru": "вы", "tr": "vı", "fa": "siz"}, {"ru": "он", "tr": "on", "fa": "o (erkek)"}, {"ru": "она", "tr": "aná", "fa": "o (kadın)"}, {"ru": "оно", "tr": "anó", "fa": "o (nötr)"}, {"ru": "мы", "tr": "mı", "fa": "biz"}, {"ru": "они", "tr": "aní", "fa": "onlar"}, {"ru": "это", "tr": "éta", "fa": "bu / şu"}, {"ru": "тот", "tr": "tot", "fa": "o (uzaktaki)"}, {"ru": "мой", "tr": "moy", "fa": "benim (erkek)"}, {"ru": "моя", "tr": "mayá", "fa": "benim (kadın)"}, {"ru": "твой", "tr": "tvoy", "fa": "senin"}, {"ru": "ваш", "tr": "vaş", "fa": "sizin"}, {"ru": "наш", "tr": "naş", "fa": "bizim"}, {"ru": "кто", "tr": "kto", "fa": "kim"}, {"ru": "что", "tr": "şto", "fa": "ne"}, {"ru": "где", "tr": "gde", "fa": "nerede"}, {"ru": "когда", "tr": "kagdá", "fa": "ne zaman"}, {"ru": "почему", "tr": "paçimú", "fa": "neden / niçin"}, {"ru": "зачем", "tr": "zaçém", "fa": "ne için / niye"}, {"ru": "как", "tr": "kak", "fa": "nasıl"}, {"ru": "сколько", "tr": "skólka", "fa": "ne kadar / kaç"}, {"ru": "какой", "tr": "kakóy", "fa": "hangi / nasıl bir"}, {"ru": "чей", "tr": "çey", "fa": "kimin"}, {"ru": "куда", "tr": "kudá", "fa": "nereye"}, {"ru": "откуда", "tr": "atkúda", "fa": "nereden"}]}, {"name": "Sayılar ve Zaman", "words": [{"ru": "ноль", "tr": "nol", "fa": "sıfır"}, {"ru": "один", "tr": "adín", "fa": "bir"}, {"ru": "два", "tr": "dva", "fa": "iki"}, {"ru": "три", "tr": "tri", "fa": "üç"}, {"ru": "четыре", "tr": "çitíri", "fa": "dört"}, {"ru": "пять", "tr": "pyat", "fa": "beş"}, {"ru": "шесть", "tr": "şest", "fa": "altı"}, {"ru": "семь", "tr": "syem", "fa": "yedi"}, {"ru": "восемь", "tr": "vósim", "fa": "sekiz"}, {"ru": "девять", "tr": "dévit", "fa": "dokuz"}, {"ru": "десять", "tr": "désit", "fa": "on"}, {"ru": "одиннадцать", "tr": "adínatsat", "fa": "on bir"}, {"ru": "двадцать", "tr": "dvátsat", "fa": "yirmi"}, {"ru": "тридцать", "tr": "trítsat", "fa": "otuz"}, {"ru": "сто", "tr": "sto", "fa": "yüz"}, {"ru": "тысяча", "tr": "tısiça", "fa": "bin"}, {"ru": "первый", "tr": "pérviy", "fa": "birinci"}, {"ru": "второй", "tr": "ftaróy", "fa": "ikinci"}, {"ru": "сегодня", "tr": "sivódnya", "fa": "bugün"}, {"ru": "завтра", "tr": "záftra", "fa": "yarın"}, {"ru": "вчера", "tr": "fçirá", "fa": "dün"}, {"ru": "сейчас", "tr": "siçás", "fa": "şimdi"}, {"ru": "потом", "tr": "patóm", "fa": "sonra"}, {"ru": "рано", "tr": "rána", "fa": "erken"}, {"ru": "поздно", "tr": "pózna", "fa": "geç"}, {"ru": "утро", "tr": "útra", "fa": "sabah"}, {"ru": "день", "tr": "den", "fa": "gün / gündüz"}, {"ru": "вечер", "tr": "véçer", "fa": "akşam"}, {"ru": "ночь", "tr": "noç", "fa": "gece"}, {"ru": "неделя", "tr": "nidélya", "fa": "hafta"}, {"ru": "месяц", "tr": "mésyats", "fa": "ay"}, {"ru": "год", "tr": "got", "fa": "yıl"}, {"ru": "час", "tr": "ças", "fa": "saat"}, {"ru": "минута", "tr": "minúta", "fa": "dakika"}, {"ru": "время", "tr": "vrémya", "fa": "zaman / vakit"}, {"ru": "понедельник", "tr": "panidélnik", "fa": "pazartesi"}, {"ru": "вторник", "tr": "ftórnik", "fa": "salı"}, {"ru": "среда", "tr": "sridá", "fa": "çarşamba"}, {"ru": "четверг", "tr": "çitvérk", "fa": "perşembe"}, {"ru": "пятница", "tr": "pyátnitsa", "fa": "cuma"}, {"ru": "суббота", "tr": "subóta", "fa": "cumartesi"}, {"ru": "воскресенье", "tr": "vaskrisénye", "fa": "pazar"}]}, {"name": "Aile ve İnsanlar", "words": [{"ru": "семья", "tr": "simyá", "fa": "aile"}, {"ru": "мама", "tr": "máma", "fa": "anne"}, {"ru": "папа", "tr": "pápa", "fa": "baba"}, {"ru": "мать", "tr": "mat", "fa": "anne (resmi)"}, {"ru": "отец", "tr": "atéts", "fa": "baba (resmi)"}, {"ru": "брат", "tr": "brat", "fa": "erkek kardeş"}, {"ru": "сестра", "tr": "sistrá", "fa": "kız kardeş"}, {"ru": "сын", "tr": "sın", "fa": "oğul"}, {"ru": "дочь", "tr": "doç", "fa": "kız evlat"}, {"ru": "ребёнок", "tr": "ribyónak", "fa": "çocuk (bebek)"}, {"ru": "дети", "tr": "déti", "fa": "çocuklar"}, {"ru": "бабушка", "tr": "bábuşka", "fa": "babaanne / anneanne"}, {"ru": "дедушка", "tr": "déduşka", "fa": "dede"}, {"ru": "муж", "tr": "muj", "fa": "koca / eş"}, {"ru": "жена", "tr": "jiná", "fa": "karı / eş"}, {"ru": "друг", "tr": "drug", "fa": "arkadaş (erkek)"}, {"ru": "подруга", "tr": "padrúga", "fa": "arkadaş (kadın)"}, {"ru": "девушка", "tr": "dévuşka", "fa": "kız / kız arkadaş"}, {"ru": "парень", "tr": "páren", "fa": "delikanlı / erkek arkadaş"}, {"ru": "мужчина", "tr": "muşçína", "fa": "erkek (yetişkin)"}, {"ru": "женщина", "tr": "jénşçina", "fa": "kadın"}, {"ru": "человек", "tr": "çilavék", "fa": "insan / kişi"}, {"ru": "люди", "tr": "lyúdi", "fa": "insanlar"}, {"ru": "сосед", "tr": "sasét", "fa": "komşu"}, {"ru": "коллега", "tr": "kalyéga", "fa": "iş arkadaşı"}]}, {"name": "Duygular ve Haller", "words": [{"ru": "любовь", "tr": "lyubóf", "fa": "aşk / sevgi"}, {"ru": "счастье", "tr": "şástye", "fa": "mutluluk"}, {"ru": "радость", "tr": "rádast", "fa": "sevinç"}, {"ru": "грусть", "tr": "grust", "fa": "hüzün"}, {"ru": "страх", "tr": "strah", "fa": "korku"}, {"ru": "гнев", "tr": "gnef", "fa": "öfke"}, {"ru": "надежда", "tr": "nadéjda", "fa": "umut"}, {"ru": "счастливый", "tr": "şaslíviy", "fa": "mutlu"}, {"ru": "грустный", "tr": "grúsnıy", "fa": "üzgün"}, {"ru": "злой", "tr": "zloy", "fa": "kızgın / kötü"}, {"ru": "усталый", "tr": "ustáliy", "fa": "yorgun"}, {"ru": "весёлый", "tr": "visyóliy", "fa": "neşeli"}, {"ru": "спокойный", "tr": "spakóyniy", "fa": "sakin"}, {"ru": "нервный", "tr": "nérvniy", "fa": "gergin / sinirli"}, {"ru": "влюблённый", "tr": "vlyublyónniy", "fa": "aşık"}, {"ru": "ревнивый", "tr": "rivníviy", "fa": "kıskanç"}, {"ru": "скучаю", "tr": "skuçáyu", "fa": "özlüyorum"}, {"ru": "я скучаю по тебе", "tr": "ya skuçáyu pa tibé", "fa": "seni özlüyorum"}, {"ru": "я тебя люблю", "tr": "ya tibyá lyublyú", "fa": "seni seviyorum"}, {"ru": "ты мне нравишься", "tr": "tı mne nrávişsa", "fa": "senden hoşlanıyorum"}, {"ru": "я рад", "tr": "ya rad", "fa": "sevindim (erkek)"}, {"ru": "я рада", "tr": "ya ráda", "fa": "sevindim (kadın)"}, {"ru": "боюсь", "tr": "bayús", "fa": "korkuyorum"}, {"ru": "надеюсь", "tr": "nadéyus", "fa": "umarım"}, {"ru": "чувствую", "tr": "çúvstvuyu", "fa": "hissediyorum"}, {"ru": "настроение", "tr": "nastrayénye", "fa": "ruh hali / keyif"}]}, {"name": "Flört ve İlişki", "words": [{"ru": "свидание", "tr": "svidánye", "fa": "randevu / buluşma"}, {"ru": "встреча", "tr": "vstréça", "fa": "buluşma / karşılaşma"}, {"ru": "отношения", "tr": "atnaşénya", "fa": "ilişki"}, {"ru": "поцелуй", "tr": "patsilúy", "fa": "öpücük"}, {"ru": "объятие", "tr": "abyátye", "fa": "kucaklama / sarılma"}, {"ru": "комплимент", "tr": "kamplimént", "fa": "iltifat"}, {"ru": "красивая", "tr": "krasívaya", "fa": "güzel (kadın)"}, {"ru": "красивый", "tr": "krasíviy", "fa": "yakışıklı"}, {"ru": "милая", "tr": "mílaya", "fa": "tatlı / sevimli (kadın)"}, {"ru": "дорогая", "tr": "daragáya", "fa": "sevgilim / canım (kadın)"}, {"ru": "дорогой", "tr": "daragóy", "fa": "sevgilim / canım (erkek)"}, {"ru": "любимая", "tr": "lyubímaya", "fa": "sevgilim / aşkım (kadın)"}, {"ru": "умная", "tr": "úmnaya", "fa": "akıllı (kadın)"}, {"ru": "добрая", "tr": "dóbraya", "fa": "iyi kalpli (kadın)"}, {"ru": "ты прекрасна", "tr": "tı prikrásna", "fa": "sen harikasın / çok güzelsin"}, {"ru": "ты мне очень нравишься", "tr": "tı mne óçin nrávişsa", "fa": "senden çok hoşlanıyorum"}, {"ru": "хочешь встретиться", "tr": "hóçiş vstrétitsa", "fa": "buluşmak ister misin"}, {"ru": "пойдём гулять", "tr": "paydyóm gulyát", "fa": "gezmeye gidelim"}, {"ru": "можно тебя пригласить", "tr": "mójna tibyá priglasít", "fa": "seni davet edebilir miyim"}, {"ru": "ты свободна сегодня", "tr": "tı svabódna sivódnya", "fa": "bugün müsait misin (kadına)"}, {"ru": "давай встретимся", "tr": "daváy vstrétimsa", "fa": "hadi buluşalım"}, {"ru": "я о тебе думаю", "tr": "ya a tibé dúmayu", "fa": "seni düşünüyorum"}, {"ru": "ты особенная", "tr": "tı asóbinnaya", "fa": "sen özelsin (kadın)"}, {"ru": "проведём время вместе", "tr": "pravidyóm vrémya vmésti", "fa": "birlikte vakit geçirelim"}, {"ru": "спасибо за вечер", "tr": "spasíba za véçer", "fa": "bu akşam için teşekkürler"}, {"ru": "мне было приятно", "tr": "mne bıla priyátna", "fa": "memnun oldum / hoşuma gitti"}, {"ru": "можно тебя проводить", "tr": "mójna tibyá pravadít", "fa": "seni geçirebilir miyim"}, {"ru": "давай созвонимся", "tr": "daváy sazvónimsa", "fa": "telefonlaşalım"}, {"ru": "напиши мне", "tr": "napişí mne", "fa": "bana yaz"}]}, {"name": "Yemek ve Restoran", "words": [{"ru": "еда", "tr": "yidá", "fa": "yemek / yiyecek"}, {"ru": "вода", "tr": "vadá", "fa": "su"}, {"ru": "чай", "tr": "çay", "fa": "çay"}, {"ru": "кофе", "tr": "kófe", "fa": "kahve"}, {"ru": "хлеб", "tr": "hlep", "fa": "ekmek"}, {"ru": "мясо", "tr": "myása", "fa": "et"}, {"ru": "курица", "tr": "kúritsa", "fa": "tavuk"}, {"ru": "рыба", "tr": "rıba", "fa": "balık"}, {"ru": "суп", "tr": "sup", "fa": "çorba"}, {"ru": "салат", "tr": "salát", "fa": "salata"}, {"ru": "сыр", "tr": "sır", "fa": "peynir"}, {"ru": "молоко", "tr": "malakó", "fa": "süt"}, {"ru": "яйцо", "tr": "yaytsó", "fa": "yumurta"}, {"ru": "фрукты", "tr": "frúktı", "fa": "meyveler"}, {"ru": "овощи", "tr": "óvaşçi", "fa": "sebzeler"}, {"ru": "сахар", "tr": "sáhar", "fa": "şeker"}, {"ru": "соль", "tr": "sol", "fa": "tuz"}, {"ru": "вино", "tr": "vinó", "fa": "şarap"}, {"ru": "пиво", "tr": "píva", "fa": "bira"}, {"ru": "вкусно", "tr": "fkúsna", "fa": "lezzetli"}, {"ru": "ресторан", "tr": "ristarán", "fa": "restoran"}, {"ru": "кафе", "tr": "kafé", "fa": "kafe"}, {"ru": "меню", "tr": "minyú", "fa": "menü"}, {"ru": "счёт", "tr": "şçot", "fa": "hesap"}, {"ru": "официант", "tr": "afitsiánt", "fa": "garson"}, {"ru": "завтрак", "tr": "záftrak", "fa": "kahvaltı"}, {"ru": "обед", "tr": "abét", "fa": "öğle yemeği"}, {"ru": "ужин", "tr": "újin", "fa": "akşam yemeği"}, {"ru": "голодный", "tr": "galódniy", "fa": "aç"}, {"ru": "хочу есть", "tr": "haçú yest", "fa": "yemek istiyorum / acıktım"}, {"ru": "хочу пить", "tr": "haçú pit", "fa": "su içmek istiyorum / susadım"}, {"ru": "приятного аппетита", "tr": "priyátnava apitíta", "fa": "afiyet olsun"}]}, {"name": "Şehir ve Mekanlar", "words": [{"ru": "город", "tr": "górat", "fa": "şehir"}, {"ru": "улица", "tr": "úlitsa", "fa": "sokak / cadde"}, {"ru": "дом", "tr": "dom", "fa": "ev"}, {"ru": "квартира", "tr": "kvartíra", "fa": "daire"}, {"ru": "магазин", "tr": "magazín", "fa": "dükkan / mağaza"}, {"ru": "рынок", "tr": "rınak", "fa": "pazar / çarşı"}, {"ru": "аптека", "tr": "aptéka", "fa": "eczane"}, {"ru": "больница", "tr": "balnítsa", "fa": "hastane"}, {"ru": "банк", "tr": "bank", "fa": "banka"}, {"ru": "метро", "tr": "mitró", "fa": "metro"}, {"ru": "вокзал", "tr": "vakzál", "fa": "tren garı"}, {"ru": "аэропорт", "tr": "aeropórt", "fa": "havalimanı"}, {"ru": "парк", "tr": "park", "fa": "park"}, {"ru": "музей", "tr": "muzéy", "fa": "müze"}, {"ru": "кино", "tr": "kinó", "fa": "sinema"}, {"ru": "театр", "tr": "tiátr", "fa": "tiyatro"}, {"ru": "гостиница", "tr": "gastínitsa", "fa": "otel"}, {"ru": "туалет", "tr": "tualét", "fa": "tuvalet"}, {"ru": "площадь", "tr": "plóşçat", "fa": "meydan"}, {"ru": "мост", "tr": "most", "fa": "köprü"}, {"ru": "церковь", "tr": "tsérkaf", "fa": "kilise"}, {"ru": "школа", "tr": "şkóla", "fa": "okul"}, {"ru": "университет", "tr": "univirsitét", "fa": "üniversite"}, {"ru": "работа", "tr": "rabóta", "fa": "iş"}, {"ru": "где находится", "tr": "gde nahóditsa", "fa": "nerede / nerede bulunuyor"}, {"ru": "как пройти", "tr": "kak praytí", "fa": "nasıl gidilir"}, {"ru": "далеко", "tr": "dalikó", "fa": "uzak"}, {"ru": "близко", "tr": "blíska", "fa": "yakın"}, {"ru": "прямо", "tr": "pryáma", "fa": "düz / doğru"}, {"ru": "налево", "tr": "nalyéva", "fa": "sola"}, {"ru": "направо", "tr": "napráva", "fa": "sağa"}]}, {"name": "Alışveriş ve Para", "words": [{"ru": "деньги", "tr": "déngi", "fa": "para"}, {"ru": "рубль", "tr": "rubl", "fa": "ruble"}, {"ru": "цена", "tr": "tsiná", "fa": "fiyat"}, {"ru": "сколько стоит", "tr": "skólka stóit", "fa": "kaç para / ne kadar"}, {"ru": "дорого", "tr": "dóraga", "fa": "pahalı"}, {"ru": "дёшево", "tr": "dyóşiva", "fa": "ucuz"}, {"ru": "скидка", "tr": "skítka", "fa": "indirim"}, {"ru": "карта", "tr": "kárta", "fa": "kart / harita"}, {"ru": "наличные", "tr": "nalíçnıye", "fa": "nakit"}, {"ru": "чек", "tr": "çek", "fa": "fiş / çek"}, {"ru": "купить", "tr": "kupít", "fa": "satın almak"}, {"ru": "продать", "tr": "pradát", "fa": "satmak"}, {"ru": "магазин", "tr": "magazín", "fa": "mağaza"}, {"ru": "одежда", "tr": "adéjda", "fa": "kıyafet / giysi"}, {"ru": "обувь", "tr": "óbuf", "fa": "ayakkabı"}, {"ru": "размер", "tr": "razmér", "fa": "beden / numara"}, {"ru": "примерить", "tr": "primérit", "fa": "denemek (kıyafet)"}, {"ru": "дайте", "tr": "dáyte", "fa": "verir misiniz"}, {"ru": "я хочу", "tr": "ya haçú", "fa": "istiyorum"}, {"ru": "мне нужно", "tr": "mne nújna", "fa": "bana lazım / ihtiyacım var"}, {"ru": "это всё", "tr": "éta fsyo", "fa": "bu kadar / hepsi bu"}]}, {"name": "Seyahat ve Ulaşım", "words": [{"ru": "машина", "tr": "maşína", "fa": "araba"}, {"ru": "такси", "tr": "taksí", "fa": "taksi"}, {"ru": "автобус", "tr": "aftóbus", "fa": "otobüs"}, {"ru": "поезд", "tr": "póyezt", "fa": "tren"}, {"ru": "самолёт", "tr": "samalyót", "fa": "uçak"}, {"ru": "билет", "tr": "bilét", "fa": "bilet"}, {"ru": "паспорт", "tr": "páspart", "fa": "pasaport"}, {"ru": "багаж", "tr": "bagáj", "fa": "bagaj"}, {"ru": "остановка", "tr": "astanófka", "fa": "durak"}, {"ru": "дорога", "tr": "daróga", "fa": "yol"}, {"ru": "карта", "tr": "kárta", "fa": "harita"}, {"ru": "направление", "tr": "napravlénye", "fa": "yön"}, {"ru": "быстро", "tr": "bıstra", "fa": "hızlı"}, {"ru": "медленно", "tr": "médlina", "fa": "yavaş"}, {"ru": "опоздать", "tr": "apazdát", "fa": "geç kalmak"}, {"ru": "приехать", "tr": "priyéhat", "fa": "varmak / gelmek (araçla)"}, {"ru": "уехать", "tr": "uyéhat", "fa": "gitmek (araçla ayrılmak)"}, {"ru": "остановите здесь", "tr": "astanavíte zdes", "fa": "burada durun"}, {"ru": "сколько ехать", "tr": "skólka yéhat", "fa": "ne kadar sürer (yolculuk)"}]}, {"name": "Vücut ve Sağlık", "words": [{"ru": "голова", "tr": "galavá", "fa": "baş / kafa"}, {"ru": "глаза", "tr": "glazá", "fa": "gözler"}, {"ru": "нос", "tr": "nos", "fa": "burun"}, {"ru": "рот", "tr": "rot", "fa": "ağız"}, {"ru": "зуб", "tr": "zup", "fa": "diş"}, {"ru": "рука", "tr": "ruká", "fa": "el / kol"}, {"ru": "нога", "tr": "nagá", "fa": "ayak / bacak"}, {"ru": "сердце", "tr": "sértse", "fa": "kalp"}, {"ru": "спина", "tr": "spiná", "fa": "sırt"}, {"ru": "живот", "tr": "jivót", "fa": "karın / mide"}, {"ru": "болит", "tr": "balít", "fa": "ağrıyor"}, {"ru": "болезнь", "tr": "balézn", "fa": "hastalık"}, {"ru": "здоровье", "tr": "zdaróvye", "fa": "sağlık"}, {"ru": "врач", "tr": "vraç", "fa": "doktor"}, {"ru": "лекарство", "tr": "likárstva", "fa": "ilaç"}, {"ru": "температура", "tr": "timpiratúra", "fa": "ateş / sıcaklık"}, {"ru": "устал", "tr": "ustál", "fa": "yoruldum"}, {"ru": "болею", "tr": "baléyu", "fa": "hastayım"}, {"ru": "мне плохо", "tr": "mne plóha", "fa": "kendimi kötü hissediyorum"}, {"ru": "мне нужен врач", "tr": "mne nújın vraç", "fa": "bana doktor lazım"}, {"ru": "будь здоров", "tr": "but zdaróf", "fa": "çok yaşa / geçmiş olsun"}]}, {"name": "Yaygın Fiiller", "words": [{"ru": "быть", "tr": "bıt", "fa": "olmak"}, {"ru": "иметь", "tr": "imét", "fa": "sahip olmak"}, {"ru": "делать", "tr": "délat", "fa": "yapmak"}, {"ru": "идти", "tr": "ittí", "fa": "gitmek (yürüyerek)"}, {"ru": "ехать", "tr": "yéhat", "fa": "gitmek (araçla)"}, {"ru": "приходить", "tr": "prihadít", "fa": "gelmek"}, {"ru": "говорить", "tr": "gavarít", "fa": "konuşmak"}, {"ru": "сказать", "tr": "skazát", "fa": "söylemek"}, {"ru": "знать", "tr": "znat", "fa": "bilmek"}, {"ru": "думать", "tr": "dúmat", "fa": "düşünmek"}, {"ru": "хотеть", "tr": "hatét", "fa": "istemek"}, {"ru": "мочь", "tr": "moç", "fa": "-ebilmek / yapabilmek"}, {"ru": "любить", "tr": "lyubít", "fa": "sevmek"}, {"ru": "видеть", "tr": "vídet", "fa": "görmek"}, {"ru": "смотреть", "tr": "smatrét", "fa": "bakmak / izlemek"}, {"ru": "слышать", "tr": "slışat", "fa": "duymak"}, {"ru": "слушать", "tr": "slúşat", "fa": "dinlemek"}, {"ru": "читать", "tr": "çitát", "fa": "okumak"}, {"ru": "писать", "tr": "pisát", "fa": "yazmak"}, {"ru": "работать", "tr": "rabótat", "fa": "çalışmak"}, {"ru": "жить", "tr": "jit", "fa": "yaşamak"}, {"ru": "есть", "tr": "yest", "fa": "yemek (fiil)"}, {"ru": "пить", "tr": "pit", "fa": "içmek"}, {"ru": "спать", "tr": "spat", "fa": "uyumak"}, {"ru": "вставать", "tr": "fstavát", "fa": "kalkmak"}, {"ru": "покупать", "tr": "pakupát", "fa": "satın almak"}, {"ru": "давать", "tr": "davát", "fa": "vermek"}, {"ru": "брать", "tr": "brat", "fa": "almak"}, {"ru": "открыть", "tr": "atkrıt", "fa": "açmak"}, {"ru": "закрыть", "tr": "zakrıt", "fa": "kapatmak"}, {"ru": "начать", "tr": "naçát", "fa": "başlamak"}, {"ru": "закончить", "tr": "zakónçit", "fa": "bitirmek"}, {"ru": "помочь", "tr": "pamóç", "fa": "yardım etmek"}, {"ru": "ждать", "tr": "jdat", "fa": "beklemek"}, {"ru": "искать", "tr": "iskát", "fa": "aramak (bulmak için)"}, {"ru": "найти", "tr": "naytí", "fa": "bulmak"}, {"ru": "забыть", "tr": "zabıt", "fa": "unutmak"}, {"ru": "помнить", "tr": "pómnit", "fa": "hatırlamak"}, {"ru": "понимать", "tr": "panimát", "fa": "anlamak"}, {"ru": "звонить", "tr": "zvanít", "fa": "aramak (telefonla)"}, {"ru": "встречать", "tr": "fstriçát", "fa": "karşılamak"}, {"ru": "гулять", "tr": "gulyát", "fa": "gezmek / dolaşmak"}, {"ru": "играть", "tr": "igrát", "fa": "oynamak"}, {"ru": "учить", "tr": "uçít", "fa": "öğrenmek / ezberlemek"}, {"ru": "учиться", "tr": "uçítsa", "fa": "ders çalışmak / okumak"}, {"ru": "показать", "tr": "pakazát", "fa": "göstermek"}, {"ru": "спросить", "tr": "sprasít", "fa": "sormak"}, {"ru": "ответить", "tr": "atvétit", "fa": "cevap vermek"}, {"ru": "чувствовать", "tr": "çúvstvavat", "fa": "hissetmek"}, {"ru": "нравиться", "tr": "nrávitsa", "fa": "hoşa gitmek / beğenmek"}, {"ru": "целовать", "tr": "tsılavát", "fa": "öpmek"}, {"ru": "обнимать", "tr": "abnimát", "fa": "sarılmak"}]}, {"name": "Yaygın Sıfatlar", "words": [{"ru": "большой", "tr": "balşóy", "fa": "büyük"}, {"ru": "маленький", "tr": "málinkiy", "fa": "küçük"}, {"ru": "хороший", "tr": "haróşiy", "fa": "iyi"}, {"ru": "плохой", "tr": "plahóy", "fa": "kötü"}, {"ru": "новый", "tr": "nóviy", "fa": "yeni"}, {"ru": "старый", "tr": "stáriy", "fa": "eski / yaşlı"}, {"ru": "молодой", "tr": "maladóy", "fa": "genç"}, {"ru": "красивый", "tr": "krasíviy", "fa": "güzel / yakışıklı"}, {"ru": "умный", "tr": "úmniy", "fa": "akıllı"}, {"ru": "глупый", "tr": "glúpiy", "fa": "aptal"}, {"ru": "сильный", "tr": "sílniy", "fa": "güçlü"}, {"ru": "слабый", "tr": "slábiy", "fa": "zayıf"}, {"ru": "быстрый", "tr": "bıstriy", "fa": "hızlı"}, {"ru": "медленный", "tr": "médliniy", "fa": "yavaş"}, {"ru": "горячий", "tr": "garyáçiy", "fa": "sıcak (dokununca)"}, {"ru": "холодный", "tr": "halódniy", "fa": "soğuk"}, {"ru": "тёплый", "tr": "tyópliy", "fa": "ılık / sıcak"}, {"ru": "длинный", "tr": "dlínniy", "fa": "uzun"}, {"ru": "короткий", "tr": "karótkiy", "fa": "kısa"}, {"ru": "высокий", "tr": "vısókiy", "fa": "yüksek / uzun boylu"}, {"ru": "низкий", "tr": "nískiy", "fa": "alçak / kısa"}, {"ru": "дорогой", "tr": "daragóy", "fa": "pahalı / değerli"}, {"ru": "дешёвый", "tr": "dişóviy", "fa": "ucuz"}, {"ru": "лёгкий", "tr": "lyóhkiy", "fa": "kolay / hafif"}, {"ru": "тяжёлый", "tr": "tijóliy", "fa": "ağır / zor"}, {"ru": "чистый", "tr": "çístiy", "fa": "temiz"}, {"ru": "грязный", "tr": "gryázniy", "fa": "kirli"}, {"ru": "полный", "tr": "pólniy", "fa": "dolu"}, {"ru": "пустой", "tr": "pustóy", "fa": "boş"}, {"ru": "важный", "tr": "vájniy", "fa": "önemli"}, {"ru": "интересный", "tr": "intirésniy", "fa": "ilginç"}, {"ru": "скучный", "tr": "skúşniy", "fa": "sıkıcı"}, {"ru": "вкусный", "tr": "fkúsniy", "fa": "lezzetli"}, {"ru": "добрый", "tr": "dóbriy", "fa": "iyi kalpli / nazik"}, {"ru": "честный", "tr": "çésniy", "fa": "dürüst"}, {"ru": "весёлый", "tr": "visyóliy", "fa": "neşeli"}]}, {"name": "Günlük Faydalı Cümleler", "words": [{"ru": "я не понимаю", "tr": "ya ni panimáyu", "fa": "anlamıyorum"}, {"ru": "я понимаю", "tr": "ya panimáyu", "fa": "anlıyorum"}, {"ru": "повторите пожалуйста", "tr": "paftaríte pajálsta", "fa": "tekrar eder misiniz lütfen"}, {"ru": "говорите медленно", "tr": "gavaríte médlina", "fa": "yavaş konuşun"}, {"ru": "я не говорю по-русски", "tr": "ya ni gavaryú pa-rúski", "fa": "Rusça bilmiyorum"}, {"ru": "я немного говорю", "tr": "ya nimnóga gavaryú", "fa": "biraz konuşuyorum"}, {"ru": "как это по-русски", "tr": "kak éta pa-rúski", "fa": "bu Rusça nasıl denir"}, {"ru": "что это значит", "tr": "şto éta znáçit", "fa": "bu ne demek"}, {"ru": "я из Ирана", "tr": "ya iz irána", "fa": "İran'lıyım"}, {"ru": "я живу в Москве", "tr": "ya jivú v maskvé", "fa": "Moskova'da yaşıyorum"}, {"ru": "я дантист", "tr": "ya dantíst", "fa": "ben diş hekimiyim"}, {"ru": "сколько тебе лет", "tr": "skólka tibé let", "fa": "kaç yaşındasın"}, {"ru": "мне тридцать лет", "tr": "mne trítsat let", "fa": "otuz yaşındayım"}, {"ru": "помогите", "tr": "pamagíte", "fa": "yardım edin"}, {"ru": "подождите", "tr": "padajdíte", "fa": "bekleyin"}, {"ru": "одну минуту", "tr": "adnú minútu", "fa": "bir dakika"}, {"ru": "всё в порядке", "tr": "fsyo f paryátke", "fa": "her şey yolunda"}, {"ru": "не волнуйся", "tr": "ni valnúysa", "fa": "merak etme / endişelenme"}, {"ru": "я согласен", "tr": "ya saglásin", "fa": "katılıyorum (erkek)"}, {"ru": "я не согласен", "tr": "ya ni saglásin", "fa": "katılmıyorum"}, {"ru": "это правда", "tr": "éta právda", "fa": "bu doğru"}, {"ru": "я думаю", "tr": "ya dúmayu", "fa": "bence / düşünüyorum"}, {"ru": "по-моему", "tr": "pa-móyimu", "fa": "bence / bana göre"}, {"ru": "мне кажется", "tr": "mne kájitsa", "fa": "bana öyle geliyor"}, {"ru": "без проблем", "tr": "bes prablém", "fa": "sorun değil"}, {"ru": "с удовольствием", "tr": "s udavólstviyem", "fa": "memnuniyetle / seve seve"}, {"ru": "к сожалению", "tr": "k sajalényu", "fa": "maalesef"}, {"ru": "ничего страшного", "tr": "niçevó stráşnava", "fa": "önemli değil / bir şey olmaz"}, {"ru": "я занят", "tr": "ya zánit", "fa": "meşgulüm (erkek)"}, {"ru": "я свободен", "tr": "ya svabódin", "fa": "müsaitim (erkek)"}, {"ru": "хорошего дня", "tr": "haróşiva dnya", "fa": "iyi günler dilerim"}, {"ru": "удачи", "tr": "udáçi", "fa": "bol şans"}, {"ru": "берегите себя", "tr": "birigíte sibyá", "fa": "kendine iyi bak (resmi)"}]}, {"name": "Nezaket ve Sosyal Adab", "words": [{"ru": "приятного вечера", "tr": "priyátnava véçira", "fa": "iyi akşamlar dilerim"}, {"ru": "приятно познакомиться", "tr": "priyátna paznakómitsa", "fa": "tanıştığıma memnun oldum"}, {"ru": "рад вас видеть", "tr": "rad vas vídet", "fa": "sizi görmek güzel"}, {"ru": "как поживаете", "tr": "kak pajiváyte", "fa": "nasılsınız"}, {"ru": "разрешите представиться", "tr": "razrişíte pritstávitsa", "fa": "kendimi tanıtayım"}, {"ru": "очень приятно", "tr": "óçin priyátna", "fa": "çok memnun oldum"}, {"ru": "спасибо за приглашение", "tr": "spasíba za priglaşénye", "fa": "davet için teşekkürler"}, {"ru": "вы очень любезны", "tr": "vı óçin lyubéznı", "fa": "çok naziksiniz"}, {"ru": "не стоит", "tr": "ni stóit", "fa": "gerek yok / lafı olmaz"}, {"ru": "с праздником", "tr": "s prázdnikam", "fa": "bayramınız kutlu olsun"}, {"ru": "поздравляю", "tr": "pazdravlyáyu", "fa": "tebrikler"}, {"ru": "желаю удачи", "tr": "jiláyu udáçi", "fa": "bol şans dilerim"}, {"ru": "всего доброго", "tr": "fsivó dóbrava", "fa": "her şey gönlünüzce olsun"}, {"ru": "приходите ещё", "tr": "prihadíte yişó", "fa": "yine buyurun / tekrar gelin"}, {"ru": "чувствуйте себя как дома", "tr": "çúvstvuyte sibyá kak dóma", "fa": "kendi eviniz gibi rahat olun"}, {"ru": "извините за беспокойство", "tr": "izviníte za bispakóystva", "fa": "rahatsız ettiğim için özür dilerim"}, {"ru": "можно вопрос", "tr": "mójna vaprós", "fa": "bir soru sorabilir miyim"}, {"ru": "конечно можно", "tr": "kanéşna mójna", "fa": "tabii ki olur"}, {"ru": "как скажете", "tr": "kak skájite", "fa": "siz nasıl isterseniz"}, {"ru": "договорились", "tr": "dagavarílis", "fa": "anlaştık / tamamdır"}]}, {"name": "Telefon ve Mesajlaşma", "words": [{"ru": "алло", "tr": "aló", "fa": "alo"}, {"ru": "кто это", "tr": "kto éta", "fa": "kim o / kimsiniz"}, {"ru": "это я", "tr": "éta ya", "fa": "benim"}, {"ru": "я перезвоню", "tr": "ya pirizvanyú", "fa": "seni tekrar ararım"}, {"ru": "ты можешь говорить", "tr": "tı mójiş gavarít", "fa": "konuşabilir misin (müsait misin)"}, {"ru": "я тебя плохо слышу", "tr": "ya tibyá plóha slışu", "fa": "seni iyi duyamıyorum"}, {"ru": "связь плохая", "tr": "svyaz plaháya", "fa": "bağlantı kötü"}, {"ru": "перезвони мне", "tr": "pirizvaní mne", "fa": "beni tekrar ara"}, {"ru": "напиши сообщение", "tr": "napişí saapşénye", "fa": "mesaj yaz"}, {"ru": "я тебе напишу", "tr": "ya tibé napişú", "fa": "sana yazarım"}, {"ru": "ты получил", "tr": "tı paluçíl", "fa": "aldın mı (mesajı)"}, {"ru": "отправь мне", "tr": "atpráf mne", "fa": "bana gönder"}, {"ru": "я занят сейчас", "tr": "ya zánit siçás", "fa": "şu an meşgulüm"}, {"ru": "позвони позже", "tr": "pazvaní pózje", "fa": "sonra ara"}, {"ru": "оставь сообщение", "tr": "astáf saapşénye", "fa": "mesaj bırak"}, {"ru": "я на связи", "tr": "ya na svyazí", "fa": "ulaşılabilirim / hattayım"}, {"ru": "до связи", "tr": "da svyazí", "fa": "görüşmek üzere (telefonda)"}, {"ru": "жду твоего звонка", "tr": "jdu tvayivó zvanká", "fa": "aramanı bekliyorum"}, {"ru": "номер телефона", "tr": "nómir tilifóna", "fa": "telefon numarası"}, {"ru": "какой у тебя номер", "tr": "kakóy u tibyá nómir", "fa": "numaran ne"}]}, {"name": "Vedalaşma", "words": [{"ru": "мне пора", "tr": "mne pará", "fa": "artık gitmeliyim"}, {"ru": "уже поздно", "tr": "ujé pózna", "fa": "artık geç oldu"}, {"ru": "было приятно", "tr": "bıla priyátna", "fa": "memnun oldum / güzeldi"}, {"ru": "спасибо за всё", "tr": "spasíba za fsyo", "fa": "her şey için teşekkürler"}, {"ru": "увидимся завтра", "tr": "uvídimsa záftra", "fa": "yarın görüşürüz"}, {"ru": "до завтра", "tr": "da záftra", "fa": "yarına / yarın görüşürüz"}, {"ru": "до скорого", "tr": "da skórava", "fa": "yakında görüşürüz"}, {"ru": "счастливо", "tr": "şaslíva", "fa": "hoşça kal / güle güle"}, {"ru": "спокойной ночи", "tr": "spakóynoy nóçi", "fa": "iyi geceler"}, {"ru": "сладких снов", "tr": "slátkih snof", "fa": "tatlı rüyalar"}, {"ru": "позвони когда доедешь", "tr": "pazvaní kagdá dayédiş", "fa": "varınca ara"}, {"ru": "напиши как доберёшься", "tr": "napişí kak dabiryóşsa", "fa": "ulaşınca yaz"}, {"ru": "береги себя", "tr": "birigí sibyá", "fa": "kendine iyi bak"}, {"ru": "целую", "tr": "tsılúyu", "fa": "öpüyorum / öptüm"}, {"ru": "обнимаю", "tr": "abnimáyu", "fa": "sarılıyorum"}, {"ru": "люблю тебя", "tr": "lyublyú tibyá", "fa": "seni seviyorum"}, {"ru": "скоро увидимся", "tr": "skóra uvídimsa", "fa": "yakında görüşürüz"}, {"ru": "хороших выходных", "tr": "haróşih vıhadnıh", "fa": "iyi hafta sonları"}, {"ru": "передавай привет", "tr": "piridaváy privét", "fa": "selam söyle"}, {"ru": "спасибо что пришёл", "tr": "spasíba şto prişól", "fa": "geldiğin için teşekkürler"}]}, {"name": "Nezaket ve Rica İfadeleri", "words": [{"ru": "можно мне", "tr": "mójna mne", "fa": "alabilir miyim / -ebilir miyim"}, {"ru": "будьте добры", "tr": "búdte dabrı", "fa": "lütfen / zahmet olmazsa"}, {"ru": "не могли бы вы", "tr": "ni maglí bı vı", "fa": "acaba ... -ebilir misiniz"}, {"ru": "разрешите", "tr": "razrişíte", "fa": "izin verir misiniz"}, {"ru": "позвольте", "tr": "pazvólte", "fa": "müsaade edin"}, {"ru": "я хотел бы", "tr": "ya hatél bı", "fa": "isterdim / rica etsem"}, {"ru": "если можно", "tr": "yésli mójna", "fa": "mümkünse"}, {"ru": "если не трудно", "tr": "yésli ni trúdna", "fa": "zahmet olmazsa"}, {"ru": "буду благодарен", "tr": "búdu blagadárin", "fa": "minnettar olurum"}, {"ru": "спасибо заранее", "tr": "spasíba zaranéye", "fa": "şimdiden teşekkürler"}, {"ru": "прошу прощения", "tr": "praşú praşénya", "fa": "özür dilerim / affınıza sığınırım"}, {"ru": "не подскажете", "tr": "ni patskájite", "fa": "acaba söyleyebilir misiniz"}, {"ru": "одну секунду", "tr": "adnú sikúndu", "fa": "bir saniye"}, {"ru": "после вас", "tr": "pósle vas", "fa": "önden buyurun"}, {"ru": "на здоровье", "tr": "na zdaróvye", "fa": "afiyet olsun / rica ederim"}, {"ru": "всегда пожалуйста", "tr": "fsigdá pajálsta", "fa": "her zaman rica ederim"}, {"ru": "рад помочь", "tr": "rad pamóç", "fa": "yardım etmekten memnunum"}, {"ru": "не за что благодарить", "tr": "ni za şta blagadarít", "fa": "teşekküre gerek yok"}, {"ru": "извините за опоздание", "tr": "izviníte za apazdánye", "fa": "geç kaldığım için özür dilerim"}, {"ru": "я вас понял", "tr": "ya vas pónyal", "fa": "sizi anladım"}]}, {"name": "Kısa Pratik Cümleler (A)", "words": [{"ru": "это хорошо", "tr": "éta haraşó", "fa": "bu iyi"}, {"ru": "это плохо", "tr": "éta plóha", "fa": "bu kötü"}, {"ru": "это интересно", "tr": "éta intirésna", "fa": "bu ilginç"}, {"ru": "это важно", "tr": "éta vájna", "fa": "bu önemli"}, {"ru": "это правда", "tr": "éta právda", "fa": "bu doğru"}, {"ru": "это неправда", "tr": "éta niprávda", "fa": "bu doğru değil"}, {"ru": "это легко", "tr": "éta lihkó", "fa": "bu kolay"}, {"ru": "это трудно", "tr": "éta trúdna", "fa": "bu zor"}, {"ru": "это возможно", "tr": "éta vazmójna", "fa": "bu mümkün"}, {"ru": "это невозможно", "tr": "éta nivazmójna", "fa": "bu imkansız"}, {"ru": "я хочу есть", "tr": "ya haçú yest", "fa": "acıktım"}, {"ru": "я хочу пить", "tr": "ya haçú pit", "fa": "susadım"}, {"ru": "я хочу спать", "tr": "ya haçú spat", "fa": "uyumak istiyorum"}, {"ru": "я хочу домой", "tr": "ya haçú damóy", "fa": "eve gitmek istiyorum"}, {"ru": "я хочу отдохнуть", "tr": "ya haçú atdahnút", "fa": "dinlenmek istiyorum"}, {"ru": "мне холодно", "tr": "mne hóladna", "fa": "üşüyorum"}, {"ru": "мне жарко", "tr": "mne járka", "fa": "sıcakladım / terledim"}, {"ru": "мне скучно", "tr": "mne skúşna", "fa": "canım sıkılıyor"}, {"ru": "мне интересно", "tr": "mne intirésna", "fa": "ilgimi çekiyor / merak ediyorum"}, {"ru": "мне нравится", "tr": "mne nrávitsa", "fa": "hoşuma gidiyor"}, {"ru": "мне не нравится", "tr": "mne ni nrávitsa", "fa": "hoşuma gitmiyor"}, {"ru": "я устал сегодня", "tr": "ya ustál sivódnya", "fa": "bugün yoruldum"}, {"ru": "я очень рад", "tr": "ya óçin rad", "fa": "çok sevindim"}, {"ru": "я немного устал", "tr": "ya nimnóga ustál", "fa": "biraz yoruldum"}]}, {"name": "Kısa Pratik Cümleler (B)", "words": [{"ru": "где ты сейчас", "tr": "gde tı siçás", "fa": "şu an neredesin"}, {"ru": "что ты делаешь", "tr": "şto tı délayiş", "fa": "ne yapıyorsun"}, {"ru": "куда ты идёшь", "tr": "kudá tı idyóş", "fa": "nereye gidiyorsun"}, {"ru": "когда ты придёшь", "tr": "kagdá tı pridyóş", "fa": "ne zaman geleceksin"}, {"ru": "во сколько", "tr": "va skólka", "fa": "saat kaçta"}, {"ru": "сколько это стоит", "tr": "skólka éta stóit", "fa": "bu ne kadar"}, {"ru": "как это работает", "tr": "kak éta rabótayit", "fa": "bu nasıl çalışıyor"}, {"ru": "что это такое", "tr": "şto éta takóye", "fa": "bu da ne / bu nedir"}, {"ru": "кто это сделал", "tr": "kto éta zdélal", "fa": "bunu kim yaptı"}, {"ru": "почему так", "tr": "paçimú tak", "fa": "neden böyle"}, {"ru": "ты уверен", "tr": "tı uvérin", "fa": "emin misin"}, {"ru": "ты готов", "tr": "tı gatóf", "fa": "hazır mısın"}, {"ru": "ты понял", "tr": "tı pónyal", "fa": "anladın mı"}, {"ru": "ты слышишь меня", "tr": "tı slışiş minyá", "fa": "beni duyuyor musun"}, {"ru": "ты меня видишь", "tr": "tı minyá vídiş", "fa": "beni görüyor musun"}, {"ru": "подожди меня", "tr": "padajdí minyá", "fa": "beni bekle"}, {"ru": "иди сюда", "tr": "idí syudá", "fa": "buraya gel"}, {"ru": "дай мне это", "tr": "day mne éta", "fa": "bunu bana ver"}, {"ru": "покажи мне", "tr": "pakaží mne", "fa": "bana göster"}, {"ru": "скажи мне", "tr": "skají mne", "fa": "bana söyle"}, {"ru": "помоги мне", "tr": "pamagí mne", "fa": "bana yardım et"}, {"ru": "позвони мне", "tr": "pazvaní mne", "fa": "beni ara"}, {"ru": "не уходи", "tr": "ni uhadí", "fa": "gitme"}, {"ru": "останься", "tr": "astánsa", "fa": "kal"}]}, {"name": "Derin İlişki Konuşması", "words": [{"ru": "я хочу узнать тебя лучше", "tr": "ya haçú uznát tibyá lúçşe", "fa": "seni daha iyi tanımak istiyorum"}, {"ru": "расскажи о себе", "tr": "raskaží a sibé", "fa": "kendinden bahset"}, {"ru": "чем ты увлекаешься", "tr": "çem tı uvlikáyişsa", "fa": "neyle ilgileniyorsun / hobin ne"}, {"ru": "какая твоя мечта", "tr": "kakáya tvayá miçtá", "fa": "hayalin ne"}, {"ru": "ты мне очень дорога", "tr": "tı mne óçin daragá", "fa": "benim için çok değerlisin (kadına)"}, {"ru": "я никогда не встречал такую", "tr": "ya nikagdá ni fstriçál takúyu", "fa": "senin gibisiyle hiç karşılaşmadım"}, {"ru": "с тобой мне легко", "tr": "s tabóy mne lihkó", "fa": "seninle kendimi rahat hissediyorum"}, {"ru": "ты делаешь меня счастливым", "tr": "tı délayiş minyá şaslívım", "fa": "beni mutlu ediyorsun"}, {"ru": "я ценю тебя", "tr": "ya tsinyú tibyá", "fa": "sana değer veriyorum"}, {"ru": "давай построим будущее", "tr": "daváy pastróim búduşçeye", "fa": "hadi bir gelecek kuralım"}, {"ru": "я доверяю тебе", "tr": "ya daviryáyu tibé", "fa": "sana güveniyorum"}, {"ru": "ты понимаешь меня", "tr": "tı panimáyiş minyá", "fa": "beni anlıyorsun"}, {"ru": "мне с тобой хорошо", "tr": "mne s tabóy haraşó", "fa": "seninle mutluyum / iyiyim"}, {"ru": "я думаю о нас", "tr": "ya dúmayu a nas", "fa": "bizi düşünüyorum"}, {"ru": "что ты чувствуешь", "tr": "şto tı çúvstvuyiş", "fa": "ne hissediyorsun"}, {"ru": "я серьёзно", "tr": "ya siryózna", "fa": "ciddiyim"}, {"ru": "это важно для меня", "tr": "éta vájna dlya minyá", "fa": "bu benim için önemli"}, {"ru": "я хочу быть с тобой", "tr": "ya haçú bıt s tabóy", "fa": "seninle olmak istiyorum"}, {"ru": "ты особенный человек", "tr": "tı asóbinniy çilavék", "fa": "özel bir insansın"}, {"ru": "я скучал по тебе", "tr": "ya skuçál pa tibé", "fa": "seni özledim (erkek)"}, {"ru": "обними меня", "tr": "abnimí minyá", "fa": "bana sarıl"}, {"ru": "останься со мной", "tr": "astánsa sa mnoy", "fa": "benimle kal"}, {"ru": "я не хочу тебя терять", "tr": "ya ni haçú tibyá tiryát", "fa": "seni kaybetmek istemiyorum"}, {"ru": "ты для меня всё", "tr": "tı dlya minyá fsyo", "fa": "benim için her şeysin"}]}, {"name": "Duygusal Destek İfadeleri", "words": [{"ru": "не переживай", "tr": "ni pirijiváy", "fa": "üzülme / merak etme"}, {"ru": "всё будет хорошо", "tr": "fsyo búdit haraşó", "fa": "her şey güzel olacak"}, {"ru": "я рядом", "tr": "ya ryádam", "fa": "yanındayım"}, {"ru": "я тебя поддержу", "tr": "ya tibyá padderjú", "fa": "seni desteklerim"}, {"ru": "ты не один", "tr": "tı ni adín", "fa": "yalnız değilsin (erkek)"}, {"ru": "ты не одна", "tr": "tı ni adná", "fa": "yalnız değilsin (kadın)"}, {"ru": "я верю в тебя", "tr": "ya véryu f tibyá", "fa": "sana inanıyorum"}, {"ru": "ты молодец", "tr": "tı maladéts", "fa": "aferin / harikasın"}, {"ru": "горжусь тобой", "tr": "garjús tabóy", "fa": "seninle gurur duyuyorum"}, {"ru": "спасибо тебе", "tr": "spasíba tibé", "fa": "sana teşekkür ederim"}, {"ru": "ты прав", "tr": "tı praf", "fa": "haklısın (erkek)"}, {"ru": "ты права", "tr": "tı pravá", "fa": "haklısın (kadın)"}, {"ru": "я понимаю тебя", "tr": "ya panimáyu tibyá", "fa": "seni anlıyorum"}, {"ru": "успокойся", "tr": "uspakóysa", "fa": "sakin ol"}, {"ru": "дыши глубоко", "tr": "dışí glubakó", "fa": "derin nefes al"}, {"ru": "отдохни", "tr": "atdahní", "fa": "dinlen"}, {"ru": "береги себя", "tr": "birigí sibyá", "fa": "kendine iyi bak"}, {"ru": "я с тобой", "tr": "ya s tabóy", "fa": "seninleyim"}, {"ru": "не сдавайся", "tr": "ni zdaváysa", "fa": "pes etme"}, {"ru": "ты справишься", "tr": "tı správişsa", "fa": "üstesinden gelirsin / başarırsın"}]}], "total": 597};
+</script>
+<script>
+const CATS=VOCAB_DATA.categories;
+let ALL=[];
+CATS.forEach((c,ci)=>c.words.forEach((w,wi)=>ALL.push({...w,cat:c.name,ci,id:ci+'_'+wi})));
+const ICONS=['💬','❓','🔢','👨‍👩‍👧','❤️','💕','🍽️','🏙️','🛍️','✈️','🩺','⚡','✨','🗣️','🤝','📱','👋','🙏','💡','🎯','💞','🌟'];
+function icon(i){return ICONS[i%ICONS.length]}
+
+const SRS={};let streak=0,lastDay=null;
+function learnedCount(){return Object.values(SRS).filter(s=>s.box>=2).length}
+function dueList(){const now=Date.now();return ALL.filter(w=>{const s=SRS[w.id];return !s||s.due<=now})}
+function refreshStats(){
+  document.getElementById('st-learned').textContent=learnedCount();
+  document.getElementById('st-due').textContent=Math.min(dueList().length,ALL.length);
+  document.getElementById('streak').textContent=streak;
+}
+
+let ruVoice=null;
+function pickVoice(){const vs=speechSynthesis.getVoices();ruVoice=vs.find(v=>v.lang&&v.lang.toLowerCase().startsWith('ru'))||null;}
+if('speechSynthesis'in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice;}
+function say(t){if(!('speechSynthesis'in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='ru-RU';u.rate=.82;if(ruVoice)u.voice=ruVoice;speechSynthesis.speak(u);}
+function spkSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>'}
+
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');document.getElementById('v-'+t.dataset.v).classList.add('on');
+  if(t.dataset.v==='flash')buildDeck();
+  if(t.dataset.v==='quiz')nextQuiz();
+});
+
+const catsEl=document.getElementById('cats'),wlEl=document.getElementById('wordlist');
+function renderCats(){
+  catsEl.style.display='grid';wlEl.style.display='none';
+  catsEl.innerHTML=CATS.map((c,i)=>{
+    const learned=c.words.filter((w,wi)=>{const s=SRS[i+'_'+wi];return s&&s.box>=2}).length;
+    const pct=Math.round(learned/c.words.length*100);
+    return `<div class="cat" onclick="openCat(${i})"><div class="ic">${icon(i)}</div>
+      <h3>${c.name}</h3><div class="n">${c.words.length} kelime · ${pct}%</div>
+      <div class="bar"><i style="width:${pct}%"></i></div></div>`}).join('');
+}
+function wordRow(w){
+  return `<div class="word">
+    <div class="spk" onclick="say('${w.ru.replace(/'/g,"\\'")}')">${spkSvg()}</div>
+    <div class="ru">${w.ru}</div>
+    <div class="meta"><div class="tr">${w.tr}</div><div class="fa">${w.fa}</div></div>
+  </div>`;
+}
+window.openCat=function(i){
+  catsEl.style.display='none';wlEl.style.display='block';
+  const c=CATS[i];
+  wlEl.innerHTML=`<button class="back" onclick="renderCats()">← Konulara dön</button>
+    <h2 style="margin:4px 4px 14px;font-size:17px">${icon(i)} ${c.name}</h2>`+
+    c.words.map(w=>wordRow({...w,ci:i})).join('');
+  window.scrollTo(0,0);
+}
+document.getElementById('search').addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase();
+  if(!q){renderCats();return}
+  catsEl.style.display='none';wlEl.style.display='block';
+  const hits=ALL.filter(w=>w.ru.toLowerCase().includes(q)||w.tr.toLowerCase().includes(q)||w.fa.toLowerCase().includes(q)).slice(0,120);
+  wlEl.innerHTML=`<div style="color:var(--mut);font-size:13px;margin:0 4px 12px">${hits.length} sonuç</div>`+
+    (hits.length?hits.map(wordRow).join(''):'<div class="empty">Bir şey bulunamadı 🤔</div>');
+});
+
+let deck=[],di=0,fcMode='all';
+const pickEl=document.getElementById('fc-pick');
+function buildPick(){
+  const opts=[['all','✨ Hepsi'],['due','🔁 Bugünün tekrarı']].concat(CATS.map((c,i)=>[i,c.name]));
+  pickEl.innerHTML=opts.map(o=>`<button data-m="${o[0]}" class="${o[0]==fcMode?'on':''}">${o[1]}</button>`).join('');
+  pickEl.querySelectorAll('button').forEach(b=>b.onclick=()=>{fcMode=b.dataset.m;buildPick();buildDeck();});
+}
+function buildDeck(){
+  if(fcMode==='all')deck=shuffle([...ALL]);
+  else if(fcMode==='due')deck=shuffle(dueList());
+  else deck=shuffle(ALL.filter(w=>w.ci==fcMode));
+  if(!deck.length)deck=shuffle([...ALL]);
+  di=0;showCard();
+  document.getElementById('fc-cat').textContent=fcMode==='all'?'Tüm kelimeler':fcMode==='due'?'Bugünün tekrarı':CATS[fcMode].name;
+}
+const fcInner=document.getElementById('fc-inner');
+function showCard(){
+  const w=deck[di];if(!w){document.getElementById('fc-ru').textContent='Bitti 🎉';return}
+  fcInner.classList.remove('flip');
+  setTimeout(()=>{document.getElementById('fc-ru').textContent=w.ru;
+    document.getElementById('fc-tr').textContent=w.tr;
+    document.getElementById('fc-fa').textContent=w.fa;
+    document.getElementById('fc-ru2').textContent=w.ru;},fcInner.classList.contains('flip')?260:0);
+  document.getElementById('fc-prog').textContent=(di+1)+' / '+deck.length;
+}
+fcInner.onclick=()=>fcInner.classList.toggle('flip');
+document.getElementById('fc-spk').onclick=e=>{e.stopPropagation();say(deck[di].ru)};
+const BOX_MS=[60e3,600e3,864e5,3*864e5,7*864e5,30*864e5];
+document.querySelectorAll('.srs button').forEach(b=>b.onclick=()=>{
+  const w=deck[di];if(!w)return;const q=+b.dataset.q;
+  let s=SRS[w.id]||{box:0};
+  if(q===0)s.box=0;else if(q===1)s.box=Math.max(1,s.box);else s.box=Math.min(s.box+1,5);
+  s.due=Date.now()+BOX_MS[Math.min(s.box,5)];SRS[w.id]=s;
+  bumpStreak();refreshStats();di++;if(di>=deck.length)buildDeck();else showCard();
+});
+function bumpStreak(){const d=new Date().toDateString();if(lastDay!==d){streak++;lastDay=d;}}
+
+let qWord=null,qLock=false,qc=0,qw=0;
+function nextQuiz(){
+  qLock=false;document.getElementById('q-next').classList.remove('show');
+  const pool=Math.random()<.55?(dueList().length?dueList():ALL):ALL;
+  qWord=pool[Math.floor(Math.random()*pool.length)];
+  document.getElementById('q-ru').textContent=qWord.ru;
+  document.getElementById('q-tr').textContent=qWord.tr;
+  const wrongs=shuffle(ALL.filter(w=>w.fa!==qWord.fa)).slice(0,3);
+  const opts=shuffle([qWord,...wrongs]);
+  const oe=document.getElementById('q-opts');
+  oe.innerHTML=opts.map(o=>`<button class="opt">${o.fa}</button>`).join('');
+  oe.querySelectorAll('.opt').forEach((btn,k)=>btn.onclick=()=>answer(btn,opts[k]));
+  say(qWord.ru);
+}
+function answer(btn,opt){
+  if(qLock)return;qLock=true;
+  const correct=opt.fa===qWord.fa;
+  document.querySelectorAll('.opt').forEach(b=>{b.disabled=true;if(b.textContent===qWord.fa)b.classList.add('correct')});
+  if(!correct)btn.classList.add('wrong');
+  if(correct){qc++;let s=SRS[qWord.id]||{box:0};s.box=Math.min(s.box+1,5);s.due=Date.now()+BOX_MS[Math.min(s.box,5)];SRS[qWord.id]=s;}
+  else{qw++;SRS[qWord.id]={box:0,due:Date.now()+60e3};}
+  bumpStreak();
+  document.getElementById('q-correct').textContent=qc;
+  document.getElementById('q-wrong').textContent=qw;
+  document.getElementById('q-pct').textContent=Math.round(qc/(qc+qw)*100)+'%';
+  document.getElementById('q-next').classList.add('show');refreshStats();
+}
+document.getElementById('q-next').onclick=nextQuiz;
+
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+document.getElementById('st-total').textContent=ALL.length;
+renderCats();buildPick();refreshStats();
+</script>
+</body>
+</html>
