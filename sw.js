@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fxscalproom-v4';
+const CACHE_NAME = 'fxscalproom-v5';
 
 const SKIP_DOMAINS = [
   'tradingview.com',
