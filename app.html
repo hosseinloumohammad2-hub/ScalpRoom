@@ -244,7 +244,8 @@ body,.hd,.tb,.ip,textarea,select{transition:background .35s ease,color .35s ease
 /* Virtualized rendering: skip offscreen cards */
 .g2 .cd{content-visibility:auto;contain-intrinsic-size:auto 235px}
 .sig-card{content-visibility:auto;contain-intrinsic-size:auto 330px}
-.modal,.sheet-vx{will-change:transform}
+.modal,.sheet-vx{will-change:transform;overscroll-behavior:contain}
+.modal-overlay{overscroll-behavior:contain;touch-action:pan-y}
 /* New item glow (first 10 min) */
 @keyframes newGlowVX{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 20px 1px color-mix(in srgb,var(--B) 38%,transparent)}}
 .vx-new{animation:newGlowVX 2.2s ease-in-out 5}
@@ -431,6 +432,16 @@ if('serviceWorker' in navigator){
 }
 </script>
 <script>
+/* Lock page scroll while a modal/sheet is open */
+(function(){
+  var locked=false,scrollY=0;
+  function check(){
+    var open=document.querySelector('.modal-overlay,.story-viewer');
+    if(open&&!locked){locked=true;scrollY=window.scrollY;document.body.style.position='fixed';document.body.style.top=(-scrollY)+'px';document.body.style.left='0';document.body.style.right='0';document.body.style.width='100%';}
+    else if(!open&&locked){locked=false;document.body.style.position='';document.body.style.top='';document.body.style.left='';document.body.style.right='';document.body.style.width='';window.scrollTo(0,scrollY);}
+  }
+  new MutationObserver(check).observe(document.body,{childList:true,subtree:true});
+})();
 /* Bottom-sheet drag-to-dismiss (mobile) */
 (function(){
   var startY=0,curY=0,target=null,dragging=false;
@@ -446,9 +457,10 @@ if('serviceWorker' in navigator){
   },{passive:true});
   document.addEventListener('touchmove',function(e){
     if(!dragging||!target)return;
+    if(e.cancelable)e.preventDefault(); /* stop the page behind from scrolling */
     curY=Math.max(0,e.touches[0].clientY-startY);
     target.style.transform='translateY('+curY+'px)';
-  },{passive:true});
+  },{passive:false});
   document.addEventListener('touchend',function(){
     if(!dragging||!target)return;
     var m=target;dragging=false;target=null;
