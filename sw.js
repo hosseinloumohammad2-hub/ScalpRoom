@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fxscalproom-v5';
+const CACHE_NAME = 'fxscalproom-v6';
 
 const SKIP_DOMAINS = [
   'tradingview.com',
@@ -27,6 +27,17 @@ self.addEventListener('fetch', event => {
 
   // Skip external APIs and widgets entirely
   if (SKIP_DOMAINS.some(d => url.hostname.includes(d))) return;
+
+  // Supabase STORAGE (images) — cache first, images never change once uploaded
+  if (url.hostname.includes('supabase.co') && url.pathname.includes('/storage/')) {
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        if (cached) return cached;
+        return fetch(event.request).then(r => { if (r.ok) { const c = r.clone(); caches.open(CACHE_NAME).then(cache => cache.put(event.request, c)); } return r; });
+      })
+    );
+    return;
+  }
 
   // Supabase API — network only, cache fallback
   if (url.hostname.includes('supabase.co')) {
