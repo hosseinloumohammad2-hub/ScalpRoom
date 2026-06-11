@@ -171,8 +171,8 @@ select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;paddi
 <style id="vx-upgrades">
 /* ===== Visual Upgrades v47 ===== */
 /* (3) Staggered entrance */
-@keyframes stagIn{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
-.stagger>*{animation:stagIn .45s cubic-bezier(.22,1,.36,1) both}
+@keyframes stagIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+.stagger>*{animation:stagIn .55s cubic-bezier(.16,1,.3,1) both}
 .stagger>*:nth-child(1){animation-delay:.02s}
 .stagger>*:nth-child(2){animation-delay:.06s}
 .stagger>*:nth-child(3){animation-delay:.10s}
@@ -264,6 +264,13 @@ body,.hd,.tb,.ip,textarea,select{transition:background .35s ease,color .35s ease
 @keyframes skVX{from{background-position:200% 0}to{background-position:-200% 0}}
 .sk-line{height:11px;border-radius:6px;margin:9px 0;background:linear-gradient(110deg,var(--brd) 30%,var(--brd2) 45%,var(--brd) 60%);background-size:200% 100%;animation:skVX 1.3s linear infinite}
 .sk-rect{height:92px;border-radius:12px;margin:10px 0;background:linear-gradient(110deg,var(--brd) 30%,var(--brd2) 45%,var(--brd) 60%);background-size:200% 100%;animation:skVX 1.3s linear infinite}
+/* Universal iOS press physics */
+*{-webkit-tap-highlight-color:transparent}
+.press-vx{scale:.962!important;filter:brightness(.96);transition:scale .12s ease,filter .12s ease!important}
+.unpress-vx{transition:scale .34s cubic-bezier(.3,1.45,.55,1),filter .28s ease!important}
+/* Story viewer: soft zoom-fade entrance */
+@keyframes svInVX{from{opacity:0;transform:scale(1.05)}to{opacity:1;transform:none}}
+.story-viewer{animation:svInVX .38s cubic-bezier(.32,.72,0,1)}
 /* Accessibility: respect reduced motion */
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.001s!important}}
 </style>
@@ -443,6 +450,41 @@ if('serviceWorker' in navigator){
     else if(!open&&locked){locked=false;document.body.style.position='';document.body.style.top='';document.body.style.left='';document.body.style.right='';document.body.style.width='';window.scrollTo(0,scrollY);}
   }
   new MutationObserver(check).observe(document.body,{childList:true,subtree:true});
+})();
+/* Universal iOS press physics — every tappable element */
+(function(){
+  var cur=null;
+  function findPressable(el){
+    var n=el,depth=0;
+    while(n&&n!==document.body&&depth<7){
+      if(n.classList&&(n.classList.contains('modal')||n.classList.contains('sheet-vx')||n.classList.contains('modal-overlay')||n.classList.contains('story-viewer')))return null;
+      var tag=n.tagName;
+      if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return null;
+      try{if(getComputedStyle(n).cursor==='pointer')return n}catch(e){return null}
+      n=n.parentElement;depth++;
+    }
+    return null;
+  }
+  document.addEventListener('touchstart',function(e){
+    var el=findPressable(e.target);
+    if(!el)return;
+    if(cur)cur.classList.remove('press-vx','unpress-vx');
+    cur=el;
+    el.classList.remove('unpress-vx');
+    el.classList.add('press-vx');
+  },{passive:true});
+  function release(){
+    if(!cur)return;
+    var el=cur;cur=null;
+    el.classList.add('unpress-vx');
+    el.classList.remove('press-vx');
+    setTimeout(function(){el.classList.remove('unpress-vx')},380);
+  }
+  document.addEventListener('touchend',release,{passive:true});
+  document.addEventListener('touchcancel',release,{passive:true});
+  document.addEventListener('touchmove',function(){
+    if(cur){cur.classList.remove('press-vx');cur=null;}
+  },{passive:true});
 })();
 /* Bottom-sheet drag-to-dismiss (mobile) */
 (function(){
