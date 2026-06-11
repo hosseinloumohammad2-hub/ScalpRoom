@@ -419,12 +419,12 @@ ${pagesHtml||`<div class="page"><div style="padding:72px;display:flex;align-item
 if('serviceWorker' in navigator){
   window.addEventListener('load',async function(){
     try{
-      if(!localStorage.getItem('sw_v8')){
+      if(!localStorage.getItem('sw_v9')){
         var regs=await navigator.serviceWorker.getRegistrations();
         for(var i=0;i<regs.length;i++){await regs[i].unregister()}
         var keys=await caches.keys();
         for(var j=0;j<keys.length;j++){await caches.delete(keys[j])}
-        localStorage.setItem('sw_v8','1');
+        localStorage.setItem('sw_v9','1');
       }
       navigator.serviceWorker.register('/sw.js');
     }catch(e){}
