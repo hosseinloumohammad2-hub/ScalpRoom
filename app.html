@@ -237,7 +237,7 @@ select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;paddi
 .cd-glass::after{height:100%;width:34%;left:0;right:auto;background:linear-gradient(105deg,transparent,rgba(255,255,255,.16),transparent);animation:sheenVX 8.5s ease-in-out infinite;pointer-events:none}
 [data-theme="dark"] .cd-glass::after{background:linear-gradient(105deg,transparent,rgba(255,255,255,.05),transparent)}
 /* Smooth theme switching */
-body,.hd,.tb,.ip,textarea,select{transition:background .35s ease,color .35s ease,border-color .35s ease}
+body,.hd,.ip,textarea,select{transition:background .35s ease,color .35s ease,border-color .35s ease}
 /* Brand dot: slow heartbeat glow */
 @keyframes dotGlowVX{0%,100%{text-shadow:0 0 0 rgba(255,69,58,0)}50%{text-shadow:0 0 9px rgba(255,69,58,.6)}}
 .lg b{animation:dotGlowVX 3.4s ease-in-out infinite}
@@ -429,12 +429,12 @@ ${pagesHtml||`<div class="page"><div style="padding:72px;display:flex;align-item
 if('serviceWorker' in navigator){
   window.addEventListener('load',async function(){
     try{
-      if(!localStorage.getItem('sw_v11')){
+      if(!localStorage.getItem('sw_v12')){
         var regs=await navigator.serviceWorker.getRegistrations();
         for(var i=0;i<regs.length;i++){await regs[i].unregister()}
         var keys=await caches.keys();
         for(var j=0;j<keys.length;j++){await caches.delete(keys[j])}
-        localStorage.setItem('sw_v11','1');
+        localStorage.setItem('sw_v12','1');
       }
       navigator.serviceWorker.register('/sw.js');
     }catch(e){}
