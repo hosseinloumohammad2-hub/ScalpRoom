@@ -155,6 +155,7 @@
   .premium .crown{ font-size:22px; flex-shrink:0; filter:drop-shadow(0 2px 6px rgba(255,69,58,.4)); }
   .premium .ptext{ font-size:12.5px; line-height:1.75; color:var(--mut); text-align:start; }
   .premium .ptext b{ color:var(--ink); font-weight:700; }
+  .premium .ptext b:last-of-type{ color:#ff8a80; direction:ltr; display:inline-block; }
   .premium a{
     color:var(--red); font-weight:700; text-decoration:none; direction:ltr; display:inline-block;
     border-bottom:1px dashed rgba(255,69,58,.4);
@@ -236,7 +237,7 @@ const I18N = {
     returnIn:"بازگشت تا",
     days:"روز", hours:"ساعت", mins:"دقیقه", secs:"ثانیه",
     etaLabel:"زمان تخمینی بازگشت:", eta:"۲۱ ژوئن ۲۰۲۶", soon:"به‌زودی…",
-    premium:'اعضای <b>پرمیوم</b> در این مدت همچنان تحلیل‌ها رو در کانال تلگرام <a href="'+TG+'" target="_blank" rel="noopener">Fx.Premium</a> دریافت می‌کنن.',
+    premium:'اعضای <b>پرمیوم</b> در این مدت همچنان تحلیل‌ها رو در کانال خصوصی تلگرام <b>Fx.Premium</b> دریافت می‌کنن.',
     contact:'جهت ارتباط، در تلگرام به ادمین <a href="'+ADMIN+'" target="_blank" rel="noopener">@Hosenlou</a> پیام بدید.'
   },
   en:{
@@ -248,7 +249,7 @@ const I18N = {
     returnIn:"Back in",
     days:"days", hours:"hours", mins:"mins", secs:"secs",
     etaLabel:"Estimated return:", eta:"June 21, 2026", soon:"Soon…",
-    premium:'<b>Premium</b> members still receive all analysis on the <a href="'+TG+'" target="_blank" rel="noopener">Fx.Premium</a> Telegram channel during this time.',
+    premium:'<b>Premium</b> members still receive all analysis on the private <b>Fx.Premium</b> Telegram channel during this time.',
     contact:'For contact, message admin <a href="'+ADMIN+'" target="_blank" rel="noopener">@Hosenlou</a> on Telegram.'
   }
 };
