@@ -22,7 +22,9 @@
     background:var(--bg); color:var(--ink);
     font-family:'Vazirmatn',system-ui,sans-serif;
     min-height:100dvh; display:flex; align-items:center; justify-content:center;
-    overflow:hidden; position:relative; padding:24px;
+    position:relative;
+    padding:calc(env(safe-area-inset-top,0px) + 54px) 22px calc(env(safe-area-inset-bottom,0px) + 32px);
+    overflow-x:hidden; overflow-y:auto;
     -webkit-font-smoothing:antialiased;
   }
   body::before{
@@ -44,21 +46,22 @@
     mask-image:linear-gradient(to bottom,transparent,#000 20%,#000 82%,transparent);
   }
 
-  /* language toggle */
+  /* language toggle - centered inside card */
   .lang-toggle{
-    position:fixed; top:20px; inset-inline-end:20px; z-index:10;
-    display:flex; gap:2px;
+    display:inline-flex; gap:3px;
     background:rgba(255,255,255,.05);
     border:1px solid var(--line);
-    border-radius:100px; padding:3px;
+    border-radius:100px; padding:4px;
+    margin:0 auto 22px;
     backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
   }
   .lang-toggle button{
     border:0; background:transparent; cursor:pointer;
-    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:12px;
-    color:var(--mut); padding:6px 13px; border-radius:100px;
-    transition:all .25s ease;
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13.5px;
+    color:var(--mut); padding:9px 22px; border-radius:100px;
+    transition:all .25s ease; min-width:84px;
   }
+  .lang-toggle button[data-lang="fa"]{ font-family:'Vazirmatn',sans-serif; }
   .lang-toggle button.on{ background:var(--ink); color:#0a0a0f; }
 
   .wrap{ position:relative; z-index:2; width:100%; max-width:560px; text-align:center; }
@@ -187,13 +190,12 @@
 <body>
 <canvas id="chart"></canvas>
 
-<div class="lang-toggle">
-  <button data-lang="fa" class="on">فا</button>
-  <button data-lang="en">EN</button>
-</div>
-
 <div class="wrap">
   <div class="card">
+    <div class="lang-toggle">
+      <button data-lang="fa" class="on">فارسی</button>
+      <button data-lang="en">English</button>
+    </div>
     <div class="brand">Fxscalproom<span class="dot">.</span></div>
     <div class="status"><span class="pulse"></span><span data-t="status"></span></div>
     <h1 data-t="title"></h1>
