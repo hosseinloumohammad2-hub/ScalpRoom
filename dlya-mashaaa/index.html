@@ -90,6 +90,8 @@ body{
 .day-card:active{transform:scale(.985)}
 .day-card.locked{opacity:.45}
 .day-card.done{border-color:rgba(61,220,151,.3)}
+.day-card.partial{border-color:rgba(255,207,107,.3)}
+.day-card.partial .day-num{background:rgba(255,207,107,.18);color:var(--gold)}
 .day-num{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;
   font-weight:800;font-size:16px;flex-shrink:0;background:var(--glass2);color:var(--mut)}
 .day-card.active .day-num{background:var(--grad);color:#fff;box-shadow:0 4px 14px rgba(255,93,143,.4)}
@@ -571,7 +573,7 @@ function dayWords(day){
   return SEQ.slice(start,start+DAY_SIZE).map(id=>ALL.find(w=>w.id===id)).filter(Boolean);
 }
 function dayDone(day){
-  return dayWords(day).every(w=>{const s=SRS[w.id];return s&&s.box>=2});
+  return dayWords(day).every(w=>{const s=SRS[w.id];return s&&s.box>=1});
 }
 // unlock = day 1..N where all previous done; current = first not-done
 function currentDay(){
@@ -583,27 +585,56 @@ function renderPath(){
   const cur=currentDay();
   STATE.pathDay=cur;save();
   const cw=dayWords(cur);
-  const doneCount=cw.filter(w=>{const s=SRS[w.id];return s&&s.box>=2}).length;
+  const doneCount=cw.filter(w=>{const s=SRS[w.id];return s&&s.box>=1}).length;
   document.getElementById('ph-day').textContent='روز '+fa(cur)+' از '+fa(TOTAL_DAYS);
   document.getElementById('ph-title').textContent=cw[0]?cw[0].cat:'مسیر یادگیری';
-  document.getElementById('ph-sub').textContent='امروز '+fa(cw.length)+' عبارت — تا حالا '+fa(doneCount)+' تا رو بلدی. همه رو با فلش‌کارت "بلدم" کن تا روز بعد باز شه.';
+  document.getElementById('ph-sub').textContent='امروز '+fa(cw.length)+' عبارت — تا حالا '+fa(doneCount)+' تا رو دیدی. هر روزی رو هر وقت خواستی می‌تونی بخونی، قفل نیست. هر چقدر دلت خواست جلو برو.';
   document.getElementById('ph-bar').style.width=(doneCount/Math.max(cw.length,1)*100)+'%';
 
   const list=document.getElementById('day-list');
   let html='';
+  // show all days, no lock. Start a bit before current so user sees context.
   const showFrom=Math.max(1,cur-1);
-  const showTo=Math.min(TOTAL_DAYS,cur+12);
-  for(let d=showFrom;d<=showTo;d++){
+  const showTo=TOTAL_DAYS;
+  // cap initial render for performance, with a "show more" if huge
+  const hardCap=showFrom+60;
+  const renderTo=Math.min(showTo,hardCap);
+  for(let d=showFrom;d<=renderTo;d++){
     const done=dayDone(d);
-    const locked=d>cur;
     const active=d===cur;
     const dw=dayWords(d);
-    const cls=done?'done':active?'active':locked?'locked':'';
+    // progress within this day
+    const dDone=dw.filter(w=>{const s=SRS[w.id];return s&&s.box>=1}).length;
+    const partial=dDone>0&&!done;
+    const cls=done?'done':active?'active':partial?'partial':'';
     const sub=dw[0]?dw[0].cat:'';
-    html+=`<div class="day-card ${cls}" ${locked?'':`onclick="startDay(${d})"`}>
+    html+=`<div class="day-card ${cls}" onclick="startDay(${d})">
       <div class="day-num">${done?'✓':fa(d)}</div>
-      <div class="day-info"><h4>روز ${fa(d)}</h4><span>${sub} · ${fa(dw.length)} عبارت</span></div>
-      <div class="day-go">${locked?'🔒':'›'}</div>
+      <div class="day-info"><h4>روز ${fa(d)}</h4><span>${sub} · ${fa(dw.length)} عبارت${partial?' · '+fa(dDone)+' دیده‌شده':''}</span></div>
+      <div class="day-go">›</div>
+    </div>`;
+  }
+  if(renderTo<showTo){
+    html+=`<button class="back" style="width:100%;margin-top:8px" onclick="document.getElementById('day-list').dataset.all='1';renderPathAll()">نمایش همه‌ی ${fa(TOTAL_DAYS)} روز ↓</button>`;
+  }
+  list.innerHTML=html;
+}
+window.renderPathAll=function(){
+  const cur=currentDay();
+  const list=document.getElementById('day-list');
+  let html='';
+  for(let d=1;d<=TOTAL_DAYS;d++){
+    const done=dayDone(d);
+    const active=d===cur;
+    const dw=dayWords(d);
+    const dDone=dw.filter(w=>{const s=SRS[w.id];return s&&s.box>=1}).length;
+    const partial=dDone>0&&!done;
+    const cls=done?'done':active?'active':partial?'partial':'';
+    const sub=dw[0]?dw[0].cat:'';
+    html+=`<div class="day-card ${cls}" onclick="startDay(${d})">
+      <div class="day-num">${done?'✓':fa(d)}</div>
+      <div class="day-info"><h4>روز ${fa(d)}</h4><span>${sub} · ${fa(dw.length)} عبارت${partial?' · '+fa(dDone)+' دیده‌شده':''}</span></div>
+      <div class="day-go">›</div>
     </div>`;
   }
   list.innerHTML=html;
