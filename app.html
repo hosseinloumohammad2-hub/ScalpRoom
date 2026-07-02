@@ -29,14 +29,14 @@
 <style id="theme-style">
 /* ─── iOS 26 Liquid Glass ─── */
 :root{--bg:#f5f5f7;--bg2:#ffffff;--glass:rgba(255,255,255,.55);--glass2:rgba(255,255,255,.35);--gb:rgba(255,255,255,.72);--card:rgba(255,255,255,.78);--brd:rgba(0,0,0,.06);--brd2:rgba(0,0,0,.10);--tx:#1d1d1f;--tx2:#424245;--mu:#86868b;--dm:#aeaeb2;--R:#ff3b30;--G:#28cd41;--B:#0071e3;--Y:#ff9f0a;--purple:#bf5af2;--r:22px;--r2:16px}
-[data-theme="dark"]{--bg:#050507;--bg2:#0a0a0c;--glass:rgba(30,30,32,.65);--glass2:rgba(30,30,32,.45);--gb:rgba(255,255,255,.08);--card:rgba(28,28,30,.82);--brd:rgba(255,255,255,.06);--brd2:rgba(255,255,255,.10);--tx:#e5e5e7;--tx2:#a1a1aa;--mu:#71717a;--dm:#52525b;--R:#ff453a;--G:#30d158;--B:#0a84ff;--Y:#ffd60a}
+[data-theme="dark"]{--bg:#000000;--bg2:#0c0c0d;--glass:rgba(22,22,24,.72);--glass2:rgba(22,22,24,.5);--gb:rgba(255,255,255,.07);--card:rgba(19,19,21,.9);--brd:rgba(255,255,255,.05);--brd2:rgba(255,255,255,.09);--tx:#f0f0f2;--tx2:#a1a1a6;--mu:#6e6e73;--dm:#48484c;--R:#ff453a;--G:#30d158;--B:#0a84ff;--Y:#ffd60a}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{background:var(--bg);overscroll-behavior:none}
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased;overflow-x:hidden;letter-spacing:-.2px;overscroll-behavior-y:none}
 /* Gradient mesh - hidden initially, shown after app loads */
 body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .5s ease .3s;background:radial-gradient(ellipse 600px 400px at 15% 5%,rgba(0,113,227,.08),transparent),radial-gradient(ellipse 500px 500px at 85% 15%,rgba(191,90,242,.06),transparent),radial-gradient(ellipse 400px 600px at 50% 95%,rgba(40,205,65,.04),transparent),var(--bg)}
 body.app-ready::before{opacity:1}
-[data-theme="dark"] body::before{background:radial-gradient(ellipse 600px 400px at 15% 5%,rgba(0,113,227,.04),transparent),radial-gradient(ellipse 500px 500px at 85% 15%,rgba(191,90,242,.03),transparent),var(--bg)}
+[data-theme="dark"] body::before{background:var(--bg)}
 ::-webkit-scrollbar{width:0}
 input,button,textarea,select{font-family:inherit;border:none;outline:none;color:var(--tx)}
 input::placeholder,textarea::placeholder{color:var(--dm)}
@@ -231,7 +231,7 @@ select{background:var(--bg);border:1px solid var(--brd);border-radius:14px;paddi
 .modal{animation:modalInVX .32s cubic-bezier(.3,1.25,.5,1)}
 /* Image shimmer while loading */
 @keyframes shimVX{from{background-position:200% 0}to{background-position:-200% 0}}
-.cd img{background:linear-gradient(110deg,var(--bg) 30%,var(--bg2) 50%,var(--bg) 70%)}
+.cd img{background:var(--bg2)}
 /* Ambient sheen drifting across glass cards */
 @keyframes sheenVX{0%,68%{transform:translateX(-130%) skewX(-18deg)}100%{transform:translateX(330%) skewX(-18deg)}}
 .cd-glass::after{height:100%;width:34%;left:0;right:auto;background:linear-gradient(105deg,transparent,rgba(255,255,255,.16),transparent);animation:sheenVX 8.5s ease-in-out infinite;pointer-events:none}
