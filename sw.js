@@ -1,4 +1,6 @@
-const CACHE_NAME = 'fxscalproom-v7';
+const CACHE_NAME = 'fxscalproom-v8';
+const IMG_CACHE = 'fxscalproom-img-v8';
+const IMG_MAX = 150; // cap cached images so storage doesn't grow forever
 
 const SKIP_DOMAINS = [
   'tradingview.com',
@@ -16,11 +18,18 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
+      Promise.all(keys.filter(k => k !== CACHE_NAME && k !== IMG_CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
+
+// Trim a cache to a max number of entries (oldest first).
+async function trim(cacheName, max) {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  if (keys.length <= max) return;
+  for (let i = 0; i < keys.length - max; i++) await cache.delete(keys[i]);
+}
 
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
@@ -31,15 +40,18 @@ self.addEventListener('fetch', event => {
   // Supabase STORAGE (images) — cache first, images never change once uploaded
   if (url.hostname.includes('supabase.co') && url.pathname.includes('/storage/')) {
     event.respondWith(
-      caches.match(event.request).then(cached => {
+      caches.open(IMG_CACHE).then(async cache => {
+        const cached = await cache.match(event.request);
         if (cached) return cached;
-        return fetch(event.request).then(r => { if (r.ok) { const c = r.clone(); caches.open(CACHE_NAME).then(cache => cache.put(event.request, c)); } return r; });
+        const r = await fetch(event.request);
+        if (r.ok) { cache.put(event.request, r.clone()); trim(IMG_CACHE, IMG_MAX); }
+        return r;
       })
     );
     return;
   }
 
-  // Supabase API — network only, cache fallback
+  // Supabase API — network only, cache fallback (fresh data)
   if (url.hostname.includes('supabase.co')) {
     event.respondWith(
       fetch(event.request)
@@ -49,8 +61,22 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // CDN (React, Babel, fonts) — cache first (these never change)
-  if (url.hostname.includes('cdnjs.cloudflare.com') || url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com')) {
+  // Local academy chart images — cache first (static, never change)
+  if (url.origin === self.location.origin && /\/charts\/academy_.*\.webp$/.test(url.pathname)) {
+    event.respondWith(
+      caches.open(IMG_CACHE).then(async cache => {
+        const cached = await cache.match(event.request);
+        if (cached) return cached;
+        const r = await fetch(event.request);
+        if (r.ok) { cache.put(event.request, r.clone()); trim(IMG_CACHE, IMG_MAX); }
+        return r;
+      })
+    );
+    return;
+  }
+
+  // CDN (React, fonts) — cache first (these never change)
+  if (url.hostname.includes('cdnjs.cloudflare.com') || url.hostname.includes('cdn.jsdelivr.net') || url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com')) {
     event.respondWith(
       caches.match(event.request).then(cached => {
         if (cached) return cached;
@@ -60,18 +86,23 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Own origin (index.html etc) — NETWORK FIRST so updates apply immediately
+  // Own origin (index.html / /app etc) — STALE-WHILE-REVALIDATE:
+  // show cached copy instantly, refresh in the background so the next load is up to date.
   if (url.origin === self.location.origin) {
     event.respondWith(
-      fetch(event.request)
-        .then(r => { const c = r.clone(); caches.open(CACHE_NAME).then(cache => cache.put(event.request, c)); return r; })
-        .catch(() => caches.match(event.request).then(c => c || (event.request.mode === 'navigate' ? caches.match('/app') : undefined)))
+      caches.open(CACHE_NAME).then(async cache => {
+        const cached = await cache.match(event.request);
+        const network = fetch(event.request)
+          .then(r => { if (r.ok) cache.put(event.request, r.clone()); return r; })
+          .catch(() => cached || (event.request.mode === 'navigate' ? cache.match('/app') : undefined));
+        return cached || network;
+      })
     );
     return;
   }
 });
 
-/* ─── Real Push Notifications ─── */
+/* ─── Real Push Notifications (unchanged) ─── */
 self.addEventListener('push', event => {
   let data = { title: 'Fxscalproom', body: 'New update!' };
   try { if (event.data) data = event.data.json(); } catch (e) { try { data.body = event.data.text(); } catch (e2) {} }
